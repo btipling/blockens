@@ -3,14 +3,15 @@ const gl = @import("zopengl");
 const entity = @import("entity.zig");
 const position = @import("position.zig");
 
-const numDataFloats = 9;
+const numDataFloats = 12;
 const numIndices = 6;
 
 // zig fmt: off
 const data: [numDataFloats]gl.Float = .{
-    -0.5, -0.5, 0.0,
-     0.5, -0.5, 0.0,
-     0.0,  0.5, 0.0,
+     0.5,  0.5, 0.0,  // top right
+     0.5, -0.5, 0.0,  // bottom right
+    -0.5, -0.5, 0.0,  // bottom left
+    -0.5,  0.5, 0.0,  // top left
 };
 
 const indices: [numIndices]gl.Uint = .{

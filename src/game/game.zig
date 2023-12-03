@@ -34,7 +34,7 @@ pub fn run() !void {
     };
     defer window.destroy();
     window.setSizeLimits(800, 800, -1, -1);
-    window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
+    window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.hidden);
 
     glfw.makeContextCurrent(window);
     glfw.swapInterval(1);
