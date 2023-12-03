@@ -5,6 +5,9 @@ const gl = @import("zopengl");
 const cfg = @import("config.zig");
 const ui = @import("ui/ui.zig");
 const controls = @import("controls.zig");
+const block = @import("block.zig");
+const position = @import("position.zig");
+const world = @import("world.zig");
 
 const embedded_font_data = @embedFile("assets/fonts/PressStart2P-Regular.ttf");
 
@@ -60,6 +63,14 @@ pub fn run() !void {
     zgui.io.setDefaultFont(font_large);
 
     var gameUI = try ui.UI.init(window);
+    var blocks = std.ArrayList(*block.Block).init(allocator);
+
+    const initialTestBlockPosition = position.Position{ .worldX = 0.0, .worldY = 0.0, .worldZ = 0.0 };
+    var testBlock = try block.Block.init("testblock", initialTestBlockPosition, allocator);
+    defer testBlock.deinit();
+
+    try blocks.append(&testBlock);
+    var gameWorld = try world.World.init(blocks);
 
     main_loop: while (!window.shouldClose()) {
         glfw.pollEvents();
@@ -72,6 +83,7 @@ pub fn run() !void {
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
         try gameUI.draw();
+        try gameWorld.draw();
 
         window.swapBuffers();
     }
