@@ -2,6 +2,7 @@ const std = @import("std");
 const glfw = @import("zglfw");
 const zgui = @import("zgui");
 const gl = @import("zopengl");
+const zstbi = @import("zstbi");
 const cfg = @import("config.zig");
 const ui = @import("ui/ui.zig");
 const controls = @import("controls.zig");
@@ -62,11 +63,15 @@ pub fn run() !void {
     const font_large = zgui.io.addFontFromMemory(embedded_font_data, std.math.floor(font_size * 1.1));
     zgui.io.setDefaultFont(font_large);
 
+    zstbi.init(allocator);
+    defer zstbi.deinit();
+    zstbi.setFlipVerticallyOnLoad(true);
+
     var gameUI = try ui.UI.init(window);
     var blocks = std.ArrayList(*block.Block).init(allocator);
 
     const initialTestBlockPosition = position.Position{ .worldX = 0.0, .worldY = 0.0, .worldZ = 0.0 };
-    var testBlock = try block.Block.init("testblock", initialTestBlockPosition, allocator);
+    var testBlock = try block.Block.init("testblock", initialTestBlockPosition);
     defer testBlock.deinit();
 
     try blocks.append(&testBlock);

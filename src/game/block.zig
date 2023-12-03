@@ -3,16 +3,16 @@ const gl = @import("zopengl");
 const entity = @import("entity.zig");
 const position = @import("position.zig");
 
-const numDataFloats = 24;
+const numDataFloats = 32;
 const numIndices = 6;
 
 // zig fmt: off
 const data: [numDataFloats]gl.Float = .{
-    // positions         // colors
-     0.5,  0.5, 0.0,     1.0, 0.0, 0.0, // top right
-     0.5, -0.5, 0.0,     0.0, 1.0, 0.0, // bottom right
-    -0.5, -0.5, 0.0,     0.0, 0.0, 1.0, // bottom left
-    -0.5,  0.5, 0.0,     0.0, 0.25, 0.0, // top left
+    // positions         // colors            // texture coords
+     0.5,  0.5, 0.0,     1.0,  0.0,  0.0,     1.0, 1.0, // top right 
+     0.5, -0.5, 0.0,     0.0,  1.0,  0.0,     1.0, 0.0, // bottom right
+    -0.5, -0.5, 0.0,     0.0,  0.0,  1.0,     0.0, 0.0, // bottom left
+    -0.5,  0.5, 0.0,     0.0, 0.25,  0.0,     0.0, 1.0, // top left
 };
 
 const indices: [numIndices]gl.Uint = .{
@@ -26,15 +26,15 @@ pub const Block = struct {
     position: position.Position,
     entity: entity.Entity,
 
-    pub fn init(name: []const u8, pos: position.Position, allocator: std.mem.Allocator) !Block {
+    pub fn init(name: []const u8, pos: position.Position) !Block {
         const blockEntity = try entity.Entity.init(
-            allocator,
             name,
             &data,
             &indices,
             @embedFile("shaders/block.vs"),
             @embedFile("shaders/block.fs"),
-            entity.EntityConfig{ .hasColor = true, .hasTexture = false },
+            @embedFile("assets/textures/smilie.png"),
+            entity.EntityConfig{ .hasColor = true, .hasTexture = true },
         );
         return Block{
             .name = name,

@@ -2,6 +2,7 @@ const std = @import("std");
 const zgui = @import("libs/zig-gamedev/libs/zgui/build.zig");
 const glfw = @import("libs/zig-gamedev/libs/zglfw/build.zig");
 const zopengl = @import("libs/zig-gamedev/libs/zopengl/build.zig");
+const zstbi = @import("libs/zig-gamedev/libs/zstbi/build.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -27,8 +28,11 @@ pub fn build(b: *std.Build) void {
     });
     const zglf_pkg = glfw.package(b, target, optimize, .{});
     const zopengl_pkg = zopengl.package(b, target, optimize, .{});
+    const zstbi_pkg = zstbi.package(b, target, optimize, .{});
+
     zglf_pkg.link(exe);
     zopengl_pkg.link(exe);
+    zstbi_pkg.link(exe);
 
     zgui_pkg.link(exe);
 
