@@ -25,7 +25,7 @@ pub const UI = struct {
         zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
         zgui.setNextWindowSize(.{
             .w = 1000,
-            .h = 300,
+            .h = 120,
         });
         zgui.setNextItemWidth(-1);
         const style = zgui.getStyle();
