@@ -3,6 +3,11 @@ const gl = @import("zopengl");
 
 pub const EntityErr = error{Error};
 
+pub const EntityConfig = struct {
+    hasColor: bool,
+    hasTexture: bool,
+};
+
 pub const Entity = struct {
     name: []const u8,
     vao: gl.Uint,
@@ -10,6 +15,7 @@ pub const Entity = struct {
     data: []const gl.Float,
     indices: []const gl.Uint,
     program: gl.Uint,
+    config: EntityConfig,
 
     pub fn init(
         allocator: std.mem.Allocator,
@@ -18,6 +24,7 @@ pub const Entity = struct {
         indices: []const gl.Uint,
         vertexShaderSource: [:0]const u8,
         fragmentShaderSource: [:0]const u8,
+        config: EntityConfig,
     ) !Entity {
         const uniforms = std.StringHashMap(gl.Uint).init(allocator);
         const vao = try initVAO(name);
@@ -26,7 +33,7 @@ pub const Entity = struct {
         try initVBO(name);
         try initEBO(name, indices);
         const program = try initProgram(name, &[_]gl.Uint{ vertexShader, fragmentShader });
-        try initData(name, data);
+        try initData(name, data, config);
         return Entity{
             .name = name,
             .vao = vao,
@@ -34,6 +41,7 @@ pub const Entity = struct {
             .data = data,
             .indices = indices,
             .program = program,
+            .config = config,
         };
     }
 
@@ -174,12 +182,23 @@ pub const Entity = struct {
         return shaderProgram;
     }
 
-    fn initData(name: []const u8, data: []const gl.Float) !void {
+    fn initData(name: []const u8, data: []const gl.Float, config: EntityConfig) !void {
         const size = @as(isize, @intCast(data.len * @sizeOf(gl.Float)));
         const dataptr: *const anyopaque = data.ptr;
         gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
-        gl.vertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 3 * @sizeOf(gl.Float), null);
-        gl.enableVertexAttribArray(0);
+        var stride: gl.Int = 3;
+        if (config.hasColor) {
+            stride += 3;
+        }
+        var curArr: gl.Uint = 0;
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), null);
+        gl.enableVertexAttribArray(curArr);
+        curArr += 1;
+        if (config.hasColor) {
+            gl.vertexAttribPointer(1, 3, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(3 * @sizeOf(gl.Float))));
+            gl.enableVertexAttribArray(curArr);
+            curArr += 1;
+        }
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} init data error: {d}\n", .{ name, e });
