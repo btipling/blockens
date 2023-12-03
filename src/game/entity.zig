@@ -19,14 +19,12 @@ pub const Entity = struct {
         vertexShaderSource: [:0]const u8,
         fragmentShaderSource: [:0]const u8,
     ) !Entity {
-        //
-        var uniforms = std.StringHashMap(gl.Uint).init(allocator);
-        _ = &uniforms;
+        const uniforms = std.StringHashMap(gl.Uint).init(allocator);
         const vao = try initVAO(name);
         const vertexShader = try initVertexShader(vertexShaderSource, name);
         const fragmentShader = try initFragmentShader(fragmentShaderSource, name);
         try initVBO(name);
-        try initEBO(name);
+        try initEBO(name, indices);
         const program = try initProgram(name, &[_]gl.Uint{ vertexShader, fragmentShader });
         try initData(name, data);
         return Entity{
@@ -70,7 +68,7 @@ pub const Entity = struct {
         return;
     }
 
-    pub fn initEBO(msg: []const u8) !void {
+    pub fn initEBO(msg: []const u8, indices: []const gl.Uint) !void {
         var EBO: gl.Uint = undefined;
         gl.genBuffers(1, &EBO);
         var e = gl.getError();
@@ -82,6 +80,15 @@ pub const Entity = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("bind ebo buff error: {s} {d}\n", .{ msg, e });
+            return EntityErr.Error;
+        }
+
+        const size = @as(isize, @intCast(indices.len * @sizeOf(gl.Uint)));
+        const indicesptr: *const anyopaque = indices.ptr;
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, size, indicesptr, gl.STATIC_DRAW);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{s} buffer data error: {d}\n", .{ msg, e });
             return EntityErr.Error;
         }
         return;
@@ -171,7 +178,7 @@ pub const Entity = struct {
         const size = @as(isize, @intCast(data.len * @sizeOf(gl.Float)));
         const dataptr: *const anyopaque = data.ptr;
         gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
-        gl.vertexAttribPointer(0, 2, gl.FLOAT, gl.FALSE, 2 * @sizeOf(gl.Float), null);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 3 * @sizeOf(gl.Float), null);
         gl.enableVertexAttribArray(0);
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
