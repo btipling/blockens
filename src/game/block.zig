@@ -1,5 +1,6 @@
 const std = @import("std");
 const gl = @import("zopengl");
+const zm = @import("zmath");
 const entity = @import("entity.zig");
 const position = @import("position.zig");
 
@@ -20,7 +21,7 @@ const indices: [numIndices]gl.Uint = .{
     1, 2, 3,
 };
 // zig fmt: on
-//
+
 pub const Block = struct {
     name: []const u8,
     position: position.Position,
@@ -48,6 +49,14 @@ pub const Block = struct {
     }
 
     pub fn draw(self: *Block) !void {
-        try self.entity.draw();
+        var m = zm.identity();
+        var angleDegrees: gl.Float = 90.0 * (std.math.pi / 180.0);
+        m = zm.mul(zm.rotationZ(angleDegrees), m);
+        angleDegrees = 35.0 * (std.math.pi / 180.0);
+        m = zm.mul(zm.rotationX(angleDegrees), m);
+        angleDegrees = 120.0 * (std.math.pi / 180.0);
+        m = zm.mul(zm.rotationY(angleDegrees), m);
+        m = zm.mul(zm.scaling(0.5, 0.5, 0.5), m);
+        try self.entity.draw(m);
     }
 };

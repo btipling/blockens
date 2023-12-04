@@ -1,6 +1,7 @@
 const std = @import("std");
 const gl = @import("zopengl");
 const zstbi = @import("zstbi");
+const zm = @import("zmath");
 
 pub const EntityErr = error{Error};
 
@@ -267,7 +268,7 @@ pub const Entity = struct {
         }
     }
 
-    pub fn draw(self: Entity) !void {
+    pub fn draw(self: Entity, tf: ?zm.Mat) !void {
         gl.useProgram(self.program);
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
@@ -289,6 +290,20 @@ pub const Entity = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} bind vertex array error: {d}\n", .{ self.name, e });
+            return EntityErr.Error;
+        }
+
+        var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+        if (tf) |t| {
+            zm.storeMat(&transform, t);
+        } else {
+            zm.storeMat(&transform, zm.identity());
+        }
+        const location = gl.getUniformLocation(self.program, "transform");
+        gl.uniformMatrix4fv(location, 1, gl.TRUE, &transform);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("error: {d}\n", .{e});
             return EntityErr.Error;
         }
 
