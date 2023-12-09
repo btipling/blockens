@@ -2,37 +2,43 @@ const std = @import("std");
 const gl = @import("zopengl");
 const zstbi = @import("zstbi");
 const zm = @import("zmath");
+const zmesh = @import("zmesh");
 
-pub const EntityErr = error{Error};
+pub const ShapeErr = error{Error};
 
-pub const EntityConfig = struct {
+pub const ShapeConfig = struct {
     hasColor: bool,
     hasTexture: bool,
 };
 
-pub const Entity = struct {
+pub const ShapeVertex = struct {
+    position: [3]gl.Float,
+    // color: [3]gl.Float,
+    // texture: [2]gl.Float,
+};
+
+pub const Shape = struct {
     name: []const u8,
     vao: gl.Uint,
     texture: gl.Uint,
-    data: []const gl.Float,
-    indices: []const gl.Uint,
+    numIndices: gl.Int,
     program: gl.Uint,
-    config: EntityConfig,
+    config: ShapeConfig,
 
     pub fn init(
         name: []const u8,
-        data: []const gl.Float,
-        indices: []const gl.Uint,
+        shape: zmesh.Shape,
         vertexShaderSource: [:0]const u8,
         fragmentShaderSource: [:0]const u8,
         img: ?[:0]const u8,
-        config: EntityConfig,
-    ) !Entity {
+        config: ShapeConfig,
+        alloc: std.mem.Allocator,
+    ) !Shape {
         const vao = try initVAO(name);
         const vertexShader = try initVertexShader(vertexShaderSource, name);
         const fragmentShader = try initFragmentShader(fragmentShaderSource, name);
         try initVBO(name);
-        try initEBO(name, indices);
+        try initEBO(name, shape.indices);
         const program = try initProgram(name, &[_]gl.Uint{ vertexShader, fragmentShader });
         var texture: gl.Uint = undefined;
         var cfg = config;
@@ -44,19 +50,18 @@ pub const Entity = struct {
                 cfg.hasTexture = false;
             }
         }
-        try initData(name, data, config);
-        return Entity{
+        try initData(name, shape, config, alloc);
+        return Shape{
             .name = name,
             .vao = vao,
             .texture = texture,
-            .data = data,
-            .indices = indices,
+            .numIndices = @intCast(shape.indices.len),
             .program = program,
             .config = cfg,
         };
     }
 
-    pub fn deinit(self: *Entity) void {
+    pub fn deinit(self: *Shape) void {
         gl.deleteVertexArrays(1, &self.vao);
         gl.deleteProgram(self.program);
         return;
@@ -69,7 +74,7 @@ pub const Entity = struct {
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("init vao error: {s} {d}\n", .{ msg, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
         return VAO;
     }
@@ -81,7 +86,7 @@ pub const Entity = struct {
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("init vbo error: {s} {d}\n", .{ msg, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
         return;
     }
@@ -92,13 +97,13 @@ pub const Entity = struct {
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("init ebo error: {s} {d}\n", .{ msg, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("bind ebo buff error: {s} {d}\n", .{ msg, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
 
         const size = @as(isize, @intCast(indices.len * @sizeOf(gl.Uint)));
@@ -107,7 +112,7 @@ pub const Entity = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} buffer data error: {d}\n", .{ msg, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
         return;
     }
@@ -139,7 +144,7 @@ pub const Entity = struct {
             gl.getShaderInfoLog(shader, 512, &logSize, &infoLog);
             const i: usize = @intCast(logSize);
             std.debug.print("ERROR::SHADER::{s}::COMPILATION_FAILED\n{s}\n", .{ name, infoLog[0..i] });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
 
         var infoLog: [512]u8 = undefined;
@@ -159,7 +164,7 @@ pub const Entity = struct {
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} error: {d}\n", .{ name, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
 
         gl.linkProgram(shaderProgram);
@@ -171,7 +176,7 @@ pub const Entity = struct {
             gl.getProgramInfoLog(shaderProgram, 512, &logSize, &infoLog);
             const i: usize = @intCast(logSize);
             std.debug.print("ERROR::SHADER::{s}::PROGRAM::LINKING_FAILED\n{s}\n", .{ name, infoLog[0..i] });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
         var infoLog: [512]u8 = undefined;
         var logSize: gl.Int = 0;
@@ -186,7 +191,7 @@ pub const Entity = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} error: {d}\n", .{ name, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
         std.debug.print("{s} program set up \n", .{name});
         return shaderProgram;
@@ -199,7 +204,7 @@ pub const Entity = struct {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} gen or bind texture error: {d}\n", .{ msg, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -209,7 +214,7 @@ pub const Entity = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} text parameter i error: {d}\n", .{ msg, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
 
         var image = try zstbi.Image.loadFromMemory(img, 4);
@@ -223,20 +228,28 @@ pub const Entity = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} gext image 2d error: {d}\n", .{ msg, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
         gl.generateMipmap(gl.TEXTURE_2D);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} generate mimap error: {d}\n", .{ msg, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
         return texture;
     }
 
-    fn initData(name: []const u8, data: []const gl.Float, config: EntityConfig) !void {
-        const size = @as(isize, @intCast(data.len * @sizeOf(gl.Float)));
-        const dataptr: *const anyopaque = data.ptr;
+    fn initData(name: []const u8, data: zmesh.Shape, config: ShapeConfig, alloc: std.mem.Allocator) !void {
+        var vertices = try std.ArrayList(ShapeVertex).initCapacity(alloc, data.positions.len);
+        defer vertices.deinit();
+        for (0..data.positions.len) |i| {
+            const vtx = ShapeVertex{
+                .position = data.positions[i],
+            };
+            vertices.appendAssumeCapacity(vtx);
+        }
+        const size = @as(isize, @intCast(vertices.items.len * @sizeOf(ShapeVertex)));
+        const dataptr: *const anyopaque = vertices.items.ptr;
         gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
         var stride: gl.Int = 3;
         var offset: gl.Uint = 3;
@@ -264,16 +277,16 @@ pub const Entity = struct {
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} init data error: {d}\n", .{ name, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
     }
 
-    pub fn draw(self: Entity, tf: ?zm.Mat) !void {
+    pub fn draw(self: Shape, tf: ?zm.Mat) !void {
         gl.useProgram(self.program);
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} error: {d}\n", .{ self.name, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
 
         if (self.config.hasTexture) {
@@ -282,7 +295,7 @@ pub const Entity = struct {
             e = gl.getError();
             if (e != gl.NO_ERROR) {
                 std.debug.print("{s} bind texture error: {d}\n", .{ self.name, e });
-                return EntityErr.Error;
+                return ShapeErr.Error;
             }
         }
 
@@ -290,21 +303,21 @@ pub const Entity = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} bind vertex array error: {d}\n", .{ self.name, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
 
         var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
         if (tf) |t| {
             zm.storeMat(&transform, zm.transpose(t));
         } else {
-            zm.storeMat(&transform, zm.identity());
+            zm.storeMat(&transform, zm.transpose(zm.identity()));
         }
         const location = gl.getUniformLocation(self.program, "transform");
         gl.uniformMatrix4fv(location, 1, gl.TRUE, &transform);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("error: {d}\n", .{e});
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
 
         if (self.config.hasTexture) {
@@ -312,14 +325,14 @@ pub const Entity = struct {
             e = gl.getError();
             if (e != gl.NO_ERROR) {
                 std.debug.print("{s} uniform1i error: {d}\n", .{ self.name, e });
-                return EntityErr.Error;
+                return ShapeErr.Error;
             }
         }
 
-        gl.drawElements(gl.TRIANGLES, @as(c_int, @intCast((self.indices.len))), gl.UNSIGNED_INT, null);
+        gl.drawElements(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null);
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} draw elements error: {d}\n", .{ self.name, e });
-            return EntityErr.Error;
+            return ShapeErr.Error;
         }
     }
 };

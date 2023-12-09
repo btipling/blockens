@@ -3,10 +3,12 @@ const glfw = @import("zglfw");
 const zgui = @import("zgui");
 const gl = @import("zopengl");
 const zstbi = @import("zstbi");
+const zmesh = @import("zmesh");
 const cfg = @import("config.zig");
 const ui = @import("ui/ui.zig");
 const controls = @import("controls.zig");
 const block = @import("block.zig");
+const cube = @import("cube.zig");
 const position = @import("position.zig");
 const world = @import("world.zig");
 
@@ -59,6 +61,9 @@ pub fn run() !void {
     zgui.backend.init(window);
     defer zgui.backend.deinit();
 
+    zmesh.init(allocator);
+    defer zmesh.deinit();
+
     const font_size = 24.0;
     const font_large = zgui.io.addFontFromMemory(embedded_font_data, std.math.floor(font_size * 1.1));
     zgui.io.setDefaultFont(font_large);
@@ -74,8 +79,12 @@ pub fn run() !void {
     var testBlock = try block.Block.init("testblock", initialTestBlockPosition);
     defer testBlock.deinit();
 
+    const initialTestCubePosition = position.Position{ .worldX = 0.0, .worldY = 0.0, .worldZ = 0.0 };
+    var testCube = try cube.Cube.init("testcube", initialTestCubePosition, allocator);
+    defer testCube.deinit();
+
     try blocks.append(&testBlock);
-    var gameWorld = try world.World.init(blocks);
+    var gameWorld = try world.World.init(testCube, blocks);
 
     main_loop: while (!window.shouldClose()) {
         glfw.pollEvents();

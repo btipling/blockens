@@ -50,6 +50,7 @@ pub const Block = struct {
 
     pub fn draw(self: *Block) !void {
         var m = zm.identity();
+        m = zm.mul(zm.translation(0.8, 0.0, 0.0), m);
         var angleDegrees: gl.Float = 90.0 * (std.math.pi / 180.0);
         m = zm.mul(zm.rotationZ(angleDegrees), m);
         angleDegrees = 35.0 * (std.math.pi / 180.0);
