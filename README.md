@@ -1,5 +1,6 @@
 # btzig-blockens
  blockens with zig
 
-![image](https://github.com/btipling/btzig-blockens/assets/249641/fb1dd3e1-a438-438e-96e3-0009c0084ac4)
+![image](https://github.com/btipling/btzig-blockens/assets/249641/d86dc821-9d9a-44c3-98a8-dcd58bc895f2)
+
 
