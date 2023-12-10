@@ -13,8 +13,35 @@ pub const ShapeConfig = struct {
 
 pub const ShapeVertex = struct {
     position: [3]gl.Float,
+    texture: [2]gl.Float,
     // color: [3]gl.Float,
-    // texture: [2]gl.Float,
+};
+
+const textCoords: [6][2]gl.Float = [_][2]gl.Float{
+    [2]gl.Float{
+        0.0,
+        0.0,
+    },
+    [2]gl.Float{
+        1.0,
+        0.0,
+    },
+    [2]gl.Float{
+        1.0,
+        1.0,
+    },
+    [2]gl.Float{
+        0.0,
+        1.0,
+    },
+    [2]gl.Float{
+        1.0,
+        1.0,
+    },
+    [2]gl.Float{
+        0.0,
+        0.0,
+    },
 };
 
 pub const Shape = struct {
@@ -242,9 +269,16 @@ pub const Shape = struct {
     fn initData(name: []const u8, data: zmesh.Shape, config: ShapeConfig, alloc: std.mem.Allocator) !void {
         var vertices = try std.ArrayList(ShapeVertex).initCapacity(alloc, data.positions.len);
         defer vertices.deinit();
+
+        if (data.texcoords) |t| {
+            std.debug.print("text coords len {d}\n", .{t.len});
+        } else {
+            std.debug.print("no text coords\n", .{});
+        }
         for (0..data.positions.len) |i| {
             const vtx = ShapeVertex{
                 .position = data.positions[i],
+                .texture = textCoords[i % 6],
             };
             vertices.appendAssumeCapacity(vtx);
         }

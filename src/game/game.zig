@@ -4,6 +4,7 @@ const zgui = @import("zgui");
 const gl = @import("zopengl");
 const zstbi = @import("zstbi");
 const zmesh = @import("zmesh");
+const zm = @import("zmath");
 const cfg = @import("config.zig");
 const ui = @import("ui/ui.zig");
 const controls = @import("controls.zig");
@@ -11,6 +12,7 @@ const block = @import("block.zig");
 const cube = @import("cube.zig");
 const position = @import("position.zig");
 const world = @import("world.zig");
+const state = @import("state.zig");
 
 const embedded_font_data = @embedFile("assets/fonts/PressStart2P-Regular.ttf");
 
@@ -73,31 +75,39 @@ pub fn run() !void {
     zstbi.setFlipVerticallyOnLoad(true);
 
     var gameUI = try ui.UI.init(window);
-    var blocks = std.ArrayList(*block.Block).init(allocator);
-
-    const initialTestBlockPosition = position.Position{ .worldX = 0.0, .worldY = 0.0, .worldZ = 0.0 };
-    var testBlock = try block.Block.init("testblock", initialTestBlockPosition);
-    defer testBlock.deinit();
+    const blocks = std.ArrayList(*block.Block).init(allocator);
 
     const initialTestCubePosition = position.Position{ .worldX = 0.0, .worldY = 0.0, .worldZ = 0.0 };
     var testCube = try cube.Cube.init("testcube", initialTestCubePosition, allocator);
     defer testCube.deinit();
 
-    try blocks.append(&testBlock);
     var gameWorld = try world.World.init(testCube, blocks);
 
+    var gameState = state.State{
+        .zRotation = 0.0,
+        .xRotation = 0.0,
+        .yRotation = 0.0,
+    };
     main_loop: while (!window.shouldClose()) {
         glfw.pollEvents();
-        const quit = try controls.handleKey(window);
+        const quit = try controls.handleKey(window, &gameState);
         if (quit) {
             break :main_loop;
         }
-        gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.0, 0.0, 0.0, 1.0 });
+        gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.5, 0.5, 0.5, 1.0 });
         gl.enable(gl.BLEND); // enable transparency
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+        var m = zm.identity();
+        var angleDegrees: gl.Float = gameState.zRotation * (std.math.pi / 180.0);
+        m = zm.mul(zm.rotationZ(angleDegrees), m);
+        angleDegrees = gameState.xRotation * (std.math.pi / 180.0);
+        m = zm.mul(zm.rotationX(angleDegrees), m);
+        angleDegrees = gameState.yRotation * (std.math.pi / 180.0);
+        m = zm.mul(zm.rotationY(angleDegrees), m);
+
         try gameUI.draw();
-        try gameWorld.draw();
+        try gameWorld.draw(m);
 
         window.swapBuffers();
     }

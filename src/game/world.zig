@@ -1,4 +1,5 @@
 const std = @import("std");
+const zm = @import("zmath");
 const block = @import("block.zig");
 const cube = @import("cube.zig");
 
@@ -17,8 +18,8 @@ pub const World = struct {
         _ = self;
     }
 
-    pub fn draw(self: *World) !void {
-        try self.cube.draw();
+    pub fn draw(self: *World, m: zm.Mat) !void {
+        try self.cube.draw(m);
         for (self.blocks.items) |b| {
             try b.draw();
         }
