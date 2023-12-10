@@ -10,6 +10,6 @@ uniform mat4 transform;
 void main()
 {
     gl_Position = transform * vec4(position.xyz, 1.0);
-    eColor = vec3(0.2f, 0.3f, 0.3f);
+    eColor = vec3(1.0f, 1.0f, 1.0f);
     TexCoord = entityTexCoord;
 }

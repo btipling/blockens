@@ -46,7 +46,7 @@ pub const Cube = struct {
     }
 
     pub fn draw(self: *Cube, givenM: zm.Mat) !void {
-        var m = zm.mul(zm.translation(0.5, 0.5, 0.0), givenM);
+        var m = zm.mul(zm.translation(0.5, 0.5, -0.5), givenM);
         var angleDegrees: gl.Float = 20.0 * (std.math.pi / 180.0);
         // m = zm.mul(zm.rotationZ(angleDegrees), m);
         angleDegrees = 80.0 * (std.math.pi / 180.0);

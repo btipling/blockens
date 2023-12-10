@@ -94,8 +94,10 @@ pub fn run() !void {
         if (quit) {
             break :main_loop;
         }
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.5, 0.5, 0.5, 1.0 });
         gl.enable(gl.BLEND); // enable transparency
+        gl.enable(gl.DEPTH_TEST); // enable depth testing
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
         var m = zm.identity();
