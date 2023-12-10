@@ -9,39 +9,13 @@ pub const ShapeErr = error{Error};
 pub const ShapeConfig = struct {
     hasColor: bool,
     hasTexture: bool,
+    isCube: bool,
 };
 
 pub const ShapeVertex = struct {
     position: [3]gl.Float,
     texture: [2]gl.Float,
     // color: [3]gl.Float,
-};
-
-const textCoords: [6][2]gl.Float = [_][2]gl.Float{
-    [2]gl.Float{
-        0.0,
-        0.0,
-    },
-    [2]gl.Float{
-        1.0,
-        0.0,
-    },
-    [2]gl.Float{
-        1.0,
-        1.0,
-    },
-    [2]gl.Float{
-        0.0,
-        1.0,
-    },
-    [2]gl.Float{
-        1.0,
-        1.0,
-    },
-    [2]gl.Float{
-        0.0,
-        0.0,
-    },
 };
 
 pub const Shape = struct {
@@ -270,15 +244,15 @@ pub const Shape = struct {
         var vertices = try std.ArrayList(ShapeVertex).initCapacity(alloc, data.positions.len);
         defer vertices.deinit();
 
-        if (data.texcoords) |t| {
-            std.debug.print("text coords len {d}\n", .{t.len});
-        } else {
-            std.debug.print("no text coords\n", .{});
-        }
+        std.debug.print("\n\n", .{});
+        var tc: [2]gl.Float = [_]gl.Float{ 0.0, 0.0 };
         for (0..data.positions.len) |i| {
+            if (data.texcoords) |t| {
+                tc = t[i];
+            }
             const vtx = ShapeVertex{
                 .position = data.positions[i],
-                .texture = textCoords[i % 6],
+                .texture = tc,
             };
             vertices.appendAssumeCapacity(vtx);
         }

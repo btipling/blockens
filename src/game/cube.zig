@@ -16,10 +16,32 @@ pub const Cube = struct {
     shape: shape.Shape,
 
     pub fn init(name: []const u8, pos: position.Position, alloc: std.mem.Allocator) !Cube {
-        var cube = zmesh.Shape.initCube();
+        // var cube = zmesh.Shape.initCube();
+        // defer cube.deinit();
+        // instead of a cube we're going to use the par_shape parametric plane functions to create a cube instead
+        // to get the texture coordinates which we don't with cubes
+        var cube = zmesh.Shape.initPlane(1, 1);
         defer cube.deinit();
-
-        cube.rotate(std.math.pi * 0.5, 0.0, 0.0, 1.0);
+        cube.rotate(std.math.pi * 0.5, 1.0, 0.0, 0.0);
+        cube.translate(0.0, 1.0, 0.0);
+        // we need five planes to finish the cube since it has 6 faces
+        var plane = zmesh.Shape.initPlane(1, 1);
+        defer plane.deinit();
+        plane.rotate(std.math.pi * 0.5, 0.0, 1.0, 0.0);
+        plane.translate(1.0, 0.0, 1.0);
+        cube.merge(plane);
+        plane.rotate(std.math.pi * 0.5, 0.0, 1.0, 0.0);
+        plane.translate(0.0, 0.0, 1.0);
+        cube.merge(plane);
+        plane.rotate(std.math.pi * 0.5, 0.0, 1.0, 0.0);
+        plane.translate(0.0, 0.0, 1.0);
+        cube.merge(plane);
+        plane.rotate(std.math.pi * 0.5, 0.0, 1.0, 0.0);
+        plane.translate(0.0, 0.0, 1.0);
+        cube.merge(plane);
+        plane.rotate(std.math.pi * 0.5, 1.0, 0.0, 0.0);
+        plane.translate(0.0, 1.0, 0.0);
+        cube.merge(plane);
 
         const vertexShaderSource = @embedFile("shaders/cube.vs");
         const fragmentShaderSource = @embedFile("shaders/cube.fs");
@@ -31,7 +53,7 @@ pub const Cube = struct {
             vertexShaderSource,
             fragmentShaderSource,
             textureSource,
-            shape.ShapeConfig{ .hasColor = false, .hasTexture = true },
+            shape.ShapeConfig{ .hasColor = false, .hasTexture = true, .isCube = true },
             alloc,
         );
         return Cube{
@@ -46,14 +68,8 @@ pub const Cube = struct {
     }
 
     pub fn draw(self: *Cube, givenM: zm.Mat) !void {
-        var m = zm.mul(zm.translation(0.5, 0.5, -0.5), givenM);
-        var angleDegrees: gl.Float = 20.0 * (std.math.pi / 180.0);
-        // m = zm.mul(zm.rotationZ(angleDegrees), m);
-        angleDegrees = 80.0 * (std.math.pi / 180.0);
-        m = zm.mul(zm.rotationX(angleDegrees), m);
-        // angleDegrees = 140.0 * (std.math.pi / 180.0);
-        // m = zm.mul(zm.rotationY(angleDegrees), m);
-        // m = zm.mul(zm.scaling(0.5, 0.5, 0.5), m);
-        try self.shape.draw(m);
+        var m = zm.translation(-0.5, -0.5, -0.5);
+        m = zm.mul(m, zm.scaling(0.5, 0.5, 0.5));
+        try self.shape.draw(zm.mul(m, givenM));
     }
 };
