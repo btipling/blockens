@@ -16,6 +16,13 @@ const state = @import("state.zig");
 
 const embedded_font_data = @embedFile("assets/fonts/PressStart2P-Regular.ttf");
 
+var ctrls: *controls.Controls = undefined;
+
+fn cursorPosCallback(window: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) void {
+    _ = window;
+    ctrls.cursorPosCallback(xpos, ypos);
+}
+
 pub fn run() !void {
     std.debug.print("\nHello btzig-blockens!\n", .{});
     glfw.init() catch {
@@ -33,13 +40,14 @@ pub fn run() !void {
     glfw.windowHintTyped(.client_api, .opengl_api);
     glfw.windowHintTyped(.doublebuffer, true);
     glfw.windowHintTyped(.resizable, false);
+    glfw.windowHintTyped(.maximized, true);
     const window = glfw.Window.create(cfg.windows_width, cfg.windows_height, cfg.game_name, null) catch {
         std.log.err("Failed to create game window.", .{});
         return;
     };
     defer window.destroy();
     window.setSizeLimits(800, 800, -1, -1);
-    window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.hidden);
+    window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
 
     glfw.makeContextCurrent(window);
     glfw.swapInterval(1);
@@ -77,20 +85,26 @@ pub fn run() !void {
     var gameUI = try ui.UI.init(window);
     const blocks = std.ArrayList(*block.Block).init(allocator);
 
-    const initialTestCubePosition = position.Position{ .worldX = 0.0, .worldY = 0.0, .worldZ = 0.0 };
-    var testCube = try cube.Cube.init("testcube", initialTestCubePosition, allocator);
+    const initialTestCubeposition = position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
+    var testCube = try cube.Cube.init("testcube", initialTestCubeposition, allocator);
     defer testCube.deinit();
 
     var gameWorld = try world.World.init(testCube, blocks);
 
-    var gameState = state.State{
-        .zRotation = 0.0,
-        .xRotation = 0.0,
-        .yRotation = 0.0,
-    };
+    var gameState = state.State.init();
+
+    var c = try controls.Controls.init(window, &gameState);
+    ctrls = &c;
+
+    _ = window.setCursorPosCallback(cursorPosCallback);
+
     main_loop: while (!window.shouldClose()) {
         glfw.pollEvents();
-        const quit = try controls.handleKey(window, &gameState);
+
+        const currentFrame: gl.Float = @as(gl.Float, @floatCast(glfw.getTime()));
+        gameState.deltaTime = currentFrame - gameState.lastFrame;
+        gameState.lastFrame = currentFrame;
+        const quit = try ctrls.handleKey();
         if (quit) {
             break :main_loop;
         }
@@ -101,12 +115,9 @@ pub fn run() !void {
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
         var m = zm.identity();
-        var angleDegrees: gl.Float = gameState.zRotation * (std.math.pi / 180.0);
-        m = zm.mul(zm.rotationZ(angleDegrees), m);
-        angleDegrees = gameState.xRotation * (std.math.pi / 180.0);
-        m = zm.mul(zm.rotationX(angleDegrees), m);
-        angleDegrees = gameState.yRotation * (std.math.pi / 180.0);
-        m = zm.mul(zm.rotationY(angleDegrees), m);
+
+        const lookat = zm.lookAtRh(gameState.cameraPos, gameState.cameraPos + gameState.cameraFront, gameState.cameraUp);
+        m = zm.mul(m, lookat);
 
         try gameUI.draw();
         try gameWorld.draw(m);

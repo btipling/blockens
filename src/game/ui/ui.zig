@@ -44,7 +44,7 @@ pub const UI = struct {
             },
         })) {
             zgui.text("Hello btzig-blockens!", .{});
-            zgui.text("Press escape or q to quit.", .{});
+            zgui.text("Press escape to quit.", .{});
         }
         zgui.end();
         zgui.backend.draw();

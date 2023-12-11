@@ -70,6 +70,8 @@ pub const Cube = struct {
     pub fn draw(self: *Cube, givenM: zm.Mat) !void {
         var m = zm.translation(-0.5, -0.5, -0.5);
         m = zm.mul(m, zm.scaling(0.5, 0.5, 0.5));
+        // move to world space with position
+        m = zm.mul(m, zm.translation(self.position.x, self.position.y, self.position.z));
         try self.shape.draw(zm.mul(m, givenM));
     }
 };

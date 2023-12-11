@@ -3,6 +3,7 @@ const gl = @import("zopengl");
 const zstbi = @import("zstbi");
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
+const config = @import("config.zig");
 
 pub const ShapeErr = error{Error};
 
@@ -15,7 +16,6 @@ pub const ShapeConfig = struct {
 pub const ShapeVertex = struct {
     position: [3]gl.Float,
     texture: [2]gl.Float,
-    // color: [3]gl.Float,
 };
 
 pub const Shape = struct {
@@ -32,7 +32,7 @@ pub const Shape = struct {
         vertexShaderSource: [:0]const u8,
         fragmentShaderSource: [:0]const u8,
         img: ?[:0]const u8,
-        config: ShapeConfig,
+        shapeConfig: ShapeConfig,
         alloc: std.mem.Allocator,
     ) !Shape {
         const vao = try initVAO(name);
@@ -42,8 +42,8 @@ pub const Shape = struct {
         try initEBO(name, shape.indices);
         const program = try initProgram(name, &[_]gl.Uint{ vertexShader, fragmentShader });
         var texture: gl.Uint = undefined;
-        var cfg = config;
-        if (config.hasTexture) {
+        var cfg = shapeConfig;
+        if (shapeConfig.hasTexture) {
             if (img) |i| {
                 texture = try initTexture(i, name);
             } else {
@@ -51,7 +51,8 @@ pub const Shape = struct {
                 cfg.hasTexture = false;
             }
         }
-        try initData(name, shape, config, alloc);
+        try initData(name, shape, shapeConfig, alloc);
+        try setUniforms(name, program, shapeConfig);
         return Shape{
             .name = name,
             .vao = vao,
@@ -240,7 +241,7 @@ pub const Shape = struct {
         return texture;
     }
 
-    fn initData(name: []const u8, data: zmesh.Shape, config: ShapeConfig, alloc: std.mem.Allocator) !void {
+    fn initData(name: []const u8, data: zmesh.Shape, shapeConfig: ShapeConfig, alloc: std.mem.Allocator) !void {
         var vertices = try std.ArrayList(ShapeVertex).initCapacity(alloc, data.positions.len);
         defer vertices.deinit();
 
@@ -261,23 +262,23 @@ pub const Shape = struct {
         gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
         var stride: gl.Int = 3;
         var offset: gl.Uint = 3;
-        if (config.hasColor) {
+        if (shapeConfig.hasColor) {
             stride += 3;
         }
-        if (config.hasTexture) {
+        if (shapeConfig.hasTexture) {
             stride += 2;
         }
         var curArr: gl.Uint = 0;
         gl.vertexAttribPointer(curArr, 3, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), null);
         gl.enableVertexAttribArray(curArr);
         curArr += 1;
-        if (config.hasColor) {
+        if (shapeConfig.hasColor) {
             gl.vertexAttribPointer(curArr, 3, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
             gl.enableVertexAttribArray(curArr);
             offset += 3;
             curArr += 1;
         }
-        if (config.hasTexture) {
+        if (shapeConfig.hasTexture) {
             gl.vertexAttribPointer(curArr, 2, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
             gl.enableVertexAttribArray(curArr);
             curArr += 1;
@@ -285,6 +286,38 @@ pub const Shape = struct {
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} init data error: {d}\n", .{ name, e });
+            return ShapeErr.Error;
+        }
+    }
+
+    pub fn setUniforms(name: []const u8, program: gl.Uint, shapeConfig: ShapeConfig) !void {
+        gl.useProgram(program);
+        var e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{s} error: {d}\n", .{ name, e });
+            return ShapeErr.Error;
+        }
+
+        if (shapeConfig.hasTexture) {
+            gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
+            e = gl.getError();
+            if (e != gl.NO_ERROR) {
+                std.debug.print("{s} uniform1i error: {d}\n", .{ name, e });
+                return ShapeErr.Error;
+            }
+        }
+        var projection: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+
+        const fov = 45.0;
+        const aspect = @as(gl.Float, @floatFromInt(config.windows_width / config.windows_height));
+        const ps = zm.perspectiveFovRh(fov, aspect, 0.1, 100.0);
+        zm.storeMat(&projection, zm.transpose(ps));
+
+        const location = gl.getUniformLocation(program, "projection");
+        gl.uniformMatrix4fv(location, 1, gl.TRUE, &projection);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("error: {d}\n", .{e});
             return ShapeErr.Error;
         }
     }
@@ -326,15 +359,6 @@ pub const Shape = struct {
         if (e != gl.NO_ERROR) {
             std.debug.print("error: {d}\n", .{e});
             return ShapeErr.Error;
-        }
-
-        if (self.config.hasTexture) {
-            gl.uniform1i(gl.getUniformLocation(self.program, "texture1"), 0);
-            e = gl.getError();
-            if (e != gl.NO_ERROR) {
-                std.debug.print("{s} uniform1i error: {d}\n", .{ self.name, e });
-                return ShapeErr.Error;
-            }
         }
 
         gl.drawElements(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null);
