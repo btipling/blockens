@@ -31,7 +31,7 @@ pub const Plane = struct {
             fragmentShaderSource,
             null,
             grassColor,
-            shape.ShapeConfig{ .hasTexture = true },
+            shape.ShapeConfig{ .hasTexture = true, .isCube = false },
             alloc,
         );
         return Plane{

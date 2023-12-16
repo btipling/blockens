@@ -85,7 +85,7 @@ pub fn run() !void {
     var gameUI = try ui.UI.init(window);
     const blocks = std.ArrayList(*block.Block).init(allocator);
 
-    const initialTestCubeposition = position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
+    const initialTestCubeposition = position.Position{ .x = 0.0, .y = 3.0, .z = -1.0 };
     var testCube = try cube.Cube.init("testcube", initialTestCubeposition, allocator);
     defer testCube.deinit();
 

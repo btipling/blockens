@@ -9,6 +9,7 @@ pub const ShapeErr = error{Error};
 
 pub const ShapeConfig = struct {
     hasTexture: bool,
+    isCube: bool,
 };
 
 pub const ShapeVertex = struct {
@@ -241,8 +242,48 @@ pub const Shape = struct {
         return texture;
     }
 
+    fn manageCubeTexturesCoordinates(vertices: []ShapeVertex) []ShapeVertex {
+        // There are 36 vertices in a cube, each cube texture has 4 textures in one png across the x axis
+        // The first texture is for the bottom, the second texture is for the sides and the third texture is for the top
+        // the last is unused
+        // This function iterates through the 36 vertices and assigns the correct texture coordinates to each vertex
+        // and adjusts for the width of each texture being a third of the total width of the png
+        std.debug.print("\n\nbefore:\n", .{});
+        for (0..vertices.len) |i| {
+            std.debug.print("({d}, {d})\n", .{ vertices[i].texture[0], vertices[i].texture[1] });
+        }
+        for (0..vertices.len) |i| {
+            if (vertices[i].texture[0] > 0.0) {
+                vertices[i].texture[0] = 0.25;
+            }
+            if (i < 4) {
+                vertices[i].texture[0] += 0.5;
+            }
+            if (i >= 4 and i < 8) {
+                vertices[i].texture[0] += 0.25;
+            }
+            if (i >= 8 and i < 12) {
+                vertices[i].texture[0] += 0.25;
+            }
+            if (i >= 12 and i < 16) {
+                vertices[i].texture[0] += 0.25;
+            }
+            if (i >= 16 and i < 20) {
+                vertices[i].texture[0] += 0.25;
+            }
+            if (i >= 20 and i < 24) {
+                // do nothing
+            }
+        }
+        std.debug.print("\n\nafter:\n", .{});
+        for (0..vertices.len) |i| {
+            std.debug.print("({d}, {d})\n", .{ vertices[i].texture[0], vertices[i].texture[1] });
+        }
+        std.debug.print("\n\n", .{});
+        return vertices;
+    }
+
     fn initData(name: []const u8, data: zmesh.Shape, shapeConfig: ShapeConfig, rgbaColor: ?[4]gl.Float, alloc: std.mem.Allocator) !void {
-        _ = shapeConfig;
         var vertices = try std.ArrayList(ShapeVertex).initCapacity(alloc, data.positions.len);
         defer vertices.deinit();
 
@@ -262,6 +303,9 @@ pub const Shape = struct {
                 .rgbaColor = color,
             };
             vertices.appendAssumeCapacity(vtx);
+        }
+        if (shapeConfig.isCube) {
+            vertices.items = manageCubeTexturesCoordinates(vertices.items);
         }
         const size = @as(isize, @intCast(vertices.items.len * @sizeOf(ShapeVertex)));
         const dataptr: *const anyopaque = vertices.items.ptr;

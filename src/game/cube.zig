@@ -40,7 +40,7 @@ pub const Cube = struct {
 
         const vertexShaderSource = @embedFile("shaders/cube.vs");
         const fragmentShaderSource = @embedFile("shaders/cube.fs");
-        const textureSource = @embedFile("assets/textures/smilie.png");
+        const textureSource = @embedFile("assets/textures/grass.png");
 
         const s = try shape.Shape.init(
             name,
@@ -49,7 +49,7 @@ pub const Cube = struct {
             fragmentShaderSource,
             textureSource,
             null,
-            shape.ShapeConfig{ .hasTexture = true },
+            shape.ShapeConfig{ .hasTexture = true, .isCube = true },
             alloc,
         );
         return Cube{
