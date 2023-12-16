@@ -96,6 +96,7 @@ pub fn run() !void {
     ctrls = &c;
 
     _ = window.setCursorPosCallback(cursorPosCallback);
+    const skyColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 };
 
     main_loop: while (!window.shouldClose()) {
         glfw.pollEvents();
@@ -108,7 +109,7 @@ pub fn run() !void {
             break :main_loop;
         }
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.5, 0.5, 0.5, 1.0 });
+        gl.clearBufferfv(gl.COLOR, 0, &skyColor);
         gl.enable(gl.BLEND); // enable transparency
         gl.enable(gl.DEPTH_TEST); // enable depth testing
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
