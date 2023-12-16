@@ -5,24 +5,20 @@ const zmesh = @import("zmesh");
 const shape = @import("shape.zig");
 const position = @import("position.zig");
 
-// Plane - this is a grassy world plane for now
+// Plane - this is a ground world plane for now
 pub const Plane = struct {
     name: []const u8,
     position: position.Position,
     shape: shape.Shape,
 
     pub fn init(name: []const u8, planePosition: position.Position, alloc: std.mem.Allocator) !Plane {
-        // var cube = zmesh.Shape.initCube();
-        // defer cube.deinit();
-        // instead of a cube we're going to use the par_shape parametric plane functions to create a cube instead
-        // to get the texture coordinates which we don't with cubes
         var plane = zmesh.Shape.initPlane(1, 1);
         defer plane.deinit();
         plane.rotate(std.math.pi * 0.5, 1.0, 0.0, 0.0);
 
         const vertexShaderSource = @embedFile("shaders/plane.vs");
         const fragmentShaderSource = @embedFile("shaders/plane.fs");
-        const grassColor: [4]gl.Float = [_]gl.Float{ 0.0, 0.5, 0.0, 1.0 };
+        const groundColor: [4]gl.Float = [_]gl.Float{ 34.0 / 255.0, 32.0 / 255.0, 52.0 / 255.0, 1.0 };
 
         const s = try shape.Shape.init(
             name,
@@ -30,7 +26,7 @@ pub const Plane = struct {
             vertexShaderSource,
             fragmentShaderSource,
             null,
-            grassColor,
+            groundColor,
             shape.ShapeConfig{ .hasTexture = true, .isCube = false },
             alloc,
         );

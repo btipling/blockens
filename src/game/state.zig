@@ -4,8 +4,6 @@ const position = @import("position.zig");
 const cube = @import("cube.zig");
 const config = @import("config.zig");
 
-pub const maxBlocksDistance = 10;
-
 pub const State = struct {
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
@@ -21,9 +19,11 @@ pub const State = struct {
 
     pub fn init(alloc: std.mem.Allocator) !State {
         var blocks = std.ArrayList(cube.Cube).init(alloc);
+        var prng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.milliTimestamp())));
+        const random = prng.random();
 
         for (0..config.num_blocks) |_| {
-            const b = try getRandomBlock(blocks, alloc);
+            const b = try getRandomBlock(blocks, alloc, random);
             try blocks.append(b);
         }
 
@@ -48,11 +48,13 @@ pub const State = struct {
         }
     }
 
-    pub fn getRandomBlock(blocks: std.ArrayList(cube.Cube), alloc: std.mem.Allocator) !cube.Cube {
+    pub fn getRandomBlock(blocks: std.ArrayList(cube.Cube), alloc: std.mem.Allocator, random: std.rand.Random) !cube.Cube {
         var pos: position.Position = undefined;
         var available = false;
-        while (!available) {
-            pos = randomBlockPosition(blocks.items.len);
+        const maxTries = 100;
+        var tries: u32 = 0;
+        while (!available and tries < maxTries) {
+            pos = randomBlockPosition(random);
             var found = false;
             for (blocks.items) |block| {
                 if (block.position.x == pos.x and block.position.y == pos.y and block.position.z == pos.z) {
@@ -61,20 +63,36 @@ pub const State = struct {
                 }
             }
             available = !found;
+            tries += 1;
         }
-        return try cube.Cube.init("block", pos, alloc);
+        return try cube.Cube.init("block", randomCubeType(random), pos, alloc);
+    }
+
+    pub fn randomCubeType(random: std.rand.Random) cube.CubeType {
+        switch (random.uintAtMost(u32, 100)) {
+            0...75 => return cube.CubeType.grass,
+            76...85 => return cube.CubeType.stone,
+            86...97 => return cube.CubeType.sand,
+            else => return cube.CubeType.ore,
+        }
+    }
+
+    pub fn randomXZP(random: std.rand.Random) gl.Float {
+        return @as(gl.Float, @floatFromInt(random.uintAtMost(u32, 15)));
+    }
+
+    pub fn randomYP(random: std.rand.Random) gl.Float {
+        switch (random.uintAtMost(u32, 100)) {
+            0...75 => return 0.0,
+            76...85 => return 1.0,
+            86...95 => return 2.0,
+            else => return 3.0,
+        }
     }
 
     pub fn randomBlockPosition(
-        i: usize,
+        random: std.rand.Random,
     ) position.Position {
-        var prng = std.rand.DefaultPrng.init(@as(u64, @intCast(i)) + @as(u64, @intCast(std.time.milliTimestamp())));
-        const random = prng.random();
-        const max = @as(u32, @intFromFloat(maxBlocksDistance));
-        const x = @as(gl.Float, @floatFromInt(random.uintAtMost(u32, max)));
-        const y = @as(gl.Float, @floatFromInt(random.uintAtMost(u32, max)));
-        const z = @as(gl.Float, @floatFromInt(random.uintAtMost(u32, max)));
-        std.debug.print("block generated at x: {d}, y: {d}, z: {d} \n", .{ x, y, z });
-        return position.Position{ .x = x - max / 2, .y = y, .z = z * -1.0 };
+        return position.Position{ .x = randomXZP(random) - 15 / 2, .y = randomYP(random), .z = (randomXZP(random) * -1.0) };
     }
 };

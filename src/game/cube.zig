@@ -5,14 +5,25 @@ const zmesh = @import("zmesh");
 const shape = @import("shape.zig");
 const position = @import("position.zig");
 
+const grassTexture = @embedFile("assets/textures/grass.png");
+const stoneTexture = @embedFile("assets/textures/stone.png");
+const sandTexture = @embedFile("assets/textures/sand.png");
+const oreTexture = @embedFile("assets/textures/ore.png");
+
+pub const CubeType = enum {
+    grass,
+    stone,
+    sand,
+    ore,
+};
+
 pub const Cube = struct {
     name: []const u8,
+    type: CubeType,
     position: position.Position,
     shape: shape.Shape,
 
-    pub fn init(name: []const u8, pos: position.Position, alloc: std.mem.Allocator) !Cube {
-        // var cube = zmesh.Shape.initCube();
-        // defer cube.deinit();
+    pub fn init(name: []const u8, cubeType: CubeType, pos: position.Position, alloc: std.mem.Allocator) !Cube {
         // instead of a cube we're going to use the par_shape parametric plane functions to create a cube instead
         // to get the texture coordinates which we don't with cubes
         var cube = zmesh.Shape.initPlane(1, 1);
@@ -40,7 +51,14 @@ pub const Cube = struct {
 
         const vertexShaderSource = @embedFile("shaders/cube.vs");
         const fragmentShaderSource = @embedFile("shaders/cube.fs");
-        const textureSource = @embedFile("assets/textures/grass.png");
+
+        var textureSource: ?[:0]const u8 = null;
+        switch (cubeType) {
+            CubeType.grass => textureSource = grassTexture,
+            CubeType.stone => textureSource = stoneTexture,
+            CubeType.sand => textureSource = sandTexture,
+            else => textureSource = oreTexture,
+        }
 
         const s = try shape.Shape.init(
             name,
@@ -53,6 +71,7 @@ pub const Cube = struct {
             alloc,
         );
         return Cube{
+            .type = cubeType,
             .name = name,
             .position = pos,
             .shape = s,
