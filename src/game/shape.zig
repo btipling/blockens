@@ -8,14 +8,13 @@ const config = @import("config.zig");
 pub const ShapeErr = error{Error};
 
 pub const ShapeConfig = struct {
-    hasColor: bool,
     hasTexture: bool,
-    isCube: bool,
 };
 
 pub const ShapeVertex = struct {
     position: [3]gl.Float,
     texture: [2]gl.Float,
+    rgbaColor: [4]gl.Float,
 };
 
 pub const Shape = struct {
@@ -32,6 +31,7 @@ pub const Shape = struct {
         vertexShaderSource: [:0]const u8,
         fragmentShaderSource: [:0]const u8,
         img: ?[:0]const u8,
+        rgbaColor: ?[4]gl.Float,
         shapeConfig: ShapeConfig,
         alloc: std.mem.Allocator,
     ) !Shape {
@@ -51,7 +51,7 @@ pub const Shape = struct {
                 cfg.hasTexture = false;
             }
         }
-        try initData(name, shape, shapeConfig, alloc);
+        try initData(name, shape, shapeConfig, rgbaColor, alloc);
         try setUniforms(name, program, shapeConfig);
         return Shape{
             .name = name,
@@ -241,48 +241,47 @@ pub const Shape = struct {
         return texture;
     }
 
-    fn initData(name: []const u8, data: zmesh.Shape, shapeConfig: ShapeConfig, alloc: std.mem.Allocator) !void {
+    fn initData(name: []const u8, data: zmesh.Shape, shapeConfig: ShapeConfig, rgbaColor: ?[4]gl.Float, alloc: std.mem.Allocator) !void {
+        _ = shapeConfig;
         var vertices = try std.ArrayList(ShapeVertex).initCapacity(alloc, data.positions.len);
         defer vertices.deinit();
 
         std.debug.print("\n\n", .{});
         var tc: [2]gl.Float = [_]gl.Float{ 0.0, 0.0 };
+        var color: [4]gl.Float = [_]gl.Float{ 1.0, 1.0, 1.0, 1.0 };
         for (0..data.positions.len) |i| {
             if (data.texcoords) |t| {
                 tc = t[i];
             }
+            if (rgbaColor) |c| {
+                color = c;
+            }
             const vtx = ShapeVertex{
                 .position = data.positions[i],
                 .texture = tc,
+                .rgbaColor = color,
             };
             vertices.appendAssumeCapacity(vtx);
         }
         const size = @as(isize, @intCast(vertices.items.len * @sizeOf(ShapeVertex)));
         const dataptr: *const anyopaque = vertices.items.ptr;
         gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
-        var stride: gl.Int = 3;
-        var offset: gl.Uint = 3;
-        if (shapeConfig.hasColor) {
-            stride += 3;
-        }
-        if (shapeConfig.hasTexture) {
-            stride += 2;
-        }
+        const posSize: gl.Int = 3;
+        const texSize: gl.Int = 2;
+        const colorSize: gl.Int = 4;
+        const stride: gl.Int = posSize + texSize + colorSize;
+        var offset: gl.Uint = posSize;
         var curArr: gl.Uint = 0;
-        gl.vertexAttribPointer(curArr, 3, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), null);
+        gl.vertexAttribPointer(curArr, posSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), null);
         gl.enableVertexAttribArray(curArr);
         curArr += 1;
-        if (shapeConfig.hasColor) {
-            gl.vertexAttribPointer(curArr, 3, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
-            gl.enableVertexAttribArray(curArr);
-            offset += 3;
-            curArr += 1;
-        }
-        if (shapeConfig.hasTexture) {
-            gl.vertexAttribPointer(curArr, 2, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
-            gl.enableVertexAttribArray(curArr);
-            curArr += 1;
-        }
+        gl.vertexAttribPointer(curArr, texSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
+        gl.enableVertexAttribArray(curArr);
+        offset += texSize;
+        curArr += 1;
+        gl.vertexAttribPointer(curArr, colorSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
+        gl.enableVertexAttribArray(curArr);
+        curArr += 1;
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} init data error: {d}\n", .{ name, e });

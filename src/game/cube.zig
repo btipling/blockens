@@ -5,11 +5,6 @@ const zmesh = @import("zmesh");
 const shape = @import("shape.zig");
 const position = @import("position.zig");
 
-const Vtx = struct {
-    indices: []gl.Uint,
-    position: [3]gl.Float,
-};
-
 pub const Cube = struct {
     name: []const u8,
     position: position.Position,
@@ -53,7 +48,8 @@ pub const Cube = struct {
             vertexShaderSource,
             fragmentShaderSource,
             textureSource,
-            shape.ShapeConfig{ .hasColor = false, .hasTexture = true, .isCube = true },
+            null,
+            shape.ShapeConfig{ .hasTexture = true },
             alloc,
         );
         return Cube{
@@ -68,10 +64,8 @@ pub const Cube = struct {
     }
 
     pub fn draw(self: *Cube, givenM: zm.Mat) !void {
-        var m = zm.translation(-0.5, -0.5, -0.5);
-        m = zm.mul(m, zm.scaling(0.5, 0.5, 0.5));
         // move to world space with position
-        m = zm.mul(m, zm.translation(self.position.x, self.position.y, self.position.z));
+        const m = zm.translation(self.position.x, self.position.y, self.position.z);
         try self.shape.draw(zm.mul(m, givenM));
     }
 };

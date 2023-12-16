@@ -10,6 +10,7 @@ const ui = @import("ui/ui.zig");
 const controls = @import("controls.zig");
 const block = @import("block.zig");
 const cube = @import("cube.zig");
+const plane = @import("plane.zig");
 const position = @import("position.zig");
 const world = @import("world.zig");
 const state = @import("state.zig");
@@ -88,7 +89,11 @@ pub fn run() !void {
     var testCube = try cube.Cube.init("testcube", initialTestCubeposition, allocator);
     defer testCube.deinit();
 
-    var gameWorld = try world.World.init(testCube, blocks);
+    const planePosition = position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
+    var worldPlane = try plane.Plane.init("worldplane", planePosition, allocator);
+    defer worldPlane.deinit();
+
+    var gameWorld = try world.World.init(worldPlane, testCube, blocks);
 
     var gameState = state.State.init();
 
