@@ -46,7 +46,6 @@ pub fn run() !void {
         return;
     };
     defer window.destroy();
-    window.setSizeLimits(800, 800, -1, -1);
     window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
 
     glfw.makeContextCurrent(window);

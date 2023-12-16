@@ -309,12 +309,15 @@ pub const Shape = struct {
         var projection: [16]gl.Float = [_]gl.Float{undefined} ** 16;
 
         const fov = 45.0;
-        const aspect = @as(gl.Float, @floatFromInt(config.windows_width / config.windows_height));
+        const h = @as(gl.Float, @floatFromInt(config.windows_height));
+        const w = @as(gl.Float, @floatFromInt(config.windows_width));
+        const aspect = w / h;
+        std.debug.print("aspect: {e}\n", .{aspect});
         const ps = zm.perspectiveFovRh(fov, aspect, 0.1, 100.0);
-        zm.storeMat(&projection, zm.transpose(ps));
+        zm.storeMat(&projection, ps);
 
         const location = gl.getUniformLocation(program, "projection");
-        gl.uniformMatrix4fv(location, 1, gl.TRUE, &projection);
+        gl.uniformMatrix4fv(location, 1, gl.FALSE, &projection);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("error: {d}\n", .{e});
