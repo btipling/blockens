@@ -59,11 +59,11 @@ pub const Cube = struct {
         };
     }
 
-    pub fn deinit(self: *Cube) void {
+    pub fn deinit(self: Cube) void {
         self.shape.deinit();
     }
 
-    pub fn draw(self: *Cube, givenM: zm.Mat) !void {
+    pub fn draw(self: Cube, givenM: zm.Mat) !void {
         // move to world space with position
         const m = zm.translation(self.position.x, self.position.y, self.position.z);
         try self.shape.draw(zm.mul(m, givenM));

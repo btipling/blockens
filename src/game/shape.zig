@@ -64,7 +64,7 @@ pub const Shape = struct {
         };
     }
 
-    pub fn deinit(self: *Shape) void {
+    pub fn deinit(self: *const Shape) void {
         gl.deleteVertexArrays(1, &self.vao);
         gl.deleteProgram(self.program);
         return;
@@ -248,10 +248,6 @@ pub const Shape = struct {
         // the last is unused
         // This function iterates through the 36 vertices and assigns the correct texture coordinates to each vertex
         // and adjusts for the width of each texture being a third of the total width of the png
-        std.debug.print("\n\nbefore:\n", .{});
-        for (0..vertices.len) |i| {
-            std.debug.print("({d}, {d})\n", .{ vertices[i].texture[0], vertices[i].texture[1] });
-        }
         for (0..vertices.len) |i| {
             if (vertices[i].texture[0] > 0.0) {
                 vertices[i].texture[0] = 0.25;
@@ -275,11 +271,6 @@ pub const Shape = struct {
                 // do nothing
             }
         }
-        std.debug.print("\n\nafter:\n", .{});
-        for (0..vertices.len) |i| {
-            std.debug.print("({d}, {d})\n", .{ vertices[i].texture[0], vertices[i].texture[1] });
-        }
-        std.debug.print("\n\n", .{});
         return vertices;
     }
 

@@ -1,19 +1,16 @@
 const std = @import("std");
 const zm = @import("zmath");
-const block = @import("block.zig");
-const cube = @import("cube.zig");
+const state = @import("state.zig");
 const plane = @import("plane.zig");
 
 pub const World = struct {
     worldPlane: plane.Plane,
-    cube: cube.Cube,
-    blocks: std.ArrayList(*block.Block),
+    gameState: *state.State,
 
-    pub fn init(worldPlane: plane.Plane, testCube: cube.Cube, blocks: std.ArrayList(*block.Block)) !World {
+    pub fn init(worldPlane: plane.Plane, gameState: *state.State) !World {
         return World{
             .worldPlane = worldPlane,
-            .cube = testCube,
-            .blocks = blocks,
+            .gameState = gameState,
         };
     }
 
@@ -23,9 +20,8 @@ pub const World = struct {
 
     pub fn draw(self: *World, m: zm.Mat) !void {
         try self.worldPlane.draw(m);
-        try self.cube.draw(m);
-        for (self.blocks.items) |b| {
-            try b.draw();
+        for (self.gameState.blocks.items) |b| {
+            try b.draw(m);
         }
     }
 };
