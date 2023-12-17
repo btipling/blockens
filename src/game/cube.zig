@@ -17,13 +17,15 @@ pub const CubeType = enum {
     ore,
 };
 
+var cubesMap: ?std.AutoHashMap(CubeType, shape.Shape) = null;
+
 pub const Cube = struct {
     name: []const u8,
     type: CubeType,
     position: position.Position,
     shape: shape.Shape,
 
-    pub fn init(name: []const u8, cubeType: CubeType, pos: position.Position, alloc: std.mem.Allocator) !Cube {
+    fn initShape(name: []const u8, cubeType: CubeType, alloc: std.mem.Allocator) !shape.Shape {
         // instead of a cube we're going to use the par_shape parametric plane functions to create a cube instead
         // to get the texture coordinates which we don't with cubes
         var cube = zmesh.Shape.initPlane(1, 1);
@@ -60,7 +62,7 @@ pub const Cube = struct {
             else => textureSource = oreTexture,
         }
 
-        const s = try shape.Shape.init(
+        return try shape.Shape.init(
             name,
             cube,
             vertexShaderSource,
@@ -70,6 +72,35 @@ pub const Cube = struct {
             shape.ShapeConfig{ .hasTexture = true, .isCube = true },
             alloc,
         );
+    }
+
+    pub fn init(name: []const u8, cubeType: CubeType, pos: position.Position, alloc: std.mem.Allocator) !Cube {
+        if (cubesMap) |m| {
+            if (m.get(cubeType)) |s| {
+                return Cube{
+                    .type = cubeType,
+                    .name = name,
+                    .position = pos,
+                    .shape = s,
+                };
+            } else {
+                const s = try initShape(name, cubeType, alloc);
+                try cubesMap.?.put(cubeType, s);
+                return Cube{
+                    .type = cubeType,
+                    .name = name,
+                    .position = pos,
+                    .shape = s,
+                };
+            }
+        }
+
+        cubesMap = std.AutoHashMap(CubeType, shape.Shape).init(
+            alloc,
+        );
+
+        const s = try initShape(name, cubeType, alloc);
+        try cubesMap.?.put(cubeType, s);
         return Cube{
             .type = cubeType,
             .name = name,
@@ -78,8 +109,15 @@ pub const Cube = struct {
         };
     }
 
-    pub fn deinit(self: Cube) void {
-        self.shape.deinit();
+    pub fn deinit(_: Cube) void {
+        if (cubesMap) |m| {
+            var iterator = m.iterator();
+            while (iterator.next()) |s| {
+                s.value_ptr.deinit();
+            }
+            cubesMap.?.deinit();
+            cubesMap = null;
+        }
     }
 
     pub fn draw(self: Cube, givenM: zm.Mat) !void {
