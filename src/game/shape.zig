@@ -16,7 +16,13 @@ pub const ShapeVertex = struct {
     position: [3]gl.Float,
     texture: [2]gl.Float,
     rgbaColor: [4]gl.Float,
+    barycentric: [3]gl.Float,
+    edge: [2]gl.Float,
 };
+
+const bcV1 = @Vector(3, gl.Float){ 1.0, 0.0, 0.0 };
+const bcV2 = @Vector(3, gl.Float){ 0.0, 1.0, 0.0 };
+const bcV3 = @Vector(3, gl.Float){ 0.0, 0.0, 1.0 };
 
 pub const Shape = struct {
     name: []const u8,
@@ -243,12 +249,19 @@ pub const Shape = struct {
     }
 
     fn manageCubeTexturesCoordinates(vertices: []ShapeVertex) []ShapeVertex {
-        // There are 36 vertices in a cube, each cube texture has 4 textures in one png across the x axis
-        // The first texture is for the bottom, the second texture is for the sides and the third texture is for the top
-        // the last is unused
-        // This function iterates through the 36 vertices and assigns the correct texture coordinates to each vertex
-        // and adjusts for the width of each texture being a third of the total width of the png
         for (0..vertices.len) |i| {
+            // Since cube positions are merged via par_shapes meshes the precision is off, round the positions
+            vertices[i].position[0] = @round(vertices[i].position[0]);
+            vertices[i].position[1] = @round(vertices[i].position[1]);
+            vertices[i].position[2] = @round(vertices[i].position[2]);
+
+            // Adjust the texture coordinates for the cube
+            // There are 36 vertices in a cube, each cube texture has 4 textures in one png across the x axis
+            // The first texture is for the bottom, the second texture is for the sides and the third texture is for the top
+            // the last is unused
+            // This function iterates through the 36 vertices and assigns the correct texture coordinates to each vertex
+            // and adjusts for the width of each texture being a third of the total width of the png
+            vertices[i].edge = vertices[i].texture;
             if (vertices[i].texture[0] > 0.0) {
                 vertices[i].texture[0] = 0.25;
             }
@@ -270,6 +283,36 @@ pub const Shape = struct {
             if (i >= 20 and i < 24) {
                 // do nothing
             }
+            // Set barycentric coordinates for the cube
+
+            std.debug.print("positions: ({d}, {d}, {d})\n", .{ @round(vertices[i].position[0]), @round(vertices[i].position[1]), @round(vertices[i].position[2]) });
+            switch (@mod(i, 6)) {
+                0 => {
+                    std.debug.print("using bcV1\n", .{});
+                    vertices[i].barycentric = bcV1;
+                },
+                1 => {
+                    std.debug.print("using bcV2\n", .{});
+                    vertices[i].barycentric = bcV2;
+                },
+                2 => {
+                    std.debug.print("using bcV3\n", .{});
+                    vertices[i].barycentric = bcV3;
+                },
+                3 => {
+                    std.debug.print("using bcV1\n", .{});
+                    vertices[i].barycentric = bcV1;
+                },
+                4 => {
+                    std.debug.print("using bcV2\n", .{});
+                    vertices[i].barycentric = bcV2;
+                },
+                5 => {
+                    std.debug.print("using bcV3\n", .{});
+                    vertices[i].barycentric = bcV3;
+                },
+                else => unreachable,
+            }
         }
         return vertices;
     }
@@ -288,10 +331,14 @@ pub const Shape = struct {
             if (rgbaColor) |c| {
                 color = c;
             }
+            const defaultBC = @Vector(3, gl.Float){ 0.0, 0.0, 0.0 };
+            const defaultEdge = @Vector(2, gl.Float){ 0.0, 0.0 };
             const vtx = ShapeVertex{
                 .position = data.positions[i],
                 .texture = tc,
                 .rgbaColor = color,
+                .barycentric = defaultBC,
+                .edge = defaultEdge,
             };
             vertices.appendAssumeCapacity(vtx);
         }
@@ -304,7 +351,9 @@ pub const Shape = struct {
         const posSize: gl.Int = 3;
         const texSize: gl.Int = 2;
         const colorSize: gl.Int = 4;
-        const stride: gl.Int = posSize + texSize + colorSize;
+        const barycentricSize: gl.Int = 3;
+        const edgeSize: gl.Int = 2;
+        const stride: gl.Int = posSize + texSize + colorSize + barycentricSize + edgeSize;
         var offset: gl.Uint = posSize;
         var curArr: gl.Uint = 0;
         gl.vertexAttribPointer(curArr, posSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), null);
@@ -316,6 +365,15 @@ pub const Shape = struct {
         curArr += 1;
         gl.vertexAttribPointer(curArr, colorSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
         gl.enableVertexAttribArray(curArr);
+        offset += colorSize;
+        curArr += 1;
+        gl.vertexAttribPointer(curArr, barycentricSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
+        gl.enableVertexAttribArray(curArr);
+        offset += barycentricSize;
+        curArr += 1;
+        gl.vertexAttribPointer(curArr, edgeSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
+        gl.enableVertexAttribArray(curArr);
+        offset += edgeSize;
         curArr += 1;
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
