@@ -2,8 +2,5 @@
  blockens with zig
 
 
-
-
-
-https://github.com/btipling/btzig-blockens/assets/249641/86d063c2-2950-48ce-b521-eef4408f0a80
+https://github.com/btipling/btzig-blockens/assets/249641/26688f8a-b38d-4cfc-b404-8beceb36b478
 
