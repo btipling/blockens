@@ -113,14 +113,17 @@ pub fn run() !void {
         gl.enable(gl.BLEND); // enable transparency
         gl.enable(gl.DEPTH_TEST); // enable depth testing
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        // culling
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(gl.BACK);
 
         var m = zm.identity();
 
         const lookat = zm.lookAtRh(gameState.cameraPos, gameState.cameraPos + gameState.cameraFront, gameState.cameraUp);
         m = zm.mul(m, lookat);
 
-        try gameUI.draw();
         try gameWorld.draw(m);
+        try gameUI.draw();
 
         window.swapBuffers();
     }

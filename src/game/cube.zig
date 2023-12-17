@@ -30,8 +30,8 @@ pub const Cube = struct {
         // to get the texture coordinates which we don't with cubes
         var cube = zmesh.Shape.initPlane(1, 1);
         defer cube.deinit();
-        cube.rotate(std.math.pi * 0.5, 1.0, 0.0, 0.0);
-        cube.translate(0.0, 1.0, 0.0);
+        cube.rotate(std.math.pi * 1.5, 1.0, 0.0, 0.0);
+        cube.translate(0.0, 1.0, 1.0);
         // we need five planes to finish the cube since it has 6 faces
         var plane = zmesh.Shape.initPlane(1, 1);
         defer plane.deinit();
