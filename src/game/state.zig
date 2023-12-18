@@ -16,6 +16,7 @@ pub const State = struct {
     yaw: gl.Float,
     pitch: gl.Float,
     blocks: std.ArrayList(cube.Cube),
+    highlightedIndex: usize = 0,
 
     pub fn init(alloc: std.mem.Allocator) !State {
         var blocks = std.ArrayList(cube.Cube).init(alloc);
@@ -48,6 +49,39 @@ pub const State = struct {
         }
     }
 
+    pub fn updateCameraPosition(self: *State, updatedCameraPosition: @Vector(4, gl.Float)) !void {
+        self.cameraPos = updatedCameraPosition;
+        try self.pickObject();
+    }
+
+    pub fn updateCameraFront(self: *State, updatedCameraFront: @Vector(4, gl.Float)) !void {
+        self.cameraFront = updatedCameraFront;
+        try self.pickObject();
+    }
+
+    fn pickObject(self: *State) !void {
+        var currentPos = self.cameraPos;
+        const maxRayLength = 10;
+        for (2..maxRayLength) |i| {
+            if (i == maxRayLength) {
+                return;
+            }
+            const distance = @as(@Vector(4, gl.Float), @splat(@as(gl.Float, @floatFromInt(i))));
+            currentPos = @floor(self.cameraPos + (distance * self.cameraFront));
+            for (self.blocks.items, 0..) |block, j| {
+                if (block.position.x == currentPos[0] and block.position.y == currentPos[1] and block.position.z == currentPos[2]) {
+                    std.debug.print("found block at {d},{d},{d}\n", .{ block.position.x, block.position.y, block.position.z });
+                    if (self.highlightedIndex == j) {
+                        return;
+                    }
+                    self.blocks.items[self.highlightedIndex].shape.highlight = 0;
+                    self.highlightedIndex = j;
+                    self.blocks.items[self.highlightedIndex].shape.highlight = 1;
+                    return;
+                }
+            }
+        }
+    }
     pub fn getRandomBlock(blocks: std.ArrayList(cube.Cube), alloc: std.mem.Allocator, random: std.rand.Random) !cube.Cube {
         var pos: position.Position = undefined;
         var available = false;

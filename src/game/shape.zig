@@ -31,6 +31,7 @@ pub const Shape = struct {
     numIndices: gl.Int,
     program: gl.Uint,
     config: ShapeConfig,
+    highlight: gl.Int,
 
     pub fn init(
         name: []const u8,
@@ -67,6 +68,7 @@ pub const Shape = struct {
             .numIndices = @intCast(shape.indices.len),
             .program = program,
             .config = cfg,
+            .highlight = 0,
         };
     }
 
@@ -453,6 +455,13 @@ pub const Shape = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("error: {d}\n", .{e});
+            return ShapeErr.Error;
+        }
+
+        gl.uniform1i(gl.getUniformLocation(self.program, "highlight"), self.highlight);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("error setting highlighted: {d}\n", .{e});
             return ShapeErr.Error;
         }
 

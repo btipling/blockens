@@ -50,7 +50,11 @@ pub const Controls = struct {
         const frontZ = @sin(yaw) * @cos(pitch);
         const front: @Vector(4, gl.Float) = @Vector(4, gl.Float){ frontX, frontY, frontZ, 1.0 };
 
-        self.gameState.cameraFront = zm.normalize4(front);
+        if (self.gameState.updateCameraFront(zm.normalize4(front))) {
+            return;
+        } else |err| {
+            std.debug.print("Failed to update camera front: {}\n", .{err});
+        }
     }
 
     pub fn handleKey(self: *Controls) !bool {
@@ -61,25 +65,31 @@ pub const Controls = struct {
         // wasd movement
         const cameraSpeed: @Vector(4, gl.Float) = @splat(2.5 * self.gameState.deltaTime);
         if (self.window.getKey(.w) == .press) {
-            self.gameState.cameraPos += self.gameState.cameraFront * cameraSpeed;
+            const np = self.gameState.cameraPos + self.gameState.cameraFront * cameraSpeed;
+            try self.gameState.updateCameraPosition(np);
         }
         if (self.window.getKey(.s) == .press) {
-            self.gameState.cameraPos -= self.gameState.cameraFront * cameraSpeed;
+            const np = self.gameState.cameraPos - self.gameState.cameraFront * cameraSpeed;
+            try self.gameState.updateCameraPosition(np);
         }
         if (self.window.getKey(.a) == .press) {
-            self.gameState.cameraPos -= zm.normalize3(zm.cross3(self.gameState.cameraFront, self.gameState.cameraUp)) * cameraSpeed;
+            const np = self.gameState.cameraPos - zm.normalize3(zm.cross3(self.gameState.cameraFront, self.gameState.cameraUp)) * cameraSpeed;
+            try self.gameState.updateCameraPosition(np);
         }
         if (self.window.getKey(.d) == .press) {
-            self.gameState.cameraPos += zm.normalize3(zm.cross3(self.gameState.cameraFront, self.gameState.cameraUp)) * cameraSpeed;
+            const np = self.gameState.cameraPos + zm.normalize3(zm.cross3(self.gameState.cameraFront, self.gameState.cameraUp)) * cameraSpeed;
+            try self.gameState.updateCameraPosition(np);
         }
 
         if (self.window.getKey(.space) == .press) {
             const upDirection: @Vector(4, gl.Float) = @splat(1.0);
-            self.gameState.cameraPos += self.gameState.cameraUp * cameraSpeed * upDirection;
+            const np = self.gameState.cameraPos + self.gameState.cameraUp * cameraSpeed * upDirection;
+            try self.gameState.updateCameraPosition(np);
         }
         if (self.window.getKey(.left_shift) == .press) {
             const downDirection: @Vector(4, gl.Float) = @splat(-1.0);
-            self.gameState.cameraPos += self.gameState.cameraUp * cameraSpeed * downDirection;
+            const np = self.gameState.cameraPos + self.gameState.cameraUp * cameraSpeed * downDirection;
+            try self.gameState.updateCameraPosition(np);
         }
 
         return false;
