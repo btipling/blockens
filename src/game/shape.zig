@@ -10,6 +10,7 @@ pub const ShapeErr = error{Error};
 pub const ShapeConfig = struct {
     hasTexture: bool,
     isCube: bool,
+    hasPerspective: bool,
 };
 
 pub const ShapeVertex = struct {
@@ -286,33 +287,13 @@ pub const Shape = struct {
                 // do nothing
             }
             // Set barycentric coordinates for the cube
-
-            std.debug.print("positions: ({d}, {d}, {d})\n", .{ @round(vertices[i].position[0]), @round(vertices[i].position[1]), @round(vertices[i].position[2]) });
             switch (@mod(i, 6)) {
-                0 => {
-                    std.debug.print("using bcV1\n", .{});
-                    vertices[i].barycentric = bcV1;
-                },
-                1 => {
-                    std.debug.print("using bcV2\n", .{});
-                    vertices[i].barycentric = bcV2;
-                },
-                2 => {
-                    std.debug.print("using bcV3\n", .{});
-                    vertices[i].barycentric = bcV3;
-                },
-                3 => {
-                    std.debug.print("using bcV1\n", .{});
-                    vertices[i].barycentric = bcV1;
-                },
-                4 => {
-                    std.debug.print("using bcV2\n", .{});
-                    vertices[i].barycentric = bcV2;
-                },
-                5 => {
-                    std.debug.print("using bcV3\n", .{});
-                    vertices[i].barycentric = bcV3;
-                },
+                0 => vertices[i].barycentric = bcV1,
+                1 => vertices[i].barycentric = bcV2,
+                2 => vertices[i].barycentric = bcV3,
+                3 => vertices[i].barycentric = bcV1,
+                4 => vertices[i].barycentric = bcV2,
+                5 => vertices[i].barycentric = bcV3,
                 else => unreachable,
             }
         }
@@ -407,7 +388,13 @@ pub const Shape = struct {
         const w = @as(gl.Float, @floatFromInt(config.windows_width));
         const aspect = w / h;
         std.debug.print("aspect: {e}\n", .{aspect});
-        const ps = zm.perspectiveFovRh(fov, aspect, 0.1, 100.0);
+        var ps = zm.perspectiveFovRh(fov, aspect, 0.1, 100.0);
+        if (shapeConfig.hasPerspective) {
+            ps = zm.perspectiveFovRh(fov, aspect, 0.1, 100.0);
+        } else {
+            // todo: make this work
+            // ps = zm.orthographicRh(-1.0, 1.0, -1.0, 100.0);
+        }
         zm.storeMat(&projection, ps);
 
         const location = gl.getUniformLocation(program, "projection");
@@ -465,10 +452,17 @@ pub const Shape = struct {
             return ShapeErr.Error;
         }
 
+        if (!self.config.hasPerspective) {
+            //disable depth test for ortho
+            gl.disable(gl.DEPTH_TEST);
+        }
+
         gl.drawElements(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null);
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} draw elements error: {d}\n", .{ self.name, e });
             return ShapeErr.Error;
         }
+        // renable depth test
+        gl.enable(gl.DEPTH_TEST);
     }
 };

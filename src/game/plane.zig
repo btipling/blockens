@@ -27,7 +27,7 @@ pub const Plane = struct {
             fragmentShaderSource,
             null,
             groundColor,
-            shape.ShapeConfig{ .hasTexture = true, .isCube = false },
+            shape.ShapeConfig{ .hasTexture = true, .isCube = false, .hasPerspective = true },
             alloc,
         );
         return Plane{

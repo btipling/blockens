@@ -69,7 +69,7 @@ pub const Cube = struct {
             fragmentShaderSource,
             textureSource,
             null,
-            shape.ShapeConfig{ .hasTexture = true, .isCube = true },
+            shape.ShapeConfig{ .hasTexture = true, .isCube = true, .hasPerspective = true },
             alloc,
         );
     }

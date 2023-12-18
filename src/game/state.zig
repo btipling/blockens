@@ -61,7 +61,7 @@ pub const State = struct {
 
     fn pickObject(self: *State) !void {
         var currentPos = self.cameraPos;
-        const maxRayLength = 10;
+        const maxRayLength = 100;
         for (2..maxRayLength) |i| {
             if (i == maxRayLength) {
                 return;
@@ -70,7 +70,6 @@ pub const State = struct {
             currentPos = @floor(self.cameraPos + (distance * self.cameraFront));
             for (self.blocks.items, 0..) |block, j| {
                 if (block.position.x == currentPos[0] and block.position.y == currentPos[1] and block.position.z == currentPos[2]) {
-                    std.debug.print("found block at {d},{d},{d}\n", .{ block.position.x, block.position.y, block.position.z });
                     if (self.highlightedIndex == j) {
                         return;
                     }
