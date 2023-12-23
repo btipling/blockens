@@ -4,19 +4,27 @@ const glfw = @import("zglfw");
 
 pub const UI = struct {
     window: *glfw.Window,
+    Game: Game,
 
     pub fn init(window: *glfw.Window) !UI {
         return UI{
             .window = window,
+            .Game = Game{},
         };
     }
 
-    pub fn draw(self: UI) !void {
-        try self.drawInfo();
+    pub fn drawGame(self: *UI) !void {
+        try self.Game.draw(self.window);
+    }
+};
+
+pub const Game = struct {
+    pub fn draw(self: Game, window: *glfw.Window) !void {
+        try self.drawInfo(window);
     }
 
-    fn drawInfo(self: UI) !void {
-        const fb_size = self.window.getFramebufferSize();
+    fn drawInfo(_: Game, window: *glfw.Window) !void {
+        const fb_size = window.getFramebufferSize();
         const w: u32 = @intCast(fb_size[0]);
         const h: u32 = @intCast(fb_size[1]);
         const xPos: f32 = 50.0;

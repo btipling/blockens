@@ -69,7 +69,7 @@ pub const Game = struct {
             try blocks.append(b);
         }
 
-        return Game{
+        var g = Game{
             .cameraPos = @Vector(4, gl.Float){ 0.0, 1.0, 3.0, 1.0 },
             .cameraFront = @Vector(4, gl.Float){ 0.0, 0.0, -1.0, 0.0 },
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
@@ -83,6 +83,8 @@ pub const Game = struct {
             .pitch = 0.0,
             .blocks = blocks,
         };
+        try Game.updateLookAt(&g);
+        return g;
     }
 
     pub fn deinit(self: *Game) void {

@@ -140,5 +140,5 @@ fn drawTextureGeneratorView() !void {
 
 fn drawGameView(gameWorld: *world.World, gameUI: *ui.UI) !void {
     try gameWorld.draw();
-    try gameUI.draw();
+    try gameUI.drawGame();
 }
