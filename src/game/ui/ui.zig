@@ -28,7 +28,7 @@ pub const UI = struct {
 };
 
 pub fn handleInput(_: *zgui.InputTextCallbackData) i32 {
-    // std.debug.print("handleInput\n", .{});
+    std.debug.print("handleInput\n", .{});
     return 0;
 }
 
@@ -41,12 +41,11 @@ pub const TextureGen = struct {
         };
     }
 
-    fn draw(self: TextureGen, window: *glfw.Window) !void {
+    fn draw(self: *TextureGen, window: *glfw.Window) !void {
         try self.drawInput(window);
     }
 
-    fn drawInput(self: TextureGen, window: *glfw.Window) !void {
-        _ = self;
+    fn drawInput(self: *TextureGen, window: *glfw.Window) !void {
         const fb_size = window.getFramebufferSize();
         const w: u32 = @intCast(fb_size[0]);
         const h: u32 = @intCast(fb_size[1]);
@@ -66,11 +65,6 @@ pub const TextureGen = struct {
         var text_color = style.getColor(.text);
         text_color = .{ 0.0, 0.0, 0.0, 1.00 };
         style.setColor(.text, text_color);
-        var a = [_]u8{'a'} ** 1000;
-        a[3] = '\n';
-        _ = &a;
-        var s = a[0..];
-        _ = &s;
         if (zgui.begin("Hello, world!", .{
             .flags = .{
                 .no_title_bar = true,
@@ -79,10 +73,15 @@ pub const TextureGen = struct {
                 .no_collapse = true,
             },
         })) {
-            zgui.text("Hello btzig-blockens!", .{});
-            zgui.text("Press escape to quit.", .{});
+            zgui.text("Create a block texture!", .{});
+            if (zgui.button("Change texture", .{
+                .w = 500,
+                .h = 100,
+            })) {
+                std.debug.print("color button pressed: {s}\n", .{self.buf});
+            }
             _ = zgui.inputTextMultiline(" ", .{
-                .buf = s,
+                .buf = self.buf[0..],
                 .w = 2400,
                 .h = 1800,
                 .callback = handleInput,
