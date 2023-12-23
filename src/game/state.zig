@@ -34,6 +34,14 @@ pub const App = struct {
             .view = View.game,
         };
     }
+
+    pub fn setGameView(self: *App) !void {
+        self.view = View.game;
+    }
+
+    pub fn setTextureGeneratorView(self: *App) !void {
+        self.view = View.textureGenerator;
+    }
 };
 
 pub const Game = struct {

@@ -92,6 +92,14 @@ pub const Controls = struct {
             try self.appState.game.updateCameraPosition(np);
         }
 
+        if (self.window.getKey(.F2) == .press) {
+            try self.appState.app.setGameView();
+        }
+
+        if (self.window.getKey(.F3) == .press) {
+            try self.appState.app.setTextureGeneratorView();
+        }
+
         return false;
     }
 };
