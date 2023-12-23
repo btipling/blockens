@@ -21,7 +21,8 @@ pub const World = struct {
         _ = self;
     }
 
-    pub fn draw(self: *World, m: zm.Mat) !void {
+    pub fn draw(self: *World) !void {
+        const m = self.appState.game.lookAt;
         try self.worldPlane.draw(m);
         for (self.appState.game.blocks.items) |b| {
             try b.draw(m);

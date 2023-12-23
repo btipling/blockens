@@ -123,7 +123,7 @@ pub fn run() !void {
 
         switch (appState.app.view) {
             .game => {
-                try drawGameView(appState, &gameWorld, &gameUI);
+                try drawGameView(&gameWorld, &gameUI);
             },
             .textureGenerator => {
                 try drawTextureGeneratorView();
@@ -138,16 +138,7 @@ fn drawTextureGeneratorView() !void {
     return;
 }
 
-fn drawGameView(appState: state.State, gameWorld: *world.World, gameUI: *ui.UI) !void {
-    var m = zm.identity();
-
-    const lookat = zm.lookAtRh(
-        appState.game.cameraPos,
-        appState.game.cameraPos + appState.game.cameraFront,
-        appState.game.cameraUp,
-    );
-    m = zm.mul(m, lookat);
-
-    try gameWorld.draw(m);
+fn drawGameView(gameWorld: *world.World, gameUI: *ui.UI) !void {
+    try gameWorld.draw();
     try gameUI.draw();
 }

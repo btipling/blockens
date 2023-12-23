@@ -1,5 +1,6 @@
 const std = @import("std");
 const gl = @import("zopengl");
+const zm = @import("zmath");
 const position = @import("position.zig");
 const cube = @import("cube.zig");
 const config = @import("config.zig");
@@ -39,6 +40,7 @@ pub const Game = struct {
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
+    lookAt: zm.Mat,
     lastFrame: gl.Float,
     deltaTime: gl.Float,
     firstMouse: bool,
@@ -63,6 +65,7 @@ pub const Game = struct {
             .cameraPos = @Vector(4, gl.Float){ 0.0, 1.0, 3.0, 1.0 },
             .cameraFront = @Vector(4, gl.Float){ 0.0, 0.0, -1.0, 0.0 },
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
+            .lookAt = zm.identity(),
             .lastFrame = 0.0,
             .deltaTime = 0.0,
             .firstMouse = true,
@@ -82,22 +85,33 @@ pub const Game = struct {
 
     pub fn updateCameraPosition(self: *Game, updatedCameraPosition: @Vector(4, gl.Float)) !void {
         self.cameraPos = updatedCameraPosition;
+        try self.updateLookAt();
         try self.pickObject();
     }
 
     pub fn updateCameraFront(self: *Game, updatedCameraFront: @Vector(4, gl.Float)) !void {
         self.cameraFront = updatedCameraFront;
+        try self.updateLookAt();
         try self.pickObject();
+    }
+
+    fn updateLookAt(self: *Game) !void {
+        self.lookAt = zm.lookAtRh(
+            self.cameraPos,
+            self.cameraPos + self.cameraFront,
+            self.cameraUp,
+        );
     }
 
     fn pickObject(self: *Game) !void {
         var currentPos = self.cameraPos;
         const maxRayLength = 100;
-        for (2..maxRayLength) |i| {
+        for (0..maxRayLength) |i| {
             if (i == maxRayLength) {
                 return;
             }
-            const distance = @as(@Vector(4, gl.Float), @splat(@as(gl.Float, @floatFromInt(i))));
+            const _i: @Vector(4, gl.Float) = @splat(@as(gl.Float, @floatFromInt(i)));
+            const distance = @as(@Vector(4, gl.Float), _i);
             currentPos = @floor(self.cameraPos + (distance * self.cameraFront));
             for (self.blocks.items, 0..) |block, j| {
                 if (block.position.x == currentPos[0] and block.position.y == currentPos[1] and block.position.z == currentPos[2]) {
