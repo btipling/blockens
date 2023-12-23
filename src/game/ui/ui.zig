@@ -3,18 +3,25 @@ const zgui = @import("zgui");
 const gl = @import("zopengl");
 const glfw = @import("zglfw");
 const config = @import("../config.zig");
+const ziglua = @import("ziglua");
+
+const Lua = ziglua.Lua;
 
 pub const UI = struct {
     window: *glfw.Window,
     Game: Game,
     TextureGen: TextureGen,
 
-    pub fn init(window: *glfw.Window) !UI {
+    pub fn init(window: *glfw.Window, alloc: std.mem.Allocator) !UI {
         return UI{
             .window = window,
             .Game = Game{},
-            .TextureGen = try TextureGen.init(),
+            .TextureGen = try TextureGen.init(alloc),
         };
+    }
+
+    pub fn deinit(self: *UI) void {
+        self.TextureGen.deinit();
     }
 
     pub fn drawGame(self: *UI) !void {
@@ -34,15 +41,54 @@ pub fn handleInput(_: *zgui.InputTextCallbackData) i32 {
 
 pub const TextureGen = struct {
     buf: [1000]u8,
+    luaInstance: Lua,
 
-    pub fn init() !TextureGen {
+    fn init(alloc: std.mem.Allocator) !TextureGen {
+        var lua: Lua = try Lua.init(alloc);
+
+        // Add an integer to the Lua stack and retrieve it
+        lua.pushInteger(99);
+        lua.openLibs();
+        std.debug.print("{}\n", .{try lua.toInteger(1)});
         return TextureGen{
             .buf = [_]u8{0} ** 1000,
+            .luaInstance = lua,
         };
+    }
+
+    fn deinit(self: *TextureGen) void {
+        self.luaInstance.deinit();
     }
 
     fn draw(self: *TextureGen, window: *glfw.Window) !void {
         try self.drawInput(window);
+    }
+
+    fn evalTextureFunc(self: *TextureGen) !void {
+        std.debug.print("evalTextureFunc from lua\n", .{});
+        var luaCode: [1000]u8 = [_]u8{0} ** 1000;
+        var nullIndex: usize = 0;
+        for (self.buf) |c| {
+            if (c == 0) {
+                break;
+            }
+            luaCode[nullIndex] = c;
+            nullIndex += 1;
+        }
+        const luaCString: [:0]const u8 = luaCode[0..nullIndex :0];
+        self.luaInstance.doString(luaCString) catch {
+            std.log.err("Failed to eval lua code from string {s}.", .{luaCString});
+            return;
+        };
+        _ = self.luaInstance.getGlobal("hello_world") catch |err| {
+            std.log.err("Failed to get global hello_world. {}", .{err});
+            return;
+        };
+        self.luaInstance.protectedCall(0, 0, 0) catch {
+            const op = try self.luaInstance.toBytes(-1);
+            std.log.err("Failed to call hello_world {s}", .{op});
+            return;
+        };
     }
 
     fn drawInput(self: *TextureGen, window: *glfw.Window) !void {
@@ -78,7 +124,7 @@ pub const TextureGen = struct {
                 .w = 500,
                 .h = 100,
             })) {
-                std.debug.print("color button pressed: {s}\n", .{self.buf});
+                try self.evalTextureFunc();
             }
             _ = zgui.inputTextMultiline(" ", .{
                 .buf = self.buf[0..],

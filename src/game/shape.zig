@@ -142,8 +142,6 @@ pub const Shape = struct {
     }
 
     pub fn initShader(name: []const u8, source: [:0]const u8, shaderType: c_uint) !gl.Uint {
-        std.debug.print("{s} source: {s}\n", .{ name, source.ptr });
-
         const shader: gl.Uint = gl.createShader(shaderType);
         gl.shaderSource(shader, 1, &[_][*c]const u8{source.ptr}, null);
         gl.compileShader(shader);
@@ -163,7 +161,7 @@ pub const Shape = struct {
         var logSize: gl.Int = 0;
         gl.getShaderInfoLog(shader, 512, &logSize, &infoLog);
         const i: usize = @intCast(logSize);
-        std.debug.print("INFO::SHADER::{s}::LINKING_SUCCESS\n{s}\n", .{ name, infoLog[0..i] });
+        std.debug.print("INFK`O::SHADER::{s}::LINKING_SUCCESS\n{s}\n", .{ name, infoLog[0..i] });
 
         return shader;
     }
@@ -304,7 +302,6 @@ pub const Shape = struct {
         var vertices = try std.ArrayList(ShapeVertex).initCapacity(alloc, data.positions.len);
         defer vertices.deinit();
 
-        std.debug.print("\n\n", .{});
         var tc: [2]gl.Float = [_]gl.Float{ 0.0, 0.0 };
         var color: [4]gl.Float = [_]gl.Float{ 1.0, 1.0, 1.0, 1.0 };
         for (0..data.positions.len) |i| {
@@ -387,7 +384,6 @@ pub const Shape = struct {
         const h = @as(gl.Float, @floatFromInt(config.windows_height));
         const w = @as(gl.Float, @floatFromInt(config.windows_width));
         const aspect = w / h;
-        std.debug.print("aspect: {e}\n", .{aspect});
         var ps = zm.perspectiveFovRh(fov, aspect, 0.1, 100.0);
         if (shapeConfig.hasPerspective) {
             ps = zm.perspectiveFovRh(fov, aspect, 0.1, 100.0);

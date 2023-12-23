@@ -41,6 +41,13 @@ pub fn build(b: *std.Build) void {
     zgui_pkg.link(exe);
     zmesh_pkg.link(exe);
 
+    const ziglua = b.dependency("ziglua", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.addModule("ziglua", ziglua.module("ziglua"));
+    exe.linkLibrary(ziglua.artifact("lua"));
+
     // This creates a build step. It will be visible in the `zig build --help` menu,
     // and can be selected like this: `zig build run`
     // This will evaluate the `run` step rather than the default, which is "install".

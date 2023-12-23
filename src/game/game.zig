@@ -83,7 +83,8 @@ pub fn run() !void {
     defer zstbi.deinit();
     zstbi.setFlipVerticallyOnLoad(true);
 
-    var gameUI = try ui.UI.init(window);
+    var gameUI = try ui.UI.init(window, allocator);
+    defer gameUI.deinit();
 
     const planePosition = position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
     var worldPlane = try plane.Plane.init("worldplane", planePosition, allocator);
