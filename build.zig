@@ -44,6 +44,7 @@ pub fn build(b: *std.Build) void {
     const ziglua = b.dependency("ziglua", .{
         .target = target,
         .optimize = optimize,
+        .version = .lua_54,
     });
     exe.addModule("ziglua", ziglua.module("ziglua"));
     exe.linkLibrary(ziglua.artifact("lua"));
