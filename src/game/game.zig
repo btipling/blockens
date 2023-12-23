@@ -133,7 +133,7 @@ pub fn run() !void {
                 try drawGameView(&gameWorld, &gameUI);
             },
             .textureGenerator => {
-                try drawTextureGeneratorView(&textureGen);
+                try drawTextureGeneratorView(&textureGen, &gameUI);
             },
         }
 
@@ -141,8 +141,9 @@ pub fn run() !void {
     }
 }
 
-fn drawTextureGeneratorView(textureGen: *texture_gen.TextureGenerator) !void {
+fn drawTextureGeneratorView(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
     try textureGen.draw();
+    try gameUI.drawTextureGen();
     return;
 }
 

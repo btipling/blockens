@@ -66,10 +66,12 @@ pub const Controls = struct {
         }
 
         if (self.window.getKey(.F2) == .press) {
+            self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.disabled);
             try self.appState.app.setGameView();
         }
 
         if (self.window.getKey(.F3) == .press) {
+            self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.normal);
             try self.appState.app.setTextureGeneratorView();
         }
 
