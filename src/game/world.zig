@@ -7,12 +7,12 @@ const cursor = @import("cursor.zig");
 pub const World = struct {
     worldPlane: plane.Plane,
     cursor: cursor.Cursor,
-    gameState: *state.State,
+    appState: *state.State,
 
-    pub fn init(worldPlane: plane.Plane, c: cursor.Cursor, gameState: *state.State) !World {
+    pub fn init(worldPlane: plane.Plane, c: cursor.Cursor, appState: *state.State) !World {
         return World{
             .worldPlane = worldPlane,
-            .gameState = gameState,
+            .appState = appState,
             .cursor = c,
         };
     }
@@ -23,7 +23,7 @@ pub const World = struct {
 
     pub fn draw(self: *World, m: zm.Mat) !void {
         try self.worldPlane.draw(m);
-        for (self.gameState.blocks.items) |b| {
+        for (self.appState.game.blocks.items) |b| {
             try b.draw(m);
         }
         try self.cursor.draw(m);

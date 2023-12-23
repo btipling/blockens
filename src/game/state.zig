@@ -5,6 +5,37 @@ const cube = @import("cube.zig");
 const config = @import("config.zig");
 
 pub const State = struct {
+    app: App,
+    game: Game,
+
+    pub fn init(alloc: std.mem.Allocator) !State {
+        return State{
+            .app = try App.init(),
+            .game = try Game.init(alloc),
+        };
+    }
+
+    pub fn deinit(self: *State) void {
+        self.game.deinit();
+    }
+};
+
+pub const View = enum {
+    game,
+    textureGenerator,
+};
+
+pub const App = struct {
+    view: View = View.game,
+
+    pub fn init() !App {
+        return App{
+            .view = View.game,
+        };
+    }
+};
+
+pub const Game = struct {
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
@@ -18,7 +49,7 @@ pub const State = struct {
     blocks: std.ArrayList(cube.Cube),
     highlightedIndex: usize = 0,
 
-    pub fn init(alloc: std.mem.Allocator) !State {
+    pub fn init(alloc: std.mem.Allocator) !Game {
         var blocks = std.ArrayList(cube.Cube).init(alloc);
         var prng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.milliTimestamp())));
         const random = prng.random();
@@ -28,7 +59,7 @@ pub const State = struct {
             try blocks.append(b);
         }
 
-        return State{
+        return Game{
             .cameraPos = @Vector(4, gl.Float){ 0.0, 1.0, 3.0, 1.0 },
             .cameraFront = @Vector(4, gl.Float){ 0.0, 0.0, -1.0, 0.0 },
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
@@ -43,23 +74,23 @@ pub const State = struct {
         };
     }
 
-    pub fn deinit(self: *State) void {
+    pub fn deinit(self: *Game) void {
         for (self.blocks.items) |block| {
             block.deinit();
         }
     }
 
-    pub fn updateCameraPosition(self: *State, updatedCameraPosition: @Vector(4, gl.Float)) !void {
+    pub fn updateCameraPosition(self: *Game, updatedCameraPosition: @Vector(4, gl.Float)) !void {
         self.cameraPos = updatedCameraPosition;
         try self.pickObject();
     }
 
-    pub fn updateCameraFront(self: *State, updatedCameraFront: @Vector(4, gl.Float)) !void {
+    pub fn updateCameraFront(self: *Game, updatedCameraFront: @Vector(4, gl.Float)) !void {
         self.cameraFront = updatedCameraFront;
         try self.pickObject();
     }
 
-    fn pickObject(self: *State) !void {
+    fn pickObject(self: *Game) !void {
         var currentPos = self.cameraPos;
         const maxRayLength = 100;
         for (2..maxRayLength) |i| {

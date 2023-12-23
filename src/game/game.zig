@@ -91,12 +91,12 @@ pub fn run() !void {
     var uiCursor = try cursor.Cursor.init("worldplane", planePosition, allocator);
     defer uiCursor.deinit();
 
-    var gameState = try state.State.init(allocator);
-    defer gameState.deinit();
+    var appState = try state.State.init(allocator);
+    defer appState.deinit();
 
-    var gameWorld = try world.World.init(worldPlane, uiCursor, &gameState);
+    var gameWorld = try world.World.init(worldPlane, uiCursor, &appState);
 
-    var c = try controls.Controls.init(window, &gameState);
+    var c = try controls.Controls.init(window, &appState);
     ctrls = &c;
 
     _ = window.setCursorPosCallback(cursorPosCallback);
@@ -106,8 +106,8 @@ pub fn run() !void {
         glfw.pollEvents();
 
         const currentFrame: gl.Float = @as(gl.Float, @floatCast(glfw.getTime()));
-        gameState.deltaTime = currentFrame - gameState.lastFrame;
-        gameState.lastFrame = currentFrame;
+        appState.game.deltaTime = currentFrame - appState.game.lastFrame;
+        appState.game.lastFrame = currentFrame;
         const quit = try ctrls.handleKey();
         if (quit) {
             break :main_loop;
@@ -121,14 +121,33 @@ pub fn run() !void {
         gl.enable(gl.CULL_FACE);
         gl.cullFace(gl.BACK);
 
-        var m = zm.identity();
-
-        const lookat = zm.lookAtRh(gameState.cameraPos, gameState.cameraPos + gameState.cameraFront, gameState.cameraUp);
-        m = zm.mul(m, lookat);
-
-        try gameWorld.draw(m);
-        try gameUI.draw();
+        switch (appState.app.view) {
+            .game => {
+                try drawGameView(appState, &gameWorld, &gameUI);
+            },
+            .textureGenerator => {
+                try drawTextureGeneratorView();
+            },
+        }
 
         window.swapBuffers();
     }
+}
+
+fn drawTextureGeneratorView() !void {
+    return;
+}
+
+fn drawGameView(appState: state.State, gameWorld: *world.World, gameUI: *ui.UI) !void {
+    var m = zm.identity();
+
+    const lookat = zm.lookAtRh(
+        appState.game.cameraPos,
+        appState.game.cameraPos + appState.game.cameraFront,
+        appState.game.cameraUp,
+    );
+    m = zm.mul(m, lookat);
+
+    try gameWorld.draw(m);
+    try gameUI.draw();
 }
