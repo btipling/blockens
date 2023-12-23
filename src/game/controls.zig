@@ -16,6 +16,9 @@ pub const Controls = struct {
     }
 
     pub fn cursorPosCallback(self: *Controls, xpos: f64, ypos: f64) void {
+        if (self.appState.app.view != .game) {
+            return;
+        }
         const x = @as(gl.Float, @floatCast(xpos));
         const y = @as(gl.Float, @floatCast(ypos));
         if (self.appState.game.firstMouse) {
@@ -62,6 +65,23 @@ pub const Controls = struct {
             return true;
         }
 
+        if (self.window.getKey(.F2) == .press) {
+            try self.appState.app.setGameView();
+        }
+
+        if (self.window.getKey(.F3) == .press) {
+            try self.appState.app.setTextureGeneratorView();
+        }
+
+        switch (self.appState.app.view) {
+            .game => try self.handleGameKey(),
+            .textureGenerator => try self.handleTextureGeneratorKey(),
+        }
+
+        return false;
+    }
+
+    fn handleGameKey(self: *Controls) !void {
         // wasd movement
         const cameraSpeed: @Vector(4, gl.Float) = @splat(2.5 * self.appState.game.deltaTime);
         if (self.window.getKey(.w) == .press) {
@@ -91,15 +111,7 @@ pub const Controls = struct {
             const np = self.appState.game.cameraPos + self.appState.game.cameraUp * cameraSpeed * downDirection;
             try self.appState.game.updateCameraPosition(np);
         }
-
-        if (self.window.getKey(.F2) == .press) {
-            try self.appState.app.setGameView();
-        }
-
-        if (self.window.getKey(.F3) == .press) {
-            try self.appState.app.setTextureGeneratorView();
-        }
-
-        return false;
     }
+
+    fn handleTextureGeneratorKey(_: *Controls) !void {}
 };

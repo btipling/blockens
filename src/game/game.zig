@@ -13,6 +13,7 @@ const plane = @import("plane.zig");
 const cursor = @import("cursor.zig");
 const position = @import("position.zig");
 const world = @import("world.zig");
+const texture_gen = @import("texture_gen.zig");
 const state = @import("state.zig");
 
 const embedded_font_data = @embedFile("assets/fonts/PressStart2P-Regular.ttf");
@@ -96,6 +97,9 @@ pub fn run() !void {
 
     var gameWorld = try world.World.init(worldPlane, uiCursor, &appState);
 
+    var textureGen = try texture_gen.TextureGenerator.init(&appState, allocator);
+    defer textureGen.deinit();
+
     var c = try controls.Controls.init(window, &appState);
     ctrls = &c;
 
@@ -126,7 +130,7 @@ pub fn run() !void {
                 try drawGameView(&gameWorld, &gameUI);
             },
             .textureGenerator => {
-                try drawTextureGeneratorView();
+                try drawTextureGeneratorView(&textureGen);
             },
         }
 
@@ -134,7 +138,8 @@ pub fn run() !void {
     }
 }
 
-fn drawTextureGeneratorView() !void {
+fn drawTextureGeneratorView(textureGen: *texture_gen.TextureGenerator) !void {
+    try textureGen.draw();
     return;
 }
 
