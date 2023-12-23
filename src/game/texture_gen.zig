@@ -11,7 +11,7 @@ pub const TextureGenerator = struct {
     lookAt: zm.Mat,
 
     pub fn init(appState: *state.State, alloc: std.mem.Allocator) !TextureGenerator {
-        const pos = position.Position{ .x = 0, .y = 0, .z = -0.5 };
+        const pos = position.Position{ .x = 0, .y = 0, .z = 0.0 };
         const displayCube = try cube.Cube.init("display_cube", cube.CubeType.grass, pos, alloc);
 
         const cameraPos = @Vector(4, gl.Float){ 0.0, 1.0, 3.0, 1.0 };

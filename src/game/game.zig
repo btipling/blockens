@@ -95,6 +95,9 @@ pub fn run() !void {
     var appState = try state.State.init(allocator);
     defer appState.deinit();
 
+    // temporary change to work on texture generator
+    appState.app.view = state.View.textureGenerator;
+
     var gameWorld = try world.World.init(worldPlane, uiCursor, &appState);
 
     var textureGen = try texture_gen.TextureGenerator.init(&appState, allocator);
