@@ -11,10 +11,10 @@ pub const TextureGenerator = struct {
     lookAt: zm.Mat,
 
     pub fn init(appState: *state.State, alloc: std.mem.Allocator) !TextureGenerator {
-        const pos = position.Position{ .x = 0, .y = 0, .z = 0.0 };
+        const pos = position.Position{ .x = 0, .y = 0, .z = 0 };
         const displayCube = try cube.Cube.init("display_cube", cube.CubeType.grass, pos, alloc);
 
-        const cameraPos = @Vector(4, gl.Float){ 0.0, 1.0, 3.0, 1.0 };
+        const cameraPos = @Vector(4, gl.Float){ 0.0, 0.0, 3.0, 1.0 };
         const cameraFront = @Vector(4, gl.Float){ 0.0, 0.0, -1.0, 0.0 };
         const cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 };
         return TextureGenerator{
@@ -37,6 +37,19 @@ pub const TextureGenerator = struct {
     }
 
     pub fn draw(self: *TextureGenerator) !void {
-        try self.displayCube.draw(self.lookAt);
+        var m = zm.identity();
+        // rotate cube around its center
+        m = zm.mul(m, zm.translationV(@Vector(4, gl.Float){ -0.5, -0.5, -0.5, 0.0 }));
+        const zrot = zm.rotationZ(0.125 * std.math.pi * 2.0);
+        m = zm.mul(m, zrot);
+        const rotPerc: gl.Float = @as(gl.Float, @floatFromInt(@mod(std.time.milliTimestamp(), 10000))) / 10000.0;
+        const yrot = zm.rotationY(rotPerc * std.math.pi * 2.0);
+        m = zm.mul(m, yrot);
+        // translate to top left corner for a small view
+        m = zm.mul(m, zm.translationV(@Vector(4, gl.Float){ -5.0, 3.5, 0.0, 0.0 }));
+        // scale to be small
+        m = zm.mul(m, zm.scalingV(@Vector(4, gl.Float){ 0.33, 0.33, 0.33, 1.0 }));
+        m = zm.mul(m, self.lookAt);
+        try self.displayCube.draw(m);
     }
 };
