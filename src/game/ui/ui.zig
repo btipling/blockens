@@ -59,7 +59,7 @@ pub const TextureGen = struct {
         var lua: Lua = try Lua.init(alloc);
         lua.openLibs();
         var buf = [_]u8{0} ** maxLuaScriptSize;
-        const defaultLuaScript = @embedFile("../assets/lua/gen_texture.lua");
+        const defaultLuaScript = @embedFile("../assets/lua/gen_texture_brightness.lua");
         for (defaultLuaScript, 0..) |c, i| {
             buf[i] = c;
         }
@@ -129,10 +129,10 @@ pub const TextureGen = struct {
                 return;
             };
             // color is an integer of rgb values in hex
-            const r = color >> 24;
-            const g = (color >> 16) & 0xFF;
-            const b = (color >> 8) & 0xFF;
-            const a = color & 0xFF;
+            const a = color >> 24;
+            const b = (color >> 16) & 0xFF;
+            const g = (color >> 8) & 0xFF;
+            const r = color & 0xFF;
             std.debug.print("({d}, {d}, {d}, {d}) \n", .{ r, g, b, a });
             textureRGBAColor[i - 1] = @as(gl.Uint, @intCast(color));
             self.luaInstance.pop(1);

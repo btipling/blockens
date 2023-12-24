@@ -315,33 +315,30 @@ pub const Shape = struct {
             vertices[i].position[2] = @round(vertices[i].position[2]);
 
             // Adjust the texture coordinates for the cube
-            // There are 36 vertices in a cube, each cube texture has 4 textures in one png across the x axis
-            // The first texture is for the bottom, the second texture is for the sides and the third texture is for the top
-            // the last is unused
+            // There are 36 vertices in a cube, each cube texture has 3 textures in one png across the y axis
+            // The first texture is for the to, the second texture is for the sides and the third texture is for the top
             // This function iterates through the 36 vertices and assigns the correct texture coordinates to each vertex
             // and adjusts for the width of each texture being a third of the total width of the png
             vertices[i].edge = vertices[i].texture;
-            if (vertices[i].texture[0] > 0.0) {
-                vertices[i].texture[0] = 0.25;
+            if (vertices[i].texture[1] > 0.0) {
+                vertices[i].texture[1] = 0.3333333333333333;
             }
             if (i < 4) {
-                vertices[i].texture[0] += 0.5;
+                vertices[i].texture[1] += 0.666666666666666;
             }
             if (i >= 4 and i < 8) {
-                vertices[i].texture[0] += 0.25;
+                vertices[i].texture[1] += 0.333333333333333;
             }
             if (i >= 8 and i < 12) {
-                vertices[i].texture[0] += 0.25;
+                vertices[i].texture[1] += 0.333333333333333;
             }
             if (i >= 12 and i < 16) {
-                vertices[i].texture[0] += 0.25;
+                vertices[i].texture[1] += 0.333333333333333;
             }
             if (i >= 16 and i < 20) {
-                vertices[i].texture[0] += 0.25;
+                vertices[i].texture[1] += 0.333333333333333;
             }
-            if (i >= 20 and i < 24) {
-                // do nothing
-            }
+            if (i >= 20 and i < 24) {}
             // Set barycentric coordinates for the cube
             switch (@mod(i, 6)) {
                 0 => vertices[i].barycentric = bcV1,
