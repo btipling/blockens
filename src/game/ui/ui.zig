@@ -39,19 +39,22 @@ pub fn handleInput(_: *zgui.InputTextCallbackData) i32 {
     return 0;
 }
 
+const maxLuaScriptSize = 360_000;
+
 pub const TextureGen = struct {
-    buf: [1000]u8,
+    buf: [maxLuaScriptSize]u8,
     luaInstance: Lua,
 
     fn init(alloc: std.mem.Allocator) !TextureGen {
         var lua: Lua = try Lua.init(alloc);
-
-        // Add an integer to the Lua stack and retrieve it
-        lua.pushInteger(99);
         lua.openLibs();
-        std.debug.print("{}\n", .{try lua.toInteger(1)});
+        var buf = [_]u8{0} ** maxLuaScriptSize;
+        const defaultLuaScript = @embedFile("../assets/lua/gen_texture.lua");
+        for (defaultLuaScript, 0..) |c, i| {
+            buf[i] = c;
+        }
         return TextureGen{
-            .buf = [_]u8{0} ** 1000,
+            .buf = buf,
             .luaInstance = lua,
         };
     }
@@ -66,7 +69,7 @@ pub const TextureGen = struct {
 
     fn evalTextureFunc(self: *TextureGen) !void {
         std.debug.print("evalTextureFunc from lua\n", .{});
-        var luaCode: [1000]u8 = [_]u8{0} ** 1000;
+        var luaCode: [maxLuaScriptSize]u8 = [_]u8{0} ** maxLuaScriptSize;
         var nullIndex: usize = 0;
         for (self.buf) |c| {
             if (c == 0) {
@@ -80,15 +83,43 @@ pub const TextureGen = struct {
             std.log.err("Failed to eval lua code from string {s}.", .{luaCString});
             return;
         };
-        _ = self.luaInstance.getGlobal("hello_world") catch |err| {
-            std.log.err("Failed to get global hello_world. {}", .{err});
+        _ = self.luaInstance.getGlobal("textures") catch |err| {
+            std.log.err("Failed to get global textures. {}", .{err});
             return;
         };
-        self.luaInstance.protectedCall(0, 0, 0) catch {
-            const op = try self.luaInstance.toBytes(-1);
-            std.log.err("Failed to call hello_world {s}", .{op});
+        if (self.luaInstance.isTable(-1) == false) {
+            std.log.err("textures is not a table", .{});
+            return;
+        } else {
+            std.debug.print("textures is a table\n", .{});
+        }
+        self.luaInstance.len(-1);
+        const tableSize = self.luaInstance.toInteger(-1) catch {
+            std.log.err("Failed to get table size", .{});
             return;
         };
+        const ts = @as(usize, @intCast(tableSize));
+        std.debug.print("table size: {d}\n", .{ts});
+        self.luaInstance.pop(1);
+        if (self.luaInstance.isTable(-1) == false) {
+            std.log.err("textures is not back to a table", .{});
+            return;
+        } else {
+            std.debug.print("textures is back to a table\n", .{});
+        }
+        for (1..(ts + 1)) |i| {
+            _ = self.luaInstance.rawGetIndex(-1, @intCast(i));
+            const color = self.luaInstance.toInteger(-1) catch {
+                std.log.err("Failed to get color", .{});
+                return;
+            };
+            // color is an integer of rgb values in hex
+            const r = color >> 16;
+            const g = (color >> 8) & 0xFF;
+            const b = color & 0xFF;
+            std.debug.print("({d}, {d}, {d}) \n", .{ r, g, b });
+            self.luaInstance.pop(1);
+        }
     }
 
     fn drawInput(self: *TextureGen, window: *glfw.Window) !void {
