@@ -151,16 +151,18 @@ pub const TextureGen = struct {
         style.setColor(.window_bg, window_bg);
         var text_color = style.getColor(.text);
         text_color = .{ 0.0, 0.0, 0.0, 1.00 };
-        style.setColor(.text, text_color);
-        if (zgui.begin("Hello, world!", .{
+        const title_color = .{ 1.0, 1.0, 1.0, 1.00 };
+        style.setColor(.text, title_color);
+        zgui.setNextWindowFocus();
+        if (zgui.begin("Create a block texture!", .{
             .flags = .{
-                .no_title_bar = true,
+                .no_title_bar = false,
                 .no_resize = true,
-                .no_scrollbar = true,
+                .no_scrollbar = false,
                 .no_collapse = true,
             },
         })) {
-            zgui.text("Create a block texture!", .{});
+            style.setColor(.text, text_color);
             if (zgui.button("Change texture", .{
                 .w = 500,
                 .h = 100,
