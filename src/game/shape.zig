@@ -49,7 +49,7 @@ pub const Shape = struct {
         fragmentShaderSource: [:0]const u8,
         img: ?[:0]const u8,
         rgbaColor: ?[4]gl.Float,
-        textureRGBAColor: ?[RGBAColorTextureSize]gl.Uint,
+        textureRGBAColor: ?[]const gl.Uint,
         shapeConfig: ShapeConfig,
         alloc: std.mem.Allocator,
     ) !Shape {
@@ -72,7 +72,7 @@ pub const Shape = struct {
             },
             textureDataType.RGBAColor => {
                 if (textureRGBAColor) |t| {
-                    texture = try initTextureFromColors(&t, name);
+                    texture = try initTextureFromColors(t, name);
                 } else {
                     std.debug.print("no texture colors for {s}\n", .{name});
                     cfg.textureType = textureDataType.None;
@@ -150,7 +150,7 @@ pub const Shape = struct {
     }
 
     pub fn initVertexShader(vertexShaderSource: [:0]const u8, msg: []const u8) !gl.Uint {
-        var buffer: [20]u8 = undefined;
+        var buffer: [100]u8 = undefined;
         const shaderMsg = try std.fmt.bufPrint(&buffer, "{s}: VERTEX", .{msg});
         return initShader(shaderMsg, vertexShaderSource, gl.VERTEX_SHADER);
     }
@@ -248,7 +248,7 @@ pub const Shape = struct {
         }
 
         const width: gl.Int = 16;
-        const height: gl.Int = 16 * 3;
+        const height: gl.Int = @divFloor(@as(gl.Int, @intCast(data.len)), width);
         const imageData: *const anyopaque = data.ptr;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
         e = gl.getError();

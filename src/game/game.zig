@@ -87,7 +87,7 @@ pub fn run() !void {
     var worldPlane = try plane.Plane.init("worldplane", planePosition, allocator);
     defer worldPlane.deinit();
 
-    var uiCursor = try cursor.Cursor.init("worldplane", planePosition, allocator);
+    var uiCursor = try cursor.Cursor.init("cursor", allocator);
     defer uiCursor.deinit();
 
     // temporary change to work on texture generator
@@ -120,8 +120,8 @@ pub fn run() !void {
         gl.enable(gl.DEPTH_TEST); // enable depth testing
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         // culling
-        // gl.enable(gl.CULL_FACE);
-        // gl.cullFace(gl.BACK);
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(gl.BACK);
 
         switch (appState.app.view) {
             .game => {

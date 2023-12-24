@@ -38,6 +38,38 @@ pub const Plane = struct {
         };
     }
 
+    pub fn initTextureRGBAColors(
+        name: []const u8,
+        planePosition: position.Position,
+        alloc: std.mem.Allocator,
+        textureRGBAColors: []const gl.Uint,
+    ) !Plane {
+        var plane = zmesh.Shape.initPlane(1, 1);
+        plane.translate(-0.5, -0.5, 0.0);
+        defer plane.deinit();
+
+        const vertexShaderSource = @embedFile("shaders/plane.vs");
+        const fragmentShaderSource = @embedFile("shaders/plane.fs");
+        const groundColor: [4]gl.Float = [_]gl.Float{ 34.0 / 255.0, 32.0 / 255.0, 52.0 / 255.0, 1.0 };
+
+        const s = try shape.Shape.init(
+            name,
+            plane,
+            vertexShaderSource,
+            fragmentShaderSource,
+            null,
+            groundColor,
+            textureRGBAColors,
+            shape.ShapeConfig{ .textureType = shape.textureDataType.RGBAColor, .isCube = false, .hasPerspective = false },
+            alloc,
+        );
+        return Plane{
+            .name = name,
+            .position = planePosition,
+            .shape = s,
+        };
+    }
+
     pub fn deinit(self: *Plane) void {
         self.shape.deinit();
     }

@@ -30,7 +30,7 @@ pub const Cube = struct {
         name: []const u8,
         cubeType: CubeType,
         alloc: std.mem.Allocator,
-        textureRGBAColors: ?[shape.RGBAColorTextureSize]gl.Uint,
+        textureRGBAColors: ?[]const gl.Uint,
     ) !shape.Shape {
         // instead of a cube we're going to use the par_shape parametric plane functions to create a cube instead
         // to get the texture coordinates which we don't with cubes
@@ -92,7 +92,7 @@ pub const Cube = struct {
         cubeType: CubeType,
         pos: position.Position,
         alloc: std.mem.Allocator,
-        textureRGBAColors: [shape.RGBAColorTextureSize]gl.Uint,
+        textureRGBAColors: []const gl.Uint,
     ) !Cube {
         const s = try initShape(name, cubeType, alloc, textureRGBAColors);
         return Cube{

@@ -3,14 +3,12 @@ const gl = @import("zopengl");
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const shape = @import("shape.zig");
-const position = @import("position.zig");
 
 pub const Cursor = struct {
     name: []const u8,
-    position: position.Position,
     shape: shape.Shape,
 
-    pub fn init(name: []const u8, planePosition: position.Position, alloc: std.mem.Allocator) !Cursor {
+    pub fn init(name: []const u8, alloc: std.mem.Allocator) !Cursor {
         var crosshair = zmesh.Shape.initPlane(1, 1);
         defer crosshair.deinit();
         crosshair.translate(-0.5, -0.5, 0.0);
@@ -38,7 +36,6 @@ pub const Cursor = struct {
         );
         return Cursor{
             .name = name,
-            .position = planePosition,
             .shape = s,
         };
     }

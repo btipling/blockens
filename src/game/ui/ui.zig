@@ -128,12 +128,6 @@ pub const TextureGen = struct {
                 std.log.err("Failed to get color", .{});
                 return;
             };
-            // color is an integer of rgb values in hex
-            const a = color >> 24;
-            const b = (color >> 16) & 0xFF;
-            const g = (color >> 8) & 0xFF;
-            const r = color & 0xFF;
-            std.debug.print("({d}, {d}, {d}, {d}) \n", .{ r, g, b, a });
             textureRGBAColor[i - 1] = @as(gl.Uint, @intCast(color));
             self.luaInstance.pop(1);
         }
