@@ -16,8 +16,6 @@ const world = @import("world.zig");
 const texture_gen = @import("texture_gen.zig");
 const state = @import("state.zig");
 
-const embedded_font_data = @embedFile("assets/fonts/PressStart2P-Regular.ttf");
-
 var ctrls: *controls.Controls = undefined;
 
 fn cursorPosCallback(window: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) void {
@@ -74,10 +72,6 @@ pub fn run() !void {
 
     zmesh.init(allocator);
     defer zmesh.deinit();
-
-    const font_size = 24.0;
-    const font_large = zgui.io.addFontFromMemory(embedded_font_data, std.math.floor(font_size * 1.1));
-    zgui.io.setDefaultFont(font_large);
 
     zstbi.init(allocator);
     defer zstbi.deinit();

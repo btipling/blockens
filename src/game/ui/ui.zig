@@ -7,12 +7,18 @@ const ziglua = @import("ziglua");
 
 const Lua = ziglua.Lua;
 
+const pressStart2PFont = @embedFile("../assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
+const robotoMonoFont = @embedFile("../assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
+
 pub const UI = struct {
     window: *glfw.Window,
     Game: Game,
     TextureGen: TextureGen,
 
     pub fn init(window: *glfw.Window, alloc: std.mem.Allocator) !UI {
+        const font_size: f32 = 24.0;
+        const gameFont = zgui.io.addFontFromMemory(pressStart2PFont, std.math.floor(font_size * 1.1));
+        zgui.io.setDefaultFont(gameFont);
         return UI{
             .window = window,
             .Game = Game{},
@@ -44,6 +50,7 @@ const maxLuaScriptSize = 360_000;
 pub const TextureGen = struct {
     buf: [maxLuaScriptSize]u8,
     luaInstance: Lua,
+    codeFont: zgui.Font,
 
     fn init(alloc: std.mem.Allocator) !TextureGen {
         var lua: Lua = try Lua.init(alloc);
@@ -53,9 +60,12 @@ pub const TextureGen = struct {
         for (defaultLuaScript, 0..) |c, i| {
             buf[i] = c;
         }
+        const font_size = 40.0;
+        const codeFont = zgui.io.addFontFromMemory(robotoMonoFont, std.math.floor(font_size * 1.1));
         return TextureGen{
             .buf = buf,
             .luaInstance = lua,
+            .codeFont = codeFont,
         };
     }
 
@@ -157,14 +167,15 @@ pub const TextureGen = struct {
             })) {
                 try self.evalTextureFunc();
             }
+            zgui.pushFont(self.codeFont);
             _ = zgui.inputTextMultiline(" ", .{
                 .buf = self.buf[0..],
                 .w = 2400,
                 .h = 1800,
                 .callback = handleInput,
             });
+            zgui.popFont();
         }
-        zgui.setKeyboardFocusHere(0);
         zgui.end();
         zgui.backend.draw();
     }
