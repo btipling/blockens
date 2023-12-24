@@ -4,6 +4,7 @@ const zm = @import("zmath");
 const position = @import("position.zig");
 const cube = @import("cube.zig");
 const config = @import("config.zig");
+const shape = @import("shape.zig");
 
 pub const State = struct {
     app: App,
@@ -28,10 +29,14 @@ pub const View = enum {
 
 pub const App = struct {
     view: View = View.game,
+    demoCubeVersion: u32 = 0,
+    demoTextureColors: ?[shape.RGBAColorTextureSize]gl.Uint,
 
     pub fn init() !App {
         return App{
             .view = View.game,
+            .demoCubeVersion = 0,
+            .demoTextureColors = null,
         };
     }
 
@@ -41,6 +46,11 @@ pub const App = struct {
 
     pub fn setTextureGeneratorView(self: *App) !void {
         self.view = View.textureGenerator;
+    }
+
+    pub fn setTextureColor(self: *App, demoTextureColors: [shape.RGBAColorTextureSize]gl.Uint) void {
+        self.demoTextureColors = demoTextureColors;
+        self.demoCubeVersion += 1;
     }
 };
 

@@ -32,7 +32,8 @@ pub const Cursor = struct {
             fragmentShaderSource,
             null,
             cursorColor,
-            shape.ShapeConfig{ .hasTexture = true, .isCube = false, .hasPerspective = false },
+            null,
+            shape.ShapeConfig{ .textureType = shape.textureDataType.Image, .isCube = false, .hasPerspective = false },
             alloc,
         );
         return Cursor{

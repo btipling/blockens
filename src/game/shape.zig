@@ -7,8 +7,14 @@ const config = @import("config.zig");
 
 pub const ShapeErr = error{Error};
 
+pub const textureDataType = enum {
+    None,
+    Image,
+    RGBAColor,
+};
+
 pub const ShapeConfig = struct {
-    hasTexture: bool,
+    textureType: textureDataType,
     isCube: bool,
     hasPerspective: bool,
 };
@@ -20,6 +26,8 @@ pub const ShapeVertex = struct {
     barycentric: [3]gl.Float,
     edge: [2]gl.Float,
 };
+
+pub const RGBAColorTextureSize = 3 * 16 * 16;
 
 const bcV1 = @Vector(3, gl.Float){ 1.0, 0.0, 0.0 };
 const bcV2 = @Vector(3, gl.Float){ 0.0, 1.0, 0.0 };
@@ -41,6 +49,7 @@ pub const Shape = struct {
         fragmentShaderSource: [:0]const u8,
         img: ?[:0]const u8,
         rgbaColor: ?[4]gl.Float,
+        textureRGBAColor: ?[RGBAColorTextureSize]gl.Uint,
         shapeConfig: ShapeConfig,
         alloc: std.mem.Allocator,
     ) !Shape {
@@ -52,13 +61,24 @@ pub const Shape = struct {
         const program = try initProgram(name, &[_]gl.Uint{ vertexShader, fragmentShader });
         var texture: gl.Uint = undefined;
         var cfg = shapeConfig;
-        if (shapeConfig.hasTexture) {
-            if (img) |i| {
-                texture = try initTexture(i, name);
-            } else {
-                std.debug.print("no texture for {s}\n", .{name});
-                cfg.hasTexture = false;
-            }
+        switch (shapeConfig.textureType) {
+            textureDataType.Image => {
+                if (img) |i| {
+                    texture = try initTexture(i, name);
+                } else {
+                    std.debug.print("no texture image for {s}\n", .{name});
+                    cfg.textureType = textureDataType.None;
+                }
+            },
+            textureDataType.RGBAColor => {
+                if (textureRGBAColor) |t| {
+                    texture = try initTextureFromColors(&t, name);
+                } else {
+                    std.debug.print("no texture colors for {s}\n", .{name});
+                    cfg.textureType = textureDataType.None;
+                }
+            },
+            else => std.debug.print("no texture for {s}\n", .{name}),
         }
         try initData(name, shape, shapeConfig, rgbaColor, alloc);
         try setUniforms(name, program, shapeConfig);
@@ -136,7 +156,7 @@ pub const Shape = struct {
     }
 
     pub fn initFragmentShader(fragmentShaderSource: [:0]const u8, msg: []const u8) !gl.Uint {
-        var buffer: [20]u8 = undefined;
+        var buffer: [100]u8 = undefined;
         const shaderMsg = try std.fmt.bufPrint(&buffer, "{s}: FRAGMENT", .{msg});
         return initShader(shaderMsg, fragmentShaderSource, gl.FRAGMENT_SHADER);
     }
@@ -205,6 +225,44 @@ pub const Shape = struct {
         }
         std.debug.print("{s} program set up \n", .{name});
         return shaderProgram;
+    }
+
+    pub fn initTextureFromColors(data: []const gl.Uint, msg: []const u8) !gl.Uint {
+        var texture: gl.Uint = undefined;
+        var e: gl.Uint = 0;
+        gl.genTextures(1, &texture);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{s} gen or bind texture error: {d}\n", .{ msg, e });
+            return ShapeErr.Error;
+        }
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{s} text parameter i error: {d}\n", .{ msg, e });
+            return ShapeErr.Error;
+        }
+
+        const width: gl.Int = 16;
+        const height: gl.Int = 16 * 3;
+        const imageData: *const anyopaque = data.ptr;
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{s} gext image 2d error: {d}\n", .{ msg, e });
+            return ShapeErr.Error;
+        }
+        gl.generateMipmap(gl.TEXTURE_2D);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{s} generate mimap error: {d}\n", .{ msg, e });
+            return ShapeErr.Error;
+        }
+        return texture;
     }
 
     pub fn initTexture(img: [:0]const u8, msg: []const u8) !gl.Uint {
@@ -370,7 +428,7 @@ pub const Shape = struct {
             return ShapeErr.Error;
         }
 
-        if (shapeConfig.hasTexture) {
+        if (shapeConfig.textureType != textureDataType.None) {
             gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
             e = gl.getError();
             if (e != gl.NO_ERROR) {
@@ -410,7 +468,7 @@ pub const Shape = struct {
             return ShapeErr.Error;
         }
 
-        if (self.config.hasTexture) {
+        if (self.config.textureType != textureDataType.None) {
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, self.texture);
             e = gl.getError();

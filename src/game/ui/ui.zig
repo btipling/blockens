@@ -2,8 +2,10 @@ const std = @import("std");
 const zgui = @import("zgui");
 const gl = @import("zopengl");
 const glfw = @import("zglfw");
-const config = @import("../config.zig");
 const ziglua = @import("ziglua");
+const config = @import("../config.zig");
+const shape = @import("../shape.zig");
+const state = @import("../state.zig");
 
 const Lua = ziglua.Lua;
 
@@ -15,14 +17,14 @@ pub const UI = struct {
     Game: Game,
     TextureGen: TextureGen,
 
-    pub fn init(window: *glfw.Window, alloc: std.mem.Allocator) !UI {
+    pub fn init(appState: *state.State, window: *glfw.Window, alloc: std.mem.Allocator) !UI {
         const font_size: f32 = 24.0;
         const gameFont = zgui.io.addFontFromMemory(pressStart2PFont, std.math.floor(font_size * 1.1));
         zgui.io.setDefaultFont(gameFont);
         return UI{
             .window = window,
             .Game = Game{},
-            .TextureGen = try TextureGen.init(alloc),
+            .TextureGen = try TextureGen.init(appState, alloc),
         };
     }
 
@@ -48,11 +50,12 @@ pub fn handleInput(_: *zgui.InputTextCallbackData) i32 {
 const maxLuaScriptSize = 360_000;
 
 pub const TextureGen = struct {
+    appState: *state.State,
     buf: [maxLuaScriptSize]u8,
     luaInstance: Lua,
     codeFont: zgui.Font,
 
-    fn init(alloc: std.mem.Allocator) !TextureGen {
+    fn init(appState: *state.State, alloc: std.mem.Allocator) !TextureGen {
         var lua: Lua = try Lua.init(alloc);
         lua.openLibs();
         var buf = [_]u8{0} ** maxLuaScriptSize;
@@ -63,6 +66,7 @@ pub const TextureGen = struct {
         const font_size = 40.0;
         const codeFont = zgui.io.addFontFromMemory(robotoMonoFont, std.math.floor(font_size * 1.1));
         return TextureGen{
+            .appState = appState,
             .buf = buf,
             .luaInstance = lua,
             .codeFont = codeFont,
@@ -117,6 +121,7 @@ pub const TextureGen = struct {
         } else {
             std.debug.print("textures is back to a table\n", .{});
         }
+        var textureRGBAColor: [shape.RGBAColorTextureSize]gl.Uint = [_]gl.Uint{0} ** shape.RGBAColorTextureSize;
         for (1..(ts + 1)) |i| {
             _ = self.luaInstance.rawGetIndex(-1, @intCast(i));
             const color = self.luaInstance.toInteger(-1) catch {
@@ -129,8 +134,10 @@ pub const TextureGen = struct {
             const b = (color >> 8) & 0xFF;
             const a = color & 0xFF;
             std.debug.print("({d}, {d}, {d}, {d}) \n", .{ r, g, b, a });
+            textureRGBAColor[i - 1] = @as(gl.Uint, @intCast(color));
             self.luaInstance.pop(1);
         }
+        self.appState.app.setTextureColor(textureRGBAColor);
     }
 
     fn drawInput(self: *TextureGen, window: *glfw.Window) !void {

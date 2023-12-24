@@ -77,7 +77,10 @@ pub fn run() !void {
     defer zstbi.deinit();
     zstbi.setFlipVerticallyOnLoad(true);
 
-    var gameUI = try ui.UI.init(window, allocator);
+    var appState = try state.State.init(allocator);
+    defer appState.deinit();
+
+    var gameUI = try ui.UI.init(&appState, window, allocator);
     defer gameUI.deinit();
 
     const planePosition = position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
@@ -86,9 +89,6 @@ pub fn run() !void {
 
     var uiCursor = try cursor.Cursor.init("worldplane", planePosition, allocator);
     defer uiCursor.deinit();
-
-    var appState = try state.State.init(allocator);
-    defer appState.deinit();
 
     // temporary change to work on texture generator
     appState.app.view = state.View.textureGenerator;

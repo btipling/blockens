@@ -15,6 +15,7 @@ pub const CubeType = enum {
     stone,
     sand,
     ore,
+    demo,
 };
 
 var cubesMap: ?std.AutoHashMap(CubeType, shape.Shape) = null;
@@ -25,7 +26,12 @@ pub const Cube = struct {
     position: position.Position,
     shape: shape.Shape,
 
-    fn initShape(name: []const u8, cubeType: CubeType, alloc: std.mem.Allocator) !shape.Shape {
+    fn initShape(
+        name: []const u8,
+        cubeType: CubeType,
+        alloc: std.mem.Allocator,
+        textureRGBAColors: ?[shape.RGBAColorTextureSize]gl.Uint,
+    ) !shape.Shape {
         // instead of a cube we're going to use the par_shape parametric plane functions to create a cube instead
         // to get the texture coordinates which we don't with cubes
         var cube = zmesh.Shape.initPlane(1, 1);
@@ -59,7 +65,13 @@ pub const Cube = struct {
             CubeType.grass => textureSource = grassTexture,
             CubeType.stone => textureSource = stoneTexture,
             CubeType.sand => textureSource = sandTexture,
-            else => textureSource = oreTexture,
+            CubeType.ore => textureSource = oreTexture,
+            else => textureSource = null,
+        }
+
+        var sconfig = shape.ShapeConfig{ .textureType = shape.textureDataType.Image, .isCube = true, .hasPerspective = true };
+        if (textureRGBAColors) |_| {
+            sconfig.textureType = shape.textureDataType.RGBAColor;
         }
 
         return try shape.Shape.init(
@@ -69,9 +81,26 @@ pub const Cube = struct {
             fragmentShaderSource,
             textureSource,
             null,
-            shape.ShapeConfig{ .hasTexture = true, .isCube = true, .hasPerspective = true },
+            textureRGBAColors,
+            sconfig,
             alloc,
         );
+    }
+
+    pub fn initDemoCube(
+        name: []const u8,
+        cubeType: CubeType,
+        pos: position.Position,
+        alloc: std.mem.Allocator,
+        textureRGBAColors: [shape.RGBAColorTextureSize]gl.Uint,
+    ) !Cube {
+        const s = try initShape(name, cubeType, alloc, textureRGBAColors);
+        return Cube{
+            .type = cubeType,
+            .name = name,
+            .position = pos,
+            .shape = s,
+        };
     }
 
     pub fn init(name: []const u8, cubeType: CubeType, pos: position.Position, alloc: std.mem.Allocator) !Cube {
@@ -84,7 +113,7 @@ pub const Cube = struct {
                     .shape = s,
                 };
             } else {
-                const s = try initShape(name, cubeType, alloc);
+                const s = try initShape(name, cubeType, alloc, null);
                 try cubesMap.?.put(cubeType, s);
                 return Cube{
                     .type = cubeType,
@@ -99,7 +128,7 @@ pub const Cube = struct {
             alloc,
         );
 
-        const s = try initShape(name, cubeType, alloc);
+        const s = try initShape(name, cubeType, alloc, null);
         try cubesMap.?.put(cubeType, s);
         return Cube{
             .type = cubeType,
