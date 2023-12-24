@@ -124,10 +124,11 @@ pub const TextureGen = struct {
                 return;
             };
             // color is an integer of rgb values in hex
-            const r = color >> 16;
-            const g = (color >> 8) & 0xFF;
-            const b = color & 0xFF;
-            std.debug.print("({d}, {d}, {d}) \n", .{ r, g, b });
+            const r = color >> 24;
+            const g = (color >> 16) & 0xFF;
+            const b = (color >> 8) & 0xFF;
+            const a = color & 0xFF;
+            std.debug.print("({d}, {d}, {d}, {d}) \n", .{ r, g, b, a });
             self.luaInstance.pop(1);
         }
     }
