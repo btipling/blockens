@@ -323,9 +323,7 @@ pub const Shape = struct {
             if (vertices[i].texture[1] > 0.0) {
                 vertices[i].texture[1] = 0.3333333333333333;
             }
-            if (i < 4) {
-                vertices[i].texture[1] += 0.666666666666666;
-            }
+            if (i < 4) {}
             if (i >= 4 and i < 8) {
                 vertices[i].texture[1] += 0.333333333333333;
             }
@@ -338,7 +336,9 @@ pub const Shape = struct {
             if (i >= 16 and i < 20) {
                 vertices[i].texture[1] += 0.333333333333333;
             }
-            if (i >= 20 and i < 24) {}
+            if (i >= 20 and i < 24) {
+                vertices[i].texture[1] += 0.666666666666666;
+            }
             // Set barycentric coordinates for the cube
             switch (@mod(i, 6)) {
                 0 => vertices[i].barycentric = bcV1,

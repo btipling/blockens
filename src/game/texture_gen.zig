@@ -51,6 +51,10 @@ pub const TextureGenerator = struct {
     }
 
     pub fn draw(self: *TextureGenerator) !void {
+        try self.drawCube();
+    }
+
+    pub fn drawCube(self: *TextureGenerator) !void {
         if (self.currentDemoCubeVersion != self.appState.app.demoCubeVersion) {
             try TextureGenerator.setCube(self);
             self.currentDemoCubeVersion = self.appState.app.demoCubeVersion;

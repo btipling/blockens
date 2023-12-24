@@ -75,7 +75,7 @@ pub fn run() !void {
 
     zstbi.init(allocator);
     defer zstbi.deinit();
-    zstbi.setFlipVerticallyOnLoad(true);
+    zstbi.setFlipVerticallyOnLoad(false);
 
     var appState = try state.State.init(allocator);
     defer appState.deinit();
@@ -120,8 +120,8 @@ pub fn run() !void {
         gl.enable(gl.DEPTH_TEST); // enable depth testing
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         // culling
-        gl.enable(gl.CULL_FACE);
-        gl.cullFace(gl.BACK);
+        // gl.enable(gl.CULL_FACE);
+        // gl.cullFace(gl.BACK);
 
         switch (appState.app.view) {
             .game => {

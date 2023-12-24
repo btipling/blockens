@@ -41,8 +41,8 @@ pub const Cube = struct {
         // we need five planes to finish the cube since it has 6 faces
         var plane = zmesh.Shape.initPlane(1, 1);
         defer plane.deinit();
-        plane.rotate(std.math.pi * 0.5, 0.0, 1.0, 0.0);
-        plane.translate(1.0, 0.0, 1.0);
+        plane.rotate(std.math.pi * 2 * 0.5, 0.0, 0.0, 1.0);
+        plane.translate(1.0, 1.0, 1.0);
         cube.merge(plane);
         plane.rotate(std.math.pi * 0.5, 0.0, 1.0, 0.0);
         plane.translate(0.0, 0.0, 1.0);
@@ -53,8 +53,8 @@ pub const Cube = struct {
         plane.rotate(std.math.pi * 0.5, 0.0, 1.0, 0.0);
         plane.translate(0.0, 0.0, 1.0);
         cube.merge(plane);
-        plane.rotate(std.math.pi * 0.5, 1.0, 0.0, 0.0);
-        plane.translate(0.0, 1.0, 0.0);
+        plane.rotate(std.math.pi * 0.5, 0.0, 0.0, 1.0);
+        plane.translate(1.0, 0.0, 0.0);
         cube.merge(plane);
 
         const vertexShaderSource = @embedFile("shaders/cube.vs");

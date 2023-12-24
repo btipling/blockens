@@ -15,11 +15,14 @@ function generate_textures()
     for i = 1, 3 * 16 * 16 do
         -- You can customize each texture here as needed
         pixelcolor = rgba_to_int(255, 0, 0, 255) -- Red color
+        if i < 16 * 16 + 1 then
+            pixelcolor = rgba_to_int(255, 200, 200, 255)
+        end
+        if i > 16 * 16 and i < 16 * 16 + 33 then
+            pixelcolor = rgba_to_int(255, 200, 200, 255)
+        end
         -- if on the third surface, darken
         if i > 16 * 16 * 2 then
-            pixelcolor = rgba_to_int(255, 100, 100, 255)
-        end
-        if i < 16 * 16 + 1 then
             pixelcolor = darken(pixelcolor, 150)
         end
         textures[i] = pixelcolor
