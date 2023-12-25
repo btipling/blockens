@@ -29,7 +29,7 @@ pub const TextureGen = struct {
         lua.openLibs();
         var buf = [_]u8{0} ** maxLuaScriptSize;
         const nameBuf = [_]u8{0} ** maxLuaScriptNameSize;
-        const defaultLuaScript = @embedFile("../assets/lua/gen_texture_brightness.lua");
+        const defaultLuaScript = @embedFile("../assets/lua/gen_wood_texture.lua");
         for (defaultLuaScript, 0..) |c, i| {
             buf[i] = c;
         }
@@ -195,6 +195,12 @@ pub const TextureGen = struct {
         try self.loadTextureScriptFunc(self.loadedScriptId);
     }
 
+    fn deleteTextureScriptFunc(self: *TextureGen) !void {
+        try self.appState.db.deleteTextureScript(self.loadedScriptId);
+        try self.listTextureScripts();
+        self.loadedScriptId = 0;
+    }
+
     fn drawInput(self: *TextureGen) !void {
         if (zgui.beginChild(
             "script_input",
@@ -258,7 +264,7 @@ pub const TextureGen = struct {
             }
             _ = zgui.beginListBox("##listbox", .{
                 .w = 800,
-                .h = 1500,
+                .h = 1400,
             });
             for (self.scriptOptions.items) |scriptOption| {
                 var buffer: [maxLuaScriptNameSize + 10]u8 = undefined;
@@ -282,6 +288,12 @@ pub const TextureGen = struct {
                     .h = 100,
                 })) {
                     try self.updateTextureScriptFunc();
+                }
+                if (zgui.button("Delete script", .{
+                    .w = 450,
+                    .h = 100,
+                })) {
+                    try self.deleteTextureScriptFunc();
                 }
             }
         }

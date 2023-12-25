@@ -3,32 +3,34 @@ function rgba_to_int(r, g, b, a)
 end
 
 function darken(color, brightness)
+    local finalColor = 0
     local a = (color >> 24) & 0xFF
     local b = (color >> 16) & 0xFF
     local g = (color >> 8) & 0xFF
     local r = color & 0xFF
-    return (a << 24) | ((b * (brightness/255)) << 16) | ((g * (brightness/255)) << 8) | (r * (brightness/255))
+    finalColor = finalColor | (a << 24) 
+    finalColor = finalColor | (math.floor(b * (brightness / 255)) << 16) 
+    finalColor = finalColor | (math.floor(g * (brightness / 255)) << 8)
+    finalColor = finalColor | math.floor(r * (brightness / 255))
+    return finalColor
 end
 
 function generate_textures()
+    math.randomseed(os.time())
     local textures = {}
     for i = 1, 3 * 16 * 16 do
+        local brightnessLevel = 255 - (math.random(96) | 0)
+        pixelcolor = rgba_to_int(150, 108, 74, 255)
         ii = i - 1
         x = ii % 16
         y = math.floor(ii / 16) % 16
         s = math.floor(ii / (16 * 16))
-        -- You can customize each texture here as needed
-        pixelcolor = rgba_to_int(255, 0, 0, 255) -- Red color
-        if s == 0 then
-            pixelcolor = rgba_to_int(255, 200, 200, 255)
-        end
-        if s == 1 and y <= 1 then
-            pixelcolor = rgba_to_int(255, 200, 200, 255)
-        end
-        -- if on the third surface, darken
+
         if s == 2 then
-            pixelcolor = darken(pixelcolor, 150)
+            brightnessLevel = brightnessLevel * 0.5
         end
+
+        pixelcolor = darken(pixelcolor, brightnessLevel)
         textures[i] = pixelcolor
     end
     return textures

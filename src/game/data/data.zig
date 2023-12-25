@@ -10,6 +10,7 @@ const insertTextureScriptStmt = @embedFile("./sql/texture_script_insert.sql");
 const updateTextureScriptStmt = @embedFile("./sql/texture_script_update.sql");
 const selectTextureStmt = @embedFile("./sql/texture_script_select.sql");
 const listTextureStmt = @embedFile("./sql/texture_script_list.sql");
+const deleteTextureStmt = @embedFile("./sql/texture_script_delete.sql");
 
 pub const scriptOption = struct {
     id: u32,
@@ -174,5 +175,18 @@ pub const Data = struct {
             return;
         }
         return error.Unreachable;
+    }
+
+    pub fn deleteTextureScript(self: *Data, id: u32) !void {
+        var deleteStmt = try self.db.prepareDynamic(deleteTextureStmt);
+        defer deleteStmt.deinit();
+
+        deleteStmt.exec(
+            .{},
+            .{ .id = id },
+        ) catch |err| {
+            std.log.err("Failed to delete texture script: {}", .{err});
+            return err;
+        };
     }
 };
