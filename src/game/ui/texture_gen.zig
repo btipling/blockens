@@ -165,6 +165,7 @@ pub const TextureGen = struct {
         }
         self.buf = buf;
         self.nameBuf = nameBuf;
+        try self.evalTextureFunc();
     }
 
     fn saveTextureScriptFunc(self: *TextureGen) !void {
@@ -230,7 +231,7 @@ pub const TextureGen = struct {
             "Saved scripts",
             .{
                 .w = 850,
-                .h = 2000,
+                .h = 1500,
                 .border = true,
             },
         )) {
@@ -245,13 +246,15 @@ pub const TextureGen = struct {
                 .h = 1800,
             });
             for (self.scriptOptions.items) |scriptOption| {
+                var buffer: [maxLuaScriptNameSize + 10]u8 = undefined;
+                const selectableName = try std.fmt.bufPrint(&buffer, "{d}: {s}", .{ scriptOption.id, scriptOption.name });
                 var name: [maxLuaScriptNameSize:0]u8 = undefined;
                 for (name, 0..) |_, i| {
-                    if (scriptOption.name.len <= i) {
+                    if (selectableName.len <= i) {
                         name[i] = 0;
                         break;
                     }
-                    name[i] = scriptOption.name[i];
+                    name[i] = selectableName[i];
                 }
                 if (zgui.selectable(&name, .{})) {
                     try self.loadTextureScriptFunc(scriptOption.id);
