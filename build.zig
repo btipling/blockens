@@ -49,6 +49,16 @@ pub fn build(b: *std.Build) void {
     exe.addModule("ziglua", ziglua.module("ziglua"));
     exe.linkLibrary(ziglua.artifact("lua"));
 
+    const sqlite = b.dependency("sqlite", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    exe.addModule("sqlite", sqlite.module("sqlite"));
+
+    // links the bundled sqlite3, so leave this out if you link the system one
+    exe.linkLibrary(sqlite.artifact("sqlite"));
+
     // This creates a build step. It will be visible in the `zig build --help` menu,
     // and can be selected like this: `zig build run`
     // This will evaluate the `run` step rather than the default, which is "install".

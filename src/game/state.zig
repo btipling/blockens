@@ -5,15 +5,27 @@ const position = @import("position.zig");
 const cube = @import("cube.zig");
 const config = @import("config.zig");
 const shape = @import("shape.zig");
+const data = @import("./data/data.zig");
 
 pub const State = struct {
     app: App,
     game: Game,
+    db: data.Data,
 
     pub fn init(alloc: std.mem.Allocator) !State {
+        var db = try data.Data.init();
+        db.ensureSchema() catch |err| {
+            std.log.err("Failed to ensure schema: {}\n", .{err});
+            return err;
+        };
+        db.ensureDefaultWorld() catch |err| {
+            std.log.err("Failed to ensure default world: {}\n", .{err});
+            return err;
+        };
         return State{
             .app = try App.init(),
             .game = try Game.init(alloc),
+            .db = db,
         };
     }
 
