@@ -22,6 +22,7 @@ pub const TextureGen = struct {
     luaInstance: Lua,
     codeFont: zgui.Font,
     scriptOptions: std.ArrayList(data.scriptOption),
+    loadedScriptId: u32 = 0,
 
     pub fn init(appState: *state.State, alloc: std.mem.Allocator) !TextureGen {
         var lua: Lua = try Lua.init(alloc);
@@ -166,6 +167,7 @@ pub const TextureGen = struct {
         self.buf = buf;
         self.nameBuf = nameBuf;
         try self.evalTextureFunc();
+        self.loadedScriptId = scriptId;
     }
 
     fn saveTextureScriptFunc(self: *TextureGen) !void {
@@ -178,6 +180,19 @@ pub const TextureGen = struct {
         }
         try self.appState.db.saveTextureScript(&self.nameBuf, &self.buf);
         try self.listTextureScripts();
+    }
+
+    fn updateTextureScriptFunc(self: *TextureGen) !void {
+        const n = std.mem.indexOf(u8, &self.nameBuf, &([_]u8{0}));
+        if (n) |i| {
+            if (i < 3) {
+                std.log.err("Script name is too short", .{});
+                return;
+            }
+        }
+        try self.appState.db.updateTextureScript(self.loadedScriptId, &self.nameBuf, &self.buf);
+        try self.listTextureScripts();
+        try self.loadTextureScriptFunc(self.loadedScriptId);
     }
 
     fn drawInput(self: *TextureGen) !void {
@@ -231,7 +246,7 @@ pub const TextureGen = struct {
             "Saved scripts",
             .{
                 .w = 850,
-                .h = 1500,
+                .h = 1800,
                 .border = true,
             },
         )) {
@@ -243,7 +258,7 @@ pub const TextureGen = struct {
             }
             _ = zgui.beginListBox("##listbox", .{
                 .w = 800,
-                .h = 1800,
+                .h = 1500,
             });
             for (self.scriptOptions.items) |scriptOption| {
                 var buffer: [maxLuaScriptNameSize + 10]u8 = undefined;
@@ -261,6 +276,14 @@ pub const TextureGen = struct {
                 }
             }
             zgui.endListBox();
+            if (self.loadedScriptId != 0) {
+                if (zgui.button("Update script", .{
+                    .w = 450,
+                    .h = 100,
+                })) {
+                    try self.updateTextureScriptFunc();
+                }
+            }
         }
         zgui.endChild();
     }

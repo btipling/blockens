@@ -7,6 +7,7 @@ const selectWorldStmt = @embedFile("./sql/world_select.sql");
 
 const createTextureScriptTable = @embedFile("./sql/texture_script_create.sql");
 const insertTextureScriptStmt = @embedFile("./sql/texture_script_insert.sql");
+const updateTextureScriptStmt = @embedFile("./sql/texture_script_update.sql");
 const selectTextureStmt = @embedFile("./sql/texture_script_select.sql");
 const listTextureStmt = @embedFile("./sql/texture_script_list.sql");
 
@@ -103,6 +104,23 @@ pub const Data = struct {
             },
         ) catch |err| {
             std.log.err("Failed to insert texture script: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn updateTextureScript(self: *Data, id: u32, name: []const u8, textureScript: []const u8) !void {
+        var updateStmt = try self.db.prepareDynamic(updateTextureScriptStmt);
+        defer updateStmt.deinit();
+
+        updateStmt.exec(
+            .{},
+            .{
+                .name = name,
+                .script = textureScript,
+                .id = id,
+            },
+        ) catch |err| {
+            std.log.err("Failed to update texture script: {}", .{err});
             return err;
         };
     }
