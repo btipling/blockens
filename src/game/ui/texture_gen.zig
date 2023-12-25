@@ -146,8 +146,28 @@ pub const TextureGen = struct {
         try self.appState.db.listTextureScripts(&self.scriptOptions);
     }
 
+    fn loadTextureScriptFunc(self: *TextureGen, scriptId: u32) !void {
+        var scriptData: data.script = undefined;
+        try self.appState.db.loadTextureScript(scriptId, &scriptData);
+        var buf = [_]u8{0} ** maxLuaScriptSize;
+        var nameBuf = [_]u8{0} ** maxLuaScriptNameSize;
+        for (scriptData.name, 0..) |c, i| {
+            if (i >= maxLuaScriptNameSize) {
+                break;
+            }
+            nameBuf[i] = c;
+        }
+        for (scriptData.script, 0..) |c, i| {
+            if (i >= maxLuaScriptSize) {
+                break;
+            }
+            buf[i] = c;
+        }
+        self.buf = buf;
+        self.nameBuf = nameBuf;
+    }
+
     fn saveTextureScriptFunc(self: *TextureGen) !void {
-        std.debug.print("saveTextureFunc from lua with name {s} \n", .{self.nameBuf});
         const n = std.mem.indexOf(u8, &self.nameBuf, &([_]u8{0}));
         if (n) |i| {
             if (i < 3) {
@@ -233,7 +253,9 @@ pub const TextureGen = struct {
                     }
                     name[i] = scriptOption.name[i];
                 }
-                _ = zgui.selectable(&name, .{});
+                if (zgui.selectable(&name, .{})) {
+                    try self.loadTextureScriptFunc(scriptOption.id);
+                }
             }
             zgui.endListBox();
         }

@@ -12,7 +12,13 @@ const listTextureStmt = @embedFile("./sql/texture_script_list.sql");
 
 pub const scriptOption = struct {
     id: u32,
-    name: [128]u8,
+    name: [21]u8,
+};
+
+pub const script = struct {
+    id: u32,
+    name: [21]u8,
+    script: [360_001]u8,
 };
 
 pub const Data = struct {
@@ -85,7 +91,7 @@ pub const Data = struct {
         };
     }
 
-    pub fn saveTextureScript(self: *Data, name: []const u8, script: []const u8) !void {
+    pub fn saveTextureScript(self: *Data, name: []const u8, textureScript: []const u8) !void {
         var insertStmt = try self.db.prepareDynamic(insertTextureScriptStmt);
         defer insertStmt.deinit();
 
@@ -93,7 +99,7 @@ pub const Data = struct {
             .{},
             .{
                 .name = name,
-                .script = script,
+                .script = textureScript,
             },
         ) catch |err| {
             std.log.err("Failed to insert texture script: {}", .{err});
@@ -109,7 +115,7 @@ pub const Data = struct {
         const rows = listStmt.all(
             struct {
                 id: u32,
-                name: [128:0]u8,
+                name: [21:0]u8,
             },
             self.alloc,
             .{},
@@ -124,5 +130,31 @@ pub const Data = struct {
                 .name = row.name,
             });
         }
+    }
+
+    pub fn loadTextureScript(self: *Data, id: u32, data: *script) !void {
+        std.debug.print("Loading texture script: {d}\n", .{id});
+        var selectStmt = try self.db.prepareDynamic(selectTextureStmt);
+        defer selectStmt.deinit();
+
+        const row = selectStmt.one(
+            struct {
+                id: u32,
+                name: [21:0]u8,
+                script: [360_001:0]u8,
+            },
+            .{},
+            .{ .id = id },
+        ) catch |err| {
+            std.log.err("Failed to load texture script: {}", .{err});
+            return err;
+        };
+        if (row) |r| {
+            data.id = id;
+            data.name = r.name;
+            data.script = r.script;
+            return;
+        }
+        return error.Unreachable;
     }
 };
