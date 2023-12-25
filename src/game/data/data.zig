@@ -1,9 +1,14 @@
 const std = @import("std");
 const sqlite = @import("sqlite");
 
-const createTableSchema = @embedFile("./sql/schema.sql");
-const insertWorldStmt = @embedFile("./sql/insert_world.sql");
-const selectWorldStmt = @embedFile("./sql/select_world.sql");
+const createWorldTable = @embedFile("./sql/world_create.sql");
+const insertWorldStmt = @embedFile("./sql/world_insert.sql");
+const selectWorldStmt = @embedFile("./sql/world_select.sql");
+
+const createTextureScriptTable = @embedFile("./sql/texture_script_create.sql");
+const insertTextureScriptStmt = @embedFile("./sql/texture_script_insert.sql");
+const selectTextureStmt = @embedFile("./sql/texture_script_select.sql");
+const listTextureStmt = @embedFile("./sql/texture_script_list.sql");
 
 pub const Data = struct {
     db: sqlite.Db,
@@ -23,13 +28,19 @@ pub const Data = struct {
     }
 
     pub fn ensureSchema(self: *Data) !void {
-        var stmt = try self.db.prepareDynamic(createTableSchema);
-        defer stmt.deinit();
-
-        stmt.exec(.{}, .{}) catch |err| {
-            std.log.err("Failed to create schema: {}", .{err});
-            return err;
+        const createTableQueries = [_][]const u8{
+            createWorldTable,
+            createTextureScriptTable,
         };
+        for (createTableQueries) |query| {
+            var stmt = try self.db.prepareDynamic(query);
+            defer stmt.deinit();
+
+            stmt.exec(.{}, .{}) catch |err| {
+                std.log.err("Failed to create schema: {}", .{err});
+                return err;
+            };
+        }
     }
 
     pub fn ensureDefaultWorld(self: *Data) !void {
@@ -37,13 +48,16 @@ pub const Data = struct {
         var selectStmt = try self.db.prepareDynamic(selectWorldStmt);
         defer selectStmt.deinit();
 
-        const row = try selectStmt.one(
+        const row = selectStmt.one(
             struct {
                 name: [128:0]u8,
             },
             .{},
             .{ .name = "default" },
-        );
+        ) catch |err| {
+            std.log.err("Failed to query for default world: {}", .{err});
+            return err;
+        };
         if (row) |r| {
             std.debug.print("Found default world: {s}\n", .{r.name});
             return;
