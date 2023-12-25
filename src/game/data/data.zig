@@ -10,10 +10,16 @@ const insertTextureScriptStmt = @embedFile("./sql/texture_script_insert.sql");
 const selectTextureStmt = @embedFile("./sql/texture_script_select.sql");
 const listTextureStmt = @embedFile("./sql/texture_script_list.sql");
 
+pub const scriptOption = struct {
+    id: u32,
+    name: [128]u8,
+};
+
 pub const Data = struct {
     db: sqlite.Db,
+    alloc: std.mem.Allocator,
 
-    pub fn init() !Data {
+    pub fn init(alloc: std.mem.Allocator) !Data {
         const db = try sqlite.Db.init(.{
             .mode = sqlite.Db.Mode{ .File = "./gamedata.db" },
             .open_flags = .{
@@ -24,6 +30,7 @@ pub const Data = struct {
         });
         return Data{
             .db = db,
+            .alloc = alloc,
         };
     }
 
@@ -42,6 +49,7 @@ pub const Data = struct {
             };
         }
     }
+
     pub fn ensureDefaultWorld(self: *Data) !void {
         // query for the default world
         var selectStmt = try self.db.prepareDynamic(selectWorldStmt);
@@ -49,7 +57,7 @@ pub const Data = struct {
 
         const row = selectStmt.one(
             struct {
-                name: [128:0]u8,
+                name: [20:0]u8,
             },
             .{},
             .{ .name = "default" },
@@ -75,5 +83,46 @@ pub const Data = struct {
             std.log.err("Failed to insert default world: {}", .{err});
             return err;
         };
+    }
+
+    pub fn saveTextureScript(self: *Data, name: []const u8, script: []const u8) !void {
+        var insertStmt = try self.db.prepareDynamic(insertTextureScriptStmt);
+        defer insertStmt.deinit();
+
+        insertStmt.exec(
+            .{},
+            .{
+                .name = name,
+                .script = script,
+            },
+        ) catch |err| {
+            std.log.err("Failed to insert texture script: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn listTextureScripts(self: *Data, data: *std.ArrayList(scriptOption)) !void {
+        var listStmt = try self.db.prepareDynamic(listTextureStmt);
+        defer listStmt.deinit();
+
+        data.clearRetainingCapacity();
+        const rows = listStmt.all(
+            struct {
+                id: u32,
+                name: [128:0]u8,
+            },
+            self.alloc,
+            .{},
+            .{},
+        ) catch |err| {
+            std.log.err("Failed to list texture scripts: {}", .{err});
+            return err;
+        };
+        for (rows) |row| {
+            try data.append(scriptOption{
+                .id = row.id,
+                .name = row.name,
+            });
+        }
     }
 };

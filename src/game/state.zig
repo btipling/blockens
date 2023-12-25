@@ -13,7 +13,7 @@ pub const State = struct {
     db: data.Data,
 
     pub fn init(alloc: std.mem.Allocator) !State {
-        var db = try data.Data.init();
+        var db = try data.Data.init(alloc);
         db.ensureSchema() catch |err| {
             std.log.err("Failed to ensure schema: {}\n", .{err});
             return err;

@@ -88,15 +88,15 @@ pub const TextureGenerator = struct {
     pub fn drawSurfaces(self: *TextureGenerator) !void {
         if (self.top_surface) |p| {
             var mp = p;
-            try mp.draw(zm.translation(-0.265, 0.05, 0.0));
+            try mp.draw(zm.translation(-0.2925, 0.1, 0.0));
         }
         if (self.side_surface) |p| {
             var mp = p;
-            try mp.draw(zm.translation(-0.265, -0.029, 0.0));
+            try mp.draw(zm.translation(-0.2925, 0.021, 0.0));
         }
         if (self.bottom_surface) |p| {
             var mp = p;
-            try mp.draw(zm.translation(-0.265, -0.108, 0.0));
+            try mp.draw(zm.translation(-0.2925, -0.058, 0.0));
         }
     }
 
@@ -115,7 +115,7 @@ pub const TextureGenerator = struct {
         const yrot = zm.rotationY(rotPerc * std.math.pi * 2.0);
         m = zm.mul(m, yrot);
         // translate to top left corner for a small view
-        m = zm.mul(m, zm.translationV(@Vector(4, gl.Float){ -5.0, 3.5, 0.0, 0.0 }));
+        m = zm.mul(m, zm.translationV(@Vector(4, gl.Float){ -5.5, 3.75, 0.0, 0.0 }));
         // scale to be small
         m = zm.mul(m, zm.scalingV(@Vector(4, gl.Float){ 0.33, 0.33, 0.33, 1.0 }));
         m = zm.mul(m, self.lookAt);

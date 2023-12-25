@@ -7,7 +7,8 @@ function darken(color, brightness)
     local b = (color >> 16) & 0xFF
     local g = (color >> 8) & 0xFF
     local r = color & 0xFF
-    return (a << 24) | ((b * (brightness/255)) << 16) | ((g * (brightness/255)) << 8) | (r * (brightness/255))
+    return (a << 24) | ((b * (brightness/255)) << 16) | ((g * (brightness/255)) << 8) | 
+      (r * (brightness/255))
 end
 
 function generate_textures()
