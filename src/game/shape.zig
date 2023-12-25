@@ -66,7 +66,6 @@ pub const Shape = struct {
                 if (img) |i| {
                     texture = try initTexture(i, name);
                 } else {
-                    std.debug.print("no texture image for {s}\n", .{name});
                     cfg.textureType = textureDataType.None;
                 }
             },
@@ -177,12 +176,6 @@ pub const Shape = struct {
             return ShapeErr.Error;
         }
 
-        var infoLog: [512]u8 = undefined;
-        var logSize: gl.Int = 0;
-        gl.getShaderInfoLog(shader, 512, &logSize, &infoLog);
-        const i: usize = @intCast(logSize);
-        std.debug.print("INFK`O::SHADER::{s}::LINKING_SUCCESS\n{s}\n", .{ name, infoLog[0..i] });
-
         return shader;
     }
 
@@ -208,11 +201,6 @@ pub const Shape = struct {
             std.debug.print("ERROR::SHADER::{s}::PROGRAM::LINKING_FAILED\n{s}\n", .{ name, infoLog[0..i] });
             return ShapeErr.Error;
         }
-        var infoLog: [512]u8 = undefined;
-        var logSize: gl.Int = 0;
-        gl.getProgramInfoLog(shaderProgram, 512, &logSize, &infoLog);
-        const i: usize = @intCast(logSize);
-        std.debug.print("INFO::SHADER::{s}::PROGRAM::LINKING_SUCCESS {d}\n{s}\n", .{ name, i, infoLog[0..i] });
 
         for (shaders) |shader| {
             gl.deleteShader(shader);
@@ -223,7 +211,6 @@ pub const Shape = struct {
             std.debug.print("{s} error: {d}\n", .{ name, e });
             return ShapeErr.Error;
         }
-        std.debug.print("{s} program set up \n", .{name});
         return shaderProgram;
     }
 
@@ -287,7 +274,6 @@ pub const Shape = struct {
 
         var image = try zstbi.Image.loadFromMemory(img, 4);
         defer image.deinit();
-        std.debug.print("loaded image {s} {d}x{d}\n", .{ msg, image.width, image.height });
 
         const width: gl.Int = @as(gl.Int, @intCast(image.width));
         const height: gl.Int = @as(gl.Int, @intCast(image.height));

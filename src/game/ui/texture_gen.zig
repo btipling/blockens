@@ -11,16 +11,13 @@ const Lua = ziglua.Lua;
 
 const robotoMonoFont = @embedFile("../assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
 
-pub fn handleInput(_: *zgui.InputTextCallbackData) i32 {
-    std.debug.print("handleInput\n", .{});
-    return 0;
-}
-
 const maxLuaScriptSize = 360_000;
+const maxLuaScriptNameSize = 10;
 
 pub const TextureGen = struct {
     appState: *state.State,
     buf: [maxLuaScriptSize]u8,
+    nameBuf: [maxLuaScriptNameSize]u8,
     luaInstance: Lua,
     codeFont: zgui.Font,
 
@@ -28,6 +25,7 @@ pub const TextureGen = struct {
         var lua: Lua = try Lua.init(alloc);
         lua.openLibs();
         var buf = [_]u8{0} ** maxLuaScriptSize;
+        const nameBuf = [_]u8{0} ** maxLuaScriptNameSize;
         const defaultLuaScript = @embedFile("../assets/lua/gen_texture_brightness.lua");
         for (defaultLuaScript, 0..) |c, i| {
             buf[i] = c;
@@ -37,6 +35,7 @@ pub const TextureGen = struct {
         return TextureGen{
             .appState = appState,
             .buf = buf,
+            .nameBuf = nameBuf,
             .luaInstance = lua,
             .codeFont = codeFont,
         };
@@ -103,6 +102,10 @@ pub const TextureGen = struct {
         self.appState.app.setTextureColor(textureRGBAColor);
     }
 
+    fn saveTextureFunc(self: *TextureGen) !void {
+        std.debug.print("saveTextureFunc from lua with name {s} \n", .{self.nameBuf});
+    }
+
     fn drawInput(self: *TextureGen, window: *glfw.Window) !void {
         const fb_size = window.getFramebufferSize();
         const w: u32 = @intCast(fb_size[0]);
@@ -115,6 +118,7 @@ pub const TextureGen = struct {
             .w = 2500,
             .h = 2000,
         });
+        zgui.setItemDefaultFocus();
         zgui.setNextItemWidth(-1);
         const style = zgui.getStyle();
         var window_bg = style.getColor(.window_bg);
@@ -133,19 +137,34 @@ pub const TextureGen = struct {
                 .no_collapse = true,
             },
         })) {
+            zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
             style.setColor(.text, text_color);
             if (zgui.button("Change texture", .{
-                .w = 500,
+                .w = 450,
                 .h = 100,
             })) {
                 try self.evalTextureFunc();
             }
+            zgui.sameLine(.{});
+            if (zgui.button("Save texture script", .{
+                .w = 600,
+                .h = 100,
+            })) {
+                try self.saveTextureFunc();
+            }
+            zgui.popStyleVar(.{ .count = 1 });
+            zgui.sameLine(.{});
             zgui.pushFont(self.codeFont);
+            zgui.pushItemWidth(1000);
+            _ = zgui.inputTextWithHint("Script name", .{
+                .buf = self.nameBuf[0..],
+                .hint = "block_script",
+            });
+            zgui.popItemWidth();
             _ = zgui.inputTextMultiline(" ", .{
                 .buf = self.buf[0..],
                 .w = 2400,
                 .h = 1800,
-                .callback = handleInput,
             });
             zgui.popFont();
         }

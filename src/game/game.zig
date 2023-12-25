@@ -41,6 +41,7 @@ pub fn run() !void {
     glfw.windowHintTyped(.doublebuffer, true);
     glfw.windowHintTyped(.resizable, false);
     glfw.windowHintTyped(.maximized, true);
+    glfw.windowHintTyped(.decorated, false);
     const window = glfw.Window.create(cfg.windows_width, cfg.windows_height, cfg.game_name, null) catch {
         std.log.err("Failed to create game window.", .{});
         return;

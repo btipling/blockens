@@ -42,7 +42,6 @@ pub const Data = struct {
             };
         }
     }
-
     pub fn ensureDefaultWorld(self: *Data) !void {
         // query for the default world
         var selectStmt = try self.db.prepareDynamic(selectWorldStmt);
@@ -59,7 +58,8 @@ pub const Data = struct {
             return err;
         };
         if (row) |r| {
-            std.debug.print("Found default world: {s}\n", .{r.name});
+            const n = std.mem.span(r.name[0..].ptr);
+            std.debug.print("Found default world: {s}\n", .{n});
             return;
         }
         // insert otherwise
