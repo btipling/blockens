@@ -22,7 +22,7 @@ pub const TextureGen = struct {
     scriptOptions: std.ArrayList(data.scriptOption),
     loadedScriptId: u32 = 0,
 
-    pub fn init(appState: *state.State, robotoMonoFont: []const u8, alloc: std.mem.Allocator) !TextureGen {
+    pub fn init(appState: *state.State, codeFont: zgui.Font, alloc: std.mem.Allocator) !TextureGen {
         var lua: Lua = try Lua.init(alloc);
         lua.openLibs();
         var buf = [_]u8{0} ** maxLuaScriptSize;
@@ -31,8 +31,6 @@ pub const TextureGen = struct {
         for (defaultLuaScript, 0..) |c, i| {
             buf[i] = c;
         }
-        const font_size = 40.0;
-        const codeFont = zgui.io.addFontFromMemory(robotoMonoFont, std.math.floor(font_size * 1.1));
         var tv = TextureGen{
             .appState = appState,
             .buf = buf,

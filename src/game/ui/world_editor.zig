@@ -22,17 +22,12 @@ pub const WorldEditor = struct {
     worldOptions: std.ArrayList(data.worldOption),
     loadedWorldId: u32 = 0,
 
-    pub fn init(appState: *state.State, robotoMonoFont: []const u8, alloc: std.mem.Allocator) !WorldEditor {
+    pub fn init(appState: *state.State, codeFont: zgui.Font, alloc: std.mem.Allocator) !WorldEditor {
         var lua: Lua = try Lua.init(alloc);
         lua.openLibs();
         var buf = [_]u8{0} ** maxLuaScriptSize;
+        _ = &buf;
         const nameBuf = [_]u8{0} ** maxLuaScriptNameSize;
-        const defaultLuaScript = @embedFile("../assets/lua/gen_wood_texture.lua");
-        for (defaultLuaScript, 0..) |c, i| {
-            buf[i] = c;
-        }
-        const font_size = 40.0;
-        const codeFont = zgui.io.addFontFromMemory(robotoMonoFont, std.math.floor(font_size * 1.1));
         var tv = WorldEditor{
             .appState = appState,
             .buf = buf,

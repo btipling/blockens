@@ -17,14 +17,16 @@ pub const UI = struct {
     WorldEditor: world_editor.WorldEditor,
 
     pub fn init(appState: *state.State, window: *glfw.Window, alloc: std.mem.Allocator) !UI {
-        const font_size: f32 = 24.0;
+        var font_size: f32 = 24.0;
         const gameFont = zgui.io.addFontFromMemory(pressStart2PFont, std.math.floor(font_size * 1.1));
         zgui.io.setDefaultFont(gameFont);
+        font_size = 40.0;
+        const codeFont = zgui.io.addFontFromMemory(robotoMonoFont, std.math.floor(font_size * 1.1));
         return UI{
             .window = window,
             .Game = game.Game{},
-            .TextureGen = try texture_gen.TextureGen.init(appState, robotoMonoFont, alloc),
-            .WorldEditor = try world_editor.WorldEditor.init(appState, robotoMonoFont, alloc),
+            .TextureGen = try texture_gen.TextureGen.init(appState, codeFont, alloc),
+            .WorldEditor = try world_editor.WorldEditor.init(appState, codeFont, alloc),
         };
     }
 
