@@ -3,8 +3,11 @@ const sqlite = @import("sqlite");
 
 const createWorldTable = @embedFile("./sql/world/create.sql");
 const insertWorldStmt = @embedFile("./sql/world/insert.sql");
-const selectWorldStmt = @embedFile("./sql/world/select.sql");
+const selectWorldByNameStmt = @embedFile("./sql/world/select_by_name.sql");
+const selectWorldByIdStmt = @embedFile("./sql/world/select_by_id.sql");
 const listWorldStmt = @embedFile("./sql/world/list.sql");
+const updateWorldStmt = @embedFile("./sql/world/update.sql");
+const deleteWorldStmt = @embedFile("./sql/world/delete.sql");
 
 const createTextureScriptTable = @embedFile("./sql/texture_script/create.sql");
 const insertTextureScriptStmt = @embedFile("./sql/texture_script/insert.sql");
@@ -25,6 +28,11 @@ pub const script = struct {
 };
 
 pub const worldOption = struct {
+    id: u32,
+    name: [21]u8,
+};
+
+pub const world = struct {
     id: u32,
     name: [21]u8,
 };
@@ -66,7 +74,7 @@ pub const Data = struct {
 
     pub fn ensureDefaultWorld(self: *Data) !void {
         // query for the default world
-        var selectStmt = try self.db.prepareDynamic(selectWorldStmt);
+        var selectStmt = try self.db.prepareDynamic(selectWorldByNameStmt);
         defer selectStmt.deinit();
 
         const row = selectStmt.one(
@@ -85,16 +93,20 @@ pub const Data = struct {
             return;
         }
         // insert otherwise
+        try saveWorld(self, "default");
+    }
+
+    pub fn saveWorld(self: *Data, name: []const u8) !void {
         var insertStmt = try self.db.prepareDynamic(insertWorldStmt);
         defer insertStmt.deinit();
 
         insertStmt.exec(
             .{},
             .{
-                .name = "default",
+                .name = name,
             },
         ) catch |err| {
-            std.log.err("Failed to insert default world: {}", .{err});
+            std.log.err("Failed to insert world: {}", .{err});
             return err;
         };
     }
@@ -122,6 +134,59 @@ pub const Data = struct {
                 .name = row.name,
             });
         }
+    }
+
+    pub fn loadWorld(self: *Data, id: u32, data: *world) !void {
+        std.debug.print("Loading world: {d}\n", .{id});
+        var selectStmt = try self.db.prepareDynamic(selectWorldByIdStmt);
+        defer selectStmt.deinit();
+
+        const row = selectStmt.one(
+            struct {
+                id: u32,
+                name: [21:0]u8,
+            },
+            .{},
+            .{ .id = id },
+        ) catch |err| {
+            std.log.err("Failed to load world: {}", .{err});
+            return err;
+        };
+        if (row) |r| {
+            data.id = id;
+            data.name = r.name;
+            return;
+        }
+        return error.Unreachable;
+    }
+
+    pub fn updateWorld(self: *Data, id: u32, name: []const u8) !void {
+        var updateStmt = try self.db.prepareDynamic(updateWorldStmt);
+        defer updateStmt.deinit();
+
+        updateStmt.exec(
+            .{},
+            .{
+                .name = name,
+                .id = id,
+            },
+        ) catch |err| {
+            std.log.err("Failed to update world: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn deleteWorld(self: *Data, id: u32) !void {
+        var deleteStmt = try self.db.prepareDynamic(deleteWorldStmt);
+        defer deleteStmt.deinit();
+
+        deleteStmt.exec(
+            .{},
+            .{ .id = id },
+        ) catch |err| {
+            std.log.err("Failed to delete world: {}", .{err});
+            return err;
+        };
     }
 
     pub fn saveTextureScript(self: *Data, name: []const u8, textureScript: []const u8) !void {
