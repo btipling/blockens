@@ -29,7 +29,7 @@ pub const State = struct {
         };
     }
 
-    pub fn deinit(self: *State) void {
+    pub fn deinit(self: State) void {
         self.game.deinit();
     }
 };
@@ -111,7 +111,7 @@ pub const Game = struct {
         return g;
     }
 
-    pub fn deinit(self: *Game) void {
+    pub fn deinit(self: Game) void {
         for (self.blocks.items) |block| {
             block.deinit();
         }

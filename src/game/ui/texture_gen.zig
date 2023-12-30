@@ -47,8 +47,9 @@ pub const TextureGen = struct {
         return tv;
     }
 
-    pub fn deinit(self: *TextureGen) void {
-        self.luaInstance.deinit();
+    pub fn deinit(self: TextureGen) void {
+        var l = self.luaInstance;
+        l.deinit();
     }
 
     pub fn draw(self: *TextureGen, window: *glfw.Window) !void {

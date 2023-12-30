@@ -24,7 +24,7 @@ pub const UI = struct {
         };
     }
 
-    pub fn deinit(self: *UI) void {
+    pub fn deinit(self: UI) void {
         self.TextureGen.deinit();
     }
 

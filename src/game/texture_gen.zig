@@ -72,7 +72,7 @@ pub const TextureGenerator = struct {
         }
     }
 
-    pub fn deinit(self: *TextureGenerator) void {
+    pub fn deinit(self: TextureGenerator) void {
         self.displayCube.deinit();
     }
 

@@ -40,7 +40,7 @@ pub const Cursor = struct {
         };
     }
 
-    pub fn deinit(self: *Cursor) void {
+    pub fn deinit(self: Cursor) void {
         self.shape.deinit();
     }
 

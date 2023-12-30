@@ -70,7 +70,7 @@ pub const Plane = struct {
         };
     }
 
-    pub fn deinit(self: *Plane) void {
+    pub fn deinit(self: Plane) void {
         self.shape.deinit();
     }
 

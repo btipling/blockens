@@ -78,6 +78,7 @@ pub const Controls = struct {
         switch (self.appState.app.view) {
             .game => try self.handleGameKey(),
             .textureGenerator => try self.handleTextureGeneratorKey(),
+            else => unreachable,
         }
 
         return false;
