@@ -8,6 +8,7 @@ const game = @import("game.zig");
 const state = @import("../state.zig");
 
 const pressStart2PFont = @embedFile("../assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
+const robotoMonoFont = @embedFile("../assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
 
 pub const UI = struct {
     window: *glfw.Window,
@@ -22,8 +23,8 @@ pub const UI = struct {
         return UI{
             .window = window,
             .Game = game.Game{},
-            .TextureGen = try texture_gen.TextureGen.init(appState, alloc),
-            .WorldEditor = try world_editor.WorldEditor.init(appState, alloc),
+            .TextureGen = try texture_gen.TextureGen.init(appState, robotoMonoFont, alloc),
+            .WorldEditor = try world_editor.WorldEditor.init(appState, robotoMonoFont, alloc),
         };
     }
 

@@ -1,16 +1,17 @@
 const std = @import("std");
 const sqlite = @import("sqlite");
 
-const createWorldTable = @embedFile("./sql/world_create.sql");
-const insertWorldStmt = @embedFile("./sql/world_insert.sql");
-const selectWorldStmt = @embedFile("./sql/world_select.sql");
+const createWorldTable = @embedFile("./sql/world/create.sql");
+const insertWorldStmt = @embedFile("./sql/world/insert.sql");
+const selectWorldStmt = @embedFile("./sql/world/select.sql");
+const listWorldStmt = @embedFile("./sql/world/list.sql");
 
-const createTextureScriptTable = @embedFile("./sql/texture_script_create.sql");
-const insertTextureScriptStmt = @embedFile("./sql/texture_script_insert.sql");
-const updateTextureScriptStmt = @embedFile("./sql/texture_script_update.sql");
-const selectTextureStmt = @embedFile("./sql/texture_script_select.sql");
-const listTextureStmt = @embedFile("./sql/texture_script_list.sql");
-const deleteTextureStmt = @embedFile("./sql/texture_script_delete.sql");
+const createTextureScriptTable = @embedFile("./sql/texture_script/create.sql");
+const insertTextureScriptStmt = @embedFile("./sql/texture_script/insert.sql");
+const updateTextureScriptStmt = @embedFile("./sql/texture_script/update.sql");
+const selectTextureStmt = @embedFile("./sql/texture_script/select.sql");
+const listTextureStmt = @embedFile("./sql/texture_script/list.sql");
+const deleteTextureStmt = @embedFile("./sql/texture_script/delete.sql");
 
 pub const scriptOption = struct {
     id: u32,
@@ -96,6 +97,31 @@ pub const Data = struct {
             std.log.err("Failed to insert default world: {}", .{err});
             return err;
         };
+    }
+
+    pub fn listWorlds(self: *Data, data: *std.ArrayList(worldOption)) !void {
+        var listStmt = try self.db.prepareDynamic(listWorldStmt);
+        defer listStmt.deinit();
+
+        data.clearRetainingCapacity();
+        const rows = listStmt.all(
+            struct {
+                id: u32,
+                name: [21:0]u8,
+            },
+            self.alloc,
+            .{},
+            .{},
+        ) catch |err| {
+            std.log.err("Failed to list worlds: {}", .{err});
+            return err;
+        };
+        for (rows) |row| {
+            try data.append(worldOption{
+                .id = row.id,
+                .name = row.name,
+            });
+        }
     }
 
     pub fn saveTextureScript(self: *Data, name: []const u8, textureScript: []const u8) !void {

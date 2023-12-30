@@ -10,8 +10,6 @@ const data = @import("../data/data.zig");
 
 const Lua = ziglua.Lua;
 
-const robotoMonoFont = @embedFile("../assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
-
 const maxLuaScriptSize = 360_000;
 const maxLuaScriptNameSize = 20;
 
@@ -22,9 +20,9 @@ pub const WorldEditor = struct {
     luaInstance: Lua,
     codeFont: zgui.Font,
     worldOptions: std.ArrayList(data.worldOption),
-    loadedScriptId: u32 = 0,
+    loadedWorldId: u32 = 0,
 
-    pub fn init(appState: *state.State, alloc: std.mem.Allocator) !WorldEditor {
+    pub fn init(appState: *state.State, robotoMonoFont: []const u8, alloc: std.mem.Allocator) !WorldEditor {
         var lua: Lua = try Lua.init(alloc);
         lua.openLibs();
         var buf = [_]u8{0} ** maxLuaScriptSize;
@@ -89,7 +87,7 @@ pub const WorldEditor = struct {
     }
 
     fn listWorlds(self: *WorldEditor) !void {
-        _ = self;
+        try self.appState.db.listWorlds(&self.worldOptions);
     }
 
     fn saveWorld(self: *WorldEditor) !void {
@@ -139,7 +137,7 @@ pub const WorldEditor = struct {
                 }
             }
             zgui.endListBox();
-            if (self.loadedScriptId != 0) {
+            if (self.loadedWorldId != 0) {
                 if (zgui.button("Update world", .{
                     .w = 450,
                     .h = 100,

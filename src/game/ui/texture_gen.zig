@@ -10,8 +10,6 @@ const data = @import("../data/data.zig");
 
 const Lua = ziglua.Lua;
 
-const robotoMonoFont = @embedFile("../assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
-
 const maxLuaScriptSize = 360_000;
 const maxLuaScriptNameSize = 20;
 
@@ -24,7 +22,7 @@ pub const TextureGen = struct {
     scriptOptions: std.ArrayList(data.scriptOption),
     loadedScriptId: u32 = 0,
 
-    pub fn init(appState: *state.State, alloc: std.mem.Allocator) !TextureGen {
+    pub fn init(appState: *state.State, robotoMonoFont: []const u8, alloc: std.mem.Allocator) !TextureGen {
         var lua: Lua = try Lua.init(alloc);
         lua.openLibs();
         var buf = [_]u8{0} ** maxLuaScriptSize;
