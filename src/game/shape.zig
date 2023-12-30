@@ -27,8 +27,6 @@ pub const ShapeVertex = struct {
     edge: [2]gl.Float,
 };
 
-pub const RGBAColorTextureSize = 3 * 16 * 16;
-
 const bcV1 = @Vector(3, gl.Float){ 1.0, 0.0, 0.0 };
 const bcV2 = @Vector(3, gl.Float){ 0.0, 1.0, 0.0 };
 const bcV3 = @Vector(3, gl.Float){ 0.0, 0.0, 1.0 };

@@ -4,7 +4,6 @@ const gl = @import("zopengl");
 const glfw = @import("zglfw");
 const ziglua = @import("ziglua");
 const config = @import("../config.zig");
-const shape = @import("../shape.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
 
@@ -126,7 +125,7 @@ pub const TextureGen = struct {
         } else {
             std.debug.print("textures is back to a table\n", .{});
         }
-        var textureRGBAColor: [shape.RGBAColorTextureSize]gl.Uint = [_]gl.Uint{0} ** shape.RGBAColorTextureSize;
+        var textureRGBAColor: [data.RGBAColorTextureSize]gl.Uint = [_]gl.Uint{0} ** data.RGBAColorTextureSize;
         for (1..(ts + 1)) |i| {
             _ = self.luaInstance.rawGetIndex(-1, @intCast(i));
             const color = self.luaInstance.toInteger(-1) catch {

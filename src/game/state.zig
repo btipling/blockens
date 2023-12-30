@@ -43,7 +43,7 @@ pub const View = enum {
 pub const App = struct {
     view: View = View.game,
     demoCubeVersion: u32 = 0,
-    demoTextureColors: ?[shape.RGBAColorTextureSize]gl.Uint,
+    demoTextureColors: ?[data.RGBAColorTextureSize]gl.Uint,
 
     pub fn init() !App {
         return App{
@@ -65,7 +65,7 @@ pub const App = struct {
         self.view = View.worldEditor;
     }
 
-    pub fn setTextureColor(self: *App, demoTextureColors: [shape.RGBAColorTextureSize]gl.Uint) void {
+    pub fn setTextureColor(self: *App, demoTextureColors: [data.RGBAColorTextureSize]gl.Uint) void {
         self.demoTextureColors = demoTextureColors;
         self.demoCubeVersion += 1;
     }

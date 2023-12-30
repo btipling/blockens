@@ -1,5 +1,6 @@
 const std = @import("std");
 const sqlite = @import("sqlite");
+const gl = @import("zopengl");
 
 const createWorldTable = @embedFile("./sql/world/create.sql");
 const insertWorldStmt = @embedFile("./sql/world/insert.sql");
@@ -15,6 +16,15 @@ const updateTextureScriptStmt = @embedFile("./sql/texture_script/update.sql");
 const selectTextureStmt = @embedFile("./sql/texture_script/select.sql");
 const listTextureStmt = @embedFile("./sql/texture_script/list.sql");
 const deleteTextureStmt = @embedFile("./sql/texture_script/delete.sql");
+
+const createBlockTable = @embedFile("./sql/block/create.sql");
+const insertBlockStmt = @embedFile("./sql/block/insert.sql");
+const updateBlockStmt = @embedFile("./sql/block/update.sql");
+const selectBlockStmt = @embedFile("./sql/block/select.sql");
+const listBlockStmt = @embedFile("./sql/block/list.sql");
+const deleteBlockStmt = @embedFile("./sql/block/delete.sql");
+
+pub const RGBAColorTextureSize = 3 * 16 * 16;
 
 pub const scriptOption = struct {
     id: u32,
@@ -35,6 +45,17 @@ pub const worldOption = struct {
 pub const world = struct {
     id: u32,
     name: [21]u8,
+};
+
+pub const blockOption = struct {
+    id: u32,
+    name: [21]u8,
+};
+
+pub const block = struct {
+    id: u32,
+    name: [21]u8,
+    texture: [RGBAColorTextureSize]gl.Uint,
 };
 
 pub const Data = struct {
@@ -282,6 +303,120 @@ pub const Data = struct {
             .{ .id = id },
         ) catch |err| {
             std.log.err("Failed to delete texture script: {}", .{err});
+            return err;
+        };
+    }
+
+    // block crud:
+
+    // textureToBlob -> uses std.mem.copy to copy a binary blob into a variable to insert into sqlite
+    fn textureToBlob(texture: [RGBAColorTextureSize]gl.Uint) ![RGBAColorTextureSize]u8 {
+        const blob: [RGBAColorTextureSize]u8 = u8{0} ** RGBAColorTextureSize;
+        try std.mem.copy(blob, texture);
+        return blob;
+    }
+
+    fn blobToTexture(blob: [RGBAColorTextureSize]u8) ![RGBAColorTextureSize]gl.Uint {
+        const texture: [RGBAColorTextureSize]gl.Uint = gl.Uint{0} ** RGBAColorTextureSize;
+        try std.mem.copy(texture, blob);
+        return texture;
+    }
+
+    pub fn saveBlock(self: *Data, name: []const u8, texture: [RGBAColorTextureSize]gl.Uint) !void {
+        var insertStmt = try self.db.prepareDynamic(insertBlockStmt);
+        defer insertStmt.deinit();
+
+        const blob = try textureToBlob(texture);
+        insertStmt.exec(
+            .{},
+            .{
+                .name = name,
+                .texture = blob,
+            },
+        ) catch |err| {
+            std.log.err("Failed to insert block: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn updateBlock(self: *Data, id: u32, name: []const u8, texture: [RGBAColorTextureSize]gl.Uint) !void {
+        var updateStmt = try self.db.prepareDynamic(updateBlockStmt);
+        defer updateStmt.deinit();
+
+        const blob = try textureToBlob(texture);
+        updateStmt.exec(
+            .{},
+            .{
+                .name = name,
+                .table = blob,
+                .id = id,
+            },
+        ) catch |err| {
+            std.log.err("Failed to update block: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn listBlocks(self: *Data, data: *std.ArrayList(scriptOption)) !void {
+        var listStmt = try self.db.prepareDynamic(listBlockStmt);
+        defer listStmt.deinit();
+
+        data.clearRetainingCapacity();
+        const rows = listStmt.all(
+            struct {
+                id: u32,
+                name: [21:0]u8,
+            },
+            self.alloc,
+            .{},
+            .{},
+        ) catch |err| {
+            std.log.err("Failed to list blocks: {}", .{err});
+            return err;
+        };
+        for (rows) |row| {
+            try data.append(blockOption{
+                .id = row.id,
+                .name = row.name,
+            });
+        }
+    }
+
+    pub fn loadBlock(self: *Data, id: u32, data: *block) !void {
+        std.debug.print("Loading block: {d}\n", .{id});
+        var selectStmt = try self.db.prepareDynamic(selectBlockStmt);
+        defer selectStmt.deinit();
+
+        const row = selectStmt.one(
+            struct {
+                id: u32,
+                name: [21:0]u8,
+                texture: [RGBAColorTextureSize:0]u8,
+            },
+            .{},
+            .{ .id = id },
+        ) catch |err| {
+            std.log.err("Failed to load block: {}", .{err});
+            return err;
+        };
+        if (row) |r| {
+            data.id = id;
+            data.name = r.name;
+            data.texture = try blobToTexture(r.texture);
+            return;
+        }
+        return error.Unreachable;
+    }
+
+    pub fn deleteBlock(self: *Data, id: u32) !void {
+        var deleteStmt = try self.db.prepareDynamic(deleteBlockStmt);
+        defer deleteStmt.deinit();
+
+        deleteStmt.exec(
+            .{},
+            .{ .id = id },
+        ) catch |err| {
+            std.log.err("Failed to delete block: {}", .{err});
             return err;
         };
     }
