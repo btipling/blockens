@@ -37,6 +37,8 @@ pub const State = struct {
 pub const View = enum {
     game,
     textureGenerator,
+    worldEditor,
+    blockEditor,
 };
 
 pub const App = struct {
