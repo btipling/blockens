@@ -79,7 +79,7 @@ pub const Game = struct {
     yaw: gl.Float,
     pitch: gl.Float,
     blocks: std.ArrayList(cube.Cube),
-    highlightedIndex: usize = 0,
+    highlightedIndex: ?usize = 0,
 
     pub fn init(alloc: std.mem.Allocator) !Game {
         var blocks = std.ArrayList(cube.Cube).init(alloc);
@@ -138,24 +138,34 @@ pub const Game = struct {
     fn pickObject(self: *Game) !void {
         var currentPos = self.cameraPos;
         const maxRayLength = 100;
+        var found = false;
         for (0..maxRayLength) |i| {
             if (i == maxRayLength) {
                 return;
             }
-            const _i: @Vector(4, gl.Float) = @splat(@as(gl.Float, @floatFromInt(i)));
-            const distance = @as(@Vector(4, gl.Float), _i);
+            const checkDistance = @as(gl.Float, @floatFromInt(i));
+            const cdV: @Vector(4, gl.Float) = @splat(checkDistance);
+            const distance = @as(@Vector(4, gl.Float), cdV);
             currentPos = @floor(self.cameraPos + (distance * self.cameraFront));
             for (self.blocks.items, 0..) |block, j| {
                 if (block.position.x == currentPos[0] and block.position.y == currentPos[1] and block.position.z == currentPos[2]) {
-                    if (self.highlightedIndex == j) {
-                        return;
+                    if (self.highlightedIndex) |hi| {
+                        if (hi == j) {
+                            return;
+                        }
+                        self.blocks.items[hi].shape.highlight = 0;
                     }
-                    self.blocks.items[self.highlightedIndex].shape.highlight = 0;
                     self.highlightedIndex = j;
-                    self.blocks.items[self.highlightedIndex].shape.highlight = 1;
-                    return;
+                    self.blocks.items[j].shape.highlight = 1;
+                    found = true;
                 }
             }
+        }
+        if (!found) {
+            if (self.highlightedIndex) |hi| {
+                self.blocks.items[hi].shape.highlight = 0;
+            }
+            self.highlightedIndex = null;
         }
     }
     pub fn getRandomBlock(blocks: std.ArrayList(cube.Cube), alloc: std.mem.Allocator, random: std.rand.Random) !cube.Cube {

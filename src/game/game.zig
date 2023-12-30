@@ -92,7 +92,7 @@ pub fn run() !void {
     defer uiCursor.deinit();
 
     // temporary change to work on texture generator
-    appState.app.view = state.View.textureGenerator;
+    // appState.app.view = state.View.textureGenerator;
 
     var gameWorld = try world.World.init(worldPlane, uiCursor, &appState);
 
