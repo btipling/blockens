@@ -23,6 +23,11 @@ pub const script = struct {
     script: [360_001]u8,
 };
 
+pub const worldOption = struct {
+    id: u32,
+    name: [21]u8,
+};
+
 pub const Data = struct {
     db: sqlite.Db,
     alloc: std.mem.Allocator,

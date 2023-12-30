@@ -75,9 +75,15 @@ pub const Controls = struct {
             try self.appState.app.setTextureGeneratorView();
         }
 
+        if (self.window.getKey(.F4) == .press) {
+            self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.normal);
+            try self.appState.app.setWorldEditorView();
+        }
+
         switch (self.appState.app.view) {
             .game => try self.handleGameKey(),
             .textureGenerator => try self.handleTextureGeneratorKey(),
+            .worldEditor => try self.handleWorldEditorKey(),
         }
 
         return false;
@@ -116,4 +122,6 @@ pub const Controls = struct {
     }
 
     fn handleTextureGeneratorKey(_: *Controls) !void {}
+
+    fn handleWorldEditorKey(_: *Controls) !void {}
 };

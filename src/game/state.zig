@@ -37,6 +37,7 @@ pub const State = struct {
 pub const View = enum {
     game,
     textureGenerator,
+    worldEditor,
 };
 
 pub const App = struct {
@@ -58,6 +59,10 @@ pub const App = struct {
 
     pub fn setTextureGeneratorView(self: *App) !void {
         self.view = View.textureGenerator;
+    }
+
+    pub fn setWorldEditorView(self: *App) !void {
+        self.view = View.worldEditor;
     }
 
     pub fn setTextureColor(self: *App, demoTextureColors: [shape.RGBAColorTextureSize]gl.Uint) void {

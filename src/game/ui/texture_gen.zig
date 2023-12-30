@@ -74,7 +74,7 @@ pub const TextureGen = struct {
         text_color = .{ 0.0, 0.0, 0.0, 1.00 };
         const title_color = .{ 1.0, 1.0, 1.0, 1.00 };
         style.setColor(.text, title_color);
-        if (zgui.begin("Create a block texture!", .{
+        if (zgui.begin("Texture Editor", .{
             .flags = .{
                 .no_title_bar = false,
                 .no_resize = true,

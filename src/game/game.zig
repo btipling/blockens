@@ -139,6 +139,9 @@ pub fn run() !void {
             .textureGenerator => {
                 try drawTextureGeneratorView(&textureGen, &gameUI);
             },
+            .worldEditor => {
+                try drawWorldEditorView(&gameUI);
+            },
         }
 
         window.swapBuffers();
@@ -154,4 +157,8 @@ fn drawTextureGeneratorView(textureGen: *texture_gen.TextureGenerator, gameUI: *
 fn drawGameView(gameWorld: *world.World, gameUI: *ui.UI) !void {
     try gameWorld.draw();
     try gameUI.drawGame();
+}
+
+fn drawWorldEditorView(gameUI: *ui.UI) !void {
+    try gameUI.drawWorldEditor();
 }
