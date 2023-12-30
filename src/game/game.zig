@@ -23,6 +23,43 @@ fn cursorPosCallback(window: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) vo
     ctrls.cursorPosCallback(xpos, ypos);
 }
 
+fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
+    glfw.windowHintTyped(.context_version_major, gl_major);
+    glfw.windowHintTyped(.context_version_minor, gl_minor);
+    glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
+    glfw.windowHintTyped(.opengl_forward_compat, true);
+    glfw.windowHintTyped(.client_api, .opengl_api);
+    glfw.windowHintTyped(.doublebuffer, true);
+    glfw.windowHintTyped(.resizable, false);
+    glfw.windowHintTyped(.maximized, true);
+    glfw.windowHintTyped(.decorated, false);
+    const window = glfw.Window.create(cfg.windows_width, cfg.windows_height, cfg.game_name, null) catch |err| {
+        std.log.err("Failed to create game window.", .{});
+        return err;
+    };
+    window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
+    glfw.makeContextCurrent(window);
+    glfw.swapInterval(1);
+    return window;
+}
+
+fn initGL(gl_major: u8, gl_minor: u8, window: *glfw.Window) !void {
+    try gl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
+
+    {
+        const dimensions: [2]i32 = window.getSize();
+        const w = dimensions[0];
+        const h = dimensions[1];
+        std.debug.print("Window size is {d}x{d}\n", .{ w, h });
+    }
+    gl.enable(gl.BLEND); // enable transparency
+    gl.enable(gl.DEPTH_TEST); // enable depth testing
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    // culling
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
+}
+
 pub fn run() !void {
     std.debug.print("\nHello btzig-blockens!\n", .{});
     glfw.init() catch {
@@ -33,33 +70,11 @@ pub fn run() !void {
 
     const gl_major = 4;
     const gl_minor = 6;
-    glfw.windowHintTyped(.context_version_major, gl_major);
-    glfw.windowHintTyped(.context_version_minor, gl_minor);
-    glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
-    glfw.windowHintTyped(.opengl_forward_compat, true);
-    glfw.windowHintTyped(.client_api, .opengl_api);
-    glfw.windowHintTyped(.doublebuffer, true);
-    glfw.windowHintTyped(.resizable, false);
-    glfw.windowHintTyped(.maximized, true);
-    glfw.windowHintTyped(.decorated, false);
-    const window = glfw.Window.create(cfg.windows_width, cfg.windows_height, cfg.game_name, null) catch {
-        std.log.err("Failed to create game window.", .{});
-        return;
-    };
+
+    const window = try initWindow(gl_major, gl_minor);
     defer window.destroy();
-    window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
 
-    glfw.makeContextCurrent(window);
-    glfw.swapInterval(1);
-
-    try gl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
-
-    {
-        const dimensions: [2]i32 = window.getSize();
-        const w = dimensions[0];
-        const h = dimensions[1];
-        std.debug.print("Window size is {d}x{d}\n", .{ w, h });
-    }
+    try initGL(gl_major, gl_minor, window);
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
@@ -84,24 +99,23 @@ pub fn run() !void {
     var gameUI = try ui.UI.init(&appState, window, allocator);
     defer gameUI.deinit();
 
+    // init view dependencies
     const planePosition = position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
     var worldPlane = try plane.Plane.init("worldplane", planePosition, allocator);
     defer worldPlane.deinit();
-
     var uiCursor = try cursor.Cursor.init("cursor", allocator);
     defer uiCursor.deinit();
 
     // temporary change to work on texture generator
     // appState.app.view = state.View.textureGenerator;
 
+    // init views
     var gameWorld = try world.World.init(worldPlane, uiCursor, &appState);
-
     var textureGen = try texture_gen.TextureGenerator.init(&appState, allocator);
     defer textureGen.deinit();
 
     var c = try controls.Controls.init(window, &appState);
     ctrls = &c;
-
     _ = window.setCursorPosCallback(cursorPosCallback);
     const skyColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 };
 
@@ -117,12 +131,6 @@ pub fn run() !void {
         }
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.clearBufferfv(gl.COLOR, 0, &skyColor);
-        gl.enable(gl.BLEND); // enable transparency
-        gl.enable(gl.DEPTH_TEST); // enable depth testing
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        // culling
-        gl.enable(gl.CULL_FACE);
-        gl.cullFace(gl.BACK);
 
         switch (appState.app.view) {
             .game => {
