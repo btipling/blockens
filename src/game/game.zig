@@ -23,12 +23,14 @@ fn cursorPosCallback(window: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) vo
     ctrls.cursorPosCallback(xpos, ypos);
 }
 
+var mainWindow: glfw.Window = undefined;
+
 pub const Game = struct {
-    window: glfw.Window,
+    window: *glfw.Window,
     gl_major: comptime_int,
     gl_minor: comptime_int,
     arenaAllocator: std.heap.ArenaAllocator,
-    allocator: *std.mem.Allocator,
+    allocator: std.mem.Allocator,
     state: state.State,
     ui: ui.UI,
     cursor: cursor.Cursor,
@@ -39,10 +41,7 @@ pub const Game = struct {
 
     pub fn init() !Game {
         var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-        defer arena.deinit();
         const allocator = arena.allocator();
-
-        const appState = try state.State.init(allocator);
 
         var g = Game{
             .window = undefined,
@@ -50,9 +49,18 @@ pub const Game = struct {
             .gl_minor = 6,
             .arenaAllocator = arena,
             .allocator = allocator,
-            .state = appState,
+            .state = undefined,
+            .ui = undefined,
+            .cursor = undefined,
+            .worldPlane = undefined,
+            .textureGen = undefined,
+            .world = undefined,
+            .controls = undefined,
         };
-        g.window = try g.initWindow();
+        var appState = try state.State.init(allocator);
+        _ = &appState;
+        g.state = appState;
+        try g.initWindow();
         try Game.initGl(&g);
         try Game.initLibs(&g);
         try Game.initViews(&g);
@@ -62,7 +70,7 @@ pub const Game = struct {
 
     pub fn deinit(self: Game) !void {
         glfw.terminate();
-        self.window.destroy();
+        mainWindow.destroy();
         self.arenaAllocator.deinit();
         zgui.deinit();
         zgui.backend.deinit();
@@ -75,7 +83,7 @@ pub const Game = struct {
         self.textureGen.deinit();
     }
 
-    fn initWindow() !glfw.Window {
+    fn initWindow() !void {
         glfw.init() catch |err| {
             std.log.err("Failed to initialize GLFW library.", .{});
             return err;
@@ -92,20 +100,20 @@ pub const Game = struct {
         glfw.windowHintTyped(.resizable, false);
         glfw.windowHintTyped(.maximized, true);
         glfw.windowHintTyped(.decorated, false);
-        const window = glfw.Window.create(cfg.windows_width, cfg.windows_height, cfg.game_name, null) catch |err| {
+        mainWindow = glfw.Window.create(cfg.windows_width, cfg.windows_height, cfg.game_name, null) catch |err| {
             std.log.err("Failed to create game window.", .{});
             return err;
         };
-        window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
+        mainWindow.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
 
-        glfw.makeContextCurrent(window);
+        glfw.makeContextCurrent(mainWindow);
         glfw.swapInterval(1);
-        return window;
+        return;
     }
 
     fn initGl(self: *Game) !void {
         try gl.loadCoreProfile(glfw.getProcAddress, self.gl_major, self.gl_minor);
-        const dimensions: [2]i32 = self.window.getSize();
+        const dimensions: [2]i32 = mainWindow.getSize();
         const w = dimensions[0];
         const h = dimensions[1];
         std.debug.print("Window size is {d}x{d}\n", .{ w, h });
@@ -119,7 +127,7 @@ pub const Game = struct {
 
     fn initLibs(self: *Game) !void {
         zgui.init(self.allocator);
-        zgui.backend.init(self.window);
+        zgui.backend.init(mainWindow);
         zmesh.init(self.allocator);
         zstbi.init(self.allocator);
         zstbi.setFlipVerticallyOnLoad(false);
@@ -129,14 +137,14 @@ pub const Game = struct {
         const planePosition = position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
         self.worldPlane = try plane.Plane.init("worldplane", planePosition, self.allocator);
         self.cursor = try cursor.Cursor.init("cursor", self.allocator);
-        self.ui = try ui.UI.init(&self.state, self.window, self.allocator);
+        self.ui = try ui.UI.init(&self.state, mainWindow, self.allocator);
         self.world = try world.World.init(self.worldPlane, self.cursor, &self.state);
         self.textureGen = try texture_gen.TextureGenerator.init(&self.state, self.allocator);
     }
 
     fn initControls(self: *Game) !void {
-        self.controls = try controls.Controls.init(self.window, &self.state);
-        _ = self.window.setCursorPosCallback(cursorPosCallback);
+        self.controls = try controls.Controls.init(mainWindow, &self.state);
+        _ = mainWindow.setCursorPosCallback(cursorPosCallback);
     }
 
     pub fn run(self: *Game) !void {
@@ -147,7 +155,7 @@ pub const Game = struct {
 
         const skyColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 };
         var appState = &self.state;
-        main_loop: while (!self.window.shouldClose()) {
+        main_loop: while (!mainWindow.shouldClose()) {
             glfw.pollEvents();
 
             const currentFrame: gl.Float = @as(gl.Float, @floatCast(glfw.getTime()));
@@ -169,7 +177,7 @@ pub const Game = struct {
                 },
             }
 
-            self.window.swapBuffers();
+            mainWindow.swapBuffers();
         }
     }
 
