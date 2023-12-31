@@ -3,12 +3,12 @@ const gl = @import("zopengl");
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const shape = @import("shape.zig");
-const position = @import("position.zig");
+const position = @import("../position.zig");
 
-const grassTexture = @embedFile("assets/textures/grass.png");
-const stoneTexture = @embedFile("assets/textures/stone.png");
-const sandTexture = @embedFile("assets/textures/sand.png");
-const oreTexture = @embedFile("assets/textures/ore.png");
+const grassTexture = @embedFile("../assets/textures/grass.png");
+const stoneTexture = @embedFile("../assets/textures/stone.png");
+const sandTexture = @embedFile("../assets/textures/sand.png");
+const oreTexture = @embedFile("../assets/textures/ore.png");
 
 pub const CubeType = enum {
     grass,
@@ -57,8 +57,8 @@ pub const Cube = struct {
         plane.translate(1.0, 0.0, 0.0);
         cube.merge(plane);
 
-        const vertexShaderSource = @embedFile("shaders/cube.vs");
-        const fragmentShaderSource = @embedFile("shaders/cube.fs");
+        const vertexShaderSource = @embedFile("../shaders/cube.vs");
+        const fragmentShaderSource = @embedFile("../shaders/cube.fs");
 
         var textureSource: ?[:0]const u8 = null;
         switch (cubeType) {

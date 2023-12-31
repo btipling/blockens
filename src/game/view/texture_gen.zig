@@ -1,10 +1,10 @@
 const std = @import("std");
 const zm = @import("zmath");
 const gl = @import("zopengl");
-const state = @import("state.zig");
-const cube = @import("cube.zig");
-const position = @import("position.zig");
-const texture_surface = @import("texture_surface.zig");
+const state = @import("../state.zig");
+const cube = @import("../shape/cube.zig");
+const position = @import("../position.zig");
+const texture_surface = @import("../shape/texture_surface.zig");
 
 pub const TextureGenerator = struct {
     appState: *state.State,

@@ -4,7 +4,7 @@ const gl = @import("zopengl");
 const glfw = @import("zglfw");
 const ziglua = @import("ziglua");
 const config = @import("../config.zig");
-const shape = @import("../shape.zig");
+const shape = @import("../shape/shape.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
 

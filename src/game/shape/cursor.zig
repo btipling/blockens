@@ -19,8 +19,8 @@ pub const Cursor = struct {
         plane.scale(0.05, 0.005, 1.0);
         crosshair.merge(plane);
 
-        const vertexShaderSource = @embedFile("shaders/cursor.vs");
-        const fragmentShaderSource = @embedFile("shaders/cursor.fs");
+        const vertexShaderSource = @embedFile("../shaders/cursor.vs");
+        const fragmentShaderSource = @embedFile("../shaders/cursor.fs");
         const cursorColor: [4]gl.Float = [_]gl.Float{ 0.0, 0.0, 0.0, 1.0 };
 
         const s = try shape.Shape.init(

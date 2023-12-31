@@ -8,12 +8,12 @@ const zm = @import("zmath");
 const cfg = @import("config.zig");
 const ui = @import("ui/ui.zig");
 const controls = @import("controls.zig");
-const cube = @import("cube.zig");
-const plane = @import("plane.zig");
-const cursor = @import("cursor.zig");
+const cube = @import("./shape/cube.zig");
+const plane = @import("./shape/plane.zig");
+const cursor = @import("./shape/cursor.zig");
 const position = @import("position.zig");
-const world = @import("world.zig");
-const texture_gen = @import("texture_gen.zig");
+const world = @import("./view/world.zig");
+const texture_gen = @import("./view/texture_gen.zig");
 const state = @import("state.zig");
 
 var ctrls: *controls.Controls = undefined;

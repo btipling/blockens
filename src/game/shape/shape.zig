@@ -3,7 +3,7 @@ const gl = @import("zopengl");
 const zstbi = @import("zstbi");
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
-const config = @import("config.zig");
+const config = @import("../config.zig");
 
 pub const ShapeErr = error{Error};
 

@@ -2,9 +2,9 @@ const std = @import("std");
 const gl = @import("zopengl");
 const zm = @import("zmath");
 const position = @import("position.zig");
-const cube = @import("cube.zig");
 const config = @import("config.zig");
-const shape = @import("shape.zig");
+const cube = @import("./shape/cube.zig");
+const shape = @import("./shape/shape.zig");
 const data = @import("./data/data.zig");
 
 pub const State = struct {

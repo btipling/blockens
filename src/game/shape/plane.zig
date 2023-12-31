@@ -3,7 +3,7 @@ const gl = @import("zopengl");
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const shape = @import("shape.zig");
-const position = @import("position.zig");
+const position = @import("../position.zig");
 
 // Plane - this is a ground world plane for now
 pub const Plane = struct {
@@ -16,8 +16,8 @@ pub const Plane = struct {
         defer plane.deinit();
         plane.rotate(std.math.pi * 1.5, 1.0, 0.0, 0.0);
 
-        const vertexShaderSource = @embedFile("shaders/plane.vs");
-        const fragmentShaderSource = @embedFile("shaders/plane.fs");
+        const vertexShaderSource = @embedFile("../shaders/plane.vs");
+        const fragmentShaderSource = @embedFile("../shaders/plane.fs");
         const groundColor: [4]gl.Float = [_]gl.Float{ 34.0 / 255.0, 32.0 / 255.0, 52.0 / 255.0, 1.0 };
 
         const s = try shape.Shape.init(

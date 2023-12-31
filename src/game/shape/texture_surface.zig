@@ -19,8 +19,8 @@ pub const TextureSurface = struct {
         plane.scale(0.075, 0.075, 1.0);
         defer plane.deinit();
 
-        const vertexShaderSource = @embedFile("shaders/demo_surface.vs");
-        const fragmentShaderSource = @embedFile("shaders/demo_surface.fs");
+        const vertexShaderSource = @embedFile("../shaders/demo_surface.vs");
+        const fragmentShaderSource = @embedFile("../shaders/demo_surface.fs");
 
         const s = try shape.Shape.init(
             name,

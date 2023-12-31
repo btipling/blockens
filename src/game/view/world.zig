@@ -1,8 +1,8 @@
 const std = @import("std");
 const zm = @import("zmath");
-const state = @import("state.zig");
-const plane = @import("plane.zig");
-const cursor = @import("cursor.zig");
+const state = @import("../state.zig");
+const plane = @import("../shape/plane.zig");
+const cursor = @import("../shape/cursor.zig");
 
 pub const World = struct {
     worldPlane: plane.Plane,
