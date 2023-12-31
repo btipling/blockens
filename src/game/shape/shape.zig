@@ -4,6 +4,7 @@ const zstbi = @import("zstbi");
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const config = @import("../config.zig");
+const data = @import("../data/data.zig");
 
 pub const ShapeErr = error{Error};
 
@@ -32,6 +33,7 @@ const bcV2 = @Vector(3, gl.Float){ 0.0, 1.0, 0.0 };
 const bcV3 = @Vector(3, gl.Float){ 0.0, 0.0, 1.0 };
 
 pub const Shape = struct {
+    blockId: u32,
     name: []const u8,
     vao: gl.Uint,
     texture: gl.Uint,
@@ -41,6 +43,7 @@ pub const Shape = struct {
     highlight: gl.Int,
 
     pub fn init(
+        blockId: u32,
         name: []const u8,
         shape: zmesh.Shape,
         vertexShaderSource: [:0]const u8,
@@ -71,7 +74,6 @@ pub const Shape = struct {
                 if (textureRGBAColor) |t| {
                     texture = try initTextureFromColors(t, name);
                 } else {
-                    std.debug.print("no texture colors for {s}\n", .{name});
                     cfg.textureType = textureDataType.None;
                 }
             },
@@ -80,6 +82,7 @@ pub const Shape = struct {
         try initData(name, shape, shapeConfig, rgbaColor, alloc);
         try setUniforms(name, program, shapeConfig);
         return Shape{
+            .blockId = blockId,
             .name = name,
             .vao = vao,
             .texture = texture,
@@ -212,7 +215,7 @@ pub const Shape = struct {
         return shaderProgram;
     }
 
-    pub fn initTextureFromColors(data: []const gl.Uint, msg: []const u8) !gl.Uint {
+    pub fn initTextureFromColors(textureData: []const gl.Uint, msg: []const u8) !gl.Uint {
         var texture: gl.Uint = undefined;
         var e: gl.Uint = 0;
         gl.genTextures(1, &texture);
@@ -233,8 +236,8 @@ pub const Shape = struct {
         }
 
         const width: gl.Int = 16;
-        const height: gl.Int = @divFloor(@as(gl.Int, @intCast(data.len)), width);
-        const imageData: *const anyopaque = data.ptr;
+        const height: gl.Int = @divFloor(@as(gl.Int, @intCast(textureData.len)), width);
+        const imageData: *const anyopaque = textureData.ptr;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
@@ -337,14 +340,14 @@ pub const Shape = struct {
         return vertices;
     }
 
-    fn initData(name: []const u8, data: zmesh.Shape, shapeConfig: ShapeConfig, rgbaColor: ?[4]gl.Float, alloc: std.mem.Allocator) !void {
-        var vertices = try std.ArrayList(ShapeVertex).initCapacity(alloc, data.positions.len);
+    fn initData(name: []const u8, shaderData: zmesh.Shape, shapeConfig: ShapeConfig, rgbaColor: ?[4]gl.Float, alloc: std.mem.Allocator) !void {
+        var vertices = try std.ArrayList(ShapeVertex).initCapacity(alloc, shaderData.positions.len);
         defer vertices.deinit();
 
         var tc: [2]gl.Float = [_]gl.Float{ 0.0, 0.0 };
         var color: [4]gl.Float = [_]gl.Float{ 1.0, 1.0, 1.0, 1.0 };
-        for (0..data.positions.len) |i| {
-            if (data.texcoords) |t| {
+        for (0..shaderData.positions.len) |i| {
+            if (shaderData.texcoords) |t| {
                 tc = t[i];
             }
             if (rgbaColor) |c| {
@@ -353,7 +356,7 @@ pub const Shape = struct {
             const defaultBC = @Vector(3, gl.Float){ 0.0, 0.0, 0.0 };
             const defaultEdge = @Vector(2, gl.Float){ 0.0, 0.0 };
             const vtx = ShapeVertex{
-                .position = data.positions[i],
+                .position = shaderData.positions[i],
                 .texture = tc,
                 .rgbaColor = color,
                 .barycentric = defaultBC,

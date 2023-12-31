@@ -2,25 +2,17 @@ const std = @import("std");
 const zgui = @import("zgui");
 const gl = @import("zopengl");
 const glfw = @import("zglfw");
-const ziglua = @import("ziglua");
 const config = @import("../config.zig");
 const shape = @import("../shape/shape.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
 
-const Lua = ziglua.Lua;
-
-const maxBlockSizeName = 20;
-const maxLuaScriptNameSize = 20;
-const maxLuaScriptSize = 360_000;
-
 pub const BlockEditor = struct {
     script: script.Script,
     appState: *state.State,
-    createNameBuf: [maxBlockSizeName]u8,
-    updateNameBuf: [maxBlockSizeName]u8,
-    luaInstance: Lua,
+    createNameBuf: [data.maxBlockSizeName]u8,
+    updateNameBuf: [data.maxBlockSizeName]u8,
     codeFont: zgui.Font,
     blockOptions: std.ArrayList(data.blockOption),
     scriptOptions: std.ArrayList(data.scriptOption),
@@ -28,16 +20,13 @@ pub const BlockEditor = struct {
     loadedScriptId: u32 = 0,
 
     pub fn init(appState: *state.State, codeFont: zgui.Font, sc: script.Script, alloc: std.mem.Allocator) !BlockEditor {
-        var lua: Lua = try Lua.init(alloc);
-        lua.openLibs();
-        const createNameBuf = [_]u8{0} ** maxBlockSizeName;
-        const updateNameBuf = [_]u8{0} ** maxBlockSizeName;
+        const createNameBuf = [_]u8{0} ** data.maxBlockSizeName;
+        const updateNameBuf = [_]u8{0} ** data.maxBlockSizeName;
         var tv = BlockEditor{
             .script = sc,
             .appState = appState,
             .createNameBuf = createNameBuf,
             .updateNameBuf = updateNameBuf,
-            .luaInstance = lua,
             .codeFont = codeFont,
             .blockOptions = std.ArrayList(data.blockOption).init(alloc),
             .scriptOptions = std.ArrayList(data.scriptOption).init(alloc),
@@ -116,9 +105,9 @@ pub const BlockEditor = struct {
     fn loadBlock(self: *BlockEditor, blockId: u32) !void {
         var blockData: data.block = undefined;
         try self.appState.db.loadBlock(blockId, &blockData);
-        var nameBuf = [_]u8{0} ** maxBlockSizeName;
+        var nameBuf = [_]u8{0} ** data.maxBlockSizeName;
         for (blockData.name, 0..) |c, i| {
-            if (i >= maxBlockSizeName) {
+            if (i >= data.maxBlockSizeName) {
                 break;
             }
             nameBuf[i] = c;
@@ -128,7 +117,7 @@ pub const BlockEditor = struct {
         self.appState.app.setTextureColor(blockData.texture);
     }
 
-    fn evalTextureFunc(self: *BlockEditor, buf: [maxLuaScriptSize]u8) !void {
+    fn evalTextureFunc(self: *BlockEditor, buf: [script.maxLuaScriptSize]u8) !void {
         std.debug.print("texture gen: evalTextureFunc from lua\n", .{});
         const textureRGBAColor = try self.script.evalTextureFunc(buf);
         self.appState.app.setTextureColor(textureRGBAColor);
@@ -137,9 +126,9 @@ pub const BlockEditor = struct {
     fn loadTextureScriptFunc(self: *BlockEditor, scriptId: u32) !void {
         var scriptData: data.script = undefined;
         try self.appState.db.loadTextureScript(scriptId, &scriptData);
-        var buf = [_]u8{0} ** maxLuaScriptSize;
+        var buf = [_]u8{0} ** script.maxLuaScriptSize;
         for (scriptData.script, 0..) |c, i| {
-            if (i >= maxLuaScriptSize) {
+            if (i >= script.maxLuaScriptSize) {
                 break;
             }
             buf[i] = c;
@@ -227,9 +216,9 @@ pub const BlockEditor = struct {
                 .h = 1400,
             });
             for (self.scriptOptions.items) |scriptOption| {
-                var buffer: [maxLuaScriptNameSize + 10]u8 = undefined;
+                var buffer: [script.maxLuaScriptNameSize + 10]u8 = undefined;
                 const selectableName = try std.fmt.bufPrint(&buffer, "{d}: {s}", .{ scriptOption.id, scriptOption.name });
-                var name: [maxLuaScriptNameSize:0]u8 = undefined;
+                var name: [script.maxLuaScriptNameSize:0]u8 = undefined;
                 for (name, 0..) |_, i| {
                     if (selectableName.len <= i) {
                         name[i] = 0;
@@ -266,9 +255,9 @@ pub const BlockEditor = struct {
                 .h = 1400,
             });
             for (self.blockOptions.items) |blockOption| {
-                var buffer: [maxBlockSizeName + 10]u8 = undefined;
+                var buffer: [data.maxBlockSizeName + 10]u8 = undefined;
                 const selectableName = try std.fmt.bufPrint(&buffer, "{d}: {s}", .{ blockOption.id, blockOption.name });
-                var name: [maxBlockSizeName:0]u8 = undefined;
+                var name: [data.maxBlockSizeName:0]u8 = undefined;
                 for (name, 0..) |_, i| {
                     if (selectableName.len <= i) {
                         name[i] = 0;

@@ -24,6 +24,7 @@ pub const Cursor = struct {
         const cursorColor: [4]gl.Float = [_]gl.Float{ 0.0, 0.0, 0.0, 1.0 };
 
         const s = try shape.Shape.init(
+            0,
             name,
             crosshair,
             vertexShaderSource,

@@ -23,6 +23,7 @@ pub const TextureSurface = struct {
         const fragmentShaderSource = @embedFile("../shaders/demo_surface.fs");
 
         const s = try shape.Shape.init(
+            0,
             name,
             plane,
             vertexShaderSource,

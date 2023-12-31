@@ -39,7 +39,7 @@ pub const TextureGenerator = struct {
     fn setCube(self: *TextureGenerator) !void {
         const pos = position.Position{ .x = 0, .y = 0, .z = 0 };
         if (self.appState.app.demoTextureColors) |demoTextureColors| {
-            const displayCube = try cube.Cube.initDemoCube("display_cube", cube.CubeType.demo, pos, self.alloc, &demoTextureColors);
+            const displayCube = try cube.Cube.initDemoCube("demo_cube", pos, self.alloc, demoTextureColors);
             self.displayCube = displayCube;
             return;
         }

@@ -21,7 +21,8 @@ pub const Plane = struct {
         const groundColor: [4]gl.Float = [_]gl.Float{ 34.0 / 255.0, 32.0 / 255.0, 52.0 / 255.0, 1.0 };
 
         const s = try shape.Shape.init(
-            name,
+            0,
+            "plane",
             plane,
             vertexShaderSource,
             fragmentShaderSource,

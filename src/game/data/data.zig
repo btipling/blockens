@@ -28,6 +28,8 @@ pub const RGBAColorTextureSize = 3 * 16 * 16; // 768
 // 768 u32s fit into 3072 u8s
 pub const TextureBlobArrayStoreSize = 3072;
 
+pub const maxBlockSizeName = 20;
+
 pub const scriptOption = struct {
     id: u32,
     name: [21]u8,

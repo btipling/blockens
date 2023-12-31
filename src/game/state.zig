@@ -22,11 +22,13 @@ pub const State = struct {
             std.log.err("Failed to ensure default world: {}\n", .{err});
             return err;
         };
-        return State{
+        var s = State{
             .app = try App.init(),
             .game = try Game.init(alloc),
             .db = db,
         };
+        try s.game.initBlocks(&s, alloc);
+        return s;
     }
 
     pub fn deinit(self: *State) void {
@@ -86,6 +88,7 @@ pub const App = struct {
 };
 
 pub const Game = struct {
+    blockOptions: std.ArrayList(data.blockOption),
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
@@ -101,16 +104,8 @@ pub const Game = struct {
     highlightedIndex: ?usize = 0,
 
     pub fn init(alloc: std.mem.Allocator) !Game {
-        var blocks = std.ArrayList(cube.Cube).init(alloc);
-        var prng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.milliTimestamp())));
-        const random = prng.random();
-
-        for (0..config.num_blocks) |_| {
-            const b = try getRandomBlock(blocks, alloc, random);
-            try blocks.append(b);
-        }
-
         var g = Game{
+            .blockOptions = std.ArrayList(data.blockOption).init(alloc),
             .cameraPos = @Vector(4, gl.Float){ 0.0, 1.0, 3.0, 1.0 },
             .cameraFront = @Vector(4, gl.Float){ 0.0, 0.0, -1.0, 0.0 },
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
@@ -122,8 +117,9 @@ pub const Game = struct {
             .lastY = 0.0,
             .yaw = -90.0,
             .pitch = 0.0,
-            .blocks = blocks,
+            .blocks = std.ArrayList(cube.Cube).init(alloc),
         };
+
         try Game.updateLookAt(&g);
         return g;
     }
@@ -131,6 +127,19 @@ pub const Game = struct {
     pub fn deinit(self: *Game) void {
         for (self.blocks.items) |block| {
             block.deinit();
+        }
+    }
+
+    pub fn initBlocks(self: *Game, appState: *State, alloc: std.mem.Allocator) !void {
+        try appState.db.listBlocks(&self.blockOptions);
+        var prng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.milliTimestamp())));
+        const random = prng.random();
+        if (self.blockOptions.items.len == 0) {
+            return;
+        }
+        for (0..config.num_blocks) |_| {
+            const b = try self.getRandomBlock(appState, self.blocks, alloc, random);
+            try self.blocks.append(b);
         }
     }
 
@@ -182,12 +191,15 @@ pub const Game = struct {
         }
         if (!found) {
             if (self.highlightedIndex) |hi| {
-                self.blocks.items[hi].shape.highlight = 0;
+                if (self.blocks.items.len > hi) {
+                    self.blocks.items[hi].shape.highlight = 0;
+                }
             }
             self.highlightedIndex = null;
         }
     }
-    pub fn getRandomBlock(blocks: std.ArrayList(cube.Cube), alloc: std.mem.Allocator, random: std.rand.Random) !cube.Cube {
+
+    pub fn getRandomBlock(self: *Game, appState: *State, blocks: std.ArrayList(cube.Cube), alloc: std.mem.Allocator, random: std.rand.Random) !cube.Cube {
         var pos: position.Position = undefined;
         var available = false;
         const maxTries = 100;
@@ -204,16 +216,12 @@ pub const Game = struct {
             available = !found;
             tries += 1;
         }
-        return try cube.Cube.init("block", randomCubeType(random), pos, alloc);
+        return try cube.Cube.init(appState, self.randomCubeType(random), pos, alloc);
     }
 
-    pub fn randomCubeType(random: std.rand.Random) cube.CubeType {
-        switch (random.uintAtMost(u32, 100)) {
-            0...75 => return cube.CubeType.grass,
-            76...85 => return cube.CubeType.stone,
-            86...97 => return cube.CubeType.sand,
-            else => return cube.CubeType.ore,
-        }
+    pub fn randomCubeType(self: *Game, random: std.rand.Random) u32 {
+        const i = random.uintAtMost(usize, self.blockOptions.items.len - 1);
+        return self.blockOptions.items[i].id;
     }
 
     pub fn randomXZP(random: std.rand.Random) gl.Float {

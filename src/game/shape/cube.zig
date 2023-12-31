@@ -4,33 +4,21 @@ const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const shape = @import("shape.zig");
 const position = @import("../position.zig");
+const state = @import("../state.zig");
+const data = @import("../data/data.zig");
 
-const grassTexture = @embedFile("../assets/textures/grass.png");
-const stoneTexture = @embedFile("../assets/textures/stone.png");
-const sandTexture = @embedFile("../assets/textures/sand.png");
-const oreTexture = @embedFile("../assets/textures/ore.png");
-
-pub const CubeType = enum {
-    grass,
-    stone,
-    sand,
-    ore,
-    demo,
-};
-
-var cubesMap: ?std.AutoHashMap(CubeType, shape.Shape) = null;
+var cubesMap: ?std.AutoHashMap(u32, shape.Shape) = null;
 
 pub const Cube = struct {
-    name: []const u8,
-    type: CubeType,
+    blockId: u32,
     position: position.Position,
     shape: shape.Shape,
 
     fn initShape(
         name: []const u8,
-        cubeType: CubeType,
+        blockId: u32,
         alloc: std.mem.Allocator,
-        textureRGBAColors: ?[]const gl.Uint,
+        textureRGBAColors: []const gl.Uint,
     ) !shape.Shape {
         // instead of a cube we're going to use the par_shape parametric plane functions to create a cube instead
         // to get the texture coordinates which we don't with cubes
@@ -60,30 +48,19 @@ pub const Cube = struct {
         const vertexShaderSource = @embedFile("../shaders/cube.vs");
         const fragmentShaderSource = @embedFile("../shaders/cube.fs");
 
-        var textureSource: ?[:0]const u8 = null;
-        switch (cubeType) {
-            CubeType.grass => textureSource = grassTexture,
-            CubeType.stone => textureSource = stoneTexture,
-            CubeType.sand => textureSource = sandTexture,
-            CubeType.ore => textureSource = oreTexture,
-            else => textureSource = null,
-        }
-
-        var sconfig = shape.ShapeConfig{
-            .textureType = shape.textureDataType.Image,
+        const sconfig = shape.ShapeConfig{
+            .textureType = shape.textureDataType.RGBAColor,
             .isCube = true,
             .hasPerspective = true,
         };
-        if (textureRGBAColors) |_| {
-            sconfig.textureType = shape.textureDataType.RGBAColor;
-        }
 
         return try shape.Shape.init(
+            blockId,
             name,
             cube,
             vertexShaderSource,
             fragmentShaderSource,
-            textureSource,
+            null,
             null,
             textureRGBAColors,
             sconfig,
@@ -93,53 +70,51 @@ pub const Cube = struct {
 
     pub fn initDemoCube(
         name: []const u8,
-        cubeType: CubeType,
         pos: position.Position,
         alloc: std.mem.Allocator,
-        textureRGBAColors: []const gl.Uint,
+        textureRGBAColors: [data.RGBAColorTextureSize]gl.Uint,
     ) !Cube {
-        const s = try initShape(name, cubeType, alloc, textureRGBAColors);
+        const s = try initShape(name, 0, alloc, &textureRGBAColors);
         return Cube{
-            .type = cubeType,
-            .name = name,
+            .blockId = 0,
             .position = pos,
             .shape = s,
         };
     }
 
-    pub fn init(name: []const u8, cubeType: CubeType, pos: position.Position, alloc: std.mem.Allocator) !Cube {
+    pub fn initBlockCube(appState: *state.State, blockId: u32, pos: position.Position, alloc: std.mem.Allocator) !Cube {
+        var blockData: data.block = undefined;
+        try appState.db.loadBlock(blockId, &blockData);
+        var name = [_]u8{0} ** data.maxBlockSizeName;
+        for (blockData.name, 0..) |c, i| {
+            if (i >= data.maxBlockSizeName) {
+                break;
+            }
+            name[i] = c;
+        }
+        const s = try initShape(&name, blockId, alloc, &blockData.texture);
+        try cubesMap.?.put(blockId, s);
+        return Cube{
+            .blockId = blockId,
+            .position = pos,
+            .shape = s,
+        };
+    }
+
+    pub fn init(appState: *state.State, blockId: u32, pos: position.Position, alloc: std.mem.Allocator) !Cube {
         if (cubesMap) |m| {
-            if (m.get(cubeType)) |s| {
+            if (m.get(blockId)) |s| {
                 return Cube{
-                    .type = cubeType,
-                    .name = name,
+                    .blockId = blockId,
                     .position = pos,
                     .shape = s,
                 };
             } else {
-                const s = try initShape(name, cubeType, alloc, null);
-                try cubesMap.?.put(cubeType, s);
-                return Cube{
-                    .type = cubeType,
-                    .name = name,
-                    .position = pos,
-                    .shape = s,
-                };
+                return try initBlockCube(appState, blockId, pos, alloc);
             }
         }
-
-        cubesMap = std.AutoHashMap(CubeType, shape.Shape).init(
-            alloc,
-        );
-
-        const s = try initShape(name, cubeType, alloc, null);
-        try cubesMap.?.put(cubeType, s);
-        return Cube{
-            .type = cubeType,
-            .name = name,
-            .position = pos,
-            .shape = s,
-        };
+        cubesMap = std.AutoHashMap(u32, shape.Shape).init(alloc);
+        return try initBlockCube(appState, blockId, pos, alloc);
     }
 
     pub fn deinit(_: Cube) void {
@@ -154,7 +129,6 @@ pub const Cube = struct {
     }
 
     pub fn draw(self: Cube, givenM: zm.Mat) !void {
-        // move to world space with position
         const m = zm.translation(self.position.x, self.position.y, self.position.z);
         try self.shape.draw(zm.mul(m, givenM));
     }
