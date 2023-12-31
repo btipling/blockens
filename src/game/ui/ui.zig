@@ -4,6 +4,7 @@ const gl = @import("zopengl");
 const glfw = @import("zglfw");
 const texture_gen = @import("texture_gen.zig");
 const world_editor = @import("world_editor.zig");
+const block_editor = @import("block_editor.zig");
 const game = @import("game.zig");
 const state = @import("../state.zig");
 
@@ -15,6 +16,7 @@ pub const UI = struct {
     Game: game.Game,
     TextureGen: texture_gen.TextureGen,
     WorldEditor: world_editor.WorldEditor,
+    BlockEditor: block_editor.BlockEditor,
 
     pub fn init(appState: *state.State, window: *glfw.Window, alloc: std.mem.Allocator) !UI {
         var font_size: f32 = 24.0;
@@ -27,6 +29,7 @@ pub const UI = struct {
             .Game = game.Game{},
             .TextureGen = try texture_gen.TextureGen.init(appState, codeFont, alloc),
             .WorldEditor = try world_editor.WorldEditor.init(appState, codeFont, alloc),
+            .BlockEditor = try block_editor.BlockEditor.init(appState, codeFont, alloc),
         };
     }
 
@@ -45,6 +48,11 @@ pub const UI = struct {
 
     pub fn drawWorldEditor(self: *UI) !void {
         try self.WorldEditor.draw(self.window);
+        self.window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.normal);
+    }
+
+    pub fn drawBlockEditor(self: *UI) !void {
+        try self.BlockEditor.draw(self.window);
         self.window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.normal);
     }
 };

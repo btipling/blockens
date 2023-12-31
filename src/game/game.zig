@@ -143,6 +143,9 @@ pub fn run() !void {
             .worldEditor => {
                 try drawWorldEditorView(&gameUI);
             },
+            .blockEditor => {
+                try drawBlockEditorView(&gameUI);
+            },
         }
 
         window.swapBuffers();
@@ -162,4 +165,8 @@ fn drawGameView(gameWorld: *world.World, gameUI: *ui.UI) !void {
 
 fn drawWorldEditorView(gameUI: *ui.UI) !void {
     try gameUI.drawWorldEditor();
+}
+
+fn drawBlockEditorView(gameUI: *ui.UI) !void {
+    try gameUI.drawBlockEditor();
 }

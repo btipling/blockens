@@ -24,7 +24,9 @@ const selectBlockStmt = @embedFile("./sql/block/select.sql");
 const listBlockStmt = @embedFile("./sql/block/list.sql");
 const deleteBlockStmt = @embedFile("./sql/block/delete.sql");
 
-pub const RGBAColorTextureSize = 3 * 16 * 16;
+pub const RGBAColorTextureSize = 3 * 16 * 16; // 768
+// 768 u32s fit into 3072 u8s
+pub const TextureBlobArrayStoreSize = 3072;
 
 pub const scriptOption = struct {
     id: u32,
@@ -81,6 +83,7 @@ pub const Data = struct {
         const createTableQueries = [_][]const u8{
             createWorldTable,
             createTextureScriptTable,
+            createBlockTable,
         };
         for (createTableQueries) |query| {
             var stmt = try self.db.prepareDynamic(query);
@@ -309,16 +312,32 @@ pub const Data = struct {
 
     // block crud:
 
-    // textureToBlob -> uses std.mem.copy to copy a binary blob into a variable to insert into sqlite
-    fn textureToBlob(texture: [RGBAColorTextureSize]gl.Uint) ![RGBAColorTextureSize]u8 {
-        const blob: [RGBAColorTextureSize]u8 = u8{0} ** RGBAColorTextureSize;
-        try std.mem.copy(blob, texture);
+    fn textureToBlob(texture: [RGBAColorTextureSize]gl.Uint) ![TextureBlobArrayStoreSize]u8 {
+        var blob: [TextureBlobArrayStoreSize]u8 = undefined;
+        for (texture, 0..) |t, i| {
+            const offset = i * 4;
+            const a = @as(u8, @intCast(t >> 24));
+            const b = @as(u8, @intCast(t >> 16));
+            const g = @as(u8, @intCast(t >> 8));
+            const r = @as(u8, @intCast(t));
+            blob[offset] = a;
+            blob[offset + 1] = b;
+            blob[offset + 2] = g;
+            blob[offset + 3] = r;
+        }
         return blob;
     }
 
-    fn blobToTexture(blob: [RGBAColorTextureSize]u8) ![RGBAColorTextureSize]gl.Uint {
-        const texture: [RGBAColorTextureSize]gl.Uint = gl.Uint{0} ** RGBAColorTextureSize;
-        try std.mem.copy(texture, blob);
+    fn blobToTexture(blob: [TextureBlobArrayStoreSize:0]u8) ![RGBAColorTextureSize]gl.Uint {
+        var texture: [RGBAColorTextureSize]gl.Uint = undefined;
+        for (texture, 0..) |_, i| {
+            const offset = i * 4;
+            const a = @as(gl.Uint, @intCast(blob[offset]));
+            const b = @as(gl.Uint, @intCast(blob[offset + 1]));
+            const g = @as(gl.Uint, @intCast(blob[offset + 2]));
+            const r = @as(gl.Uint, @intCast(blob[offset + 3]));
+            texture[i] = a << 24 | b << 16 | g << 8 | r;
+        }
         return texture;
     }
 
@@ -357,7 +376,7 @@ pub const Data = struct {
         };
     }
 
-    pub fn listBlocks(self: *Data, data: *std.ArrayList(scriptOption)) !void {
+    pub fn listBlocks(self: *Data, data: *std.ArrayList(blockOption)) !void {
         var listStmt = try self.db.prepareDynamic(listBlockStmt);
         defer listStmt.deinit();
 
@@ -391,7 +410,7 @@ pub const Data = struct {
             struct {
                 id: u32,
                 name: [21:0]u8,
-                texture: [RGBAColorTextureSize:0]u8,
+                texture: [TextureBlobArrayStoreSize:0]u8,
             },
             .{},
             .{ .id = id },

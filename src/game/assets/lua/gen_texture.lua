@@ -1,5 +1,5 @@
 function rgba_to_int(r, g, b, a)
-    return (r << 24) | (g << 16) | (b << 8) | a
+    return (a << 24) | (b << 16) | (g << 8) | r
 end
 
 function generate_textures()
