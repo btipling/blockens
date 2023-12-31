@@ -6,35 +6,29 @@ const ziglua = @import("ziglua");
 const config = @import("../config.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
-
-const Lua = ziglua.Lua;
-
-const maxLuaScriptSize = 360_000;
-const maxLuaScriptNameSize = 20;
+const script = @import("../script/script.zig");
 
 pub const TextureGen = struct {
+    script: script.Script,
     appState: *state.State,
-    buf: [maxLuaScriptSize]u8,
-    nameBuf: [maxLuaScriptNameSize]u8,
-    luaInstance: Lua,
+    buf: [script.maxLuaScriptSize]u8,
+    nameBuf: [script.maxLuaScriptNameSize]u8,
     codeFont: zgui.Font,
     scriptOptions: std.ArrayList(data.scriptOption),
     loadedScriptId: u32 = 0,
 
-    pub fn init(appState: *state.State, codeFont: zgui.Font, alloc: std.mem.Allocator) !TextureGen {
-        var lua: Lua = try Lua.init(alloc);
-        lua.openLibs();
-        var buf = [_]u8{0} ** maxLuaScriptSize;
-        const nameBuf = [_]u8{0} ** maxLuaScriptNameSize;
-        const defaultLuaScript = @embedFile("../assets/lua/gen_wood_texture.lua");
+    pub fn init(appState: *state.State, codeFont: zgui.Font, sc: script.Script, alloc: std.mem.Allocator) !TextureGen {
+        var buf = [_]u8{0} ** script.maxLuaScriptSize;
+        const nameBuf = [_]u8{0} ** script.maxLuaScriptNameSize;
+        const defaultLuaScript = @embedFile("../script/lua/gen_wood_texture.lua");
         for (defaultLuaScript, 0..) |c, i| {
             buf[i] = c;
         }
         var tv = TextureGen{
+            .script = sc,
             .appState = appState,
             .buf = buf,
             .nameBuf = nameBuf,
-            .luaInstance = lua,
             .codeFont = codeFont,
             .scriptOptions = std.ArrayList(data.scriptOption).init(alloc),
         };
@@ -43,7 +37,7 @@ pub const TextureGen = struct {
     }
 
     pub fn deinit(self: *TextureGen) void {
-        self.luaInstance.deinit();
+        _ = self;
     }
 
     pub fn draw(self: *TextureGen, window: *glfw.Window) !void {
@@ -86,55 +80,8 @@ pub const TextureGen = struct {
     }
 
     fn evalTextureFunc(self: *TextureGen) !void {
-        std.debug.print("evalTextureFunc from lua\n", .{});
-        var luaCode: [maxLuaScriptSize]u8 = [_]u8{0} ** maxLuaScriptSize;
-        var nullIndex: usize = 0;
-        for (self.buf) |c| {
-            if (c == 0) {
-                break;
-            }
-            luaCode[nullIndex] = c;
-            nullIndex += 1;
-        }
-        const luaCString: [:0]const u8 = luaCode[0..nullIndex :0];
-        self.luaInstance.doString(luaCString) catch {
-            std.log.err("Failed to eval lua code from string {s}.", .{luaCString});
-            return;
-        };
-        _ = self.luaInstance.getGlobal("textures") catch |err| {
-            std.log.err("Failed to get global textures. {}", .{err});
-            return;
-        };
-        if (self.luaInstance.isTable(-1) == false) {
-            std.log.err("textures is not a table", .{});
-            return;
-        } else {
-            std.debug.print("textures is a table\n", .{});
-        }
-        self.luaInstance.len(-1);
-        const tableSize = self.luaInstance.toInteger(-1) catch {
-            std.log.err("Failed to get table size", .{});
-            return;
-        };
-        const ts = @as(usize, @intCast(tableSize));
-        std.debug.print("table size: {d}\n", .{ts});
-        self.luaInstance.pop(1);
-        if (self.luaInstance.isTable(-1) == false) {
-            std.log.err("textures is not back to a table", .{});
-            return;
-        } else {
-            std.debug.print("textures is back to a table\n", .{});
-        }
-        var textureRGBAColor: [data.RGBAColorTextureSize]gl.Uint = [_]gl.Uint{0} ** data.RGBAColorTextureSize;
-        for (1..(ts + 1)) |i| {
-            _ = self.luaInstance.rawGetIndex(-1, @intCast(i));
-            const color = self.luaInstance.toInteger(-1) catch {
-                std.log.err("Failed to get color", .{});
-                return;
-            };
-            textureRGBAColor[i - 1] = @as(gl.Uint, @intCast(color));
-            self.luaInstance.pop(1);
-        }
+        std.debug.print("texture gen: evalTextureFunc from lua\n", .{});
+        const textureRGBAColor = try self.script.evalTextureFunc(self.buf);
         self.appState.app.setTextureColor(textureRGBAColor);
     }
 
@@ -145,16 +92,16 @@ pub const TextureGen = struct {
     fn loadTextureScriptFunc(self: *TextureGen, scriptId: u32) !void {
         var scriptData: data.script = undefined;
         try self.appState.db.loadTextureScript(scriptId, &scriptData);
-        var buf = [_]u8{0} ** maxLuaScriptSize;
-        var nameBuf = [_]u8{0} ** maxLuaScriptNameSize;
+        var buf = [_]u8{0} ** script.maxLuaScriptSize;
+        var nameBuf = [_]u8{0} ** script.maxLuaScriptNameSize;
         for (scriptData.name, 0..) |c, i| {
-            if (i >= maxLuaScriptNameSize) {
+            if (i >= script.maxLuaScriptNameSize) {
                 break;
             }
             nameBuf[i] = c;
         }
         for (scriptData.script, 0..) |c, i| {
-            if (i >= maxLuaScriptSize) {
+            if (i >= script.maxLuaScriptSize) {
                 break;
             }
             buf[i] = c;
@@ -262,9 +209,9 @@ pub const TextureGen = struct {
                 .h = 1400,
             });
             for (self.scriptOptions.items) |scriptOption| {
-                var buffer: [maxLuaScriptNameSize + 10]u8 = undefined;
+                var buffer: [script.maxLuaScriptNameSize + 10]u8 = undefined;
                 const selectableName = try std.fmt.bufPrint(&buffer, "{d}: {s}", .{ scriptOption.id, scriptOption.name });
-                var name: [maxLuaScriptNameSize:0]u8 = undefined;
+                var name: [script.maxLuaScriptNameSize:0]u8 = undefined;
                 for (name, 0..) |_, i| {
                     if (selectableName.len <= i) {
                         name[i] = 0;
