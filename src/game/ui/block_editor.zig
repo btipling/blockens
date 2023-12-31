@@ -156,8 +156,11 @@ pub const BlockEditor = struct {
                 return;
             }
         }
-        const emtpyText = [_]gl.Uint{0} ** data.RGBAColorTextureSize;
-        try self.appState.db.updateBlock(self.loadedBlockId, &self.updateNameBuf, emtpyText);
+        var textureColors = [_]gl.Uint{0} ** data.RGBAColorTextureSize;
+        if (self.appState.app.demoTextureColors) |colors| {
+            textureColors = colors;
+        }
+        try self.appState.db.updateBlock(self.loadedBlockId, &self.updateNameBuf, textureColors);
         try self.listBlocks();
         try self.loadBlock(self.loadedBlockId);
     }

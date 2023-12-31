@@ -316,10 +316,10 @@ pub const Data = struct {
         var blob: [TextureBlobArrayStoreSize]u8 = undefined;
         for (texture, 0..) |t, i| {
             const offset = i * 4;
-            const a = @as(u8, @intCast(t >> 24));
-            const b = @as(u8, @intCast(t >> 16));
-            const g = @as(u8, @intCast(t >> 8));
-            const r = @as(u8, @intCast(t));
+            const a = @as(u8, @truncate(t >> 24));
+            const b = @as(u8, @truncate(t >> 16));
+            const g = @as(u8, @truncate(t >> 8));
+            const r = @as(u8, @truncate(t));
             blob[offset] = a;
             blob[offset + 1] = b;
             blob[offset + 2] = g;
