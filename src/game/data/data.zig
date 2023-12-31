@@ -26,7 +26,7 @@ const deleteBlockStmt = @embedFile("./sql/block/delete.sql");
 
 pub const RGBAColorTextureSize = 3 * 16 * 16; // 768
 // 768 u32s fit into 3072 u8s
-pub const TextureBlobArrayStoreSize = 3073; // + 1 for null terminator
+pub const TextureBlobArrayStoreSize = 3072;
 
 pub const scriptOption = struct {
     id: u32,
@@ -328,7 +328,7 @@ pub const Data = struct {
         return blob;
     }
 
-    fn blobToTexture(blob: [TextureBlobArrayStoreSize:0]u8) ![RGBAColorTextureSize]gl.Uint {
+    fn blobToTexture(blob: [TextureBlobArrayStoreSize + 1:0]u8) ![RGBAColorTextureSize]gl.Uint {
         var texture: [RGBAColorTextureSize]gl.Uint = undefined;
         for (texture, 0..) |_, i| {
             const offset = i * 4;
@@ -413,7 +413,7 @@ pub const Data = struct {
             struct {
                 id: u32,
                 name: [21:0]u8,
-                texture: [TextureBlobArrayStoreSize:0]u8,
+                texture: [TextureBlobArrayStoreSize + 1:0]u8,
             },
             .{},
             .{ .id = id },
