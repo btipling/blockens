@@ -7,18 +7,22 @@ const world_editor = @import("world_editor.zig");
 const block_editor = @import("block_editor.zig");
 const game = @import("game.zig");
 const state = @import("../state.zig");
+const script = @import("../script/script.zig");
 
 const pressStart2PFont = @embedFile("../assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
 const robotoMonoFont = @embedFile("../assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
 
 pub const UI = struct {
     window: *glfw.Window,
+    script: script.Script,
     Game: game.Game,
     TextureGen: texture_gen.TextureGen,
     WorldEditor: world_editor.WorldEditor,
     BlockEditor: block_editor.BlockEditor,
 
     pub fn init(appState: *state.State, window: *glfw.Window, alloc: std.mem.Allocator) !UI {
+        const sc = try script.Script.init(alloc);
+        var _sc = sc;
         var font_size: f32 = 24.0;
         const gameFont = zgui.io.addFontFromMemory(pressStart2PFont, std.math.floor(font_size * 1.1));
         zgui.io.setDefaultFont(gameFont);
@@ -26,8 +30,9 @@ pub const UI = struct {
         const codeFont = zgui.io.addFontFromMemory(robotoMonoFont, std.math.floor(font_size * 1.1));
         return UI{
             .window = window,
+            .script = sc,
             .Game = game.Game{},
-            .TextureGen = try texture_gen.TextureGen.init(appState, codeFont, alloc),
+            .TextureGen = try texture_gen.TextureGen.init(appState, codeFont, &_sc, alloc),
             .WorldEditor = try world_editor.WorldEditor.init(appState, codeFont, alloc),
             .BlockEditor = try block_editor.BlockEditor.init(appState, codeFont, alloc),
         };
@@ -35,6 +40,7 @@ pub const UI = struct {
 
     pub fn deinit(self: *UI) void {
         self.TextureGen.deinit();
+        self.script.deinit();
     }
 
     pub fn drawGame(self: *UI) !void {
