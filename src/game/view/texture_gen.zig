@@ -109,16 +109,16 @@ pub const TextureGenerator = struct {
         var m = zm.identity();
         // rotate cube around its center
         m = zm.mul(m, zm.translationV(@Vector(4, gl.Float){ -0.5, -0.5, -0.5, 0.0 }));
+        // scale to be small
+        m = zm.mul(m, zm.scalingV(@Vector(4, gl.Float){ 0.33, 0.33, 0.33, 1.0 }));
         const zrot = zm.rotationZ(0.125 * std.math.pi * 2.0);
         m = zm.mul(m, zrot);
         const rotPerc: gl.Float = @as(gl.Float, @floatFromInt(@mod(std.time.milliTimestamp(), 10000))) / 10000.0;
         const yrot = zm.rotationY(rotPerc * std.math.pi * 2.0);
         m = zm.mul(m, yrot);
-        // translate to top left corner for a small view
-        m = zm.mul(m, zm.translationV(@Vector(4, gl.Float){ -5.5, 3.75, 0.0, 0.0 }));
-        // scale to be small
-        m = zm.mul(m, zm.scalingV(@Vector(4, gl.Float){ 0.33, 0.33, 0.33, 1.0 }));
         m = zm.mul(m, self.lookAt);
+        // translate to top left corner for a small view
+        m = zm.mul(m, zm.translationV(@Vector(4, gl.Float){ -1.8, 1.2, 0.0, 0.0 }));
         try self.displayCube.draw(m);
     }
 };

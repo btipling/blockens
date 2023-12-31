@@ -69,7 +69,11 @@ pub const Cube = struct {
             else => textureSource = null,
         }
 
-        var sconfig = shape.ShapeConfig{ .textureType = shape.textureDataType.Image, .isCube = true, .hasPerspective = true };
+        var sconfig = shape.ShapeConfig{
+            .textureType = shape.textureDataType.Image,
+            .isCube = true,
+            .hasPerspective = true,
+        };
         if (textureRGBAColors) |_| {
             sconfig.textureType = shape.textureDataType.RGBAColor;
         }
