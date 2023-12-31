@@ -11,6 +11,8 @@ const data = @import("../data/data.zig");
 const Lua = ziglua.Lua;
 
 const maxBlockSizeName = 20;
+const maxLuaScriptNameSize = 20;
+const maxLuaScriptSize = 360_000;
 
 pub const BlockEditor = struct {
     appState: *state.State,
@@ -19,7 +21,9 @@ pub const BlockEditor = struct {
     luaInstance: Lua,
     codeFont: zgui.Font,
     blockOptions: std.ArrayList(data.blockOption),
+    scriptOptions: std.ArrayList(data.scriptOption),
     loadedBlockId: u32 = 0,
+    loadedScriptId: u32 = 0,
 
     pub fn init(appState: *state.State, codeFont: zgui.Font, alloc: std.mem.Allocator) !BlockEditor {
         var lua: Lua = try Lua.init(alloc);
@@ -33,8 +37,10 @@ pub const BlockEditor = struct {
             .luaInstance = lua,
             .codeFont = codeFont,
             .blockOptions = std.ArrayList(data.blockOption).init(alloc),
+            .scriptOptions = std.ArrayList(data.scriptOption).init(alloc),
         };
         try BlockEditor.listBlocks(&tv);
+        try BlockEditor.listTextureScripts(&tv);
         return tv;
     }
 
@@ -87,6 +93,10 @@ pub const BlockEditor = struct {
         try self.appState.db.listBlocks(&self.blockOptions);
     }
 
+    fn listTextureScripts(self: *BlockEditor) !void {
+        try self.appState.db.listTextureScripts(&self.scriptOptions);
+    }
+
     fn saveBlock(self: *BlockEditor) !void {
         const n = std.mem.indexOf(u8, &self.createNameBuf, &([_]u8{0}));
         if (n) |i| {
@@ -112,6 +122,29 @@ pub const BlockEditor = struct {
         }
         self.updateNameBuf = nameBuf;
         self.loadedBlockId = blockId;
+    }
+
+    fn loadTextureScriptFunc(self: *BlockEditor, scriptId: u32) !void {
+        var scriptData: data.script = undefined;
+        try self.appState.db.loadTextureScript(scriptId, &scriptData);
+        var buf = [_]u8{0} ** maxLuaScriptSize;
+        var nameBuf = [_]u8{0} ** maxLuaScriptNameSize;
+        for (scriptData.name, 0..) |c, i| {
+            if (i >= maxLuaScriptNameSize) {
+                break;
+            }
+            nameBuf[i] = c;
+        }
+        for (scriptData.script, 0..) |c, i| {
+            if (i >= maxLuaScriptSize) {
+                break;
+            }
+            buf[i] = c;
+        }
+        // self.buf = buf;
+        // self.nameBuf = nameBuf;
+        // try self.evalTextureFunc();
+        self.loadedScriptId = scriptId;
     }
 
     fn updateBlock(self: *BlockEditor) !void {
@@ -184,6 +217,27 @@ pub const BlockEditor = struct {
             }
             zgui.popItemWidth();
             zgui.popFont();
+            zgui.text("Select a texture", .{});
+            _ = zgui.beginListBox("##listbox", .{
+                .w = 800,
+                .h = 1400,
+            });
+            for (self.scriptOptions.items) |scriptOption| {
+                var buffer: [maxLuaScriptNameSize + 10]u8 = undefined;
+                const selectableName = try std.fmt.bufPrint(&buffer, "{d}: {s}", .{ scriptOption.id, scriptOption.name });
+                var name: [maxLuaScriptNameSize:0]u8 = undefined;
+                for (name, 0..) |_, i| {
+                    if (selectableName.len <= i) {
+                        name[i] = 0;
+                        break;
+                    }
+                    name[i] = selectableName[i];
+                }
+                if (zgui.selectable(&name, .{})) {
+                    try self.loadTextureScriptFunc(scriptOption.id);
+                }
+            }
+            zgui.endListBox();
         }
         zgui.endChild();
     }
