@@ -54,19 +54,28 @@ pub const App = struct {
         };
     }
 
+    fn clearViewState(self: *App) void {
+        self.demoCubeVersion += 1;
+        self.demoTextureColors = null;
+    }
+
     pub fn setGameView(self: *App) !void {
+        self.clearViewState();
         self.view = View.game;
     }
 
     pub fn setTextureGeneratorView(self: *App) !void {
+        self.clearViewState();
         self.view = View.textureGenerator;
     }
 
     pub fn setWorldEditorView(self: *App) !void {
+        self.clearViewState();
         self.view = View.worldEditor;
     }
 
     pub fn setBlockEditorView(self: *App) !void {
+        self.clearViewState();
         self.view = View.blockEditor;
     }
 

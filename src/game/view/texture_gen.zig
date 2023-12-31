@@ -8,10 +8,10 @@ const texture_surface = @import("../shape/texture_surface.zig");
 
 pub const TextureGenerator = struct {
     appState: *state.State,
-    displayCube: cube.Cube,
     lookAt: zm.Mat,
     alloc: std.mem.Allocator,
     currentDemoCubeVersion: u32 = 0,
+    displayCube: ?cube.Cube,
     top_surface: ?texture_surface.TextureSurface,
     side_surface: ?texture_surface.TextureSurface,
     bottom_surface: ?texture_surface.TextureSurface,
@@ -20,7 +20,7 @@ pub const TextureGenerator = struct {
         const cameraPos = @Vector(4, gl.Float){ 0.0, 0.0, 3.0, 1.0 };
         const cameraFront = @Vector(4, gl.Float){ 0.0, 0.0, -1.0, 0.0 };
         const cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 };
-        var tg = TextureGenerator{
+        return TextureGenerator{
             .appState = appState,
             .displayCube = undefined,
             .top_surface = null,
@@ -34,8 +34,6 @@ pub const TextureGenerator = struct {
             .alloc = alloc,
             .currentDemoCubeVersion = 0,
         };
-        try TextureGenerator.setCube(&tg);
-        return tg;
     }
 
     fn setCube(self: *TextureGenerator) !void {
@@ -45,8 +43,7 @@ pub const TextureGenerator = struct {
             self.displayCube = displayCube;
             return;
         }
-        const displayCube = try cube.Cube.init("display_cube", cube.CubeType.grass, pos, self.alloc);
-        self.displayCube = displayCube;
+        self.displayCube = null;
     }
 
     fn setSurfaces(self: *TextureGenerator) !void {
@@ -69,11 +66,15 @@ pub const TextureGenerator = struct {
                 (&demoTextureColors)[16 * 16 * 2 .. 16 * 16 * 3],
             );
             self.bottom_surface = p;
+        } else {
+            self.top_surface = null;
+            self.side_surface = null;
+            self.bottom_surface = null;
         }
     }
 
     pub fn deinit(self: *TextureGenerator) void {
-        self.displayCube.deinit();
+        if (self.displayCube) |displayCube| displayCube.deinit();
     }
 
     pub fn update(self: *TextureGenerator) !void {
@@ -106,19 +107,21 @@ pub const TextureGenerator = struct {
             try TextureGenerator.setSurfaces(self);
             self.currentDemoCubeVersion = self.appState.app.demoCubeVersion;
         }
-        var m = zm.identity();
-        // rotate cube around its center
-        m = zm.mul(m, zm.translationV(@Vector(4, gl.Float){ -0.5, -0.5, -0.5, 0.0 }));
-        // scale to be small
-        m = zm.mul(m, zm.scalingV(@Vector(4, gl.Float){ 0.33, 0.33, 0.33, 1.0 }));
-        const zrot = zm.rotationZ(0.125 * std.math.pi * 2.0);
-        m = zm.mul(m, zrot);
-        const rotPerc: gl.Float = @as(gl.Float, @floatFromInt(@mod(std.time.milliTimestamp(), 10000))) / 10000.0;
-        const yrot = zm.rotationY(rotPerc * std.math.pi * 2.0);
-        m = zm.mul(m, yrot);
-        m = zm.mul(m, self.lookAt);
-        // translate to top left corner for a small view
-        m = zm.mul(m, zm.translationV(@Vector(4, gl.Float){ -1.8, 1.2, 0.0, 0.0 }));
-        try self.displayCube.draw(m);
+        if (self.displayCube) |displayCube| {
+            var m = zm.identity();
+            // rotate cube around its center
+            m = zm.mul(m, zm.translationV(@Vector(4, gl.Float){ -0.5, -0.5, -0.5, 0.0 }));
+            // scale to be small
+            m = zm.mul(m, zm.scalingV(@Vector(4, gl.Float){ 0.33, 0.33, 0.33, 1.0 }));
+            const zrot = zm.rotationZ(0.125 * std.math.pi * 2.0);
+            m = zm.mul(m, zrot);
+            const rotPerc: gl.Float = @as(gl.Float, @floatFromInt(@mod(std.time.milliTimestamp(), 10000))) / 10000.0;
+            const yrot = zm.rotationY(rotPerc * std.math.pi * 2.0);
+            m = zm.mul(m, yrot);
+            m = zm.mul(m, self.lookAt);
+            // translate to top left corner for a small view
+            m = zm.mul(m, zm.translationV(@Vector(4, gl.Float){ -1.8, 1.2, 0.0, 0.0 }));
+            try displayCube.draw(m);
+        }
     }
 };

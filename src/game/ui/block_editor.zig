@@ -125,6 +125,7 @@ pub const BlockEditor = struct {
         }
         self.updateNameBuf = nameBuf;
         self.loadedBlockId = blockId;
+        self.appState.app.setTextureColor(blockData.texture);
     }
 
     fn evalTextureFunc(self: *BlockEditor, buf: [maxLuaScriptSize]u8) !void {
