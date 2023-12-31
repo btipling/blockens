@@ -22,7 +22,6 @@ pub const UI = struct {
 
     pub fn init(appState: *state.State, window: *glfw.Window, alloc: std.mem.Allocator) !UI {
         const sc = try script.Script.init(alloc);
-        var _sc = sc;
         var font_size: f32 = 24.0;
         const gameFont = zgui.io.addFontFromMemory(pressStart2PFont, std.math.floor(font_size * 1.1));
         zgui.io.setDefaultFont(gameFont);
@@ -32,7 +31,7 @@ pub const UI = struct {
             .window = window,
             .script = sc,
             .Game = game.Game{},
-            .TextureGen = try texture_gen.TextureGen.init(appState, codeFont, &_sc, alloc),
+            .TextureGen = try texture_gen.TextureGen.init(appState, codeFont, sc, alloc),
             .WorldEditor = try world_editor.WorldEditor.init(appState, codeFont, alloc),
             .BlockEditor = try block_editor.BlockEditor.init(appState, codeFont, alloc),
         };

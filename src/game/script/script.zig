@@ -27,7 +27,7 @@ pub const Script = struct {
     }
 
     pub fn evalTextureFunc(self: *Script, buf: [maxLuaScriptSize]u8) ![data.RGBAColorTextureSize]gl.Uint {
-        std.debug.print("evalTextureFunc from lua {d} {s}\n", .{ buf.len, buf });
+        std.debug.print("evalTextureFunc from lua {d}\n", .{buf.len});
         var luaCode: [maxLuaScriptSize]u8 = [_]u8{0} ** maxLuaScriptSize;
         var nullIndex: usize = 0;
         for (buf) |c| {
@@ -38,7 +38,7 @@ pub const Script = struct {
             nullIndex += 1;
         }
         const luaCString: [:0]const u8 = luaCode[0..nullIndex :0];
-        std.debug.print("evalTextureFunc: nullIndex: {d} {s} \n", .{ nullIndex, luaCString });
+        std.debug.print("evalTextureFunc: nullIndex: {d} \n", .{nullIndex});
         self.luaInstance.doString(luaCString) catch |err| {
             std.log.err("evalTextureFunc: failed to eval lua code from string {s}.", .{luaCString});
             return err;

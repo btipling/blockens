@@ -9,7 +9,7 @@ const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
 
 pub const TextureGen = struct {
-    script: *script.Script,
+    script: script.Script,
     appState: *state.State,
     buf: [script.maxLuaScriptSize]u8,
     nameBuf: [script.maxLuaScriptNameSize]u8,
@@ -17,7 +17,7 @@ pub const TextureGen = struct {
     scriptOptions: std.ArrayList(data.scriptOption),
     loadedScriptId: u32 = 0,
 
-    pub fn init(appState: *state.State, codeFont: zgui.Font, sc: *script.Script, alloc: std.mem.Allocator) !TextureGen {
+    pub fn init(appState: *state.State, codeFont: zgui.Font, sc: script.Script, alloc: std.mem.Allocator) !TextureGen {
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
         const nameBuf = [_]u8{0} ** script.maxLuaScriptNameSize;
         const defaultLuaScript = @embedFile("../script/lua/gen_wood_texture.lua");
@@ -79,9 +79,9 @@ pub const TextureGen = struct {
         zgui.backend.draw();
     }
 
-    fn evalTextureFunc(self: *TextureGen, buf: [script.maxLuaScriptSize]u8) !void {
+    fn evalTextureFunc(self: *TextureGen) !void {
         std.debug.print("texture gen: evalTextureFunc from lua\n", .{});
-        const textureRGBAColor = try self.script.evalTextureFunc(buf);
+        const textureRGBAColor = try self.script.evalTextureFunc(self.buf);
         self.appState.app.setTextureColor(textureRGBAColor);
     }
 
@@ -108,7 +108,7 @@ pub const TextureGen = struct {
         }
         self.buf = buf;
         self.nameBuf = nameBuf;
-        try self.evalTextureFunc(buf);
+        try self.evalTextureFunc();
         self.loadedScriptId = scriptId;
     }
 
@@ -161,7 +161,7 @@ pub const TextureGen = struct {
                 .w = 450,
                 .h = 100,
             })) {
-                try self.evalTextureFunc(self.buf);
+                try self.evalTextureFunc();
             }
             zgui.sameLine(.{});
             if (zgui.button("Save new texture script", .{
