@@ -145,7 +145,7 @@ pub fn run() !void {
                 try drawWorldEditorView(&gameUI);
             },
             .blockEditor => {
-                try drawBlockEditorView(&gameUI);
+                try drawBlockEditorView(&textureGen, &gameUI);
             },
         }
 
@@ -156,7 +156,6 @@ pub fn run() !void {
 fn drawTextureGeneratorView(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
     try textureGen.draw();
     try gameUI.drawTextureGen();
-    return;
 }
 
 fn drawGameView(gameWorld: *world.World, gameUI: *ui.UI) !void {
@@ -168,6 +167,7 @@ fn drawWorldEditorView(gameUI: *ui.UI) !void {
     try gameUI.drawWorldEditor();
 }
 
-fn drawBlockEditorView(gameUI: *ui.UI) !void {
+fn drawBlockEditorView(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
+    try textureGen.draw();
     try gameUI.drawBlockEditor();
 }
