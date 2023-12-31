@@ -26,7 +26,7 @@ const deleteBlockStmt = @embedFile("./sql/block/delete.sql");
 
 pub const RGBAColorTextureSize = 3 * 16 * 16; // 768
 // 768 u32s fit into 3072 u8s
-pub const TextureBlobArrayStoreSize = 3072;
+pub const TextureBlobArrayStoreSize = 3073; // + 1 for null terminator
 
 pub const scriptOption = struct {
     id: u32,
@@ -342,7 +342,10 @@ pub const Data = struct {
     }
 
     pub fn saveBlock(self: *Data, name: []const u8, texture: [RGBAColorTextureSize]gl.Uint) !void {
-        var insertStmt = try self.db.prepareDynamic(insertBlockStmt);
+        var insertStmt = self.db.prepareDynamic(insertBlockStmt) catch |err| {
+            std.log.err("Failed to prepare insert block statement: {}", .{err});
+            return err;
+        };
         defer insertStmt.deinit();
 
         const blob = try textureToBlob(texture);
