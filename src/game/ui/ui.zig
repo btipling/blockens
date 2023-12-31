@@ -33,7 +33,7 @@ pub const UI = struct {
             .Game = game.Game{},
             .TextureGen = try texture_gen.TextureGen.init(appState, codeFont, sc, alloc),
             .WorldEditor = try world_editor.WorldEditor.init(appState, codeFont, alloc),
-            .BlockEditor = try block_editor.BlockEditor.init(appState, codeFont, alloc),
+            .BlockEditor = try block_editor.BlockEditor.init(appState, codeFont, sc, alloc),
         };
     }
 
