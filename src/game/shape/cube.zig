@@ -8,10 +8,6 @@ const state = @import("../state.zig");
 const data = @import("../data/data.zig");
 
 pub const Cube = struct {
-    blockId: u32,
-    position: position.Position,
-    shape: shape.Shape,
-
     fn initShape(
         name: []const u8,
         blockId: u32,
@@ -66,18 +62,12 @@ pub const Cube = struct {
         );
     }
 
-    pub fn initDemoCube(
+    pub fn initDemoCubeShape(
         name: []const u8,
-        pos: position.Position,
         alloc: std.mem.Allocator,
         textureRGBAColors: [data.RGBAColorTextureSize]gl.Uint,
-    ) !Cube {
-        const s = try initShape(name, 0, alloc, &textureRGBAColors);
-        return Cube{
-            .blockId = 0,
-            .position = pos,
-            .shape = s,
-        };
+    ) !shape.Shape {
+        return try initShape(name, 0, alloc, &textureRGBAColors);
     }
 
     pub fn initBlockCube(appState: *state.State, blockId: u32, alloc: std.mem.Allocator, cubesMap: *std.AutoHashMap(u32, shape.Shape)) !void {
@@ -94,23 +84,8 @@ pub const Cube = struct {
         try cubesMap.put(blockId, s);
     }
 
-    pub fn init(blockId: u32, pos: position.Position, cubesMap: std.AutoHashMap(u32, shape.Shape)) !Cube {
-        if (cubesMap.get(blockId)) |s| {
-            return Cube{
-                .blockId = blockId,
-                .position = pos,
-                .shape = s,
-            };
-        }
-        return shape.ShapeErr.NotInitialized;
-    }
-
-    pub fn deinit(_: Cube) void {
-        // nothing to do here
-    }
-
-    pub fn draw(self: Cube, givenM: zm.Mat) !void {
-        const m = zm.translation(self.position.x, self.position.y, self.position.z);
-        try self.shape.draw(zm.mul(m, givenM));
+    pub fn draw(x: gl.Float, y: gl.Float, z: gl.Float, givenM: zm.Mat, s: shape.Shape) !void {
+        const m = zm.translation(x, y, z);
+        try s.draw(zm.mul(m, givenM));
     }
 };
