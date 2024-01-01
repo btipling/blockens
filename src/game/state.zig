@@ -4,7 +4,7 @@ const zm = @import("zmath");
 const position = @import("position.zig");
 const config = @import("config.zig");
 const cube = @import("./shape/cube.zig");
-const shape = @import("./shape/shape.zig");
+const instancedShape = @import("./shape/instanced_shape.zig");
 const data = @import("./data/data.zig");
 
 pub const State = struct {
@@ -88,7 +88,7 @@ pub const App = struct {
 };
 
 pub const Game = struct {
-    cubesMap: std.AutoHashMap(u32, shape.Shape),
+    cubesMap: std.AutoHashMap(u32, instancedShape.InstancedShape),
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
@@ -105,7 +105,7 @@ pub const Game = struct {
 
     pub fn init(alloc: std.mem.Allocator) !Game {
         var g = Game{
-            .cubesMap = std.AutoHashMap(u32, shape.Shape).init(alloc),
+            .cubesMap = std.AutoHashMap(u32, instancedShape.InstancedShape).init(alloc),
             // .cameraPos = @Vector(4, gl.Float){ 0.0, 65.0, 3.0, 1.0 },
             .cameraPos = @Vector(4, gl.Float){ 0.0, 0.0, 3.0, 1.0 },
             .cameraFront = @Vector(4, gl.Float){ 0.0, 0.0, -1.0, 0.0 },
