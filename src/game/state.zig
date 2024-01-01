@@ -12,8 +12,8 @@ pub const State = struct {
     game: Game,
     db: data.Data,
 
-    pub fn init(alloc: std.mem.Allocator) !State {
-        var db = try data.Data.init(alloc);
+    pub fn init(alloc: std.mem.Allocator, sqliteAlloc: std.mem.Allocator) !State {
+        var db = try data.Data.init(sqliteAlloc);
         db.ensureSchema() catch |err| {
             std.log.err("Failed to ensure schema: {}\n", .{err});
             return err;
@@ -128,6 +128,8 @@ pub const Game = struct {
         for (self.blocks.items) |block| {
             block.deinit();
         }
+        self.blocks.deinit();
+        self.blockOptions.deinit();
     }
 
     pub fn initBlocks(self: *Game, appState: *State, alloc: std.mem.Allocator) !void {

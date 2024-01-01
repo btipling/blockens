@@ -62,17 +62,18 @@ fn initGL(gl_major: u8, gl_minor: u8, window: *glfw.Window) !void {
 
 pub const Game = struct {
     allocator: std.mem.Allocator,
+    sqliteAlloc: std.mem.Allocator,
 
-    pub fn init(allocator: std.mem.Allocator) !Game {
+    pub fn init(allocator: std.mem.Allocator, sqliteAlloc: std.mem.Allocator) !Game {
         return .{
             .allocator = allocator,
+            .sqliteAlloc = sqliteAlloc,
         };
     }
 
     pub fn deinit(self: *Game) void {
         _ = self;
         std.debug.print("\nGoodbye btzig-blockens!\n", .{});
-        // self.allocator.deinit();
     }
 
     pub fn run(self: *Game) !void {
@@ -104,7 +105,7 @@ pub const Game = struct {
         defer zstbi.deinit();
         zstbi.setFlipVerticallyOnLoad(false);
 
-        var appState = try state.State.init(self.allocator);
+        var appState = try state.State.init(self.allocator, self.sqliteAlloc);
         defer appState.deinit();
 
         var gameUI = try ui.UI.init(&appState, window, self.allocator);

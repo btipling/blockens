@@ -2,13 +2,10 @@ const std = @import("std");
 const zgui = @import("zgui");
 const gl = @import("zopengl");
 const glfw = @import("zglfw");
-const ziglua = @import("ziglua");
 const config = @import("../config.zig");
 const shape = @import("../shape/shape.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
-
-const Lua = ziglua.Lua;
 
 const maxWorldSizeName = 20;
 
@@ -16,21 +13,17 @@ pub const WorldEditor = struct {
     appState: *state.State,
     createNameBuf: [maxWorldSizeName]u8,
     updateNameBuf: [maxWorldSizeName]u8,
-    luaInstance: Lua,
     codeFont: zgui.Font,
     worldOptions: std.ArrayList(data.worldOption),
     loadedWorldId: u32 = 0,
 
     pub fn init(appState: *state.State, codeFont: zgui.Font, alloc: std.mem.Allocator) !WorldEditor {
-        var lua: Lua = try Lua.init(alloc);
-        lua.openLibs();
         const createNameBuf = [_]u8{0} ** maxWorldSizeName;
         const updateNameBuf = [_]u8{0} ** maxWorldSizeName;
         var tv = WorldEditor{
             .appState = appState,
             .createNameBuf = createNameBuf,
             .updateNameBuf = updateNameBuf,
-            .luaInstance = lua,
             .codeFont = codeFont,
             .worldOptions = std.ArrayList(data.worldOption).init(alloc),
         };
@@ -39,7 +32,7 @@ pub const WorldEditor = struct {
     }
 
     pub fn deinit(self: *WorldEditor) void {
-        self.luaInstance.deinit();
+        self.worldOptions.deinit();
     }
 
     pub fn draw(self: *WorldEditor, window: *glfw.Window) !void {

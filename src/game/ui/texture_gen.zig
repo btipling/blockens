@@ -2,7 +2,6 @@ const std = @import("std");
 const zgui = @import("zgui");
 const gl = @import("zopengl");
 const glfw = @import("zglfw");
-const ziglua = @import("ziglua");
 const config = @import("../config.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
@@ -37,7 +36,7 @@ pub const TextureGen = struct {
     }
 
     pub fn deinit(self: *TextureGen) void {
-        _ = self;
+        self.scriptOptions.deinit();
     }
 
     pub fn draw(self: *TextureGen, window: *glfw.Window) !void {

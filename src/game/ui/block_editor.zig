@@ -37,7 +37,8 @@ pub const BlockEditor = struct {
     }
 
     pub fn deinit(self: *BlockEditor) void {
-        self.luaInstance.deinit();
+        self.scriptOptions.deinit();
+        self.blockOptions.deinit();
     }
 
     pub fn draw(self: *BlockEditor, window: *glfw.Window) !void {
@@ -118,7 +119,6 @@ pub const BlockEditor = struct {
     }
 
     fn evalTextureFunc(self: *BlockEditor, buf: [script.maxLuaScriptSize]u8) !void {
-        std.debug.print("texture gen: evalTextureFunc from lua\n", .{});
         const textureRGBAColor = try self.script.evalTextureFunc(buf);
         self.appState.app.setTextureColor(textureRGBAColor);
     }

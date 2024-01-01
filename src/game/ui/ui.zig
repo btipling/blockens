@@ -39,6 +39,8 @@ pub const UI = struct {
 
     pub fn deinit(self: *UI) void {
         self.TextureGen.deinit();
+        self.BlockEditor.deinit();
+        self.WorldEditor.deinit();
         self.script.deinit();
     }
 
