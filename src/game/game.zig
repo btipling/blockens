@@ -60,98 +60,110 @@ fn initGL(gl_major: u8, gl_minor: u8, window: *glfw.Window) !void {
     gl.cullFace(gl.BACK);
 }
 
-pub fn run() !void {
-    std.debug.print("\nHello btzig-blockens!\n", .{});
-    glfw.init() catch {
-        std.log.err("Failed to initialize GLFW library.", .{});
-        return;
-    };
-    defer glfw.terminate();
+pub const Game = struct {
+    allocator: std.mem.Allocator,
 
-    const gl_major = 4;
-    const gl_minor = 6;
-
-    const window = try initWindow(gl_major, gl_minor);
-    defer window.destroy();
-
-    try initGL(gl_major, gl_minor, window);
-
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-    const allocator = arena.allocator();
-
-    zgui.init(allocator);
-    defer zgui.deinit();
-
-    zgui.backend.init(window);
-    defer zgui.backend.deinit();
-
-    zmesh.init(allocator);
-    defer zmesh.deinit();
-
-    zstbi.init(allocator);
-    defer zstbi.deinit();
-    zstbi.setFlipVerticallyOnLoad(false);
-
-    var appState = try state.State.init(allocator);
-    defer appState.deinit();
-
-    var gameUI = try ui.UI.init(&appState, window, allocator);
-    defer gameUI.deinit();
-
-    // init view dependencies
-    const planePosition = position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
-    var worldPlane = try plane.Plane.init("worldplane", planePosition, allocator);
-    defer worldPlane.deinit();
-    var uiCursor = try cursor.Cursor.init("cursor", allocator);
-    defer uiCursor.deinit();
-
-    // uncomment to start in a specific view:
-    // appState.app.view = state.View.textureGenerator;
-    // appState.app.view = state.View.worldEditor;
-    // appState.app.view = state.View.blockEditor;
-
-    // init views
-    var gameWorld = try world.World.init(worldPlane, uiCursor, &appState);
-    var textureGen = try texture_gen.TextureGenerator.init(&appState, allocator);
-    defer textureGen.deinit();
-
-    var c = try controls.Controls.init(window, &appState);
-    ctrls = &c;
-    _ = window.setCursorPosCallback(cursorPosCallback);
-    const skyColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 };
-
-    main_loop: while (!window.shouldClose()) {
-        glfw.pollEvents();
-
-        const currentFrame: gl.Float = @as(gl.Float, @floatCast(glfw.getTime()));
-        appState.game.deltaTime = currentFrame - appState.game.lastFrame;
-        appState.game.lastFrame = currentFrame;
-        const quit = try ctrls.handleKey();
-        if (quit) {
-            break :main_loop;
-        }
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        gl.clearBufferfv(gl.COLOR, 0, &skyColor);
-
-        switch (appState.app.view) {
-            .game => {
-                try drawGameView(&gameWorld, &gameUI);
-            },
-            .textureGenerator => {
-                try drawTextureGeneratorView(&textureGen, &gameUI);
-            },
-            .worldEditor => {
-                try drawWorldEditorView(&gameUI);
-            },
-            .blockEditor => {
-                try drawBlockEditorView(&textureGen, &gameUI);
-            },
-        }
-
-        window.swapBuffers();
+    pub fn init(allocator: std.mem.Allocator) !Game {
+        return .{
+            .allocator = allocator,
+        };
     }
-}
+
+    pub fn deinit(self: *Game) void {
+        _ = self;
+        std.debug.print("\nGoodbye btzig-blockens!\n", .{});
+        // self.allocator.deinit();
+    }
+
+    pub fn run(self: *Game) !void {
+        std.debug.print("\nHello btzig-blockens!\n", .{});
+        glfw.init() catch {
+            std.log.err("Failed to initialize GLFW library.", .{});
+            return;
+        };
+        defer glfw.terminate();
+
+        const gl_major = 4;
+        const gl_minor = 6;
+
+        const window = try initWindow(gl_major, gl_minor);
+        defer window.destroy();
+
+        try initGL(gl_major, gl_minor, window);
+
+        zgui.init(self.allocator);
+        defer zgui.deinit();
+
+        zgui.backend.init(window);
+        defer zgui.backend.deinit();
+
+        zmesh.init(self.allocator);
+        defer zmesh.deinit();
+
+        zstbi.init(self.allocator);
+        defer zstbi.deinit();
+        zstbi.setFlipVerticallyOnLoad(false);
+
+        var appState = try state.State.init(self.allocator);
+        defer appState.deinit();
+
+        var gameUI = try ui.UI.init(&appState, window, self.allocator);
+        defer gameUI.deinit();
+
+        // init view dependencies
+        const planePosition = position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
+        var worldPlane = try plane.Plane.init("worldplane", planePosition, self.allocator);
+        defer worldPlane.deinit();
+        var uiCursor = try cursor.Cursor.init("cursor", self.allocator);
+        defer uiCursor.deinit();
+
+        // uncomment to start in a specific view:
+        // appState.app.view = state.View.textureGenerator;
+        // appState.app.view = state.View.worldEditor;
+        // appState.app.view = state.View.blockEditor;
+
+        // init views
+        var gameWorld = try world.World.init(worldPlane, uiCursor, &appState);
+        var textureGen = try texture_gen.TextureGenerator.init(&appState, self.allocator);
+        defer textureGen.deinit();
+
+        var c = try controls.Controls.init(window, &appState);
+        ctrls = &c;
+        _ = window.setCursorPosCallback(cursorPosCallback);
+        const skyColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 };
+
+        main_loop: while (!window.shouldClose()) {
+            glfw.pollEvents();
+
+            const currentFrame: gl.Float = @as(gl.Float, @floatCast(glfw.getTime()));
+            appState.game.deltaTime = currentFrame - appState.game.lastFrame;
+            appState.game.lastFrame = currentFrame;
+            const quit = try ctrls.handleKey();
+            if (quit) {
+                break :main_loop;
+            }
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.clearBufferfv(gl.COLOR, 0, &skyColor);
+
+            switch (appState.app.view) {
+                .game => {
+                    try drawGameView(&gameWorld, &gameUI);
+                },
+                .textureGenerator => {
+                    try drawTextureGeneratorView(&textureGen, &gameUI);
+                },
+                .worldEditor => {
+                    try drawWorldEditorView(&gameUI);
+                },
+                .blockEditor => {
+                    try drawBlockEditorView(&textureGen, &gameUI);
+                },
+            }
+
+            window.swapBuffers();
+        }
+    }
+};
 
 fn drawTextureGeneratorView(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
     try textureGen.draw();
