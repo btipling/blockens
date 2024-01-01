@@ -6,7 +6,10 @@ const zmesh = @import("zmesh");
 const config = @import("../config.zig");
 const data = @import("../data/data.zig");
 
-pub const ShapeErr = error{Error};
+pub const ShapeErr = error{
+    NotInitialized,
+    RenderError,
+};
 
 pub const textureDataType = enum {
     None,
@@ -106,7 +109,7 @@ pub const Shape = struct {
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("init vao error: {s} {d}\n", .{ msg, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
         return VAO;
     }
@@ -118,7 +121,7 @@ pub const Shape = struct {
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("init vbo error: {s} {d}\n", .{ msg, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
         return;
     }
@@ -129,13 +132,13 @@ pub const Shape = struct {
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("init ebo error: {s} {d}\n", .{ msg, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("bind ebo buff error: {s} {d}\n", .{ msg, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
 
         const size = @as(isize, @intCast(indices.len * @sizeOf(gl.Uint)));
@@ -144,7 +147,7 @@ pub const Shape = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} buffer data error: {d}\n", .{ msg, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
         return;
     }
@@ -174,7 +177,7 @@ pub const Shape = struct {
             gl.getShaderInfoLog(shader, 512, &logSize, &infoLog);
             const i: usize = @intCast(logSize);
             std.debug.print("ERROR::SHADER::{s}::COMPILATION_FAILED\n{s}\n", .{ name, infoLog[0..i] });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
 
         return shader;
@@ -188,7 +191,7 @@ pub const Shape = struct {
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} error: {d}\n", .{ name, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
 
         gl.linkProgram(shaderProgram);
@@ -200,7 +203,7 @@ pub const Shape = struct {
             gl.getProgramInfoLog(shaderProgram, 512, &logSize, &infoLog);
             const i: usize = @intCast(logSize);
             std.debug.print("ERROR::SHADER::{s}::PROGRAM::LINKING_FAILED\n{s}\n", .{ name, infoLog[0..i] });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
 
         for (shaders) |shader| {
@@ -210,7 +213,7 @@ pub const Shape = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} error: {d}\n", .{ name, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
         return shaderProgram;
     }
@@ -222,7 +225,7 @@ pub const Shape = struct {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} gen or bind texture error: {d}\n", .{ msg, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -232,7 +235,7 @@ pub const Shape = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} text parameter i error: {d}\n", .{ msg, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
 
         const width: gl.Int = 16;
@@ -242,13 +245,13 @@ pub const Shape = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} gext image 2d error: {d}\n", .{ msg, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
         gl.generateMipmap(gl.TEXTURE_2D);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} generate mimap error: {d}\n", .{ msg, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
         return texture;
     }
@@ -260,7 +263,7 @@ pub const Shape = struct {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} gen or bind texture error: {d}\n", .{ msg, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -270,7 +273,7 @@ pub const Shape = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} text parameter i error: {d}\n", .{ msg, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
 
         var image = try zstbi.Image.loadFromMemory(img, 4);
@@ -283,13 +286,13 @@ pub const Shape = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} gext image 2d error: {d}\n", .{ msg, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
         gl.generateMipmap(gl.TEXTURE_2D);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} generate mimap error: {d}\n", .{ msg, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
         return texture;
     }
@@ -400,7 +403,7 @@ pub const Shape = struct {
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} init data error: {d}\n", .{ name, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
     }
 
@@ -409,7 +412,7 @@ pub const Shape = struct {
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} error: {d}\n", .{ name, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
 
         if (shapeConfig.textureType != textureDataType.None) {
@@ -417,7 +420,7 @@ pub const Shape = struct {
             e = gl.getError();
             if (e != gl.NO_ERROR) {
                 std.debug.print("{s} uniform1i error: {d}\n", .{ name, e });
-                return ShapeErr.Error;
+                return ShapeErr.RenderError;
             }
         }
         var projection: [16]gl.Float = [_]gl.Float{undefined} ** 16;
@@ -434,7 +437,7 @@ pub const Shape = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("error: {d}\n", .{e});
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
     }
 
@@ -443,7 +446,7 @@ pub const Shape = struct {
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} error: {d}\n", .{ self.name, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
 
         if (self.config.textureType != textureDataType.None) {
@@ -452,7 +455,7 @@ pub const Shape = struct {
             e = gl.getError();
             if (e != gl.NO_ERROR) {
                 std.debug.print("{s} bind texture error: {d}\n", .{ self.name, e });
-                return ShapeErr.Error;
+                return ShapeErr.RenderError;
             }
         }
 
@@ -460,7 +463,7 @@ pub const Shape = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} bind vertex array error: {d}\n", .{ self.name, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
 
         var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
@@ -474,14 +477,14 @@ pub const Shape = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("error: {d}\n", .{e});
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
 
         gl.uniform1i(gl.getUniformLocation(self.program, "highlight"), self.highlight);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("error setting highlighted: {d}\n", .{e});
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
 
         if (!self.config.hasPerspective) {
@@ -492,7 +495,7 @@ pub const Shape = struct {
         gl.drawElements(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null);
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} draw elements error: {d}\n", .{ self.name, e });
-            return ShapeErr.Error;
+            return ShapeErr.RenderError;
         }
         // renable depth test
         gl.enable(gl.DEPTH_TEST);

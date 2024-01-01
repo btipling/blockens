@@ -7,8 +7,6 @@ const position = @import("../position.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
 
-var cubesMap: ?std.AutoHashMap(u32, shape.Shape) = null;
-
 pub const Cube = struct {
     blockId: u32,
     position: position.Position,
@@ -82,7 +80,7 @@ pub const Cube = struct {
         };
     }
 
-    pub fn initBlockCube(appState: *state.State, blockId: u32, pos: position.Position, alloc: std.mem.Allocator) !Cube {
+    pub fn initBlockCube(appState: *state.State, blockId: u32, alloc: std.mem.Allocator, cubesMap: *std.AutoHashMap(u32, shape.Shape)) !void {
         var blockData: data.block = undefined;
         try appState.db.loadBlock(blockId, &blockData);
         var name = [_]u8{0} ** data.maxBlockSizeName;
@@ -93,39 +91,22 @@ pub const Cube = struct {
             name[i] = c;
         }
         const s = try initShape(&name, blockId, alloc, &blockData.texture);
-        try cubesMap.?.put(blockId, s);
-        return Cube{
-            .blockId = blockId,
-            .position = pos,
-            .shape = s,
-        };
+        try cubesMap.put(blockId, s);
     }
 
-    pub fn init(appState: *state.State, blockId: u32, pos: position.Position, alloc: std.mem.Allocator) !Cube {
-        if (cubesMap) |m| {
-            if (m.get(blockId)) |s| {
-                return Cube{
-                    .blockId = blockId,
-                    .position = pos,
-                    .shape = s,
-                };
-            } else {
-                return try initBlockCube(appState, blockId, pos, alloc);
-            }
+    pub fn init(blockId: u32, pos: position.Position, cubesMap: std.AutoHashMap(u32, shape.Shape)) !Cube {
+        if (cubesMap.get(blockId)) |s| {
+            return Cube{
+                .blockId = blockId,
+                .position = pos,
+                .shape = s,
+            };
         }
-        cubesMap = std.AutoHashMap(u32, shape.Shape).init(alloc);
-        return try initBlockCube(appState, blockId, pos, alloc);
+        return shape.ShapeErr.NotInitialized;
     }
 
     pub fn deinit(_: Cube) void {
-        if (cubesMap) |m| {
-            var iterator = m.iterator();
-            while (iterator.next()) |s| {
-                s.value_ptr.deinit();
-            }
-            cubesMap.?.deinit();
-            cubesMap = null;
-        }
+        // nothing to do here
     }
 
     pub fn draw(self: Cube, givenM: zm.Mat) !void {
