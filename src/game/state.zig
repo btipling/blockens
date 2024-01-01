@@ -106,7 +106,7 @@ pub const Game = struct {
     pub fn init(alloc: std.mem.Allocator) !Game {
         var g = Game{
             .blockOptions = std.ArrayList(data.blockOption).init(alloc),
-            .cameraPos = @Vector(4, gl.Float){ 0.0, 1.0, 3.0, 1.0 },
+            .cameraPos = @Vector(4, gl.Float){ 0.0, 65.0, 3.0, 1.0 },
             .cameraFront = @Vector(4, gl.Float){ 0.0, 0.0, -1.0, 0.0 },
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
             .lookAt = zm.identity(),

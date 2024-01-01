@@ -106,10 +106,10 @@ pub fn run() !void {
     var uiCursor = try cursor.Cursor.init("cursor", allocator);
     defer uiCursor.deinit();
 
-    // temporary change to work on texture generator
+    // uncomment to start in a specific view:
     // appState.app.view = state.View.textureGenerator;
     // appState.app.view = state.View.worldEditor;
-    appState.app.view = state.View.blockEditor;
+    // appState.app.view = state.View.blockEditor;
 
     // init views
     var gameWorld = try world.World.init(worldPlane, uiCursor, &appState);
