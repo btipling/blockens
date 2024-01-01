@@ -17,12 +17,6 @@ pub const textureDataType = enum {
     RGBAColor,
 };
 
-pub const InstancedShapeConfig = struct {
-    textureType: textureDataType,
-    isCube: bool,
-    hasPerspective: bool,
-};
-
 pub const InstancedShapeVertex = struct {
     position: [3]gl.Float,
     texture: [2]gl.Float,
@@ -42,7 +36,6 @@ pub const InstancedShape = struct {
     texture: gl.Uint,
     numIndices: gl.Int,
     program: gl.Uint,
-    config: InstancedShapeConfig,
     highlight: gl.Int,
 
     pub fn init(
@@ -51,10 +44,8 @@ pub const InstancedShape = struct {
         shape: zmesh.Shape,
         vertexShaderSource: [:0]const u8,
         fragmentShaderSource: [:0]const u8,
-        img: ?[:0]const u8,
         rgbaColor: ?[4]gl.Float,
-        textureRGBAColor: ?[]const gl.Uint,
-        shapeConfig: InstancedShapeConfig,
+        textureRGBAColor: []const gl.Uint,
         alloc: std.mem.Allocator,
     ) !InstancedShape {
         const vao = try initVAO(name);
@@ -63,27 +54,9 @@ pub const InstancedShape = struct {
         try initVBO(name);
         try initEBO(name, shape.indices);
         const program = try initProgram(name, &[_]gl.Uint{ vertexShader, fragmentShader });
-        var texture: gl.Uint = undefined;
-        var cfg = shapeConfig;
-        switch (shapeConfig.textureType) {
-            textureDataType.Image => {
-                if (img) |i| {
-                    texture = try initTexture(i, name);
-                } else {
-                    cfg.textureType = textureDataType.None;
-                }
-            },
-            textureDataType.RGBAColor => {
-                if (textureRGBAColor) |t| {
-                    texture = try initTextureFromColors(t, name);
-                } else {
-                    cfg.textureType = textureDataType.None;
-                }
-            },
-            else => std.debug.print("no texture for {s}\n", .{name}),
-        }
-        try initData(name, shape, shapeConfig, rgbaColor, alloc);
-        try setUniforms(name, program, shapeConfig);
+        const texture = try initTextureFromColors(textureRGBAColor, name);
+        try initData(name, shape, rgbaColor, alloc);
+        try setUniforms(name, program);
         return InstancedShape{
             .blockId = blockId,
             .name = name,
@@ -91,7 +64,6 @@ pub const InstancedShape = struct {
             .texture = texture,
             .numIndices = @intCast(shape.indices.len),
             .program = program,
-            .config = cfg,
             .highlight = 0,
         };
     }
@@ -343,7 +315,7 @@ pub const InstancedShape = struct {
         return vertices;
     }
 
-    fn initData(name: []const u8, shaderData: zmesh.Shape, shapeConfig: InstancedShapeConfig, rgbaColor: ?[4]gl.Float, alloc: std.mem.Allocator) !void {
+    fn initData(name: []const u8, shaderData: zmesh.Shape, rgbaColor: ?[4]gl.Float, alloc: std.mem.Allocator) !void {
         var vertices = try std.ArrayList(InstancedShapeVertex).initCapacity(alloc, shaderData.positions.len);
         defer vertices.deinit();
 
@@ -367,9 +339,7 @@ pub const InstancedShape = struct {
             };
             vertices.appendAssumeCapacity(vtx);
         }
-        if (shapeConfig.isCube) {
-            vertices.items = manageCubeTexturesCoordinates(vertices.items);
-        }
+        vertices.items = manageCubeTexturesCoordinates(vertices.items);
         const size = @as(isize, @intCast(vertices.items.len * @sizeOf(InstancedShapeVertex)));
         const dataptr: *const anyopaque = vertices.items.ptr;
         gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
@@ -407,7 +377,7 @@ pub const InstancedShape = struct {
         }
     }
 
-    pub fn setUniforms(name: []const u8, program: gl.Uint, shapeConfig: InstancedShapeConfig) !void {
+    pub fn setUniforms(name: []const u8, program: gl.Uint) !void {
         gl.useProgram(program);
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
@@ -415,13 +385,11 @@ pub const InstancedShape = struct {
             return ShapeErr.RenderError;
         }
 
-        if (shapeConfig.textureType != textureDataType.None) {
-            gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
-            e = gl.getError();
-            if (e != gl.NO_ERROR) {
-                std.debug.print("{s} uniform1i error: {d}\n", .{ name, e });
-                return ShapeErr.RenderError;
-            }
+        gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{s} uniform1i error: {d}\n", .{ name, e });
+            return ShapeErr.RenderError;
         }
         var projection: [16]gl.Float = [_]gl.Float{undefined} ** 16;
 
@@ -449,14 +417,12 @@ pub const InstancedShape = struct {
             return ShapeErr.RenderError;
         }
 
-        if (self.config.textureType != textureDataType.None) {
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, self.texture);
-            e = gl.getError();
-            if (e != gl.NO_ERROR) {
-                std.debug.print("{s} bind texture error: {d}\n", .{ self.name, e });
-                return ShapeErr.RenderError;
-            }
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, self.texture);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{s} bind texture error: {d}\n", .{ self.name, e });
+            return ShapeErr.RenderError;
         }
 
         gl.bindVertexArray(self.vao);
@@ -485,11 +451,6 @@ pub const InstancedShape = struct {
         if (e != gl.NO_ERROR) {
             std.debug.print("error setting highlighted: {d}\n", .{e});
             return ShapeErr.RenderError;
-        }
-
-        if (!self.config.hasPerspective) {
-            //disable depth test for ortho
-            gl.disable(gl.DEPTH_TEST);
         }
 
         gl.drawElements(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null);

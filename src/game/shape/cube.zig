@@ -75,11 +75,6 @@ pub const Cube = struct {
         const vertexShaderSource = @embedFile("../shaders/cube.vs");
         const fragmentShaderSource = @embedFile("../shaders/cube.fs");
 
-        const sconfig = instancedShape.InstancedShapeConfig{
-            .textureType = instancedShape.textureDataType.RGBAColor,
-            .isCube = true,
-            .hasPerspective = true,
-        };
         const cube = initParShapeCubeFromPlanes();
         defer cube.deinit();
 
@@ -90,9 +85,7 @@ pub const Cube = struct {
             vertexShaderSource,
             fragmentShaderSource,
             null,
-            null,
             textureRGBAColors,
-            sconfig,
             alloc,
         );
     }
