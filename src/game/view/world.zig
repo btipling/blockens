@@ -8,6 +8,7 @@ const cube = @import("../shape/cube.zig");
 const shape = @import("../shape/shape.zig");
 
 const chunkSize: comptime_int = 64 * 64 * 64;
+const transformSize = chunkSize * 16;
 
 pub const World = struct {
     worldPlane: plane.Plane,
@@ -27,22 +28,27 @@ pub const World = struct {
     }
 
     pub fn draw(self: *World) !void {
-        // const chunk: [chunkSize]u32 = [_]u32{1} ** chunkSize;
-        const chunk: [1]u32 = [_]u32{1};
+        const chunk: [2]u32 = [_]u32{1} ** 2;
+        var transforms: [32]gl.Float = [_]gl.Float{undefined} ** 32;
         try self.worldPlane.draw(self.appState.game.lookAt);
         for (chunk, 0..) |blockId, i| {
+            _ = blockId;
             const x = @as(gl.Float, @floatFromInt(@mod(i, 64)));
             const y = @as(gl.Float, @floatFromInt(@mod(i / 64, 64)));
             const z = @as(gl.Float, @floatFromInt(i / (64 * 64)));
-            if (self.appState.game.cubesMap.get(blockId)) |is| {
-                var m = zm.translation(x, y, z);
-                m = zm.mul(m, self.appState.game.lookAt);
-                var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
-                zm.storeMat(&transform, m);
-                try cube.Cube.drawInstanced(&transform, is);
-            } else {
-                std.debug.print("blockId {d} not found in cubesMap\n", .{blockId});
+            var m = zm.translation(x, y, z);
+            m = zm.mul(m, self.appState.game.lookAt);
+            var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+            zm.storeMat(&transform, m);
+            for (0..16) |j| {
+                transforms[i * 16 + j] = transform[j];
             }
+        }
+        if (self.appState.game.cubesMap.get(1)) |is| {
+            var _is = is;
+            try cube.Cube.drawInstanced(&transforms, &_is);
+        } else {
+            std.debug.print("blockId {d} not found in cubesMap\n", .{1});
         }
         try self.cursor.draw(self.appState.game.lookAt);
     }

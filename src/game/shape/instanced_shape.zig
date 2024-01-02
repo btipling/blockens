@@ -39,6 +39,7 @@ pub const InstancedShape = struct {
     program: gl.Uint,
     highlight: gl.Int,
     instanceVBO: gl.Uint,
+    numInstances: gl.Int,
 
     pub fn init(
         blockId: u32,
@@ -68,6 +69,7 @@ pub const InstancedShape = struct {
             .program = program,
             .highlight = 0,
             .instanceVBO = instancedVBO,
+            .numInstances = 0,
         };
     }
 
@@ -442,7 +444,7 @@ pub const InstancedShape = struct {
         return instanceVBO;
     }
 
-    pub fn updateInstanceData(self: *const InstancedShape, transforms: []gl.Float) !void {
+    pub fn updateInstanceData(self: *InstancedShape, transforms: []gl.Float) !void {
         const size = @as(isize, @intCast(transforms.len * @sizeOf(gl.Float)));
         const dataptr: *const anyopaque = transforms.ptr;
         gl.bindVertexArray(self.vao);
@@ -455,6 +457,7 @@ pub const InstancedShape = struct {
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
         gl.bindVertexArray(0);
+        self.numInstances = @as(gl.Int, @intCast(transforms.len / 16));
         return;
     }
 
@@ -496,7 +499,7 @@ pub const InstancedShape = struct {
             return ShapeErr.RenderError;
         }
 
-        gl.drawElementsInstanced(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null, 1);
+        gl.drawElementsInstanced(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null, self.numInstances);
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} draw elements error: {d}\n", .{ self.name, e });
             return ShapeErr.RenderError;
