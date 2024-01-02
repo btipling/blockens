@@ -39,7 +39,7 @@ pub const World = struct {
                 m = zm.mul(m, self.appState.game.lookAt);
                 var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
                 zm.storeMat(&transform, m);
-                try cube.Cube.drawInstanced(transform, is);
+                try cube.Cube.drawInstanced(&transform, is);
             } else {
                 std.debug.print("blockId {d} not found in cubesMap\n", .{blockId});
             }

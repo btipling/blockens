@@ -442,10 +442,12 @@ pub const InstancedShape = struct {
         return instanceVBO;
     }
 
-    pub fn updateInstanceData(self: *const InstancedShape, transform: [16]gl.Float) !void {
+    pub fn updateInstanceData(self: *const InstancedShape, transforms: []gl.Float) !void {
+        const size = @as(isize, @intCast(transforms.len * @sizeOf(gl.Float)));
+        const dataptr: *const anyopaque = transforms.ptr;
         gl.bindVertexArray(self.vao);
         gl.bindBuffer(gl.ARRAY_BUFFER, self.instanceVBO);
-        gl.bufferData(gl.ARRAY_BUFFER, 1 * @sizeOf([16]gl.Float), &transform, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("instanced shaped update error: {s} {d}\n", .{ self.name, e });
