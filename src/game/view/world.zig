@@ -7,7 +7,7 @@ const cursor = @import("../shape/cursor.zig");
 const cube = @import("../shape/cube.zig");
 const shape = @import("../shape/shape.zig");
 
-const chunkSize: comptime_int = 64 * 64 * 64;
+const chunkSize: comptime_int = 64 * 64 * 32;
 const transformSize = chunkSize * 16;
 
 pub const World = struct {
@@ -28,8 +28,8 @@ pub const World = struct {
     }
 
     pub fn draw(self: *World) !void {
-        const chunk: [2]u32 = [_]u32{1} ** 2;
-        var transforms: [32]gl.Float = [_]gl.Float{undefined} ** 32;
+        const chunk: [chunkSize]u32 = [_]u32{1} ** chunkSize;
+        var transforms: [transformSize]gl.Float = [_]gl.Float{undefined} ** transformSize;
         try self.worldPlane.draw(self.appState.game.lookAt);
         for (chunk, 0..) |blockId, i| {
             _ = blockId;
