@@ -11,7 +11,6 @@ out vec2 TexCoord;
 out vec3 barycentric;
 out vec2 edge;
 
-uniform mat4 transform;
 uniform mat4 projection;
 
 void main()
