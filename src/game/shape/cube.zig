@@ -72,8 +72,8 @@ pub const Cube = struct {
         alloc: std.mem.Allocator,
         textureRGBAColors: []const gl.Uint,
     ) !instancedShape.InstancedShape {
-        const vertexShaderSource = @embedFile("../shaders/cube.vs");
-        const fragmentShaderSource = @embedFile("../shaders/cube.fs");
+        const vertexShaderSource = @embedFile("../shaders/cube_instance.vs");
+        const fragmentShaderSource = @embedFile("../shaders/cube_instance.fs");
 
         const cube = initParShapeCubeFromPlanes();
         defer cube.deinit();
@@ -101,14 +101,7 @@ pub const Cube = struct {
     pub fn initBlockCube(appState: *state.State, blockId: u32, alloc: std.mem.Allocator, cubesMap: *std.AutoHashMap(u32, instancedShape.InstancedShape)) !void {
         var blockData: data.block = undefined;
         try appState.db.loadBlock(blockId, &blockData);
-        var name = [_]u8{0} ** data.maxBlockSizeName;
-        for (blockData.name, 0..) |c, i| {
-            if (i >= data.maxBlockSizeName) {
-                break;
-            }
-            name[i] = c;
-        }
-        const s = try initInstancedShape(&name, blockId, alloc, &blockData.texture);
+        const s = try initInstancedShape("block", blockId, alloc, &blockData.texture);
         try cubesMap.put(blockId, s);
     }
 
@@ -117,8 +110,8 @@ pub const Cube = struct {
         try s.draw(zm.mul(m, givenM));
     }
 
-    pub fn drawInstanced(x: gl.Float, y: gl.Float, z: gl.Float, givenM: zm.Mat, s: instancedShape.InstancedShape) !void {
-        const m = zm.translation(x, y, z);
-        try s.draw(zm.mul(m, givenM));
+    pub fn drawInstanced(givenMs: [16]gl.Float, s: instancedShape.InstancedShape) !void {
+        try s.updateInstanceData(givenMs);
+        try s.draw();
     }
 };

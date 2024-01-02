@@ -9,6 +9,7 @@ const data = @import("../data/data.zig");
 pub const ShapeErr = error{
     NotInitialized,
     RenderError,
+    UpdateError,
 };
 
 pub const textureDataType = enum {
@@ -37,6 +38,7 @@ pub const InstancedShape = struct {
     numIndices: gl.Int,
     program: gl.Uint,
     highlight: gl.Int,
+    instanceVBO: gl.Uint,
 
     pub fn init(
         blockId: u32,
@@ -55,7 +57,7 @@ pub const InstancedShape = struct {
         try initEBO(name, shape.indices);
         const program = try initProgram(name, &[_]gl.Uint{ vertexShader, fragmentShader });
         const texture = try initTextureFromColors(textureRGBAColor, name);
-        try initData(name, shape, rgbaColor, alloc);
+        const instancedVBO = try initData(name, shape, rgbaColor, alloc);
         try setUniforms(name, program);
         return InstancedShape{
             .blockId = blockId,
@@ -65,6 +67,7 @@ pub const InstancedShape = struct {
             .numIndices = @intCast(shape.indices.len),
             .program = program,
             .highlight = 0,
+            .instanceVBO = instancedVBO,
         };
     }
 
@@ -315,7 +318,39 @@ pub const InstancedShape = struct {
         return vertices;
     }
 
-    fn initData(name: []const u8, shaderData: zmesh.Shape, rgbaColor: ?[4]gl.Float, alloc: std.mem.Allocator) !void {
+    pub fn setUniforms(name: []const u8, program: gl.Uint) !void {
+        gl.useProgram(program);
+        var e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{s} error: {d}\n", .{ name, e });
+            return ShapeErr.RenderError;
+        }
+
+        gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{s} uniform1i error: {d}\n", .{ name, e });
+            return ShapeErr.RenderError;
+        }
+        var projection: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+
+        const fov = 45.0;
+        const h = @as(gl.Float, @floatFromInt(config.windows_height));
+        const w = @as(gl.Float, @floatFromInt(config.windows_width));
+        const aspect = w / h;
+        const ps = zm.perspectiveFovRh(fov, aspect, 0.1, 100.0);
+        zm.storeMat(&projection, ps);
+
+        const location = gl.getUniformLocation(program, "projection");
+        gl.uniformMatrix4fv(location, 1, gl.FALSE, &projection);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("error: {d}\n", .{e});
+            return ShapeErr.RenderError;
+        }
+    }
+
+    fn initData(name: []const u8, shaderData: zmesh.Shape, rgbaColor: ?[4]gl.Float, alloc: std.mem.Allocator) !gl.Uint {
         var vertices = try std.ArrayList(InstancedShapeVertex).initCapacity(alloc, shaderData.positions.len);
         defer vertices.deinit();
 
@@ -375,41 +410,53 @@ pub const InstancedShape = struct {
             std.debug.print("{s} init data error: {d}\n", .{ name, e });
             return ShapeErr.RenderError;
         }
+        gl.bindBuffer(gl.ARRAY_BUFFER, 0);
+
+        // one transform matrix per instance with a default size of 1
+        const idM = zm.identity();
+        var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+        zm.storeMat(&transform, idM);
+
+        // init instanceVBO data
+        var instanceVBO: gl.Uint = undefined;
+        gl.genBuffers(1, &instanceVBO);
+        gl.bindBuffer(gl.ARRAY_BUFFER, instanceVBO);
+        gl.bufferData(gl.ARRAY_BUFFER, 1 * @sizeOf([16]gl.Float), &transform, gl.STATIC_DRAW);
+        // have to set up 4 consecutive attributes for the matrix
+
+        gl.enableVertexAttribArray(5);
+        gl.vertexAttribPointer(5, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, null);
+        gl.enableVertexAttribArray(6);
+        gl.vertexAttribPointer(6, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(@sizeOf(gl.Float) * 4)));
+        gl.enableVertexAttribArray(7);
+        gl.vertexAttribPointer(7, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(2 * @sizeOf(gl.Float) * 4)));
+        gl.enableVertexAttribArray(8);
+        gl.vertexAttribPointer(8, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(3 * @sizeOf(gl.Float) * 4)));
+
+        gl.vertexAttribDivisor(5, 1);
+        gl.vertexAttribDivisor(6, 1);
+        gl.vertexAttribDivisor(7, 1);
+        gl.vertexAttribDivisor(8, 1);
+        gl.bindBuffer(gl.ARRAY_BUFFER, 0);
+
+        return instanceVBO;
     }
 
-    pub fn setUniforms(name: []const u8, program: gl.Uint) !void {
-        gl.useProgram(program);
-        var e = gl.getError();
+    pub fn updateInstanceData(self: *const InstancedShape, transform: [16]gl.Float) !void {
+        gl.bindVertexArray(self.vao);
+        gl.bindBuffer(gl.ARRAY_BUFFER, self.instanceVBO);
+        gl.bufferData(gl.ARRAY_BUFFER, 1 * @sizeOf([16]gl.Float), &transform, gl.STATIC_DRAW);
+        const e = gl.getError();
         if (e != gl.NO_ERROR) {
-            std.debug.print("{s} error: {d}\n", .{ name, e });
-            return ShapeErr.RenderError;
+            std.debug.print("instanced shaped update error: {s} {d}\n", .{ self.name, e });
+            return ShapeErr.UpdateError;
         }
-
-        gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} uniform1i error: {d}\n", .{ name, e });
-            return ShapeErr.RenderError;
-        }
-        var projection: [16]gl.Float = [_]gl.Float{undefined} ** 16;
-
-        const fov = 45.0;
-        const h = @as(gl.Float, @floatFromInt(config.windows_height));
-        const w = @as(gl.Float, @floatFromInt(config.windows_width));
-        const aspect = w / h;
-        const ps = zm.perspectiveFovRh(fov, aspect, 0.1, 100.0);
-        zm.storeMat(&projection, ps);
-
-        const location = gl.getUniformLocation(program, "projection");
-        gl.uniformMatrix4fv(location, 1, gl.FALSE, &projection);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, 0);
+        gl.bindVertexArray(0);
+        return;
     }
 
-    pub fn draw(self: InstancedShape, tf: ?zm.Mat) !void {
+    pub fn draw(self: InstancedShape) !void {
         gl.useProgram(self.program);
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
@@ -432,17 +479,11 @@ pub const InstancedShape = struct {
             return ShapeErr.RenderError;
         }
 
-        var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
-        if (tf) |t| {
-            zm.storeMat(&transform, zm.transpose(t));
-        } else {
-            zm.storeMat(&transform, zm.transpose(zm.identity()));
-        }
-        const location = gl.getUniformLocation(self.program, "transform");
-        gl.uniformMatrix4fv(location, 1, gl.TRUE, &transform);
+        // bind the instanceVBO
+        gl.bindBuffer(gl.ARRAY_BUFFER, self.instanceVBO);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
-            std.debug.print("error: {d}\n", .{e});
+            std.debug.print("{s} bind instance vbo error: {d}\n", .{ self.name, e });
             return ShapeErr.RenderError;
         }
 
@@ -453,7 +494,7 @@ pub const InstancedShape = struct {
             return ShapeErr.RenderError;
         }
 
-        gl.drawElements(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null);
+        gl.drawElementsInstanced(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null, 1);
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} draw elements error: {d}\n", .{ self.name, e });
             return ShapeErr.RenderError;

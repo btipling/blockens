@@ -29,18 +29,21 @@ pub const World = struct {
     pub fn draw(self: *World) !void {
         // const chunk: [chunkSize]u32 = [_]u32{1} ** chunkSize;
         const chunk: [1]u32 = [_]u32{1};
-        const m = self.appState.game.lookAt;
-        try self.worldPlane.draw(m);
+        try self.worldPlane.draw(self.appState.game.lookAt);
         for (chunk, 0..) |blockId, i| {
             const x = @as(gl.Float, @floatFromInt(@mod(i, 64)));
             const y = @as(gl.Float, @floatFromInt(@mod(i / 64, 64)));
             const z = @as(gl.Float, @floatFromInt(i / (64 * 64)));
             if (self.appState.game.cubesMap.get(blockId)) |is| {
-                try cube.Cube.drawInstanced(x, y, z, m, is);
+                var m = zm.translation(x, y, z);
+                m = zm.mul(m, self.appState.game.lookAt);
+                var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+                zm.storeMat(&transform, m);
+                try cube.Cube.drawInstanced(transform, is);
             } else {
                 std.debug.print("blockId {d} not found in cubesMap\n", .{blockId});
             }
         }
-        try self.cursor.draw(m);
+        try self.cursor.draw(self.appState.game.lookAt);
     }
 };
