@@ -106,12 +106,11 @@ pub const Cube = struct {
         appState: *state.State,
         blockId: u32,
         alloc: std.mem.Allocator,
-        cubesMap: *std.AutoHashMap(u32, instancedShape.InstancedShape),
-    ) !void {
+    ) !instancedShape.InstancedShape {
         var blockData: data.block = undefined;
         try appState.db.loadBlock(blockId, &blockData);
         const s = try initInstancedShape(vm, "block", blockId, alloc, &blockData.texture);
-        try cubesMap.put(blockId, s);
+        return s;
     }
 
     pub fn draw(x: gl.Float, y: gl.Float, z: gl.Float, givenM: zm.Mat, s: shape.Shape) !void {

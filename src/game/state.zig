@@ -28,7 +28,7 @@ pub const State = struct {
             .game = try Game.init(alloc),
             .db = db,
         };
-        try s.game.initBlocks(&s, alloc);
+        try s.game.initBlocks(&s);
         return s;
     }
 
@@ -89,8 +89,10 @@ pub const App = struct {
 };
 
 pub const Game = struct {
+    alloc: std.mem.Allocator,
     view: view.View,
-    cubesMap: std.AutoHashMap(u32, instancedShape.InstancedShape),
+    blockOptions: std.ArrayList(data.blockOption),
+    cubesMap: std.AutoHashMap(u32, std.ArrayList(instancedShape.InstancedShape)),
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
@@ -102,13 +104,14 @@ pub const Game = struct {
     lastY: gl.Float,
     yaw: gl.Float,
     pitch: gl.Float,
-    blocks: std.ArrayList(u32),
     highlightedIndex: ?usize = 0,
 
     pub fn init(alloc: std.mem.Allocator) !Game {
         var g = Game{
+            .alloc = alloc,
             .view = try view.View.init(zm.identity()),
-            .cubesMap = std.AutoHashMap(u32, instancedShape.InstancedShape).init(alloc),
+            .blockOptions = std.ArrayList(data.blockOption).init(alloc),
+            .cubesMap = std.AutoHashMap(u32, std.ArrayList(instancedShape.InstancedShape)).init(alloc),
             .cameraPos = @Vector(4, gl.Float){ 0.0, 65.0, 3.0, 1.0 },
             .cameraFront = @Vector(4, gl.Float){ 0.0, 0.0, -1.0, 0.0 },
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
@@ -120,7 +123,6 @@ pub const Game = struct {
             .lastY = 0.0,
             .yaw = -90.0,
             .pitch = 0.0,
-            .blocks = std.ArrayList(u32).init(alloc),
         };
 
         try Game.updateLookAt(&g);
@@ -128,27 +130,41 @@ pub const Game = struct {
     }
 
     pub fn deinit(self: *Game) void {
-        self.blocks.deinit();
-
         var iterator = self.cubesMap.iterator();
         while (iterator.next()) |s| {
+            for (s.value_ptr.items) |shape| {
+                shape.deinit();
+            }
             s.value_ptr.deinit();
         }
         self.cubesMap.deinit();
+        self.blockOptions.deinit();
     }
 
-    pub fn initBlocks(self: *Game, appState: *State, alloc: std.mem.Allocator) !void {
-        var blockOptions = std.ArrayList(data.blockOption).init(alloc);
-        defer blockOptions.deinit();
+    pub fn initBlocks(self: *Game, appState: *State) !void {
+        try appState.db.listBlocks(&self.blockOptions);
+    }
 
-        try appState.db.listBlocks(&blockOptions);
-        if (blockOptions.items.len == 0) {
+    pub fn addBlocks(self: *Game, appState: *State, blockOptionId: u32) !void {
+        if (self.blockOptions.items.len == 0) {
             return;
         }
-        for (blockOptions.items) |blockOption| {
-            try cube.Cube.initBlockCube(&self.view, appState, blockOption.id, alloc, &self.cubesMap);
+        for (self.blockOptions.items) |blockOption| {
+            if (blockOption.id != blockOptionId) {
+                continue;
+            }
+            var s = try cube.Cube.initBlockCube(&self.view, appState, blockOption.id, self.alloc);
+            _ = &s;
+            if (self.cubesMap.get(blockOption.id)) |shapes| {
+                var _shapes = shapes;
+                try _shapes.append(s);
+                try self.cubesMap.put(blockOption.id, _shapes);
+            } else {
+                var shapes = std.ArrayList(instancedShape.InstancedShape).init(self.alloc);
+                try shapes.append(s);
+                try self.cubesMap.put(blockOption.id, shapes);
+            }
         }
-        try self.blocks.append(1);
     }
 
     pub fn updateCameraPosition(self: *Game, updatedCameraPosition: @Vector(4, gl.Float)) !void {
