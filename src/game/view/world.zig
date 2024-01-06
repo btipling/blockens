@@ -6,9 +6,11 @@ const plane = @import("../shape/plane.zig");
 const cursor = @import("../shape/cursor.zig");
 const cube = @import("../shape/cube.zig");
 const shape = @import("../shape/shape.zig");
+const instancedShape = @import("../shape/instanced_shape.zig");
 
-const chunkSize: comptime_int = 64 * 64 * 32;
-const transformSize = chunkSize * 16;
+const chunkDim = 64;
+const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
+const drawSize = chunkDim * chunkDim;
 
 pub const World = struct {
     worldPlane: plane.Plane,
@@ -28,28 +30,39 @@ pub const World = struct {
     }
 
     pub fn draw(self: *World) !void {
-        const chunk: [chunkSize]u32 = [_]u32{1} ** chunkSize;
-        var transforms: [transformSize]gl.Float = [_]gl.Float{undefined} ** transformSize;
         try self.worldPlane.draw(self.appState.game.lookAt);
+        const chunk: [chunkSize]u32 = [_]u32{1} ** chunkSize;
+        const initialT: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+        var transforms: [drawSize]instancedShape.InstancedShapeTransform = [_]instancedShape.InstancedShapeTransform{
+            instancedShape.InstancedShapeTransform{ .transform = initialT },
+        } ** drawSize;
         for (chunk, 0..) |blockId, i| {
             _ = blockId;
-            const x = @as(gl.Float, @floatFromInt(@mod(i, 64)));
-            const y = @as(gl.Float, @floatFromInt(@mod(i / 64, 64)));
-            const z = @as(gl.Float, @floatFromInt(i / (64 * 64)));
+            const x = @as(gl.Float, @floatFromInt(@mod(i, chunkDim)));
+            const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim)));
+            const z = @as(gl.Float, @floatFromInt(i / (chunkDim * chunkDim)));
             var m = zm.translation(x, y, z);
             m = zm.mul(m, self.appState.game.lookAt);
             var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
             zm.storeMat(&transform, m);
-            for (0..16) |j| {
-                transforms[i * 16 + j] = transform[j];
+            const index = @as(usize, @mod(i, drawSize));
+            transforms[index] = instancedShape.InstancedShapeTransform{ .transform = transform };
+            if (index == drawSize - 1) {
+                if (self.appState.game.cubesMap.get(1)) |is| {
+                    var _is = is;
+                    try cube.Cube.drawInstanced(&transforms, &_is);
+                } else {
+                    std.debug.print("blockId {d} not found in cubesMap\n", .{1});
+                }
+                // reset transforms
+                transforms = [_]instancedShape.InstancedShapeTransform{
+                    instancedShape.InstancedShapeTransform{ .transform = initialT },
+                } ** drawSize;
             }
+            // draw every chunkDim^2 cubes
+
         }
-        if (self.appState.game.cubesMap.get(1)) |is| {
-            var _is = is;
-            try cube.Cube.drawInstanced(&transforms, &_is);
-        } else {
-            std.debug.print("blockId {d} not found in cubesMap\n", .{1});
-        }
+
         try self.cursor.draw(self.appState.game.lookAt);
     }
 };

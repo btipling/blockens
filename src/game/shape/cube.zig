@@ -110,7 +110,7 @@ pub const Cube = struct {
         try s.draw(zm.mul(m, givenM));
     }
 
-    pub fn drawInstanced(givenMs: []gl.Float, s: *instancedShape.InstancedShape) !void {
+    pub fn drawInstanced(givenMs: []instancedShape.InstancedShapeTransform, s: *instancedShape.InstancedShape) !void {
         try s.updateInstanceData(givenMs);
         try s.draw();
     }

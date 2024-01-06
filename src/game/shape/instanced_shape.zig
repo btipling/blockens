@@ -26,6 +26,10 @@ pub const InstancedShapeVertex = struct {
     edge: [2]gl.Float,
 };
 
+pub const InstancedShapeTransform = struct {
+    transform: [16]gl.Float,
+};
+
 const bcV1 = @Vector(3, gl.Float){ 1.0, 0.0, 0.0 };
 const bcV2 = @Vector(3, gl.Float){ 0.0, 1.0, 0.0 };
 const bcV3 = @Vector(3, gl.Float){ 0.0, 0.0, 1.0 };
@@ -418,12 +422,13 @@ pub const InstancedShape = struct {
         const idM = zm.identity();
         var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
         zm.storeMat(&transform, idM);
+        const ist = InstancedShapeTransform{ .transform = transform };
 
         // init instanceVBO data
         var instanceVBO: gl.Uint = undefined;
         gl.genBuffers(1, &instanceVBO);
         gl.bindBuffer(gl.ARRAY_BUFFER, instanceVBO);
-        gl.bufferData(gl.ARRAY_BUFFER, 1 * @sizeOf([16]gl.Float), &transform, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, @sizeOf(InstancedShapeTransform), &ist, gl.STATIC_DRAW);
         // have to set up 4 consecutive attributes for the matrix
 
         gl.enableVertexAttribArray(5);
@@ -444,8 +449,8 @@ pub const InstancedShape = struct {
         return instanceVBO;
     }
 
-    pub fn updateInstanceData(self: *InstancedShape, transforms: []gl.Float) !void {
-        const size = @as(isize, @intCast(transforms.len * @sizeOf(gl.Float)));
+    pub fn updateInstanceData(self: *InstancedShape, transforms: []InstancedShapeTransform) !void {
+        const size = @as(isize, @intCast(transforms.len * @sizeOf(InstancedShapeTransform)));
         const dataptr: *const anyopaque = transforms.ptr;
         gl.bindVertexArray(self.vao);
         gl.bindBuffer(gl.ARRAY_BUFFER, self.instanceVBO);
@@ -457,7 +462,8 @@ pub const InstancedShape = struct {
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
         gl.bindVertexArray(0);
-        self.numInstances = @as(gl.Int, @intCast(transforms.len / 16));
+        self.numInstances = @as(gl.Int, @intCast(transforms.len));
+        // std.debug.print("num instances: {d}\n", .{self.numInstances});
         return;
     }
 
