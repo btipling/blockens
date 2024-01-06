@@ -5,6 +5,7 @@ const zmesh = @import("zmesh");
 const shape = @import("shape.zig");
 const instancedShape = @import("instanced_shape.zig");
 const position = @import("../position.zig");
+const view = @import("./view.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
 
@@ -67,6 +68,7 @@ pub const Cube = struct {
     }
 
     fn initInstancedShape(
+        vm: *view.View,
         name: []const u8,
         blockId: u32,
         alloc: std.mem.Allocator,
@@ -79,6 +81,7 @@ pub const Cube = struct {
         defer cube.deinit();
 
         return try instancedShape.InstancedShape.init(
+            vm,
             blockId,
             name,
             cube,
@@ -98,10 +101,16 @@ pub const Cube = struct {
         return try initShape(name, 0, alloc, &textureRGBAColors);
     }
 
-    pub fn initBlockCube(appState: *state.State, blockId: u32, alloc: std.mem.Allocator, cubesMap: *std.AutoHashMap(u32, instancedShape.InstancedShape)) !void {
+    pub fn initBlockCube(
+        vm: *view.View,
+        appState: *state.State,
+        blockId: u32,
+        alloc: std.mem.Allocator,
+        cubesMap: *std.AutoHashMap(u32, instancedShape.InstancedShape),
+    ) !void {
         var blockData: data.block = undefined;
         try appState.db.loadBlock(blockId, &blockData);
-        const s = try initInstancedShape("block", blockId, alloc, &blockData.texture);
+        const s = try initInstancedShape(vm, "block", blockId, alloc, &blockData.texture);
         try cubesMap.put(blockId, s);
     }
 
@@ -110,8 +119,11 @@ pub const Cube = struct {
         try s.draw(zm.mul(m, givenM));
     }
 
-    pub fn drawInstanced(givenMs: []instancedShape.InstancedShapeTransform, s: *instancedShape.InstancedShape) !void {
+    pub fn updateInstanced(givenMs: []instancedShape.InstancedShapeTransform, s: *instancedShape.InstancedShape) !void {
         try s.updateInstanceData(givenMs);
+    }
+
+    pub fn drawInstanced(s: *instancedShape.InstancedShape) !void {
         try s.draw();
     }
 };

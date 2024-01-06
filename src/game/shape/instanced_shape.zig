@@ -3,6 +3,7 @@ const gl = @import("zopengl");
 const zstbi = @import("zstbi");
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
+const view = @import("./view.zig");
 const config = @import("../config.zig");
 const data = @import("../data/data.zig");
 
@@ -46,6 +47,7 @@ pub const InstancedShape = struct {
     numInstances: gl.Int,
 
     pub fn init(
+        vm: *view.View,
         blockId: u32,
         name: []const u8,
         shape: zmesh.Shape,
@@ -63,7 +65,7 @@ pub const InstancedShape = struct {
         const program = try initProgram(name, &[_]gl.Uint{ vertexShader, fragmentShader });
         const texture = try initTextureFromColors(textureRGBAColor, name);
         const instancedVBO = try initData(name, shape, rgbaColor, alloc);
-        try setUniforms(name, program);
+        try setUniforms(name, program, vm);
         return InstancedShape{
             .blockId = blockId,
             .name = name,
@@ -324,7 +326,7 @@ pub const InstancedShape = struct {
         return vertices;
     }
 
-    pub fn setUniforms(name: []const u8, program: gl.Uint) !void {
+    pub fn setUniforms(name: []const u8, program: gl.Uint, vm: *view.View) !void {
         gl.useProgram(program);
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
@@ -354,6 +356,15 @@ pub const InstancedShape = struct {
             std.debug.print("error: {d}\n", .{e});
             return ShapeErr.RenderError;
         }
+        const blockIndex: gl.Uint = gl.getUniformBlockIndex(program, vm.name.ptr);
+        const bindingPoint: gl.Uint = 0;
+        gl.uniformBlockBinding(program, blockIndex, bindingPoint);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("error: {d}\n", .{e});
+            return ShapeErr.RenderError;
+        }
+        gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, vm.ubo);
     }
 
     fn initData(name: []const u8, shaderData: zmesh.Shape, rgbaColor: ?[4]gl.Float, alloc: std.mem.Allocator) !gl.Uint {
@@ -463,7 +474,6 @@ pub const InstancedShape = struct {
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
         gl.bindVertexArray(0);
         self.numInstances = @as(gl.Int, @intCast(transforms.len));
-        // std.debug.print("num instances: {d}\n", .{self.numInstances});
         return;
     }
 

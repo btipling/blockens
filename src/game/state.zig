@@ -4,6 +4,7 @@ const zm = @import("zmath");
 const position = @import("position.zig");
 const config = @import("config.zig");
 const cube = @import("./shape/cube.zig");
+const view = @import("./shape/view.zig");
 const instancedShape = @import("./shape/instanced_shape.zig");
 const data = @import("./data/data.zig");
 
@@ -88,6 +89,7 @@ pub const App = struct {
 };
 
 pub const Game = struct {
+    view: view.View,
     cubesMap: std.AutoHashMap(u32, instancedShape.InstancedShape),
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
@@ -105,6 +107,7 @@ pub const Game = struct {
 
     pub fn init(alloc: std.mem.Allocator) !Game {
         var g = Game{
+            .view = try view.View.init(zm.identity()),
             .cubesMap = std.AutoHashMap(u32, instancedShape.InstancedShape).init(alloc),
             .cameraPos = @Vector(4, gl.Float){ 0.0, 65.0, 3.0, 1.0 },
             .cameraFront = @Vector(4, gl.Float){ 0.0, 0.0, -1.0, 0.0 },
@@ -143,7 +146,7 @@ pub const Game = struct {
             return;
         }
         for (blockOptions.items) |blockOption| {
-            try cube.Cube.initBlockCube(appState, blockOption.id, alloc, &self.cubesMap);
+            try cube.Cube.initBlockCube(&self.view, appState, blockOption.id, alloc, &self.cubesMap);
         }
         try self.blocks.append(1);
     }
@@ -166,6 +169,7 @@ pub const Game = struct {
             self.cameraPos + self.cameraFront,
             self.cameraUp,
         );
+        try self.view.update(self.lookAt);
     }
 
     fn pickObject(self: *Game) !void {

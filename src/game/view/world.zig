@@ -13,6 +13,7 @@ const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
 const drawSize = chunkDim * chunkDim;
 
 pub const World = struct {
+    chunk: [chunkSize]u32 = [_]u32{1} ** chunkSize,
     worldPlane: plane.Plane,
     cursor: cursor.Cursor,
     appState: *state.State,
@@ -29,20 +30,17 @@ pub const World = struct {
         _ = self;
     }
 
-    pub fn draw(self: *World) !void {
-        try self.worldPlane.draw(self.appState.game.lookAt);
-        const chunk: [chunkSize]u32 = [_]u32{1} ** chunkSize;
+    pub fn initChunk(self: *World) !void {
         const initialT: [16]gl.Float = [_]gl.Float{undefined} ** 16;
         var transforms: [drawSize]instancedShape.InstancedShapeTransform = [_]instancedShape.InstancedShapeTransform{
             instancedShape.InstancedShapeTransform{ .transform = initialT },
         } ** drawSize;
-        for (chunk, 0..) |blockId, i| {
+        for (self.chunk, 0..) |blockId, i| {
             _ = blockId;
             const x = @as(gl.Float, @floatFromInt(@mod(i, chunkDim)));
             const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim)));
             const z = @as(gl.Float, @floatFromInt(i / (chunkDim * chunkDim)));
-            var m = zm.translation(x, y, z);
-            m = zm.mul(m, self.appState.game.lookAt);
+            const m = zm.translation(x, y, z);
             var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
             zm.storeMat(&transform, m);
             const index = @as(usize, @mod(i, drawSize));
@@ -50,7 +48,8 @@ pub const World = struct {
             if (index == drawSize - 1) {
                 if (self.appState.game.cubesMap.get(1)) |is| {
                     var _is = is;
-                    try cube.Cube.drawInstanced(&transforms, &_is);
+                    try cube.Cube.updateInstanced(&transforms, &_is);
+                    try self.appState.game.cubesMap.put(1, _is);
                 } else {
                     std.debug.print("blockId {d} not found in cubesMap\n", .{1});
                 }
@@ -59,8 +58,24 @@ pub const World = struct {
                     instancedShape.InstancedShapeTransform{ .transform = initialT },
                 } ** drawSize;
             }
-            // draw every chunkDim^2 cubes
+        }
 
+        try self.cursor.draw(self.appState.game.lookAt);
+    }
+
+    pub fn draw(self: *World) !void {
+        try self.worldPlane.draw(self.appState.game.lookAt);
+        for (self.chunk, 0..) |blockId, i| {
+            _ = blockId;
+            const index = @as(usize, @mod(i, drawSize));
+            if (index == drawSize - 1) {
+                if (self.appState.game.cubesMap.get(1)) |is| {
+                    var _is = is;
+                    try cube.Cube.drawInstanced(&_is);
+                } else {
+                    std.debug.print("blockId {d} not found in cubesMap\n", .{1});
+                }
+            }
         }
 
         try self.cursor.draw(self.appState.game.lookAt);
