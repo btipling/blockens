@@ -114,6 +114,7 @@ pub const App = struct {
     view: View = View.game,
     demoCubeVersion: u32 = 0,
     demoTextureColors: ?[data.RGBAColorTextureSize]gl.Uint,
+    showChunkGeneratorUI: bool = true,
 
     pub fn init() !App {
         return App{
@@ -121,6 +122,10 @@ pub const App = struct {
             .demoCubeVersion = 0,
             .demoTextureColors = null,
         };
+    }
+
+    pub fn toggleChunkGeneratorUI(self: *App) !void {
+        self.showChunkGeneratorUI = !self.showChunkGeneratorUI;
     }
 
     fn clearViewState(self: *App) !void {
@@ -154,8 +159,6 @@ pub const ViewState = struct {
     pitch: gl.Float,
     highlightedIndex: ?usize = 0,
     disableScreenTransform: bool,
-    viewStateLastUpdated: i64,
-
     pub fn init(
         alloc: std.mem.Allocator,
         v: view.View,
@@ -185,7 +188,6 @@ pub const ViewState = struct {
             .yaw = initialYaw,
             .pitch = initialPitch,
             .disableScreenTransform = false,
-            .viewStateLastUpdated = 0,
         };
 
         try ViewState.updateLookAt(&g);
@@ -209,12 +211,7 @@ pub const ViewState = struct {
     }
 
     pub fn toggleScreenTransform(self: *ViewState) !void {
-        const now = std.time.milliTimestamp();
-        if (now - self.viewStateLastUpdated < 250) {
-            return;
-        }
         self.disableScreenTransform = !self.disableScreenTransform;
-        self.viewStateLastUpdated = now;
         try self.updateLookAt();
     }
 

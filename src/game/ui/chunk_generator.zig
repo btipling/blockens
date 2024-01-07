@@ -12,7 +12,6 @@ const maxWorldSizeName = 20;
 
 pub const ChunkGenerator = struct {
     appState: *state.State,
-    showUI: bool,
 
     pub fn init(appState: *state.State, codeFont: zgui.Font, sc: script.Script, alloc: std.mem.Allocator) !ChunkGenerator {
         _ = sc;
@@ -20,7 +19,6 @@ pub const ChunkGenerator = struct {
         _ = codeFont;
         const tv = ChunkGenerator{
             .appState = appState,
-            .showUI = true,
         };
         return tv;
     }
@@ -29,12 +27,8 @@ pub const ChunkGenerator = struct {
         _ = self;
     }
 
-    pub fn toggleUI(self: *ChunkGenerator) void {
-        self.showUI = !self.showUI;
-    }
-
     pub fn draw(self: *ChunkGenerator, window: *glfw.Window) !void {
-        if (!self.showUI) {
+        if (!self.appState.app.showChunkGeneratorUI) {
             return;
         }
         const fb_size = window.getFramebufferSize();

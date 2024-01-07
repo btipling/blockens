@@ -7,11 +7,13 @@ const state = @import("state.zig");
 pub const Controls = struct {
     window: *zglfw.Window,
     appState: *state.State,
+    controlsLastUpdated: i64,
 
     pub fn init(window: *zglfw.Window, gameState: *state.State) !Controls {
         return Controls{
             .window = window,
             .appState = gameState,
+            .controlsLastUpdated = 0,
         };
     }
 
@@ -153,7 +155,12 @@ pub const Controls = struct {
             try self.appState.demoView.rotateWorldInReverse();
         }
         if (self.window.getKey(.v) == .press) {
-            try self.appState.demoView.toggleScreenTransform();
+            const now = std.time.milliTimestamp();
+            if (now - self.controlsLastUpdated >= 250) {
+                self.controlsLastUpdated = now;
+                try self.appState.app.toggleChunkGeneratorUI();
+                try self.appState.demoView.toggleScreenTransform();
+            }
         }
     }
 };

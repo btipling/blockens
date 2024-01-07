@@ -138,6 +138,7 @@ pub const Game = struct {
         // uncomment to start in a specific view:
         // try appState.setGameView();
         try appState.setChunkGeneratorView();
+
         main_loop: while (!window.shouldClose()) {
             glfw.pollEvents();
 
