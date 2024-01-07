@@ -49,11 +49,15 @@ pub const World = struct {
     }
 
     pub fn initChunk(self: *World, alloc: std.mem.Allocator) !void {
+        var prng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.milliTimestamp())));
+        const random = prng.random();
         var perBlockTransforms = std.AutoHashMap(u32, std.ArrayList(instancedShape.InstancedShapeTransform)).init(alloc);
         defer perBlockTransforms.deinit();
         const ds: usize = drawSize;
         _ = ds;
-        for (self.chunk, 0..) |blockId, i| {
+        for (self.chunk, 0..) |_, i| {
+            const randomInt = random.uintAtMost(usize, self.appState.game.blockOptions.items.len - 1);
+            const blockId = @as(u32, @intCast(randomInt + 1));
             const x = @as(gl.Float, @floatFromInt(@mod(i, chunkDim)));
             const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim)));
             const z = @as(gl.Float, @floatFromInt(i / (chunkDim * chunkDim)));
@@ -95,15 +99,19 @@ pub const World = struct {
     }
 
     pub fn draw(self: *World) !void {
-        const _blockId = 1;
         try self.worldPlane.draw(self.appState.game.lookAt);
-        if (self.appState.game.cubesMap.get(_blockId)) |shapes| {
-            for (shapes.items) |is| {
-                var _is = is;
-                try cube.Cube.drawInstanced(&_is);
+
+        var keys = self.appState.game.cubesMap.keyIterator();
+        while (keys.next()) |_k| {
+            const _blockId = _k.*;
+            if (self.appState.game.cubesMap.get(_blockId)) |shapes| {
+                for (shapes.items) |is| {
+                    var _is = is;
+                    try cube.Cube.drawInstanced(&_is);
+                }
+            } else {
+                std.debug.print("blockId {d} not found in cubesMap\n", .{_blockId});
             }
-        } else {
-            std.debug.print("blockId {d} not found in cubesMap\n", .{_blockId});
         }
         try self.cursor.draw(self.appState.game.lookAt);
     }
