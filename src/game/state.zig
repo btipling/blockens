@@ -172,6 +172,7 @@ pub const Game = struct {
                 return 0;
             }
         }
+        std.debug.print("Invalid block id: {}\n", .{blockOptionId});
         return StateErrors.InvalidBlockID;
     }
 

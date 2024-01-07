@@ -46,12 +46,13 @@ pub const World = struct {
         _b.clearRetainingCapacity();
     }
 
-    pub fn randomChunk() [chunkSize]u32 {
+    pub fn randomChunk(self: *World) [chunkSize]u32 {
         var prng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.milliTimestamp())));
         const random = prng.random();
+        const maxOptions = self.appState.game.blockOptions.items.len - 1;
         var chunk: [chunkSize]u32 = [_]u32{undefined} ** chunkSize;
         for (chunk, 0..) |_, i| {
-            const randomInt = random.uintAtMost(usize, 5);
+            const randomInt = random.uintAtMost(usize, maxOptions);
             const blockId = @as(u32, @intCast(randomInt + 1));
             chunk[i] = blockId;
         }

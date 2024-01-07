@@ -127,7 +127,7 @@ pub const Game = struct {
 
         // init views
         var gameWorld = try world.World.init(worldPlane, uiCursor, &appState);
-        const chunk = world.World.randomChunk();
+        const chunk = gameWorld.randomChunk();
         try gameWorld.initChunk(chunk, self.allocator, position.Position{ .x = 0, .y = 0, .z = 0 });
         var textureGen = try texture_gen.TextureGenerator.init(&appState, self.allocator);
         defer textureGen.deinit();
