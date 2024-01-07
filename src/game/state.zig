@@ -8,6 +8,11 @@ const view = @import("./shape/view.zig");
 const instancedShape = @import("./shape/instanced_shape.zig");
 const data = @import("./data/data.zig");
 
+pub const StateErrors = error{
+    NoBlocks,
+    InvalidBlockID,
+};
+
 pub const State = struct {
     app: App,
     game: Game,
@@ -145,9 +150,9 @@ pub const Game = struct {
         try appState.db.listBlocks(&self.blockOptions);
     }
 
-    pub fn addBlocks(self: *Game, appState: *State, blockOptionId: u32) !void {
+    pub fn addBlocks(self: *Game, appState: *State, blockOptionId: u32) !usize {
         if (self.blockOptions.items.len == 0) {
-            return;
+            return StateErrors.NoBlocks;
         }
         for (self.blockOptions.items) |blockOption| {
             if (blockOption.id != blockOptionId) {
@@ -159,12 +164,15 @@ pub const Game = struct {
                 var _shapes = shapes;
                 try _shapes.append(s);
                 try self.cubesMap.put(blockOption.id, _shapes);
+                return _shapes.items.len - 1;
             } else {
                 var shapes = std.ArrayList(instancedShape.InstancedShape).init(self.alloc);
                 try shapes.append(s);
                 try self.cubesMap.put(blockOption.id, shapes);
+                return 0;
             }
         }
+        return StateErrors.InvalidBlockID;
     }
 
     pub fn updateCameraPosition(self: *Game, updatedCameraPosition: @Vector(4, gl.Float)) !void {
