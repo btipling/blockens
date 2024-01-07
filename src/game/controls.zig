@@ -96,7 +96,11 @@ pub const Controls = struct {
     fn handleGameKey(self: *Controls) !void {
         // wasd movement
         const viewState = self.appState.worldView;
-        const cameraSpeed: @Vector(4, gl.Float) = @splat(2.5 * viewState.deltaTime);
+        var speed = 2.5 * viewState.deltaTime;
+        if (self.window.getKey(.left_control) != .press) {
+            speed *= 10.0;
+        }
+        const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
         if (self.window.getKey(.w) == .press) {
             const np = viewState.cameraPos + viewState.cameraFront * cameraSpeed;
             try self.appState.worldView.updateCameraPosition(np);

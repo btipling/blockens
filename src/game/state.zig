@@ -16,6 +16,7 @@ pub const StateErrors = error{
 pub const State = struct {
     app: App,
     worldView: ViewState,
+    demoView: ViewState,
     db: data.Data,
 
     pub fn init(alloc: std.mem.Allocator, sqliteAlloc: std.mem.Allocator) !State {
@@ -30,7 +31,20 @@ pub const State = struct {
         };
         var s = State{
             .app = try App.init(),
-            .worldView = try ViewState.init(alloc),
+            .worldView = try ViewState.init(
+                alloc,
+                @Vector(4, gl.Float){ -31.0, 78.0, -27.0, 1.0 },
+                @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 },
+                41.6,
+                -19.4,
+            ),
+            .demoView = try ViewState.init(
+                alloc,
+                @Vector(4, gl.Float){ -31.0, 78.0, -27.0, 1.0 },
+                @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 },
+                41.6,
+                -19.4,
+            ),
             .db = db,
         };
         try s.worldView.initBlocks(&s);
@@ -111,14 +125,20 @@ pub const ViewState = struct {
     pitch: gl.Float,
     highlightedIndex: ?usize = 0,
 
-    pub fn init(alloc: std.mem.Allocator) !ViewState {
+    pub fn init(
+        alloc: std.mem.Allocator,
+        initialCameraPos: @Vector(4, gl.Float),
+        initialCameraFront: @Vector(4, gl.Float),
+        initialYaw: gl.Float,
+        initialPitch: gl.Float,
+    ) !ViewState {
         var g = ViewState{
             .alloc = alloc,
             .view = try view.View.init(zm.identity()),
             .blockOptions = std.ArrayList(data.blockOption).init(alloc),
             .cubesMap = std.AutoHashMap(u32, std.ArrayList(instancedShape.InstancedShape)).init(alloc),
-            .cameraPos = @Vector(4, gl.Float){ 0.0, 65.0, 3.0, 1.0 },
-            .cameraFront = @Vector(4, gl.Float){ 0.0, 0.0, -1.0, 0.0 },
+            .cameraPos = initialCameraPos,
+            .cameraFront = initialCameraFront,
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
             .lookAt = zm.identity(),
             .lastFrame = 0.0,
@@ -126,8 +146,8 @@ pub const ViewState = struct {
             .firstMouse = true,
             .lastX = 0.0,
             .lastY = 0.0,
-            .yaw = -90.0,
-            .pitch = 0.0,
+            .yaw = initialYaw,
+            .pitch = initialPitch,
         };
 
         try ViewState.updateLookAt(&g);

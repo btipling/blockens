@@ -429,7 +429,7 @@ pub const Shape = struct {
         const h = @as(gl.Float, @floatFromInt(config.windows_height));
         const w = @as(gl.Float, @floatFromInt(config.windows_width));
         const aspect = w / h;
-        const ps = zm.perspectiveFovRh(fov, aspect, 0.1, 100.0);
+        const ps = zm.perspectiveFovRh(fov, aspect, 0.1, 200.0);
         zm.storeMat(&projection, ps);
 
         const location = gl.getUniformLocation(program, "projection");
