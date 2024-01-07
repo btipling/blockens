@@ -163,6 +163,9 @@ pub const Game = struct {
                 .blockEditor => {
                     try drawBlockEditorView(&textureGen, &gameUI);
                 },
+                .clusterGenerator => {
+                    try drawClusterGeneratorView();
+                },
             }
 
             window.swapBuffers();
@@ -188,3 +191,5 @@ fn drawBlockEditorView(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI
     try textureGen.draw();
     try gameUI.drawBlockEditor();
 }
+
+fn drawClusterGeneratorView() !void {}

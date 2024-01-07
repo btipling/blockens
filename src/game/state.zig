@@ -63,6 +63,7 @@ pub const View = enum {
     textureGenerator,
     worldEditor,
     blockEditor,
+    clusterGenerator,
 };
 
 pub const App = struct {
@@ -101,6 +102,11 @@ pub const App = struct {
     pub fn setBlockEditorView(self: *App) !void {
         self.clearViewState();
         self.view = View.blockEditor;
+    }
+
+    pub fn setClusterGeneratorView(self: *App) !void {
+        self.clearViewState();
+        self.view = View.clusterGenerator;
     }
 
     pub fn setTextureColor(self: *App, demoTextureColors: [data.RGBAColorTextureSize]gl.Uint) void {
