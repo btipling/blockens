@@ -29,10 +29,12 @@ pub const State = struct {
             std.log.err("Failed to ensure default world: {}\n", .{err});
             return err;
         };
+        const v = try view.View.init(zm.identity());
         var s = State{
             .app = try App.init(),
             .worldView = try ViewState.init(
                 alloc,
+                v,
                 @Vector(4, gl.Float){ -68.0, 78.0, -70.0, 1.0 },
                 @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 },
                 41.6,
@@ -41,6 +43,7 @@ pub const State = struct {
             ),
             .demoView = try ViewState.init(
                 alloc,
+                v,
                 @Vector(4, gl.Float){ -68.0, 78.0, -70.0, 1.0 },
                 @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 },
                 41.6,
@@ -50,11 +53,46 @@ pub const State = struct {
             .db = db,
         };
         try s.worldView.initBlocks(&s);
+        try s.demoView.initBlocks(&s);
         return s;
+    }
+
+    fn clearViewState(self: *State) !void {
+        try self.app.clearViewState();
+        try self.worldView.clearViewState();
+        try self.demoView.clearViewState();
     }
 
     pub fn deinit(self: *State) void {
         self.worldView.deinit();
+        self.demoView.deinit();
+    }
+
+    pub fn setGameView(self: *State) !void {
+        try self.clearViewState();
+        try self.worldView.focusView();
+        self.app.view = View.game;
+    }
+
+    pub fn setTextureGeneratorView(self: *State) !void {
+        try self.clearViewState();
+        self.app.view = View.textureGenerator;
+    }
+
+    pub fn setWorldEditorView(self: *State) !void {
+        try self.clearViewState();
+        self.app.view = View.worldEditor;
+    }
+
+    pub fn setBlockEditorView(self: *State) !void {
+        try self.clearViewState();
+        self.app.view = View.blockEditor;
+    }
+
+    pub fn setClusterGeneratorView(self: *State) !void {
+        try self.clearViewState();
+        try self.demoView.focusView();
+        self.app.view = View.clusterGenerator;
     }
 };
 
@@ -79,34 +117,9 @@ pub const App = struct {
         };
     }
 
-    fn clearViewState(self: *App) void {
+    fn clearViewState(self: *App) !void {
         self.demoCubeVersion += 1;
         self.demoTextureColors = null;
-    }
-
-    pub fn setGameView(self: *App) !void {
-        self.clearViewState();
-        self.view = View.game;
-    }
-
-    pub fn setTextureGeneratorView(self: *App) !void {
-        self.clearViewState();
-        self.view = View.textureGenerator;
-    }
-
-    pub fn setWorldEditorView(self: *App) !void {
-        self.clearViewState();
-        self.view = View.worldEditor;
-    }
-
-    pub fn setBlockEditorView(self: *App) !void {
-        self.clearViewState();
-        self.view = View.blockEditor;
-    }
-
-    pub fn setClusterGeneratorView(self: *App) !void {
-        self.clearViewState();
-        self.view = View.clusterGenerator;
     }
 
     pub fn setTextureColor(self: *App, demoTextureColors: [data.RGBAColorTextureSize]gl.Uint) void {
@@ -136,6 +149,7 @@ pub const ViewState = struct {
 
     pub fn init(
         alloc: std.mem.Allocator,
+        v: view.View,
         initialCameraPos: @Vector(4, gl.Float),
         initialCameraFront: @Vector(4, gl.Float),
         initialYaw: gl.Float,
@@ -144,7 +158,7 @@ pub const ViewState = struct {
     ) !ViewState {
         var g = ViewState{
             .alloc = alloc,
-            .view = try view.View.init(zm.identity()),
+            .view = v,
             .blockOptions = std.ArrayList(data.blockOption).init(alloc),
             .cubesMap = std.AutoHashMap(u32, std.ArrayList(instancedShape.InstancedShape)).init(alloc),
             .cameraPos = initialCameraPos,
@@ -175,6 +189,15 @@ pub const ViewState = struct {
         }
         self.cubesMap.deinit();
         self.blockOptions.deinit();
+    }
+
+    fn clearViewState(self: *ViewState) !void {
+        self.view.unbind();
+    }
+
+    fn focusView(self: *ViewState) !void {
+        self.view.bind();
+        try self.updateLookAt();
     }
 
     pub fn initBlocks(self: *ViewState, appState: *State) !void {

@@ -55,8 +55,8 @@ pub const World = struct {
         _b.clearRetainingCapacity();
     }
 
-    pub fn randomChunk(self: *World) [chunkSize]u32 {
-        var prng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.milliTimestamp())));
+    pub fn randomChunk(self: *World, seed: u64) [chunkSize]u32 {
+        var prng = std.rand.DefaultPrng.init(seed + @as(u64, @intCast(std.time.milliTimestamp())));
         const random = prng.random();
         const maxOptions = self.worldView.blockOptions.items.len - 1;
         var chunk: [chunkSize]u32 = [_]u32{undefined} ** chunkSize;
@@ -69,6 +69,7 @@ pub const World = struct {
     }
 
     pub fn initChunk(self: *World, chunk: [chunkSize]u32, alloc: std.mem.Allocator, chunkPosition: position.Position) !void {
+        self.worldView.view.bind();
         var perBlockTransforms = std.AutoHashMap(u32, std.ArrayList(instancedShape.InstancedShapeTransform)).init(alloc);
         defer perBlockTransforms.deinit();
         for (chunk, 0..) |blockId, i| {
@@ -107,6 +108,7 @@ pub const World = struct {
         while (values.next()) |v| {
             v.deinit();
         }
+        self.worldView.view.unbind();
     }
 
     pub fn draw(self: *World) !void {

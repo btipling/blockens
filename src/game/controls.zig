@@ -65,27 +65,27 @@ pub const Controls = struct {
 
         if (self.window.getKey(.F2) == .press) {
             self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.disabled);
-            try self.appState.app.setGameView();
+            try self.appState.setGameView();
         }
 
         if (self.window.getKey(.F3) == .press) {
             self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.normal);
-            try self.appState.app.setTextureGeneratorView();
+            try self.appState.setTextureGeneratorView();
         }
 
         if (self.window.getKey(.F4) == .press) {
             self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.normal);
-            try self.appState.app.setWorldEditorView();
+            try self.appState.setWorldEditorView();
         }
 
         if (self.window.getKey(.F5) == .press) {
             self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.normal);
-            try self.appState.app.setBlockEditorView();
+            try self.appState.setBlockEditorView();
         }
 
         if (self.window.getKey(.F6) == .press) {
             self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.normal);
-            try self.appState.app.setClusterGeneratorView();
+            try self.appState.setClusterGeneratorView();
         }
 
         switch (self.appState.app.view) {

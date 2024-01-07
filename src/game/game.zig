@@ -127,16 +127,20 @@ pub const Game = struct {
 
         // init views
         var gameWorld = try world.World.initWithHUD(worldPlane, uiCursor, &appState, &appState.worldView);
-        const chunk = gameWorld.randomChunk();
+        const chunk = gameWorld.randomChunk(1337);
         try gameWorld.initChunk(chunk, self.allocator, position.Position{ .x = 0, .y = 0, .z = 0 });
         var textureGen = try texture_gen.TextureGenerator.init(&appState, self.allocator);
         defer textureGen.deinit();
+        var demoWorld = try world.World.init(&appState, &appState.demoView);
+        const demoChunk = demoWorld.randomChunk(9001);
+        try demoWorld.initChunk(demoChunk, self.allocator, position.Position{ .x = 0, .y = 0, .z = 0 });
 
         var c = try controls.Controls.init(window, &appState);
         ctrls = &c;
         _ = window.setCursorPosCallback(cursorPosCallback);
         const skyColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 };
 
+        try appState.setGameView();
         main_loop: while (!window.shouldClose()) {
             glfw.pollEvents();
 
@@ -164,7 +168,7 @@ pub const Game = struct {
                     try drawBlockEditorView(&textureGen, &gameUI);
                 },
                 .clusterGenerator => {
-                    try drawClusterGeneratorView();
+                    try drawClusterGeneratorView(&demoWorld);
                 },
             }
 
@@ -192,4 +196,6 @@ fn drawBlockEditorView(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI
     try gameUI.drawBlockEditor();
 }
 
-fn drawClusterGeneratorView() !void {}
+fn drawClusterGeneratorView(demoWorld: *world.World) !void {
+    try demoWorld.draw();
+}

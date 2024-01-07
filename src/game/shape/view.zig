@@ -32,10 +32,12 @@ pub const View = struct {
             std.debug.print("view matrix: bind vbo buff error:  {d}\n", .{e});
             return ViewError.UpdateError;
         }
+        gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
         return ubo;
     }
 
     pub fn update(self: *View, updated: zm.Mat) !void {
+        // std.debug.print("updating view matrix for ubo: {d}\n", .{self.ubo});
         self.viewMatrix = updated;
         gl.bindBuffer(gl.UNIFORM_BUFFER, self.ubo);
         var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
@@ -47,5 +49,14 @@ pub const View = struct {
             std.debug.print("view matrix: bufferSubData vbo buff error:  {d}\n", .{e});
             return ViewError.UpdateError;
         }
+        gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
+    }
+
+    pub fn bind(self: *View) void {
+        gl.bindBuffer(gl.UNIFORM_BUFFER, self.ubo);
+    }
+
+    pub fn unbind(_: *View) void {
+        gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
     }
 };
