@@ -15,11 +15,17 @@ const drawSize = chunkDim * chunkDim;
 
 pub const World = struct {
     chunk: [chunkSize]u32 = [_]u32{1} ** chunkSize,
-    worldPlane: plane.Plane,
-    cursor: cursor.Cursor,
+    worldPlane: ?plane.Plane = null,
+    cursor: ?cursor.Cursor = null,
     appState: *state.State,
 
-    pub fn init(worldPlane: plane.Plane, c: cursor.Cursor, appState: *state.State) !World {
+    pub fn init(appState: *state.State) !World {
+        return World{
+            .appState = appState,
+        };
+    }
+
+    pub fn initWithHUD(worldPlane: plane.Plane, c: cursor.Cursor, appState: *state.State) !World {
         return World{
             .worldPlane = worldPlane,
             .appState = appState,
@@ -33,8 +39,8 @@ pub const World = struct {
 
     pub fn writeAndClear(self: *World, blockId: u32, blockTransforms: *std.ArrayList(instancedShape.InstancedShapeTransform)) !void {
         const transforms = blockTransforms.items;
-        const addedAt = try self.appState.game.addBlocks(self.appState, blockId);
-        if (self.appState.game.cubesMap.get(blockId)) |shapes| {
+        const addedAt = try self.appState.worldView.addBlocks(self.appState, blockId);
+        if (self.appState.worldView.cubesMap.get(blockId)) |shapes| {
             var _is = shapes.items[addedAt];
             try cube.Cube.updateInstanced(transforms, &_is);
             shapes.items[addedAt] = _is;
@@ -49,7 +55,7 @@ pub const World = struct {
     pub fn randomChunk(self: *World) [chunkSize]u32 {
         var prng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.milliTimestamp())));
         const random = prng.random();
-        const maxOptions = self.appState.game.blockOptions.items.len - 1;
+        const maxOptions = self.appState.worldView.blockOptions.items.len - 1;
         var chunk: [chunkSize]u32 = [_]u32{undefined} ** chunkSize;
         for (chunk, 0..) |_, i| {
             const randomInt = random.uintAtMost(usize, maxOptions);
@@ -101,12 +107,15 @@ pub const World = struct {
     }
 
     pub fn draw(self: *World) !void {
-        try self.worldPlane.draw(self.appState.game.lookAt);
+        if (self.worldPlane) |wp| {
+            var _wp = wp;
+            try _wp.draw(self.appState.worldView.lookAt);
+        }
 
-        var keys = self.appState.game.cubesMap.keyIterator();
+        var keys = self.appState.worldView.cubesMap.keyIterator();
         while (keys.next()) |_k| {
             const _blockId = _k.*;
-            if (self.appState.game.cubesMap.get(_blockId)) |shapes| {
+            if (self.appState.worldView.cubesMap.get(_blockId)) |shapes| {
                 for (shapes.items) |is| {
                     var _is = is;
                     try cube.Cube.drawInstanced(&_is);
@@ -115,6 +124,10 @@ pub const World = struct {
                 std.debug.print("blockId {d} not found in cubesMap\n", .{_blockId});
             }
         }
-        try self.cursor.draw(self.appState.game.lookAt);
+
+        if (self.cursor) |c| {
+            var _c = c;
+            try _c.draw(self.appState.worldView.lookAt);
+        }
     }
 };

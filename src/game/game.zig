@@ -126,7 +126,7 @@ pub const Game = struct {
         // appState.app.view = state.View.blockEditor;
 
         // init views
-        var gameWorld = try world.World.init(worldPlane, uiCursor, &appState);
+        var gameWorld = try world.World.initWithHUD(worldPlane, uiCursor, &appState);
         const chunk = gameWorld.randomChunk();
         try gameWorld.initChunk(chunk, self.allocator, position.Position{ .x = 0, .y = 0, .z = 0 });
         var textureGen = try texture_gen.TextureGenerator.init(&appState, self.allocator);
@@ -141,8 +141,8 @@ pub const Game = struct {
             glfw.pollEvents();
 
             const currentFrame: gl.Float = @as(gl.Float, @floatCast(glfw.getTime()));
-            appState.game.deltaTime = currentFrame - appState.game.lastFrame;
-            appState.game.lastFrame = currentFrame;
+            appState.worldView.deltaTime = currentFrame - appState.worldView.lastFrame;
+            appState.worldView.lastFrame = currentFrame;
             const quit = try ctrls.handleKey();
             if (quit) {
                 break :main_loop;

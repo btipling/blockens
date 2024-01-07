@@ -21,39 +21,39 @@ pub const Controls = struct {
         }
         const x = @as(gl.Float, @floatCast(xpos));
         const y = @as(gl.Float, @floatCast(ypos));
-        if (self.appState.game.firstMouse) {
-            self.appState.game.lastX = x;
-            self.appState.game.lastY = y;
-            self.appState.game.firstMouse = false;
+        if (self.appState.worldView.firstMouse) {
+            self.appState.worldView.lastX = x;
+            self.appState.worldView.lastY = y;
+            self.appState.worldView.firstMouse = false;
         }
-        var xoffset = x - self.appState.game.lastX;
-        var yoffset = self.appState.game.lastY - y;
-        self.appState.game.lastX = x;
-        self.appState.game.lastY = y;
+        var xoffset = x - self.appState.worldView.lastX;
+        var yoffset = self.appState.worldView.lastY - y;
+        self.appState.worldView.lastX = x;
+        self.appState.worldView.lastY = y;
 
         const sensitivity = 0.1;
         xoffset *= sensitivity;
         yoffset *= sensitivity;
 
-        self.appState.game.yaw += xoffset;
-        self.appState.game.pitch += yoffset;
+        self.appState.worldView.yaw += xoffset;
+        self.appState.worldView.pitch += yoffset;
 
-        if (self.appState.game.pitch > 89.0) {
-            self.appState.game.pitch = 89.0;
+        if (self.appState.worldView.pitch > 89.0) {
+            self.appState.worldView.pitch = 89.0;
         }
-        if (self.appState.game.pitch < -89.0) {
-            self.appState.game.pitch = -89.0;
+        if (self.appState.worldView.pitch < -89.0) {
+            self.appState.worldView.pitch = -89.0;
         }
 
         // pitch to radians
-        const pitch = self.appState.game.pitch * (std.math.pi / 180.0);
-        const yaw = self.appState.game.yaw * (std.math.pi / 180.0);
+        const pitch = self.appState.worldView.pitch * (std.math.pi / 180.0);
+        const yaw = self.appState.worldView.yaw * (std.math.pi / 180.0);
         const frontX = @cos(yaw) * @cos(pitch);
         const frontY = @sin(pitch);
         const frontZ = @sin(yaw) * @cos(pitch);
         const front: @Vector(4, gl.Float) = @Vector(4, gl.Float){ frontX, frontY, frontZ, 1.0 };
 
-        if (self.appState.game.updateCameraFront(zm.normalize4(front))) {
+        if (self.appState.worldView.updateCameraFront(zm.normalize4(front))) {
             return;
         } else |err| {
             std.debug.print("Failed to update camera front: {}\n", .{err});
@@ -97,33 +97,33 @@ pub const Controls = struct {
 
     fn handleGameKey(self: *Controls) !void {
         // wasd movement
-        const cameraSpeed: @Vector(4, gl.Float) = @splat(2.5 * self.appState.game.deltaTime);
+        const cameraSpeed: @Vector(4, gl.Float) = @splat(2.5 * self.appState.worldView.deltaTime);
         if (self.window.getKey(.w) == .press) {
-            const np = self.appState.game.cameraPos + self.appState.game.cameraFront * cameraSpeed;
-            try self.appState.game.updateCameraPosition(np);
+            const np = self.appState.worldView.cameraPos + self.appState.worldView.cameraFront * cameraSpeed;
+            try self.appState.worldView.updateCameraPosition(np);
         }
         if (self.window.getKey(.s) == .press) {
-            const np = self.appState.game.cameraPos - self.appState.game.cameraFront * cameraSpeed;
-            try self.appState.game.updateCameraPosition(np);
+            const np = self.appState.worldView.cameraPos - self.appState.worldView.cameraFront * cameraSpeed;
+            try self.appState.worldView.updateCameraPosition(np);
         }
         if (self.window.getKey(.a) == .press) {
-            const np = self.appState.game.cameraPos - zm.normalize3(zm.cross3(self.appState.game.cameraFront, self.appState.game.cameraUp)) * cameraSpeed;
-            try self.appState.game.updateCameraPosition(np);
+            const np = self.appState.worldView.cameraPos - zm.normalize3(zm.cross3(self.appState.worldView.cameraFront, self.appState.worldView.cameraUp)) * cameraSpeed;
+            try self.appState.worldView.updateCameraPosition(np);
         }
         if (self.window.getKey(.d) == .press) {
-            const np = self.appState.game.cameraPos + zm.normalize3(zm.cross3(self.appState.game.cameraFront, self.appState.game.cameraUp)) * cameraSpeed;
-            try self.appState.game.updateCameraPosition(np);
+            const np = self.appState.worldView.cameraPos + zm.normalize3(zm.cross3(self.appState.worldView.cameraFront, self.appState.worldView.cameraUp)) * cameraSpeed;
+            try self.appState.worldView.updateCameraPosition(np);
         }
 
         if (self.window.getKey(.space) == .press) {
             const upDirection: @Vector(4, gl.Float) = @splat(1.0);
-            const np = self.appState.game.cameraPos + self.appState.game.cameraUp * cameraSpeed * upDirection;
-            try self.appState.game.updateCameraPosition(np);
+            const np = self.appState.worldView.cameraPos + self.appState.worldView.cameraUp * cameraSpeed * upDirection;
+            try self.appState.worldView.updateCameraPosition(np);
         }
         if (self.window.getKey(.left_shift) == .press) {
             const downDirection: @Vector(4, gl.Float) = @splat(-1.0);
-            const np = self.appState.game.cameraPos + self.appState.game.cameraUp * cameraSpeed * downDirection;
-            try self.appState.game.updateCameraPosition(np);
+            const np = self.appState.worldView.cameraPos + self.appState.worldView.cameraUp * cameraSpeed * downDirection;
+            try self.appState.worldView.updateCameraPosition(np);
         }
     }
 

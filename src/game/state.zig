@@ -15,7 +15,7 @@ pub const StateErrors = error{
 
 pub const State = struct {
     app: App,
-    game: Game,
+    worldView: ViewState,
     db: data.Data,
 
     pub fn init(alloc: std.mem.Allocator, sqliteAlloc: std.mem.Allocator) !State {
@@ -30,15 +30,15 @@ pub const State = struct {
         };
         var s = State{
             .app = try App.init(),
-            .game = try Game.init(alloc),
+            .worldView = try ViewState.init(alloc),
             .db = db,
         };
-        try s.game.initBlocks(&s);
+        try s.worldView.initBlocks(&s);
         return s;
     }
 
     pub fn deinit(self: *State) void {
-        self.game.deinit();
+        self.worldView.deinit();
     }
 };
 
@@ -93,7 +93,7 @@ pub const App = struct {
     }
 };
 
-pub const Game = struct {
+pub const ViewState = struct {
     alloc: std.mem.Allocator,
     view: view.View,
     blockOptions: std.ArrayList(data.blockOption),
@@ -111,8 +111,8 @@ pub const Game = struct {
     pitch: gl.Float,
     highlightedIndex: ?usize = 0,
 
-    pub fn init(alloc: std.mem.Allocator) !Game {
-        var g = Game{
+    pub fn init(alloc: std.mem.Allocator) !ViewState {
+        var g = ViewState{
             .alloc = alloc,
             .view = try view.View.init(zm.identity()),
             .blockOptions = std.ArrayList(data.blockOption).init(alloc),
@@ -130,11 +130,11 @@ pub const Game = struct {
             .pitch = 0.0,
         };
 
-        try Game.updateLookAt(&g);
+        try ViewState.updateLookAt(&g);
         return g;
     }
 
-    pub fn deinit(self: *Game) void {
+    pub fn deinit(self: *ViewState) void {
         var iterator = self.cubesMap.iterator();
         while (iterator.next()) |s| {
             for (s.value_ptr.items) |shape| {
@@ -146,11 +146,11 @@ pub const Game = struct {
         self.blockOptions.deinit();
     }
 
-    pub fn initBlocks(self: *Game, appState: *State) !void {
+    pub fn initBlocks(self: *ViewState, appState: *State) !void {
         try appState.db.listBlocks(&self.blockOptions);
     }
 
-    pub fn addBlocks(self: *Game, appState: *State, blockOptionId: u32) !usize {
+    pub fn addBlocks(self: *ViewState, appState: *State, blockOptionId: u32) !usize {
         if (self.blockOptions.items.len == 0) {
             return StateErrors.NoBlocks;
         }
@@ -176,19 +176,19 @@ pub const Game = struct {
         return StateErrors.InvalidBlockID;
     }
 
-    pub fn updateCameraPosition(self: *Game, updatedCameraPosition: @Vector(4, gl.Float)) !void {
+    pub fn updateCameraPosition(self: *ViewState, updatedCameraPosition: @Vector(4, gl.Float)) !void {
         self.cameraPos = updatedCameraPosition;
         try self.updateLookAt();
         try self.pickObject();
     }
 
-    pub fn updateCameraFront(self: *Game, updatedCameraFront: @Vector(4, gl.Float)) !void {
+    pub fn updateCameraFront(self: *ViewState, updatedCameraFront: @Vector(4, gl.Float)) !void {
         self.cameraFront = updatedCameraFront;
         try self.updateLookAt();
         try self.pickObject();
     }
 
-    fn updateLookAt(self: *Game) !void {
+    fn updateLookAt(self: *ViewState) !void {
         self.lookAt = zm.lookAtRh(
             self.cameraPos,
             self.cameraPos + self.cameraFront,
@@ -197,7 +197,7 @@ pub const Game = struct {
         try self.view.update(self.lookAt);
     }
 
-    fn pickObject(self: *Game) !void {
+    fn pickObject(self: *ViewState) !void {
         _ = self;
         // var currentPos = self.cameraPos;
         // const maxRayLength = 100;
