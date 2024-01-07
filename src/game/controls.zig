@@ -85,7 +85,7 @@ pub const Controls = struct {
 
         if (self.window.getKey(.F6) == .press) {
             self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.normal);
-            try self.appState.setClusterGeneratorView();
+            try self.appState.setChunkGeneratorView();
         }
 
         switch (self.appState.app.view) {
@@ -93,7 +93,7 @@ pub const Controls = struct {
             .textureGenerator => try self.handleTextureGeneratorKey(),
             .worldEditor => try self.handleWorldEditorKey(),
             .blockEditor => try self.handleBlockEditorKey(),
-            .clusterGenerator => try self.handleClusterGeneratorKey(),
+            .chunkGenerator => try self.handleChunkGeneratorKey(),
         }
 
         return false;
@@ -145,7 +145,7 @@ pub const Controls = struct {
     fn handleTextureGeneratorKey(_: *Controls) !void {}
     fn handleWorldEditorKey(_: *Controls) !void {}
     fn handleBlockEditorKey(_: *Controls) !void {}
-    fn handleClusterGeneratorKey(self: *Controls) !void {
+    fn handleChunkGeneratorKey(self: *Controls) !void {
         if (self.window.getKey(.r) == .press) {
             try self.appState.demoView.rotateWorld();
         }

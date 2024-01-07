@@ -39,6 +39,8 @@ pub const InstancedShape = struct {
     blockId: u32,
     name: []const u8,
     vao: gl.Uint,
+    vbo: gl.Uint,
+    ebo: gl.Uint,
     texture: gl.Uint,
     numIndices: gl.Int,
     program: gl.Uint,
@@ -60,8 +62,8 @@ pub const InstancedShape = struct {
         const vao = try initVAO(name);
         const vertexShader = try initVertexShader(vertexShaderSource, name);
         const fragmentShader = try initFragmentShader(fragmentShaderSource, name);
-        try initVBO(name);
-        try initEBO(name, shape.indices);
+        const vbo = try initVBO(name);
+        const ebo = try initEBO(name, shape.indices);
         const program = try initProgram(name, &[_]gl.Uint{ vertexShader, fragmentShader });
         const texture = try initTextureFromColors(textureRGBAColor, name);
         const instancedVBO = try initData(name, shape, rgbaColor, alloc);
@@ -70,6 +72,8 @@ pub const InstancedShape = struct {
             .blockId = blockId,
             .name = name,
             .vao = vao,
+            .vbo = vbo,
+            .ebo = ebo,
             .texture = texture,
             .numIndices = @intCast(shape.indices.len),
             .program = program,
@@ -82,6 +86,10 @@ pub const InstancedShape = struct {
     pub fn deinit(self: *const InstancedShape) void {
         gl.deleteVertexArrays(1, &self.vao);
         gl.deleteProgram(self.program);
+        gl.deleteBuffers(1, &self.vbo);
+        gl.deleteBuffers(1, &self.ebo);
+        gl.deleteTextures(1, &self.texture);
+        gl.deleteBuffers(1, &self.instanceVBO);
         return;
     }
 
@@ -97,7 +105,7 @@ pub const InstancedShape = struct {
         return VAO;
     }
 
-    pub fn initVBO(msg: []const u8) !void {
+    pub fn initVBO(msg: []const u8) !gl.Uint {
         var VBO: gl.Uint = undefined;
         gl.genBuffers(1, &VBO);
         gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
@@ -106,10 +114,10 @@ pub const InstancedShape = struct {
             std.debug.print("init vbo error: {s} {d}\n", .{ msg, e });
             return ShapeErr.RenderError;
         }
-        return;
+        return VBO;
     }
 
-    pub fn initEBO(msg: []const u8, indices: []const gl.Uint) !void {
+    pub fn initEBO(msg: []const u8, indices: []const gl.Uint) !gl.Uint {
         var EBO: gl.Uint = undefined;
         gl.genBuffers(1, &EBO);
         var e = gl.getError();
@@ -132,7 +140,7 @@ pub const InstancedShape = struct {
             std.debug.print("{s} buffer data error: {d}\n", .{ msg, e });
             return ShapeErr.RenderError;
         }
-        return;
+        return EBO;
     }
 
     pub fn initVertexShader(vertexShaderSource: [:0]const u8, msg: []const u8) !gl.Uint {

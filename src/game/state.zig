@@ -95,10 +95,10 @@ pub const State = struct {
         self.app.view = View.blockEditor;
     }
 
-    pub fn setClusterGeneratorView(self: *State) !void {
+    pub fn setChunkGeneratorView(self: *State) !void {
         try self.clearViewState();
         try self.demoView.focusView();
-        self.app.view = View.clusterGenerator;
+        self.app.view = View.chunkGenerator;
     }
 };
 
@@ -107,7 +107,7 @@ pub const View = enum {
     textureGenerator,
     worldEditor,
     blockEditor,
-    clusterGenerator,
+    chunkGenerator,
 };
 
 pub const App = struct {

@@ -111,6 +111,24 @@ pub const World = struct {
         self.worldView.view.unbind();
     }
 
+    pub fn clearChunks(self: *World) !void {
+        self.worldView.view.bind();
+        var keys = self.worldView.cubesMap.keyIterator();
+        while (keys.next()) |_k| {
+            const _blockId = _k.*;
+            if (self.worldView.cubesMap.get(_blockId)) |shapes| {
+                for (shapes.items) |is| {
+                    var _is = is;
+                    _is.deinit();
+                }
+                shapes.clearRetainingCapacity();
+            } else {
+                std.debug.print("blockId {d} not found in cubesMap\n", .{_blockId});
+            }
+        }
+        self.worldView.view.unbind();
+    }
+
     pub fn draw(self: *World) !void {
         if (self.worldPlane) |wp| {
             var _wp = wp;

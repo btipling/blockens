@@ -5,6 +5,7 @@ const glfw = @import("zglfw");
 const texture_gen = @import("texture_gen.zig");
 const world_editor = @import("world_editor.zig");
 const block_editor = @import("block_editor.zig");
+const chunk_generator = @import("chunk_generator.zig");
 const game = @import("game.zig");
 const state = @import("../state.zig");
 const script = @import("../script/script.zig");
@@ -19,6 +20,7 @@ pub const UI = struct {
     TextureGen: texture_gen.TextureGen,
     WorldEditor: world_editor.WorldEditor,
     BlockEditor: block_editor.BlockEditor,
+    ChunkGenerator: chunk_generator.ChunkGenerator,
 
     pub fn init(appState: *state.State, window: *glfw.Window, alloc: std.mem.Allocator) !UI {
         const sc = try script.Script.init(alloc);
@@ -34,6 +36,7 @@ pub const UI = struct {
             .TextureGen = try texture_gen.TextureGen.init(appState, codeFont, sc, alloc),
             .WorldEditor = try world_editor.WorldEditor.init(appState, codeFont, alloc),
             .BlockEditor = try block_editor.BlockEditor.init(appState, codeFont, sc, alloc),
+            .ChunkGenerator = try chunk_generator.ChunkGenerator.init(appState, codeFont, sc, alloc),
         };
     }
 
@@ -60,6 +63,11 @@ pub const UI = struct {
 
     pub fn drawBlockEditor(self: *UI) !void {
         try self.BlockEditor.draw(self.window);
+        self.window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.normal);
+    }
+
+    pub fn drawChunkGenerator(self: *UI) !void {
+        try self.ChunkGenerator.draw(self.window);
         self.window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.normal);
     }
 };

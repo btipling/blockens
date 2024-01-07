@@ -137,7 +137,7 @@ pub const Game = struct {
 
         // uncomment to start in a specific view:
         // try appState.setGameView();
-        try appState.setClusterGeneratorView();
+        try appState.setChunkGeneratorView();
         main_loop: while (!window.shouldClose()) {
             glfw.pollEvents();
 
@@ -164,8 +164,8 @@ pub const Game = struct {
                 .blockEditor => {
                     try drawBlockEditorView(&textureGen, &gameUI);
                 },
-                .clusterGenerator => {
-                    try drawClusterGeneratorView(&demoWorld);
+                .chunkGenerator => {
+                    try drawChunkGeneratorView(&demoWorld, &gameUI);
                 },
             }
 
@@ -193,6 +193,7 @@ fn drawBlockEditorView(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI
     try gameUI.drawBlockEditor();
 }
 
-fn drawClusterGeneratorView(demoWorld: *world.World) !void {
+fn drawChunkGeneratorView(demoWorld: *world.World, gameUI: *ui.UI) !void {
     try demoWorld.draw();
+    try gameUI.drawChunkGenerator();
 }
