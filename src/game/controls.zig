@@ -98,7 +98,7 @@ pub const Controls = struct {
         const viewState = self.appState.worldView;
         var speed = 2.5 * viewState.deltaTime;
         if (self.window.getKey(.left_control) != .press) {
-            speed *= 10.0;
+            speed *= 20.0;
         }
         const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
         if (self.window.getKey(.w) == .press) {
@@ -127,6 +127,12 @@ pub const Controls = struct {
             const downDirection: @Vector(4, gl.Float) = @splat(-1.0);
             const np = viewState.cameraPos + viewState.cameraUp * cameraSpeed * downDirection;
             try self.appState.worldView.updateCameraPosition(np);
+        }
+        if (self.window.getKey(.r) == .press) {
+            try self.appState.worldView.rotateWorld();
+        }
+        if (self.window.getKey(.t) == .press) {
+            try self.appState.worldView.rotateWorldInReverse();
         }
     }
 

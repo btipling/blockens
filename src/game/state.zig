@@ -33,17 +33,19 @@ pub const State = struct {
             .app = try App.init(),
             .worldView = try ViewState.init(
                 alloc,
-                @Vector(4, gl.Float){ -31.0, 78.0, -27.0, 1.0 },
+                @Vector(4, gl.Float){ -68.0, 78.0, -70.0, 1.0 },
                 @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 },
                 41.6,
                 -19.4,
+                zm.translationV(@Vector(4, gl.Float){ -32.0, 0.0, -32.0, 0.0 }),
             ),
             .demoView = try ViewState.init(
                 alloc,
-                @Vector(4, gl.Float){ -31.0, 78.0, -27.0, 1.0 },
+                @Vector(4, gl.Float){ -68.0, 78.0, -70.0, 1.0 },
                 @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 },
                 41.6,
                 -19.4,
+                zm.identity(),
             ),
             .db = db,
         };
@@ -115,6 +117,7 @@ pub const ViewState = struct {
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
+    worldTransform: zm.Mat,
     lookAt: zm.Mat,
     lastFrame: gl.Float,
     deltaTime: gl.Float,
@@ -131,6 +134,7 @@ pub const ViewState = struct {
         initialCameraFront: @Vector(4, gl.Float),
         initialYaw: gl.Float,
         initialPitch: gl.Float,
+        worldTransform: zm.Mat,
     ) !ViewState {
         var g = ViewState{
             .alloc = alloc,
@@ -140,6 +144,7 @@ pub const ViewState = struct {
             .cameraPos = initialCameraPos,
             .cameraFront = initialCameraFront,
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
+            .worldTransform = worldTransform,
             .lookAt = zm.identity(),
             .lastFrame = 0.0,
             .deltaTime = 0.0,
@@ -196,6 +201,20 @@ pub const ViewState = struct {
         return StateErrors.InvalidBlockID;
     }
 
+    pub fn rotateWorld(self: *ViewState) !void {
+        const r = zm.rotationY(0.0125 * std.math.pi * 2.0);
+        self.worldTransform = zm.mul(self.worldTransform, r);
+        try self.updateLookAt();
+        try self.pickObject();
+    }
+
+    pub fn rotateWorldInReverse(self: *ViewState) !void {
+        const r = zm.rotationY(-0.0125 * std.math.pi * 2.0);
+        self.worldTransform = zm.mul(self.worldTransform, r);
+        try self.updateLookAt();
+        try self.pickObject();
+    }
+
     pub fn updateCameraPosition(self: *ViewState, updatedCameraPosition: @Vector(4, gl.Float)) !void {
         self.cameraPos = updatedCameraPosition;
         try self.updateLookAt();
@@ -219,7 +238,7 @@ pub const ViewState = struct {
             self.cameraPos + self.cameraFront,
             self.cameraUp,
         );
-        try self.view.update(self.lookAt);
+        try self.view.update(zm.mul(self.worldTransform, self.lookAt));
     }
 
     fn pickObject(self: *ViewState) !void {

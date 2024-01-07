@@ -420,8 +420,6 @@ pub const InstancedShape = struct {
         curArr += 1;
         gl.vertexAttribPointer(curArr, edgeSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
         gl.enableVertexAttribArray(curArr);
-        offset += edgeSize;
-        curArr += 1;
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} init data error: {d}\n", .{ name, e });
