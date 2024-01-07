@@ -145,5 +145,15 @@ pub const Controls = struct {
     fn handleTextureGeneratorKey(_: *Controls) !void {}
     fn handleWorldEditorKey(_: *Controls) !void {}
     fn handleBlockEditorKey(_: *Controls) !void {}
-    fn handleClusterGeneratorKey(_: *Controls) !void {}
+    fn handleClusterGeneratorKey(self: *Controls) !void {
+        if (self.window.getKey(.r) == .press) {
+            try self.appState.demoView.rotateWorld();
+        }
+        if (self.window.getKey(.t) == .press) {
+            try self.appState.demoView.rotateWorldInReverse();
+        }
+        if (self.window.getKey(.v) == .press) {
+            try self.appState.demoView.toggleScreenTransform();
+        }
+    }
 };

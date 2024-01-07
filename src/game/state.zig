@@ -30,6 +30,10 @@ pub const State = struct {
             return err;
         };
         const v = try view.View.init(zm.identity());
+        var demoTransform = zm.identity();
+        demoTransform = zm.mul(demoTransform, zm.scalingV(@Vector(4, gl.Float){ 0.005, 0.005, 0.005, 0.0 }));
+        demoTransform = zm.mul(demoTransform, zm.rotationX(0.05 * std.math.pi * 2.0));
+        demoTransform = zm.mul(demoTransform, zm.translationV(@Vector(4, gl.Float){ -0.7995, 0.401, -1.0005, 0.0 }));
         var s = State{
             .app = try App.init(),
             .worldView = try ViewState.init(
@@ -40,6 +44,7 @@ pub const State = struct {
                 41.6,
                 -19.4,
                 zm.translationV(@Vector(4, gl.Float){ -32.0, 0.0, -32.0, 0.0 }),
+                zm.identity(),
             ),
             .demoView = try ViewState.init(
                 alloc,
@@ -48,7 +53,8 @@ pub const State = struct {
                 @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 },
                 41.6,
                 -19.4,
-                zm.identity(),
+                zm.translationV(@Vector(4, gl.Float){ -32.0, 0.0, -32.0, 0.0 }),
+                demoTransform,
             ),
             .db = db,
         };
@@ -137,6 +143,7 @@ pub const ViewState = struct {
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
     worldTransform: zm.Mat,
+    screenTransform: zm.Mat,
     lookAt: zm.Mat,
     lastFrame: gl.Float,
     deltaTime: gl.Float,
@@ -146,6 +153,8 @@ pub const ViewState = struct {
     yaw: gl.Float,
     pitch: gl.Float,
     highlightedIndex: ?usize = 0,
+    disableScreenTransform: bool,
+    viewStateLastUpdated: i64,
 
     pub fn init(
         alloc: std.mem.Allocator,
@@ -155,6 +164,7 @@ pub const ViewState = struct {
         initialYaw: gl.Float,
         initialPitch: gl.Float,
         worldTransform: zm.Mat,
+        screenTransform: zm.Mat,
     ) !ViewState {
         var g = ViewState{
             .alloc = alloc,
@@ -165,6 +175,7 @@ pub const ViewState = struct {
             .cameraFront = initialCameraFront,
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
             .worldTransform = worldTransform,
+            .screenTransform = screenTransform,
             .lookAt = zm.identity(),
             .lastFrame = 0.0,
             .deltaTime = 0.0,
@@ -173,6 +184,8 @@ pub const ViewState = struct {
             .lastY = 0.0,
             .yaw = initialYaw,
             .pitch = initialPitch,
+            .disableScreenTransform = false,
+            .viewStateLastUpdated = 0,
         };
 
         try ViewState.updateLookAt(&g);
@@ -193,6 +206,16 @@ pub const ViewState = struct {
 
     fn clearViewState(self: *ViewState) !void {
         self.view.unbind();
+    }
+
+    pub fn toggleScreenTransform(self: *ViewState) !void {
+        const now = std.time.milliTimestamp();
+        if (now - self.viewStateLastUpdated < 250) {
+            return;
+        }
+        self.disableScreenTransform = !self.disableScreenTransform;
+        self.viewStateLastUpdated = now;
+        try self.updateLookAt();
     }
 
     fn focusView(self: *ViewState) !void {
@@ -267,7 +290,12 @@ pub const ViewState = struct {
             self.cameraPos + self.cameraFront,
             self.cameraUp,
         );
-        try self.view.update(zm.mul(self.worldTransform, self.lookAt));
+        const m = zm.mul(self.worldTransform, self.lookAt);
+        if (self.disableScreenTransform) {
+            try self.view.update(m);
+            return;
+        }
+        try self.view.update(zm.mul(m, self.screenTransform));
     }
 
     fn pickObject(self: *ViewState) !void {

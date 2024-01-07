@@ -120,11 +120,6 @@ pub const Game = struct {
         var uiCursor = try cursor.Cursor.init("cursor", self.allocator);
         defer uiCursor.deinit();
 
-        // uncomment to start in a specific view:
-        // appState.app.view = state.View.textureGenerator;
-        // appState.app.view = state.View.worldEditor;
-        // appState.app.view = state.View.blockEditor;
-
         // init views
         var gameWorld = try world.World.initWithHUD(worldPlane, uiCursor, &appState, &appState.worldView);
         const chunk = gameWorld.randomChunk(1337);
@@ -140,7 +135,9 @@ pub const Game = struct {
         _ = window.setCursorPosCallback(cursorPosCallback);
         const skyColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 };
 
-        try appState.setGameView();
+        // uncomment to start in a specific view:
+        // try appState.setGameView();
+        try appState.setClusterGeneratorView();
         main_loop: while (!window.shouldClose()) {
             glfw.pollEvents();
 
