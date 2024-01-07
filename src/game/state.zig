@@ -182,7 +182,12 @@ pub const ViewState = struct {
         try self.pickObject();
     }
 
-    pub fn updateCameraFront(self: *ViewState, updatedCameraFront: @Vector(4, gl.Float)) !void {
+    pub fn updateCameraFront(self: *ViewState, pitch: gl.Float, yaw: gl.Float, lastX: gl.Float, lastY: gl.Float, updatedCameraFront: @Vector(4, gl.Float)) !void {
+        self.pitch = pitch;
+        self.yaw = yaw;
+        self.lastX = lastX;
+        self.lastY = lastY;
+        self.firstMouse = false;
         self.cameraFront = updatedCameraFront;
         try self.updateLookAt();
         try self.pickObject();
