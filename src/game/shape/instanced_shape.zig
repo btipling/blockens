@@ -474,7 +474,6 @@ pub const InstancedShape = struct {
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
         gl.bindVertexArray(0);
         self.numInstances = @as(gl.Int, @intCast(transforms.len));
-        std.debug.print("updated {s} with {d} instances\n", .{ self.name, self.numInstances });
         return;
     }
 

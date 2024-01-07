@@ -407,7 +407,6 @@ pub const Data = struct {
     }
 
     pub fn loadBlock(self: *Data, id: u32, data: *block) !void {
-        std.debug.print("Loading block: {d}\n", .{id});
         var selectStmt = try self.db.prepareDynamic(selectBlockStmt);
         defer selectStmt.deinit();
 

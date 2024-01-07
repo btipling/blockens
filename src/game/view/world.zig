@@ -5,6 +5,7 @@ const state = @import("../state.zig");
 const plane = @import("../shape/plane.zig");
 const cursor = @import("../shape/cursor.zig");
 const cube = @import("../shape/cube.zig");
+const position = @import("../position.zig");
 const shape = @import("../shape/shape.zig");
 const instancedShape = @import("../shape/instanced_shape.zig");
 
@@ -34,9 +35,7 @@ pub const World = struct {
         const transforms = blockTransforms.items;
         const addedAt = try self.appState.game.addBlocks(self.appState, blockId);
         if (self.appState.game.cubesMap.get(blockId)) |shapes| {
-            std.debug.print("attempting to update thing items.length {d} at shapesIndex {d}\n", .{ shapes.items.len, addedAt });
             var _is = shapes.items[addedAt];
-            std.debug.print("updating thing\n", .{});
             try cube.Cube.updateInstanced(transforms, &_is);
             shapes.items[addedAt] = _is;
         } else {
@@ -45,22 +44,27 @@ pub const World = struct {
         // reset transforms
         var _b = blockTransforms;
         _b.clearRetainingCapacity();
-        std.debug.print("len of blockTransforms after clear {d}\n", .{_b.items.len});
     }
 
-    pub fn initChunk(self: *World, alloc: std.mem.Allocator) !void {
+    pub fn randomChunk() [chunkSize]u32 {
         var prng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.milliTimestamp())));
         const random = prng.random();
+        var chunk: [chunkSize]u32 = [_]u32{undefined} ** chunkSize;
+        for (chunk, 0..) |_, i| {
+            const randomInt = random.uintAtMost(usize, 5);
+            const blockId = @as(u32, @intCast(randomInt + 1));
+            chunk[i] = blockId;
+        }
+        return chunk;
+    }
+
+    pub fn initChunk(self: *World, chunk: [chunkSize]u32, alloc: std.mem.Allocator, chunkPosition: position.Position) !void {
         var perBlockTransforms = std.AutoHashMap(u32, std.ArrayList(instancedShape.InstancedShapeTransform)).init(alloc);
         defer perBlockTransforms.deinit();
-        const ds: usize = drawSize;
-        _ = ds;
-        for (self.chunk, 0..) |_, i| {
-            const randomInt = random.uintAtMost(usize, self.appState.game.blockOptions.items.len - 1);
-            const blockId = @as(u32, @intCast(randomInt + 1));
-            const x = @as(gl.Float, @floatFromInt(@mod(i, chunkDim)));
-            const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim)));
-            const z = @as(gl.Float, @floatFromInt(i / (chunkDim * chunkDim)));
+        for (chunk, 0..) |blockId, i| {
+            const x = @as(gl.Float, @floatFromInt(@mod(i, chunkDim))) + (chunkPosition.x * chunkDim);
+            const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim))) + (chunkPosition.y * chunkDim);
+            const z = @as(gl.Float, @floatFromInt(i / (chunkDim * chunkDim))) + (chunkPosition.z * chunkDim);
             const m = zm.translation(x, y, z);
             var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
             zm.storeMat(&transform, m);
@@ -70,9 +74,7 @@ pub const World = struct {
                 var _blockTransforms = blockTransforms;
                 try _blockTransforms.append(t);
                 if (_blockTransforms.items.len == drawSize) {
-                    std.debug.print("drawing? {d} \n", .{_blockTransforms.items.len});
                     try self.writeAndClear(blockId, &_blockTransforms);
-                    std.debug.print("len of blockTransforms after clear {d}\n", .{_blockTransforms.items.len});
                 }
                 try perBlockTransforms.put(blockId, _blockTransforms);
             } else {
@@ -93,7 +95,6 @@ pub const World = struct {
         }
         var values = perBlockTransforms.valueIterator();
         while (values.next()) |v| {
-            std.debug.print("deiniting with values {d}\n", .{v.items.len});
             v.deinit();
         }
     }

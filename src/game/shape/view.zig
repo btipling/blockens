@@ -25,13 +25,6 @@ pub const View = struct {
 
         var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
         zm.storeMat(&transform, data);
-        // print each row
-        for (0..16) |i| {
-            std.debug.print("{d} ", .{transform[i]});
-            if (@mod(i, 4) == 3) {
-                std.debug.print("\n", .{});
-            }
-        }
         const size = @as(isize, @intCast(transform.len * @sizeOf(gl.Float)));
         gl.bufferData(gl.UNIFORM_BUFFER, size, &transform, gl.STATIC_DRAW);
         const e = gl.getError();
