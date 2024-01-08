@@ -20,7 +20,7 @@ pub const ChunkGenerator = struct {
 
     pub fn init(appState: *state.State, codeFont: zgui.Font, sc: script.Script, alloc: std.mem.Allocator) !ChunkGenerator {
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
-        const defaultLuaScript = @embedFile("../script/lua/chunk_gen_pattern.lua");
+        const defaultLuaScript = @embedFile("../script/lua/chunk_gen_hole.lua");
         for (defaultLuaScript, 0..) |c, i| {
             buf[i] = c;
         }

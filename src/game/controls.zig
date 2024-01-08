@@ -154,7 +154,7 @@ pub const Controls = struct {
         if (self.window.getKey(.left) == .press) {
             try self.appState.demoView.rotateWorldInReverse();
         }
-        if (self.window.getKey(.left_alt) == .press) {
+        if (self.window.getKey(.up) == .press) {
             const now = std.time.milliTimestamp();
             if (now - self.controlsLastUpdated >= 250) {
                 self.controlsLastUpdated = now;
