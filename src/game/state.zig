@@ -380,7 +380,9 @@ pub const ViewState = struct {
                     var _is = is;
                     _is.deinit();
                 }
-                shapes.clearRetainingCapacity();
+                var _shapes = shapes;
+                _shapes.clearRetainingCapacity();
+                try self.cubesMap.put(_blockId, _shapes);
             } else {
                 std.debug.print("blockId {d} not found in cubesMap\n", .{_blockId});
             }

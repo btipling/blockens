@@ -3,6 +3,7 @@ const zgui = @import("zgui");
 const gl = @import("zopengl");
 const glfw = @import("zglfw");
 const config = @import("../config.zig");
+const position = @import("../position.zig");
 const shape = @import("../shape/shape.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
@@ -12,13 +13,14 @@ const maxWorldSizeName = 20;
 
 pub const ChunkGenerator = struct {
     appState: *state.State,
+    alloc: std.mem.Allocator,
 
     pub fn init(appState: *state.State, codeFont: zgui.Font, sc: script.Script, alloc: std.mem.Allocator) !ChunkGenerator {
         _ = sc;
-        _ = alloc;
         _ = codeFont;
         const tv = ChunkGenerator{
             .appState = appState,
+            .alloc = alloc,
         };
         return tv;
     }
@@ -93,7 +95,10 @@ pub const ChunkGenerator = struct {
     }
 
     fn generateRandomChunk(self: *ChunkGenerator) !void {
-        _ = self;
         std.debug.print("Generating random chunk\n", .{});
+
+        try self.appState.demoView.clearChunks();
+        const demoChunk = self.appState.demoView.randomChunk(9001);
+        try self.appState.demoView.initChunk(self.appState, demoChunk, self.alloc, position.Position{ .x = 0, .y = 0, .z = 0 });
     }
 };
