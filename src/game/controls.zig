@@ -148,13 +148,13 @@ pub const Controls = struct {
     fn handleWorldEditorKey(_: *Controls) !void {}
     fn handleBlockEditorKey(_: *Controls) !void {}
     fn handleChunkGeneratorKey(self: *Controls) !void {
-        if (self.window.getKey(.r) == .press) {
+        if (self.window.getKey(.right) == .press) {
             try self.appState.demoView.rotateWorld();
         }
-        if (self.window.getKey(.t) == .press) {
+        if (self.window.getKey(.left) == .press) {
             try self.appState.demoView.rotateWorldInReverse();
         }
-        if (self.window.getKey(.v) == .press) {
+        if (self.window.getKey(.left_alt) == .press) {
             const now = std.time.milliTimestamp();
             if (now - self.controlsLastUpdated >= 250) {
                 self.controlsLastUpdated = now;
