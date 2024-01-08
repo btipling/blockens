@@ -13,6 +13,10 @@ pub const StateErrors = error{
     InvalidBlockID,
 };
 
+const chunkDim = 64;
+const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
+const drawSize = chunkDim * chunkDim;
+
 pub const State = struct {
     app: App,
     worldView: ViewState,
@@ -293,6 +297,95 @@ pub const ViewState = struct {
             return;
         }
         try self.view.update(zm.mul(m, self.screenTransform));
+    }
+
+    pub fn randomChunk(self: *ViewState, seed: u64) [chunkSize]u32 {
+        var prng = std.rand.DefaultPrng.init(seed + @as(u64, @intCast(std.time.milliTimestamp())));
+        const random = prng.random();
+        const maxOptions = self.blockOptions.items.len - 1;
+        var chunk: [chunkSize]u32 = [_]u32{undefined} ** chunkSize;
+        for (chunk, 0..) |_, i| {
+            const randomInt = random.uintAtMost(usize, maxOptions);
+            const blockId = @as(u32, @intCast(randomInt + 1));
+            chunk[i] = blockId;
+        }
+        return chunk;
+    }
+
+    pub fn initChunk(self: *ViewState, appState: *State, chunk: [chunkSize]u32, alloc: std.mem.Allocator, chunkPosition: position.Position) !void {
+        self.view.bind();
+        var perBlockTransforms = std.AutoHashMap(u32, std.ArrayList(instancedShape.InstancedShapeTransform)).init(alloc);
+        defer perBlockTransforms.deinit();
+        for (chunk, 0..) |blockId, i| {
+            const x = @as(gl.Float, @floatFromInt(@mod(i, chunkDim))) + (chunkPosition.x * chunkDim);
+            const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim))) + (chunkPosition.y * chunkDim);
+            const z = @as(gl.Float, @floatFromInt(i / (chunkDim * chunkDim))) + (chunkPosition.z * chunkDim);
+            const m = zm.translation(x, y, z);
+            var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+            zm.storeMat(&transform, m);
+            const t = instancedShape.InstancedShapeTransform{ .transform = transform };
+
+            if (perBlockTransforms.get(blockId)) |blockTransforms| {
+                var _blockTransforms = blockTransforms;
+                try _blockTransforms.append(t);
+                if (_blockTransforms.items.len == drawSize) {
+                    try self.writeAndClear(appState, blockId, &_blockTransforms);
+                }
+                try perBlockTransforms.put(blockId, _blockTransforms);
+            } else {
+                var blockTransforms = std.ArrayList(instancedShape.InstancedShapeTransform).init(alloc);
+                try blockTransforms.append(t);
+                try perBlockTransforms.put(blockId, blockTransforms);
+            }
+        }
+
+        var keys = perBlockTransforms.keyIterator();
+        while (keys.next()) |_k| {
+            if (@TypeOf(_k) == u32) {
+                const k = _k.*;
+                if (perBlockTransforms.get(k)) |blockTransforms| {
+                    try self.writeAndClear(k, blockTransforms);
+                }
+            }
+        }
+        var values = perBlockTransforms.valueIterator();
+        while (values.next()) |v| {
+            v.deinit();
+        }
+        self.view.unbind();
+    }
+
+    pub fn writeAndClear(self: *ViewState, appState: *State, blockId: u32, blockTransforms: *std.ArrayList(instancedShape.InstancedShapeTransform)) !void {
+        const transforms = blockTransforms.items;
+        const addedAt = try self.addBlocks(appState, blockId);
+        if (self.cubesMap.get(blockId)) |shapes| {
+            var _is = shapes.items[addedAt];
+            try cube.Cube.updateInstanced(transforms, &_is);
+            shapes.items[addedAt] = _is;
+        } else {
+            std.debug.print("blockId {d} not found in cubesMap\n", .{blockId});
+        }
+        // reset transforms
+        var _b = blockTransforms;
+        _b.clearRetainingCapacity();
+    }
+
+    pub fn clearChunks(self: *ViewState) !void {
+        self.view.bind();
+        var keys = self.cubesMap.keyIterator();
+        while (keys.next()) |_k| {
+            const _blockId = _k.*;
+            if (self.cubesMap.get(_blockId)) |shapes| {
+                for (shapes.items) |is| {
+                    var _is = is;
+                    _is.deinit();
+                }
+                shapes.clearRetainingCapacity();
+            } else {
+                std.debug.print("blockId {d} not found in cubesMap\n", .{_blockId});
+            }
+        }
+        self.view.unbind();
     }
 
     fn pickObject(self: *ViewState) !void {
