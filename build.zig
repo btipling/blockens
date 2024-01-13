@@ -1,10 +1,10 @@
 const std = @import("std");
-const zgui = @import("libs/zig-gamedev/libs/zgui/build.zig");
-const glfw = @import("libs/zig-gamedev/libs/zglfw/build.zig");
-const zopengl = @import("libs/zig-gamedev/libs/zopengl/build.zig");
-const zstbi = @import("libs/zig-gamedev/libs/zstbi/build.zig");
-const zmath = @import("libs/zig-gamedev/libs/zmath/build.zig");
-const zmesh = @import("libs/zig-gamedev/libs/zmesh/build.zig");
+// const zgui = @import("libs/zig-gamedev/libs/zgui/build.zig");
+// const glfw = @import("libs/zig-gamedev/libs/zglfw/build.zig");
+// const zopengl = @import("libs/zig-gamedev/libs/zopengl/build.zig");
+// const zstbi = @import("libs/zig-gamedev/libs/zstbi/build.zig");
+// const zmath = @import("libs/zig-gamedev/libs/zmath/build.zig");
+// const zmesh = @import("libs/zig-gamedev/libs/zmesh/build.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -25,39 +25,39 @@ pub fn build(b: *std.Build) void {
         run_cmd.addArgs(args);
     }
 
-    const zgui_pkg = zgui.package(b, target, optimize, .{
-        .options = .{ .backend = .glfw_opengl3 },
-    });
-    const zglf_pkg = glfw.package(b, target, optimize, .{});
-    const zopengl_pkg = zopengl.package(b, target, optimize, .{});
-    const zstbi_pkg = zstbi.package(b, target, optimize, .{});
-    const zmath_pkg = zmath.package(b, target, optimize, .{});
-    const zmesh_pkg = zmesh.package(b, target, optimize, .{});
+    // const zgui_pkg = zgui.package(b, target, optimize, .{
+    //     .options = .{ .backend = .glfw_opengl3 },
+    // });
+    // const zglf_pkg = glfw.package(b, target, optimize, .{});
+    // const zopengl_pkg = zopengl.package(b, target, optimize, .{});
+    // const zstbi_pkg = zstbi.package(b, target, optimize, .{});
+    // const zmath_pkg = zmath.package(b, target, optimize, .{});
+    // const zmesh_pkg = zmesh.package(b, target, optimize, .{});
 
-    zglf_pkg.link(exe);
-    zopengl_pkg.link(exe);
-    zstbi_pkg.link(exe);
-    zmath_pkg.link(exe);
-    zgui_pkg.link(exe);
-    zmesh_pkg.link(exe);
+    // zglf_pkg.link(exe);
+    // zopengl_pkg.link(exe);
+    // zstbi_pkg.link(exe);
+    // zmath_pkg.link(exe);
+    // zgui_pkg.link(exe);
+    // zmesh_pkg.link(exe);
 
-    const ziglua = b.dependency("ziglua", .{
-        .target = target,
-        .optimize = optimize,
-        .version = .lua_54,
-    });
-    exe.addModule("ziglua", ziglua.module("ziglua"));
-    exe.linkLibrary(ziglua.artifact("lua"));
+    // const ziglua = b.dependency("ziglua", .{
+    //     .target = target,
+    //     .optimize = optimize,
+    //     .version = .lua_54,
+    // });
+    // exe.addModule("ziglua", ziglua.module("ziglua"));
+    // exe.linkLibrary(ziglua.artifact("lua"));
 
-    const sqlite = b.dependency("sqlite", .{
-        .target = target,
-        .optimize = optimize,
-    });
+    // const sqlite = b.dependency("sqlite", .{
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
 
-    exe.addModule("sqlite", sqlite.module("sqlite"));
+    // exe.addModule("sqlite", sqlite.module("sqlite"));
 
-    // links the bundled sqlite3, so leave this out if you link the system one
-    exe.linkLibrary(sqlite.artifact("sqlite"));
+    // // links the bundled sqlite3, so leave this out if you link the system one
+    // exe.linkLibrary(sqlite.artifact("sqlite"));
 
     // This creates a build step. It will be visible in the `zig build --help` menu,
     // and can be selected like this: `zig build run`
