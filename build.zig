@@ -1,5 +1,5 @@
 const std = @import("std");
-// const zgui = @import("libs/zig-gamedev/libs/zgui/build.zig");
+const ui = @import("libs/ui/build.zig");
 const glfw = @import("libs/glfw/build.zig");
 // const zopengl = @import("libs/zig-gamedev/libs/zopengl/build.zig");
 // const zstbi = @import("libs/zig-gamedev/libs/zstbi/build.zig");
@@ -25,10 +25,10 @@ pub fn build(b: *std.Build) void {
         run_cmd.addArgs(args);
     }
 
-    // const zgui_pkg = zgui.package(b, target, optimize, .{
-    //     .options = .{ .backend = .glfw_opengl3 },
-    // });
     const glfw_pkg = glfw.package(b, target, optimize, .{});
+    const ui_pkg = ui.package(b, target, optimize, .{
+        .options = .{ .backend = .glfw_opengl3 },
+    });
     // const zopengl_pkg = zopengl.package(b, target, optimize, .{});
     // const zstbi_pkg = zstbi.package(b, target, optimize, .{});
     // const zmath_pkg = zmath.package(b, target, optimize, .{});
@@ -38,7 +38,7 @@ pub fn build(b: *std.Build) void {
     // zopengl_pkg.link(exe);
     // zstbi_pkg.link(exe);
     // zmath_pkg.link(exe);
-    // zgui_pkg.link(exe);
+    ui_pkg.link(exe);
     // zmesh_pkg.link(exe);
 
     // const ziglua = b.dependency("ziglua", .{

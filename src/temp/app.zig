@@ -1,5 +1,6 @@
 const std = @import("std");
 const glfw = @import("zglfw");
+const zgui = @import("zgui");
 const cfg = @import("../game/config.zig");
 
 fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
@@ -39,7 +40,6 @@ pub const App = struct {
     }
 
     pub fn run(self: *App) !void {
-        _ = self;
         // TODO: move alot of this into init and create a separate render loop in a thread
         // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
         std.debug.print("\nHello btzig-blockens!\n", .{});
@@ -54,6 +54,9 @@ pub const App = struct {
 
         const window = try initWindow(gl_major, gl_minor);
         defer window.destroy();
+
+        zgui.init(self.allocator);
+        defer zgui.deinit();
 
         while (!window.shouldClose()) {
             glfw.pollEvents();
