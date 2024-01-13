@@ -1,6 +1,7 @@
 const std = @import("std");
 const glfw = @import("zglfw");
 const zgui = @import("zgui");
+const zstbi = @import("zstbi");
 const gl = @import("zopengl");
 const cfg = @import("../game/config.zig");
 
@@ -77,6 +78,10 @@ pub const App = struct {
 
         zgui.init(self.allocator);
         defer zgui.deinit();
+
+        zstbi.init(self.allocator);
+        defer zstbi.deinit();
+        zstbi.setFlipVerticallyOnLoad(false);
 
         while (!window.shouldClose()) {
             glfw.pollEvents();

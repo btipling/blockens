@@ -2,7 +2,7 @@ const std = @import("std");
 const ui = @import("libs/ui/build.zig");
 const glfw = @import("libs/glfw/build.zig");
 const opengl = @import("libs/opengl/build.zig");
-// const zstbi = @import("libs/zig-gamedev/libs/zstbi/build.zig");
+const stbi = @import("libs/stbi/build.zig");
 // const zmath = @import("libs/zig-gamedev/libs/zmath/build.zig");
 // const zmesh = @import("libs/zig-gamedev/libs/zmesh/build.zig");
 
@@ -30,13 +30,13 @@ pub fn build(b: *std.Build) void {
         .options = .{ .backend = .glfw_opengl3 },
     });
     const opengl_pkg = opengl.package(b, target, optimize, .{});
-    // const zstbi_pkg = zstbi.package(b, target, optimize, .{});
+    const stbi_pkg = stbi.package(b, target, optimize, .{});
     // const zmath_pkg = zmath.package(b, target, optimize, .{});
     // const zmesh_pkg = zmesh.package(b, target, optimize, .{});
 
     glfw_pkg.link(exe);
     opengl_pkg.link(exe);
-    // zstbi_pkg.link(exe);
+    stbi_pkg.link(exe);
     // zmath_pkg.link(exe);
     ui_pkg.link(exe);
     // zmesh_pkg.link(exe);
