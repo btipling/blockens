@@ -1,10 +1,10 @@
 const std = @import("std");
-const zgui = @import("libs/zig-gamedev/libs/zgui/build.zig");
-const glfw = @import("libs/zig-gamedev/libs/zglfw/build.zig");
-const zopengl = @import("libs/zig-gamedev/libs/zopengl/build.zig");
-const zstbi = @import("libs/zig-gamedev/libs/zstbi/build.zig");
-const zmath = @import("libs/zig-gamedev/libs/zmath/build.zig");
-const zmesh = @import("libs/zig-gamedev/libs/zmesh/build.zig");
+const ui = @import("libs/ui/build.zig");
+const glfw = @import("libs/glfw/build.zig");
+const opengl = @import("libs/opengl/build.zig");
+const stbi = @import("libs/stbi/build.zig");
+const math = @import("libs/math/build.zig");
+const mesh = @import("libs/mesh/build.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -25,21 +25,21 @@ pub fn build(b: *std.Build) void {
         run_cmd.addArgs(args);
     }
 
-    const zgui_pkg = zgui.package(b, target, optimize, .{
+    const glfw_pkg = glfw.package(b, target, optimize, .{});
+    const ui_pkg = ui.package(b, target, optimize, .{
         .options = .{ .backend = .glfw_opengl3 },
     });
-    const zglf_pkg = glfw.package(b, target, optimize, .{});
-    const zopengl_pkg = zopengl.package(b, target, optimize, .{});
-    const zstbi_pkg = zstbi.package(b, target, optimize, .{});
-    const zmath_pkg = zmath.package(b, target, optimize, .{});
-    const zmesh_pkg = zmesh.package(b, target, optimize, .{});
+    const opengl_pkg = opengl.package(b, target, optimize, .{});
+    const stbi_pkg = stbi.package(b, target, optimize, .{});
+    const math_pkg = math.package(b, target, optimize, .{});
+    const mesh_pkg = mesh.package(b, target, optimize, .{});
 
-    zglf_pkg.link(exe);
-    zopengl_pkg.link(exe);
-    zstbi_pkg.link(exe);
-    zmath_pkg.link(exe);
-    zgui_pkg.link(exe);
-    zmesh_pkg.link(exe);
+    glfw_pkg.link(exe);
+    opengl_pkg.link(exe);
+    stbi_pkg.link(exe);
+    math_pkg.link(exe);
+    ui_pkg.link(exe);
+    mesh_pkg.link(exe);
 
     const ziglua = b.dependency("ziglua", .{
         .target = target,
@@ -56,12 +56,8 @@ pub fn build(b: *std.Build) void {
 
     exe.addModule("sqlite", sqlite.module("sqlite"));
 
-    // links the bundled sqlite3, so leave this out if you link the system one
     exe.linkLibrary(sqlite.artifact("sqlite"));
 
-    // This creates a build step. It will be visible in the `zig build --help` menu,
-    // and can be selected like this: `zig build run`
-    // This will evaluate the `run` step rather than the default, which is "install".
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
 }
