@@ -4,7 +4,7 @@ const glfw = @import("libs/glfw/build.zig");
 const opengl = @import("libs/opengl/build.zig");
 const stbi = @import("libs/stbi/build.zig");
 const math = @import("libs/math/build.zig");
-// const zmesh = @import("libs/zig-gamedev/libs/zmesh/build.zig");
+const mesh = @import("libs/mesh/build.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -32,14 +32,14 @@ pub fn build(b: *std.Build) void {
     const opengl_pkg = opengl.package(b, target, optimize, .{});
     const stbi_pkg = stbi.package(b, target, optimize, .{});
     const math_pkg = math.package(b, target, optimize, .{});
-    // const zmesh_pkg = zmesh.package(b, target, optimize, .{});
+    const mesh_pkg = mesh.package(b, target, optimize, .{});
 
     glfw_pkg.link(exe);
     opengl_pkg.link(exe);
     stbi_pkg.link(exe);
     math_pkg.link(exe);
     ui_pkg.link(exe);
-    // zmesh_pkg.link(exe);
+    mesh_pkg.link(exe);
 
     // const ziglua = b.dependency("ziglua", .{
     //     .target = target,

@@ -4,6 +4,7 @@ const zgui = @import("zgui");
 const zstbi = @import("zstbi");
 const zm = @import("zmath");
 const gl = @import("zopengl");
+const zmesh = @import("zmesh");
 const cfg = @import("../game/config.zig");
 
 fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
@@ -86,6 +87,9 @@ pub const App = struct {
 
         const i = zm.identity();
         std.debug.print("identity ? {e}\n", .{i[0]});
+
+        zmesh.init(self.allocator);
+        defer zmesh.deinit();
 
         while (!window.shouldClose()) {
             glfw.pollEvents();
