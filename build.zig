@@ -41,27 +41,23 @@ pub fn build(b: *std.Build) void {
     ui_pkg.link(exe);
     mesh_pkg.link(exe);
 
-    // const ziglua = b.dependency("ziglua", .{
-    //     .target = target,
-    //     .optimize = optimize,
-    //     .version = .lua_54,
-    // });
-    // exe.addModule("ziglua", ziglua.module("ziglua"));
-    // exe.linkLibrary(ziglua.artifact("lua"));
+    const ziglua = b.dependency("ziglua", .{
+        .target = target,
+        .optimize = optimize,
+        .version = .lua_54,
+    });
+    exe.addModule("ziglua", ziglua.module("ziglua"));
+    exe.linkLibrary(ziglua.artifact("lua"));
 
-    // const sqlite = b.dependency("sqlite", .{
-    //     .target = target,
-    //     .optimize = optimize,
-    // });
+    const sqlite = b.dependency("sqlite", .{
+        .target = target,
+        .optimize = optimize,
+    });
 
-    // exe.addModule("sqlite", sqlite.module("sqlite"));
+    exe.addModule("sqlite", sqlite.module("sqlite"));
 
-    // // links the bundled sqlite3, so leave this out if you link the system one
-    // exe.linkLibrary(sqlite.artifact("sqlite"));
+    exe.linkLibrary(sqlite.artifact("sqlite"));
 
-    // This creates a build step. It will be visible in the `zig build --help` menu,
-    // and can be selected like this: `zig build run`
-    // This will evaluate the `run` step rather than the default, which is "install".
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
 }
