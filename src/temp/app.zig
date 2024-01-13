@@ -1,6 +1,7 @@
 const std = @import("std");
 const glfw = @import("zglfw");
 const zgui = @import("zgui");
+const gl = @import("zopengl");
 const cfg = @import("../game/config.zig");
 
 fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
@@ -21,6 +22,23 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     glfw.makeContextCurrent(window);
     glfw.swapInterval(1);
     return window;
+}
+
+fn initGL(gl_major: u8, gl_minor: u8, window: *glfw.Window) !void {
+    try gl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
+
+    {
+        const dimensions: [2]i32 = window.getSize();
+        const w = dimensions[0];
+        const h = dimensions[1];
+        std.debug.print("Window size is {d}x{d}\n", .{ w, h });
+    }
+    gl.enable(gl.BLEND); // enable transparency
+    gl.enable(gl.DEPTH_TEST); // enable depth testing
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    // culling
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
 }
 
 pub const App = struct {
@@ -54,6 +72,8 @@ pub const App = struct {
 
         const window = try initWindow(gl_major, gl_minor);
         defer window.destroy();
+
+        try initGL(gl_major, gl_minor, window);
 
         zgui.init(self.allocator);
         defer zgui.deinit();
