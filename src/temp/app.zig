@@ -2,6 +2,7 @@ const std = @import("std");
 const glfw = @import("zglfw");
 const zgui = @import("zgui");
 const zstbi = @import("zstbi");
+const zm = @import("zmath");
 const gl = @import("zopengl");
 const cfg = @import("../game/config.zig");
 
@@ -82,6 +83,9 @@ pub const App = struct {
         zstbi.init(self.allocator);
         defer zstbi.deinit();
         zstbi.setFlipVerticallyOnLoad(false);
+
+        const i = zm.identity();
+        std.debug.print("identity ? {e}\n", .{i[0]});
 
         while (!window.shouldClose()) {
             glfw.pollEvents();
