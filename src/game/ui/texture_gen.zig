@@ -14,7 +14,7 @@ pub const TextureGen = struct {
     nameBuf: [script.maxLuaScriptNameSize]u8,
     codeFont: zgui.Font,
     scriptOptions: std.ArrayList(data.scriptOption),
-    loadedScriptId: u32 = 0,
+    loadedScriptId: i32 = 0,
 
     pub fn init(appState: *state.State, codeFont: zgui.Font, sc: script.Script, alloc: std.mem.Allocator) !TextureGen {
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
@@ -108,7 +108,7 @@ pub const TextureGen = struct {
         self.buf = buf;
         self.nameBuf = nameBuf;
         try self.evalTextureFunc();
-        self.loadedScriptId = @as(u32, @intCast(scriptId));
+        self.loadedScriptId = scriptId;
     }
 
     fn saveTextureScriptFunc(self: *TextureGen) !void {
@@ -131,14 +131,13 @@ pub const TextureGen = struct {
                 return;
             }
         }
-        const id = @as(i32, @intCast(self.loadedScriptId));
-        try self.appState.db.updateTextureScript(id, &self.nameBuf, &self.buf);
+        try self.appState.db.updateTextureScript(self.loadedScriptId, &self.nameBuf, &self.buf);
         try self.listTextureScripts();
-        try self.loadTextureScriptFunc(id);
+        try self.loadTextureScriptFunc(self.loadedScriptId);
     }
 
     fn deleteTextureScriptFunc(self: *TextureGen) !void {
-        try self.appState.db.deleteTextureScript(@as(i32, @intCast(self.loadedScriptId)));
+        try self.appState.db.deleteTextureScript(self.loadedScriptId);
         try self.listTextureScripts();
         self.loadedScriptId = 0;
     }
@@ -220,7 +219,7 @@ pub const TextureGen = struct {
                     name[i] = selectableName[i];
                 }
                 if (zgui.selectable(&name, .{})) {
-                    try self.loadTextureScriptFunc(@as(i32, @intCast(scriptOption.id)));
+                    try self.loadTextureScriptFunc(scriptOption.id);
                 }
             }
             zgui.endListBox();
