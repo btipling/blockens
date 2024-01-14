@@ -1,16 +1,7 @@
 .{
     .name = "btzig-blockens",
     .version = "0.0.1",
-    .dependencies = .{
-        .ziglua = .{
-            .url = "https://github.com/natecraddock/ziglua/archive/3538e1710a21d24924d35ef274be1e127da63d7d.tar.gz",
-            .hash = "12202d1ee1975de6e494d5f81e5286bb25d7ae7e34e01c78d6a1f4b1667d2ddf72f6",
-        },
-        .sqlite = .{
-            .url = "https://github.com/vrischmann/zig-sqlite/archive/aa6f95b1279f633259406e67986ba5ac4e76544b.tar.gz",
-            .hash = "1220d751f09c5c18c45f0a42af71ff255e62ae73deb34567ca42e9e67c614a4daa5a",
-        },
-    },
+    .dependencies = .{},
     .paths = .{
         "",
     },

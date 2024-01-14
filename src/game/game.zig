@@ -113,7 +113,7 @@ pub const Game = struct {
         var gameUI = try ui.UI.init(&appState, window, self.allocator);
         defer gameUI.deinit();
 
-        // init view dependencies
+        // init view imports
         const planePosition = position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
         var worldPlane = try plane.Plane.init("worldplane", planePosition, self.allocator);
         defer worldPlane.deinit();

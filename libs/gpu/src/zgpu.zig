@@ -1399,7 +1399,7 @@ fn ResourcePool(comptime Info: type, comptime Resource: type) type {
             // is destroyed.
             //
             // TODO: We could instead store a linked list in Info to track
-            // dependencies.  The parent resource could "point" to the first
+            // imports.  The parent resource could "point" to the first
             // dependent resource, and each dependent resource could "point" to
             // the parent and the prev/next dependent resources of the same
             // type (perhaps using handles instead of pointers).
