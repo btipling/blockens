@@ -63,19 +63,24 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    sqlite.linkLibC();
+    const sqliteHeaderPath = "libs/sqlite/c";
+    sqlite.addIncludePath(.{ .path = sqliteHeaderPath });
     sqlite.addCSourceFile(.{
         .file = .{ .path = "libs/sqlite/c/sqlite3.c" },
         .flags = &[_][]const u8{
             "-std=c99",
+            // "-fno-sanitize=undefined",
         },
     });
-    const sqliteHeaderPath = "libs/sqlite/c";
+    // zmesh_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/par_shapes" });
+    // zmesh_c_cpp.addCSourceFile(.{
+    //     .file = .{ .path = thisDir() ++ "/libs/par_shapes/par_shapes.c" },
+    //     .flags = &.{ "-std=c99", "-fno-sanitize=undefined", par_shapes_t },
+    // });
     std.debug.print("sqlite header path: {s}\n", .{sqliteHeaderPath});
-    sqlite.addIncludePath(.{ .path = sqliteHeaderPath });
-    sqlite.linkLibC();
     exe.linkLibrary(sqlite);
 
-    exe.addIncludePath(.{ .path = sqliteHeaderPath });
     const sqlite_module = b.addModule("sqlite", .{
         .root_source_file = .{ .path = path ++ "/libs/sqlite/sqlite.zig" },
     });
