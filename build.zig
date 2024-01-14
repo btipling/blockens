@@ -56,7 +56,7 @@ pub fn build(b: *std.Build) void {
             .options = .{ .lua_version = .lua54, .shared = false },
         },
     );
-    exe.root_module.addImport("zlua", lua_lib);
+    exe.root_module.addImport("ziglua", lua_lib);
 
     const sqlite = b.addStaticLibrary(.{
         .name = "sqlite",
@@ -69,11 +69,13 @@ pub fn build(b: *std.Build) void {
             "-std=c99",
         },
     });
-    sqlite.addIncludePath(.{ .path = path ++ "/libs/sqlite/c" });
+    const sqliteHeaderPath = "libs/sqlite/c";
+    std.debug.print("sqlite header path: {s}\n", .{sqliteHeaderPath});
+    sqlite.addIncludePath(.{ .path = sqliteHeaderPath });
     sqlite.linkLibC();
     exe.linkLibrary(sqlite);
 
-    exe.addIncludePath(.{ .path = path ++ "/libs/sqlite/c" });
+    exe.addIncludePath(.{ .path = sqliteHeaderPath });
     const sqlite_module = b.addModule("sqlite", .{
         .root_source_file = .{ .path = path ++ "/libs/sqlite/sqlite.zig" },
     });

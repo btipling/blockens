@@ -24,13 +24,16 @@ inline fn getPath() []const u8 {
 
 pub fn buildLibrary(
     b: *Build,
-    _: Build.ResolvedTarget,
-    _: std.builtin.OptimizeMode,
+    target: Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
     args: struct {
         options: Options = .{},
     },
 ) *Build.Module {
     const lua_version = b.option(LuaVersion, "version", "Lua API and library version") orelse args.options.lua_version;
+    const shared = b.option(bool, "shared", "Build shared library instead of static") orelse false;
+
+    const upstream = b.dependency(@tagName(lua_version), .{});
 
     // Zig module
     const ziglua = b.addModule("ziglua", .{
@@ -42,6 +45,23 @@ pub fn buildLibrary(
             .luau => .{ .path = path ++ "/src/zigluau/lib.zig" },
         },
     });
+
+    const lib = switch (lua_version) {
+        .luau => buildLuau(b, target, optimize, upstream, shared),
+        else => buildLua(b, target, optimize, upstream, lua_version, shared),
+    };
+
+    switch (lua_version) {
+        .luau => {
+            ziglua.addIncludePath(upstream.path("Common/include"));
+            ziglua.addIncludePath(upstream.path("Compiler/include"));
+            ziglua.addIncludePath(upstream.path("Ast/include"));
+            ziglua.addIncludePath(upstream.path("VM/include"));
+        },
+        else => ziglua.addIncludePath(upstream.path("src")),
+    }
+
+    ziglua.linkLibrary(lib);
 
     return ziglua;
 }
