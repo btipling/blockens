@@ -48,7 +48,7 @@ pub fn build(b: *std.Build) void {
     ui_pkg.link(exe);
     mesh_pkg.link(exe);
 
-    const lua_lib = lua.buildLibrary(
+    const lua_module = lua.buildLibrary(
         b,
         target,
         optimize,
@@ -56,7 +56,7 @@ pub fn build(b: *std.Build) void {
             .options = .{ .lua_version = .lua54, .shared = false },
         },
     );
-    exe.root_module.addImport("ziglua", lua_lib);
+    exe.root_module.addImport("ziglua", lua_module);
 
     const sqlite = b.addStaticLibrary(.{
         .name = "sqlite",
