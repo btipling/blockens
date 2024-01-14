@@ -1,5 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
+const Build = std.Build;
 
 var sqlite3: ?*std.Build.Step.Compile = null;
 
@@ -12,22 +13,101 @@ fn linkSqlite(b: *std.Build.Step.Compile) void {
     }
 }
 
-fn getTarget(original_target: std.zig.CrossTarget, bundled: bool) std.zig.CrossTarget {
+pub const Options = struct {
+    use_bundled: bool = false,
+    ci: bool = false,
+};
+
+pub const path = getPath();
+
+inline fn getPath() []const u8 {
+    return std.fs.path.dirname(@src().file) orelse unreachable;
+}
+
+// const sqlite = b.addStaticLibrary(.{
+//     .name = "sqlite",
+//     .target = target,
+//     .optimize = optimize,
+// });
+// sqlite.linkLibC();
+// const sqliteHeaderPath = "libs/sqlite/c";
+// sqlite.addIncludePath(.{ .path = sqliteHeaderPath });
+// sqlite.addCSourceFile(.{
+//     .file = .{ .path = "libs/sqlite/c/sqlite3.c" },
+//     .flags = &[_][]const u8{
+//         "-std=c99",
+//         // "-fno-sanitize=undefined",
+//     },
+// });
+
+// std.debug.print("sqlite header path: {s}\n", .{sqliteHeaderPath});
+// exe.linkLibrary(sqlite);
+
+// const sqlite_module = b.addModule("sqlite", .{
+//     .root_source_file = .{ .path = path ++ "/libs/sqlite/sqlite.zig" },
+// });
+// exe.root_module.addImport("sqlite", sqlite_module);
+
+pub fn buildLibrary(
+    b: *Build,
+    target: Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    _: struct {
+        options: Options = .{},
+    },
+) *Build.Module {
+    const sqlite_lib = b.addStaticLibrary(.{
+        .name = "sqlite",
+        .target = target,
+        .optimize = optimize,
+    });
+
+    sqlite_lib.addIncludePath(.{ .path = path ++ "/c" });
+    sqlite_lib.addCSourceFile(.{
+        .file = .{ .path = path ++ "/c/sqlite3.c" },
+        .flags = &[_][]const u8{"-std=c99"},
+    });
+    sqlite_lib.linkLibC();
+    sqlite_lib.installHeader(path ++ "/c/sqlite3.h", "sqlite3.h");
+
+    b.installArtifact(sqlite_lib);
+
+    const preprocess_files_tool = b.addExecutable(.{
+        .name = "preprocess-files",
+        .root_source_file = .{ .path = "tools/preprocess_files.zig" },
+        .target = getTarget(target, true),
+        .optimize = optimize,
+    });
+
+    const preprocess_files_run = b.step("preprocess-files", "Run the preprocess-files tool");
+
+    const preprocess_files_tool_run = b.addRunArtifact(preprocess_files_tool);
+    preprocess_files_run.dependOn(&preprocess_files_tool_run.step);
+
+    const sqlite_module = b.addModule(
+        "sqlite",
+        .{ .root_source_file = .{ .path = path ++ "/sqlite.zig" } },
+    );
+    sqlite_module.addIncludePath(.{ .path = path ++ "/c" });
+    return sqlite_module;
+}
+
+fn getTarget(original_target: Build.ResolvedTarget, bundled: bool) Build.ResolvedTarget {
     if (bundled) {
         var tmp = original_target;
 
-        if (tmp.isGnuLibC()) {
+        if (tmp.result.isGnuLibC()) {
             const min_glibc_version = std.SemanticVersion{
                 .major = 2,
                 .minor = 28,
                 .patch = 0,
             };
-            if (tmp.glibc_version) |ver| {
+            if (tmp.query.glibc_version) |ver| {
                 if (ver.order(min_glibc_version) == .lt) {
                     std.debug.panic("sqlite requires glibc version >= 2.28", .{});
                 }
             } else {
-                tmp.setGnuLibCVersion(2, 28, 0);
+                tmp.query.setGnuLibCVersion(2, 28, 0);
             }
         }
 

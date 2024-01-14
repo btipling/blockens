@@ -6,6 +6,7 @@ const stbi = @import("libs/stbi/build.zig");
 const math = @import("libs/math/build.zig");
 const mesh = @import("libs/mesh/build.zig");
 const lua = @import("libs/lua/build.zig");
+const sqlite = @import("libs/sqlite/build.zig");
 
 pub const path = getPath();
 
@@ -58,32 +59,12 @@ pub fn build(b: *std.Build) void {
     );
     exe.root_module.addImport("ziglua", lua_module);
 
-    const sqlite = b.addStaticLibrary(.{
-        .name = "sqlite",
-        .target = target,
-        .optimize = optimize,
-    });
-    sqlite.linkLibC();
-    const sqliteHeaderPath = "libs/sqlite/c";
-    sqlite.addIncludePath(.{ .path = sqliteHeaderPath });
-    sqlite.addCSourceFile(.{
-        .file = .{ .path = "libs/sqlite/c/sqlite3.c" },
-        .flags = &[_][]const u8{
-            "-std=c99",
-            // "-fno-sanitize=undefined",
-        },
-    });
-    // zmesh_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/par_shapes" });
-    // zmesh_c_cpp.addCSourceFile(.{
-    //     .file = .{ .path = thisDir() ++ "/libs/par_shapes/par_shapes.c" },
-    //     .flags = &.{ "-std=c99", "-fno-sanitize=undefined", par_shapes_t },
-    // });
-    std.debug.print("sqlite header path: {s}\n", .{sqliteHeaderPath});
-    exe.linkLibrary(sqlite);
-
-    const sqlite_module = b.addModule("sqlite", .{
-        .root_source_file = .{ .path = path ++ "/libs/sqlite/sqlite.zig" },
-    });
+    const sqlite_module = sqlite.buildLibrary(
+        b,
+        target,
+        optimize,
+        .{},
+    );
     exe.root_module.addImport("sqlite", sqlite_module);
 
     const run_step = b.step("run", "Run blockens");
