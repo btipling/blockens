@@ -26,6 +26,10 @@
             .url = "https://github.com/luau-lang/luau/archive/refs/tags/0.607.tar.gz",
             .hash = "122003818ff2aa912db37d4bbda314ff9ff70d03d9243af4b639490be98e2bfa7cb6",
         },
+        .sqlite_amalgamation = .{
+            .url = "https://www.sqlite.org/2023/sqlite-autoconf-3440200.tar.gz",
+            .hash = "1220808ebe54c856e5e024c42eb97eafc0844f617d47e9e6df11eb2fb881cff071fe",
+        },
     },
     .paths = .{
         "",

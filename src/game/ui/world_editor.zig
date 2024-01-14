@@ -92,7 +92,7 @@ pub const WorldEditor = struct {
         try self.listWorlds();
     }
 
-    fn loadWorld(self: *WorldEditor, worldId: u32) !void {
+    fn loadWorld(self: *WorldEditor, worldId: i32) !void {
         var worldData: data.world = undefined;
         try self.appState.db.loadWorld(worldId, &worldData);
         var nameBuf = [_]u8{0} ** maxWorldSizeName;
@@ -103,7 +103,7 @@ pub const WorldEditor = struct {
             nameBuf[i] = c;
         }
         self.updateNameBuf = nameBuf;
-        self.loadedWorldId = worldId;
+        self.loadedWorldId = @as(u32, @intCast(worldId));
     }
 
     fn updateWorld(self: *WorldEditor) !void {
@@ -114,13 +114,15 @@ pub const WorldEditor = struct {
                 return;
             }
         }
-        try self.appState.db.updateWorld(self.loadedWorldId, &self.updateNameBuf);
+        const id = @as(i32, @intCast(self.loadedWorldId));
+        try self.appState.db.updateWorld(id, &self.updateNameBuf);
         try self.listWorlds();
-        try self.loadWorld(self.loadedWorldId);
+        try self.loadWorld(id);
     }
 
     fn deleteWorld(self: *WorldEditor) !void {
-        try self.appState.db.deleteWorld(self.loadedWorldId);
+        const id = @as(i32, @intCast(self.loadedWorldId));
+        try self.appState.db.deleteWorld(id);
         try self.listWorlds();
         self.loadedWorldId = 0;
     }

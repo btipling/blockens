@@ -1,1 +1,1 @@
-DELETE FROM block WHERE id = ?;
+DELETE FROM block WHERE id = :id;

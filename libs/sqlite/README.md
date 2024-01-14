@@ -1,735 +1,197 @@
 # zig-sqlite
 
-This package is a thin wrapper around [sqlite](https://sqlite.org/index.html)'s C API.
+Simple, low-level, explicitly-typed SQLite bindings for Zig.
 
-_Maintainer note_: I'm currently on a break working with Zig and don't intend to work on new features for zig-sqlite.
-I will keep it updated for the latest Zig versions because that doesn't take too much of my time.
+## Table of Contents
 
-# Status
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Methods](#methods)
+  - [Queries](#queries)
+- [Notes](#notes)
+- [Build options](#build-options)
+- [License](#license)
 
-While the core functionality works right now, the API is still subject to changes.
+## Installation
 
-If you use this library, expect to have to make changes when you update the code.
+This library uses the new per-module compilation features and requires Zig version `0.12.0-dev.2127+fcc0c5ddc` (2023-01-10) or later.
 
-# Zig release support
-
-`zig-sqlite` only tracks Zig master (as can be found [here](https://ziglang.org/download/)). The plan is to support releases once Zig 1.0 is released but this can still change.
-
-Unfortunately as of zig `0.11.0-dev.3312+ab37ab33c` some things still don't compile properly, for example our tests don't compile. However [this demo program](https://github.com/vrischmann/zig-sqlite-demo) compiles fine.
-
-So your mileage may vary if you try to use `zig-sqlite`.
-
-# Table of contents
-
-* [Status](#status)
-* [Requirements](#requirements)
-* [Features](#features)
-* [Installation](#installation)
-   * [Official package manager](#official-package-manager)
-   * [zigmod](#zigmod)
-   * [Git submodule](#git-submodule)
-   * [Using the system sqlite library](#using-the-system-sqlite-library)
-   * [Using the bundled sqlite source code file](#using-the-bundled-sqlite-source-code-file)
-* [Usage](#usage)
-   * [Initialization](#initialization)
-   * [Preparing a statement](#preparing-a-statement)
-      * [Common use](#common-use)
-      * [Diagnostics](#diagnostics)
-   * [Executing a statement](#executing-a-statement)
-   * [Reuse a statement](#reuse-a-statement)
-   * [Reading data](#reading-data)
-      * [Type parameter](#type-parameter)
-      * [Non allocating](#non-allocating)
-      * [Allocating](#allocating)
-   * [Iterating](#iterating)
-      * [Non allocating](#non-allocating-1)
-      * [Allocating](#allocating-1)
-   * [Bind parameters and resultset rows](#bind-parameters-and-resultset-rows)
-   * [Custom type binding and reading](#custom-type-binding-and-reading)
-   * [Note about complex allocations](#note-about-complex-allocations)
-* [Comptime checks](#comptime-checks)
-   * [Check the number of bind parameters.](#check-the-number-of-bind-parameters)
-   * [Assign types to bind markers and check them.](#assign-types-to-bind-markers-and-check-them)
-* [User defined SQL functions](#user-defined-sql-functions)
-   * [Scalar functions](#scalar-functions)
-   * [Aggregate functions](#aggregate-functions)
-
-# Requirements
-
-[Zig master](https://ziglang.org/download/) is the only required dependency.
-
-For sqlite, you have options depending on your target:
-* On Windows the only supported way at the moment to build `zig-sqlite` is with the bundled sqlite source code file.
-* On Linux we have two options:
-  * use the system and development package for sqlite (`libsqlite3-dev` for Debian and derivatives, `sqlite3-devel` for Fedora)
-  * use the bundled sqlite source code file.
-
-# Features
-
-* Preparing, executing statements
-* comptime checked bind parameters
-* user defined SQL functions
-
-# Installation
-
-There are three main ways to include `zig-sqlite` in your project:
-* using zig's official package manager
-* using the [zigmod](https://github.com/nektro/zigmod) package manager
-* using a git submodule
-
-## Official package manager
-
-Add this as one of the `.dependencies` inside your `build.zig.zon` file:
-```zig
-.sqlite = .{
-    .url = "https://github.com/vrischmann/zig-sqlite/archive/COMMIT.tar.gz",
-    .hash = <hash value>,
-},
-```
-
-This tells zig to fetch zig-sqlite from a tarball provided by GitHub. Make sure to replace the `COMMIT` part with an actual commit SHA in long form, like `219faa2a5cd5a268a865a1100e92805df4b84610`.
-Every time you want to update zig-sqlite you'll have to update this commit.
-
-You'll have to provide the `hash` field too which is actually a litte annoying because the hash is of the _content_, not the _archive_ (see [the Zig 0.11 release notes](https://ziglang.org/download/0.11.0/release-notes.html#Package-Management)).
-The easiest way to get the hash value is to omit it from the file and run `zig build`, it will report an error like this:
-```
-Fetch Packages... sqlite... /Users/vincent/dev/perso/projects/zig-sqlite-demo/build.zig.zon:6:11: error: url field is missing corresponding hash field
-   .url = "https://github.com/vrischmann/zig-sqlite/archive/219faa2a5cd5a268a865a1100e92805df4b84610.tar.gz",
-          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-note: expected .hash = "122088f0b73f5adcf07c9af8437c5149ed35c3f16f6393c330a294bdd5f91f069a08",
-```
-
-Now in your `build.zig` you can access the module like this:
-```zig
-const sqlite = b.dependency("sqlite", .{
-    .target = target,
-    .optimize = optimize,
-});
-
-exe.addModule("sqlite", sqlite.module("sqlite"));
-
-// links the bundled sqlite3, so leave this out if you link the system one
-exe.linkLibrary(sqlite.artifact("sqlite"));
-```
-
-## zigmod
-
-Add this to your `zig.mod` file:
-```
-dependencies:
-  - src: git https://github.com/vrischmann/zig-sqlite branch-master
-```
-
-Note that if you're building an executable and not a library you should use `dev_dependencies` instead.
-
-Next run `zigmod fetch`; it should create a `deps.zig` file.
-
-Now in your `build.zig` you can access the package like this:
-```zig
-const deps = @import("deps.zig");
-...
-deps.addAllTo(exe);
-```
-
-This is the easiest way to add `zig-sqlite` because it uses the bundled source code, avoiding all sorts of linking problems.
-
-## Git submodule
-
-If you don't want to use a package manager you can simply add this repository as a git submodule.
-
-Then you need to chose if you want to use the system sqlite library or the bundled source code.
-
-## Using the system sqlite library
-
-If you want to use the system sqlite library, add the following to your `build.zig` target(s):
+Add the dependency to `build.zig.zon`:
 
 ```zig
-exe.linkLibC();
-exe.linkSystemLibrary("sqlite3");
-exe.addAnonymousModule("sqlite", .{
-    .source_file = .{ .path = "third_party/zig-sqlite/sqlite.zig" },
-});
-```
-
-## Using the bundled sqlite source code file
-
-If you want to use the bundled sqlite source code file, first you need to add it as a static library in your `build.zig` file:
-
-```zig
-const sqlite = b.addStaticLibrary(.{
-    .name = "sqlite",
-    .target = target,
-    .optimize = optimize,
-});
-sqlite.addCSourceFile(.{
-    .file = .{ .path = "third_party/zig-sqlite/c/sqlite3.c" },
-    .flags = &[_][]const u8{
-        "-std=c99",
+.{
+    .dependencies = .{
+        .sqlite = .{
+            .url = "https://github.com/nDimensional/zig-sqlite/archive/refs/tags/v0.0.2.tar.gz",
+            .hash = "1220915e2ec976233b79c9ba4f56ff5220b428482eabae172b5eb5135f069fdad502",
+        },
     },
-});
-sqlite.addIncludePath(.{ .path = "third_party/zig-sqlite/c" });
-sqlite.linkLibC();
+}
 ```
 
-If you need to define custom [compile-time options](https://www.sqlite.org/compile.html#overview) for sqlite, modify the flags (second argument to `addCSourceFile`).
-
-Now it's just a matter of linking your `build.zig` target(s) to this library instead of the system one:
+Then add `sqlite` as an import to your root modules in `build.zig`:
 
 ```zig
-exe.linkLibrary(sqlite);
-exe.addIncludePath(.{ .path = "third_party/zig-sqlite/c" });
-exe.addAnonymousModule("sqlite", .{
-    .source_file = .{ .path = "third_party/zig-sqlite/sqlite.zig" },
-});
+fn build(b: *std.Build) void {
+    const app = b.addExecutable(.{ ... });
+    // ...
+
+    const sqlite = b.dependency("sqlite", .{});
+    app.root_module.addImport("sqlite", sqlite.module("sqlite"));
+}
 ```
 
-If you're building with glibc you must make sure that the version used is at least 2.28.
+## Usage
 
-You can do that in your `build.zig` file:
-```zig
-var target = b.standardTargetOptions(.{});
-target.setGnuLibCVersion(2, 28, 0);
-exe.setTarget(target);
-```
-
-Or with `-Dtarget`:
-```
-$ zig build -Dtarget=native-linux-gnu.2.28
-```
-
-# Usage
-
-Import `zig-sqlite` like this:
+Open databases using `Database.init` and close them with `db.deinit()`:
 
 ```zig
 const sqlite = @import("sqlite");
-```
 
-## Initialization
+{
+    // in-memory database
+    const db = try sqlite.Database.init(.{});
+    defer db.deinit();
+}
 
-You must create and initialize an instance of `sqlite.Db`:
-
-```zig
-var db = try sqlite.Db.init(.{
-    .mode = sqlite.Db.Mode{ .File = "/home/vincent/mydata.db" },
-    .open_flags = .{
-        .write = true,
-        .create = true,
-    },
-    .threading_mode = .MultiThread,
-});
-```
-
-The `init` method takes a `InitOptions` struct which will be used to configure sqlite.
-
-Only the `mode` field is mandatory, the other fields have sane default values.
-
-## Preparing a statement
-
-### Common use
-
-sqlite works exclusively by using prepared statements. The wrapper type is `sqlite.Statement`. Here is how you get one:
-
-```zig
-const query =
-    \\SELECT id, name, age, salary FROM employees WHERE age > ? AND age < ?
-;
-
-var stmt = try db.prepare(query);
-defer stmt.deinit();
-```
-
-The `Db.prepare` method takes a `comptime` query string.
-
-### Diagnostics
-
-If you want failure diagnostics you can use `prepareWithDiags` like this:
-
-```zig
-var diags = sqlite.Diagnostics{};
-var stmt = db.prepareWithDiags(query, .{ .diags = &diags }) catch |err| {
-    std.log.err("unable to prepare statement, got error {}. diagnostics: {s}", .{ err, diags });
-    return err;
-};
-defer stmt.deinit();
-```
-
-## Executing a statement
-
-For queries which do not return data (`INSERT`, `UPDATE`) you can use the `exec` method:
-
-```zig
-const query =
-    \\UPDATE foo SET salary = ? WHERE id = ?
-;
-
-var stmt = try db.prepare(query);
-defer stmt.deinit();
-
-try stmt.exec(.{}, .{
-    .salary = 20000,
-    .id = 40,
-});
-```
-
-See the section "Bind parameters and resultset rows" for more information on the types mapping rules.
-
-## Reuse a statement
-
-You can reuse a statement by resetting it like this:
-```zig
-const query =
-    \\UPDATE foo SET salary = ? WHERE id = ?
-;
-
-var stmt = try db.prepare(query);
-defer stmt.deinit();
-
-var id: usize = 0;
-while (id < 20) : (id += 1) {
-    stmt.reset();
-    try stmt.exec(.{}, .{
-        .salary = 2000,
-        .id = id,
-    });
+{
+    // persistent database
+    const db = try sqlite.Database.init(.{ .path = "path/to/db.sqlite" });
+    defer db.deinit();
 }
 ```
 
-## Reading data
-
-For queries which return data you have multiple options:
-* `Statement.all` which takes an allocator and can allocate memory.
-* `Statement.one` which does not take an allocator and cannot allocate memory (aside from what sqlite allocates itself).
-* `Statement.oneAlloc` which takes an allocator and can allocate memory.
-
-### Type parameter
-
-All these methods take a type as first parameter.
-
-The type represents a "row", it can be:
-* a struct where each field maps to the corresponding column in the resultset (so field 0 must map to column 1 and so on).
-* a single type, in that case the resultset must only return one column.
-
-The type can be a pointer but only when using the methods taking an allocator.
-
-Not all types are allowed, see the section "Bind parameters and resultset rows" for more information on the types mapping rules.
-
-### Non allocating
-
-Using `one`:
+Execute one-off statements using `Database.exec`:
 
 ```zig
-const query =
-    \\SELECT name, age FROM employees WHERE id = ?
-;
+try db.exec("CREATE TABLE users (id TEXT PRIMARY KEY, age FLOAT)", .{});
+```
 
-var stmt = try db.prepare(query);
-defer stmt.deinit();
+Prepare statements using `Database.prepare`, and finalize them with `stmt.deinit()`. Statements must be given explicit comptime params and result types and are typed as `sqlite.Statement(Params, Result)`.
 
-const row = try stmt.one(
-    struct {
-        name: [128:0]u8,
-        age: usize,
-    },
-    .{},
-    .{ .id = 20 },
+- The comptime `Params` type must be a struct whose fields are (possibly optional) float, integer, `sqlite.Blob`, or `sqlite.Text` types.
+- The comptime `Result` type must either be `void`, indicating a method that returns no data, or a struct of the same kind as param types, indicating a query that returns rows.
+
+`Blob` and `Text` are wrapper structs with a single field `data: []const u8`.
+
+### Methods
+
+If the `Result` type is `void`, use the `exec(params: Params): !void` method to execute the statement several times with different params.
+
+```zig
+const User = struct { id: sqlite.Text, age: ?f32 };
+const insert = try db.prepare(
+    User,
+    void,
+    "INSERT INTO users VALUES (:id, :age)",
 );
-if (row) |row| {
-    std.log.debug("name: {}, age: {}", .{std.mem.spanZ(&row.name), row.age});
-}
+defer insert.deinit();
+
+try insert.exec(.{ .id = sqlite.text("a"), .age = 21 });
+try insert.exec(.{ .id = sqlite.text("b"), .age = null });
 ```
-Notice that to read text we need to use a 0-terminated array; if the `name` column is bigger than 127 bytes the call to `one` will fail.
 
-If the length of the data is variable then the sentinel is mandatory: without one there would be no way to know where the data ends in the array.
+### Queries
 
-However if the length is fixed, you can read into a non 0-terminated array, for example:
+If the `Result` type is a struct, use `get(params: Params): !?Result` to get individual records.
 
 ```zig
-const query =
-    \\SELECT id FROM employees WHERE name = ?
-;
-
-var stmt = try db.prepare(query);
-defer stmt.deinit();
-
-const row = try stmt.one(
-    [16]u8,
-    .{},
-    .{ .name = "Vincent" },
+const select = try db.prepare(
+    struct { id: sqlite.Text },
+    struct { age: ?f32 },
+    "SELECT age FROM users WHERE id = :id",
 );
-if (row) |id| {
-    std.log.debug("id: {s}", .{std.fmt.fmtSliceHexLower(&id)});
+defer select.deinit();
+
+if (try select.get(.{ .id = sqlite.text("b") })) |user| {
+    std.log.info("age: {d}", .{ user.age });
+} else {
+    std.log.info("not found", .{});
 }
 ```
 
-If the column data doesn't have the correct length a `error.ArraySizeMismatch` will be returned.
+To iterate over all results, use `stmt.bind(params)` in conjunction with `defer stmt.reset()`, then `stmt.step()` over the results.
 
-The convenience function `sqlite.Db.one` works exactly the same way:
-
-```zig
-const query =
-    \\SELECT age FROM employees WHERE id = ?
-;
-
-const row = try db.one(usize, query, .{}, .{ .id = 20 });
-if (row) |age| {
-    std.log.debug("age: {}", .{age});
-}
-```
-
-### Allocating
-
-Using `all`:
+> ℹ️ Every `bind` should be paired with a `reset`, just like every `init` is paired with a `deinit`.
 
 ```zig
-const query =
-    \\SELECT name FROM employees WHERE age > ? AND age < ?
-;
+const User = struct { id: sqlite.Text, age: ?f32 };
+const select = try db.prepare(
+    struct { min: f32 },
+    User,
+    "SELECT * FROM users WHERE age >= :min",
+);
 
-var stmt = try db.prepare(query);
-defer stmt.deinit();
+defer select.deinit();
 
-const names = try stmt.all([]const u8, allocator, .{}, .{
-    .age1 = 20,
-    .age2 = 40,
-});
-for (names) |name| {
-    std.log.debug("name: {s}", .{ name });
-}
-```
+// Iterate over all rows
+{
+    try select.bind(.{ .min = 0 });
+    defer select.reset();
 
-Using `oneAlloc`:
-
-```zig
-const query =
-    \\SELECT name FROM employees WHERE id = ?
-;
-
-var stmt = try db.prepare(query);
-defer stmt.deinit();
-
-const row = try stmt.oneAlloc([]const u8, allocator, .{}, .{
-    .id = 200,
-});
-if (row) |name| {
-    std.log.debug("name: {}", .{name});
-}
-```
-
-## Iterating
-
-Another way to get the data returned by a query is to use the `sqlite.Iterator` type.
-
-You can only get one by calling the `iterator` method on a statement.
-
-The `iterator` method takes a type which is the same as with `all`, `one` or `oneAlloc`: every row retrieved by calling `next` or `nextAlloc` will have this type.
-
-Iterating is done by calling the `next` or `nextAlloc` method on an iterator. Just like before, `next` cannot allocate memory while `nextAlloc` can allocate memory.
-
-`next` or `nextAlloc` will either return an optional value or an error; you should keep iterating until `null` is returned.
-
-### Non allocating
-
-```zig
-var stmt = try db.prepare("SELECT age FROM user WHERE age < ?");
-defer stmt.deinit();
-
-var iter = try stmt.iterator(usize, .{
-    .age = 20,
-});
-
-while (try iter.next(.{})) |age| {
-    std.debug.print("age: {}\n", .{age});
-}
-```
-
-### Allocating
-
-```zig
-var stmt = try db.prepare("SELECT name FROM user WHERE age < ?");
-defer stmt.deinit();
-
-var iter = try stmt.iterator([]const u8, .{
-    .age = 20,
-});
-
-while (true) {
-    var arena = std.heap.ArenaAllocator.init(allocator);
-    defer arena.deinit();
-
-    const name = (try iter.nextAlloc(arena.allocator(), .{})) orelse break;
-    std.debug.print("name: {}\n", .{name});
-}
-```
-
-## Bind parameters and resultset rows
-
-Since sqlite doesn't have many [types](https://www.sqlite.org/datatype3.html) only a small number of Zig types are allowed in binding parameters and in resultset mapping types.
-
-Here are the rules for bind parameters:
-* any Zig `Int` or `ComptimeInt` is treated as a `INTEGER`.
-* any Zig `Float` or `ComptimeFloat` is treated as a `REAL`.
-* `[]const u8`, `[]u8` is treated as a `TEXT`.
-* the custom `sqlite.Blob` type is treated as a `BLOB`.
-* the custom `sqlite.Text` type is treated as a `TEXT`.
-* the `null` value is treated as a `NULL`.
-* non-null optionals are treated like a regular value, null optionals are treated as a `NULL`.
-
-Here are the rules for resultset rows:
-* `INTEGER` can be read into any Zig `Int` provided the data fits.
-* `REAL` can be read into any Zig `Float` provided the data fits.
-* `TEXT` can be read into a `[]const u8` or `[]u8`.
-* `TEXT` can be read into any array of `u8` with a sentinel provided the data fits.
-* `BLOB` follows the same rules as `TEXT`.
-* `NULL` can be read into any optional.
-
-Note that arrays must have a sentinel because we need a way to communicate where the data actually stops in the array, so for example use `[200:0]u8` for a `TEXT` field.
-
-## Custom type binding and reading
-
-Sometimes the default field binding or reading logic is not what you want, for example if you want to store an enum using its tag name instead of its integer value or
-if you want to store a byte slice as an hex string.
-
-To accomplish this you must first define a wrapper struct for your type. For example if your type is a `[4]u8` and you want to treat it as an integer:
-```zig
-pub const MyArray = struct {
-    data: [4]u8,
-
-    pub const BaseType = u32;
-
-    pub fn bindField(self: MyArray, _: std.mem.Allocator) !BaseType {
-        return std.mem.readIntNative(BaseType, &self.data);
+    while (try select.step()) |user| {
+        std.log.info("{s} age: {d}", .{ user.id, user.age });
     }
+}
 
-    pub fn readField(_: std.mem.Allocator, value: BaseType) !MyArray {
-        var arr: MyArray = undefined;
-        std.mem.writeIntNative(BaseType, &arr.data, value);
-        return arr;
+// Iterate again, with different params
+{
+    try select.bind(.{ .min = 21 });
+    defer select.reset();
+
+    while (try select.step()) |user| {
+        std.log.info("{s} age: {d}", .{ user.id, user.age });
     }
-};
-```
-
-Now when you bind a value of type `MyArray` the value returned by `bindField` will be used for binding instead.
-
-Same for reading, when you select _into_ a `MyArray` row or field the value returned by `readField` will be used instead.
-
-_NOTE_: when you _do_ allocate in `bindField` or `readField` make sure to pass a `std.heap.ArenaAllocator`-based allocator.
-
-The binding or reading code does not keep tracking of allocations made in custom types so it can't free the allocated data itself; it's therefore required
-to use an arena to prevent memory leaks.
-
-## Note about complex allocations
-
-Depending on your queries and types there can be a lot of allocations required. Take the following example:
-```zig
-const User = struct {
-    id: usize,
-    first_name: []const u8,
-    last_name: []const u8,
-    data: []const u8,
-};
-
-fn fetchUsers(allocator: std.mem.Allocator, db: *sqlite.Db) ![]User {
-    var stmt = try db.prepare("SELECT id FROM user WHERE id > $id");
-    defer stmt.deinit();
-
-    return stmt.all(User, allocator, .{}, .{ .id = 20 });
 }
 ```
 
-This will do multiple allocations:
-* one for each id field in the `User` type
-* one for the resulting slice
+Text and blob values must not be retained across steps. **You are responsible for copying them.**
 
-To facilitate memory handling, consider using an arena allocator like this:
+## Notes
+
+Crafting sensible Zig bindings for SQLite involves making tradeoffs between following the Zig philosophy ("deallocation must succeed") and matching the SQLite API, in which closing databases or finalizing statements may return error codes.
+
+This library takes the following approach:
+
+- `Database.deinit` calls `sqlite3_close_v2` and panics if it returns an error code.
+- `Statement.deinit` calls `sqlite3_finalize` and panics if it returns an error code.
+- `Statement.step` automatically calls `sqlite3_reset` if `sqlite3_step` returns an error code.
+  - In SQLite, `sqlite3_reset` returns the error code from the most recent call to `sqlite3_step`. This is handled gracefully.
+- `Statement.reset` calls both `sqlite3_reset` and `sqlite3_clear_bindings`, and panics if either return an error code.
+
+These should only result in panic through gross misuse or in extremely unusual situations, e.g. `sqlite3_reset` failing internally. All "normal" errors are faithfully surfaced as Zig errors.
+
+## Build options
+
 ```zig
-var arena = std.heap.ArenaAllocator.init(allocator);
-defer arena.deinit();
-
-const users = try fetchUsers(arena.allocator(), db);
-_ = users;
+struct {
+    SQLITE_ENABLE_COLUMN_METADATA: bool = false,
+    SQLITE_ENABLE_DBSTAT_VTAB:     bool = false,
+    SQLITE_ENABLE_FTS3:            bool = false,
+    SQLITE_ENABLE_FTS4:            bool = false,
+    SQLITE_ENABLE_FTS5:            bool = false,
+    SQLITE_ENABLE_GEOPOLY:         bool = false,
+    SQLITE_ENABLE_ICU:             bool = false,
+    SQLITE_ENABLE_MATH_FUNCTIONS:  bool = false,
+    SQLITE_ENABLE_RBU:             bool = false,
+    SQLITE_ENABLE_RTREE:           bool = false,
+    SQLITE_ENABLE_STAT4:           bool = false,
+    SQLITE_OMIT_DECLTYPE:          bool = false,
+    SQLITE_OMIT_JSON:              bool = false,
+    SQLITE_USE_URI:                bool = false,
+}
 ```
 
-This is especially recommended if you use custom types that allocate memory since, as noted above, it's necessary to prevent memory leaks.
+Set these by passing e.g. `-DSQLITE_ENABLE_RTREE` in the CLI, or by setting `.SQLITE_ENABLE_RTREE = true` in the `args` parameter to `std.Build.dependency`. For example:
 
-# Comptime checks
-
-Prepared statements contain _comptime_ metadata which is used to validate every call to `exec`, `one` and `all` _at compile time_.
-
-## Check the number of bind parameters.
-
-The first check makes sure you provide the same number of bind parameters as there are bind markers in the query string.
-
-Take the following code:
 ```zig
-var stmt = try db.prepare("SELECT id FROM user WHERE age > ? AND age < ? AND weight > ?");
-defer stmt.deinit();
+pub fn build(b: *std.Build) !void {
+    // ...
 
-const rows = try stmt.all(usize, .{}, .{
-    .age_1 = 10,
-    .age_2 = 20,
-});
-_ = rows;
-```
-It fails with this compilation error:
-```
-/home/vincent/dev/perso/libs/zig-sqlite/sqlite.zig:738:17: error: number of bind markers not equal to number of fields
-                @compileError("number of bind markers not equal to number of fields");
-                ^
-/home/vincent/dev/perso/libs/zig-sqlite/sqlite.zig:817:22: note: called from here
-            self.bind(values);
-                     ^
-/home/vincent/dev/perso/libs/zig-sqlite/sqlite.zig:905:41: note: called from here
-            var iter = try self.iterator(Type, values);
-                                        ^
-./src/main.zig:19:30: note: called from here
-    const rows = try stmt.all(usize, allocator, .{}, .{
-                             ^
-./src/main.zig:5:29: note: called from here
-pub fn main() anyerror!void {
+    const sqlite = b.dependency("sqlite", .{ .SQLITE_ENABLE_RTREE = true });
+}
 ```
 
-## Assign types to bind markers and check them.
+## License
 
-The second (and more interesting) check makes sure you provide appropriately typed values as bind parameters.
-
-This check is not automatic since with a standard SQL query we have no way to know the types of the bind parameters, to use it you must provide theses types in the SQL query with a custom syntax.
-
-For example, take the same code as above but now we also bind the last parameter:
-```zig
-var stmt = try db.prepare("SELECT id FROM user WHERE age > ? AND age < ? AND weight > ?");
-defer stmt.deinit();
-
-const rows = try stmt.all(usize, .{ .allocator = allocator }, .{
-    .age_1 = 10,
-    .age_2 = 20,
-    .weight = false,
-});
-_ = rows;
-```
-
-This compiles correctly even if the `weight` field in our `user` table is of the type `INTEGER`.
-
-We can make sure the bind parameters have the right type if we rewrite the query like this:
-```zig
-var stmt = try db.prepare("SELECT id FROM user WHERE age > ? AND age < ? AND weight > ?{usize}");
-defer stmt.deinit();
-
-const rows = try stmt.all(usize, .{ .allocator = allocator }, .{
-    .age_1 = 10,
-    .age_2 = 20,
-    .weight = false,
-});
-_ = rows;
-```
-Now this fails to compile:
-```
-/home/vincent/dev/perso/libs/zig-sqlite/sqlite.zig:745:25: error: value type bool is not the bind marker type usize
-                        @compileError("value type " ++ @typeName(struct_field.field_type) ++ " is not the bind marker type " ++ @typeName(typ));
-                        ^
-/home/vincent/dev/perso/libs/zig-sqlite/sqlite.zig:817:22: note: called from here
-            self.bind(values);
-                     ^
-/home/vincent/dev/perso/libs/zig-sqlite/sqlite.zig:905:41: note: called from here
-            var iter = try self.iterator(Type, values);
-                                        ^
-./src/main.zig:19:30: note: called from here
-    const rows = try stmt.all(usize, allocator, .{}, .{
-                             ^
-./src/main.zig:5:29: note: called from here
-pub fn main() anyerror!void {
-```
-The syntax is straightforward: a bind marker `?` followed by `{`, a Zig type name and finally `}`.
-
-There are a limited number of types allowed currently:
- * all [integer](https://ziglang.org/documentation/master/#Primitive-Types) types.
- * all [arbitrary bit-width integer](https://ziglang.org/documentation/master/#Primitive-Types) types.
- * all [float](https://ziglang.org/documentation/master/#Primitive-Types) types.
- * bool.
- * strings with `[]const u8` or `[]u8`.
- * strings with `sqlite.Text`.
- * blobs with `sqlite.Blob`.
-
-It's probably possible to support arbitrary types if they can be marshaled to a sqlite type. This is something to investigate.
-
-**NOTE**: this is done at compile time and is quite CPU intensive, therefore it's possible you'll have to play with [@setEvalBranchQuota](https://ziglang.org/documentation/master/#setEvalBranchQuota) to make it compile.
-
-To finish our example, passing the proper type allows it compile:
-```zig
-var stmt = try db.prepare("SELECT id FROM user WHERE age > ? AND age < ? AND weight > ?{usize}");
-defer stmt.deinit();
-
-const rows = try stmt.all(usize, .{}, .{
-    .age_1 = 10,
-    .age_2 = 20,
-    .weight = @as(usize, 200),
-});
-_ = rows;
-```
-
-# User defined SQL functions
-
-sqlite supports [user-defined SQL functions](https://www.sqlite.org/c3ref/create_function.html) which come in two types:
-* scalar functions
-* aggregate functions
-
-In both cases the arguments are [sqlite3\_values](https://www.sqlite.org/c3ref/value_blob.html) and are converted to Zig values using the following rules:
-* `TEXT` values can be either `sqlite.Text` or `[]const u8`
-* `BLOB` values can be either `sqlite.Blob` or `[]const u8`
-* `INTEGER` values can be any Zig integer
-* `REAL` values can be any Zig float
-
-## Scalar functions
-
-You can define a scalar function using `db.createScalarFunction`:
-```zig
-try db.createScalarFunction(
-    "blake3",
-    struct {
-        fn run(input: []const u8) [std.crypto.hash.Blake3.digest_length]u8 {
-            var hash: [std.crypto.hash.Blake3.digest_length]u8 = undefined;
-            std.crypto.hash.Blake3.hash(input, &hash, .{});
-            return hash;
-        }
-    }.run,
-    .{},
-);
-
-const hash = try db.one([std.crypto.hash.Blake3.digest_length]u8, "SELECT blake3('hello')", .{}, .{});
-```
-
-Each input arguments in the function call in the statement is passed on to the registered `run` function.
-
-## Aggregate functions
-
-You can define a scalar function using `db.createAggregateFunction`:
-```zig
-const MyContext = struct {
-    sum: u32,
-};
-var my_ctx = MyContext{ .sum = 0 };
-
-try db.createAggregateFunction(
-    "mySum",
-    &my_ctx,
-    struct {
-        fn step(ctx: *MyContext, input: u32) void {
-            ctx.sum += input;
-        }
-    }.step,
-    struct {
-        fn finalize(ctx: *MyContext) u32 {
-            return ctx.sum;
-        }
-    }.finalize,
-    .{},
-);
-
-const result = try db.one(usize, "SELECT mySum(nb) FROM foobar", .{}, .{});
-```
-
-Each input arguments in the function call in the statement is passed on to the registered `step` function.
-The `finalize` function is called once at the end.
-
-The context (2nd argument of `createAggregateFunction`) can be whatever you want; both `step` and `finalize` function must
-have their first argument of the same type as the context.
+MIT © nDimensional Studios

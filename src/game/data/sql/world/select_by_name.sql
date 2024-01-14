@@ -1,1 +1,1 @@
-SELECT name FROM world WHERE name = ?;
+SELECT name FROM world WHERE name = :name;

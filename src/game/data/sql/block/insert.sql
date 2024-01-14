@@ -1,1 +1,1 @@
-INSERT INTO block (name, texture, created_at, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO block (name, texture, created_at, updated_at) VALUES (:name, :texture, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

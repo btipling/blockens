@@ -38,7 +38,7 @@ fn initParShapeCubeFromPlanes() zmesh.Shape {
 pub const Cube = struct {
     fn initShape(
         name: []const u8,
-        blockId: u32,
+        blockId: i32,
         alloc: std.mem.Allocator,
         textureRGBAColors: []const gl.Uint,
     ) !shape.Shape {
@@ -70,7 +70,7 @@ pub const Cube = struct {
     fn initInstancedShape(
         vm: *view.View,
         name: []const u8,
-        blockId: u32,
+        blockId: i32,
         alloc: std.mem.Allocator,
         textureRGBAColors: []const gl.Uint,
     ) !instancedShape.InstancedShape {
@@ -104,7 +104,7 @@ pub const Cube = struct {
     pub fn initBlockCube(
         vm: *view.View,
         appState: *state.State,
-        blockId: u32,
+        blockId: i32,
         alloc: std.mem.Allocator,
     ) !instancedShape.InstancedShape {
         var blockData: data.block = undefined;

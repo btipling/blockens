@@ -1,22 +1,9 @@
 const std = @import("std");
-const builtin = @import("builtin");
+const LazyPath = std.Build.LazyPath;
 const Build = std.Build;
+const Step = std.Build.Step;
 
-var sqlite3: ?*std.Build.Step.Compile = null;
-
-fn linkSqlite(b: *std.Build.Step.Compile) void {
-    if (sqlite3) |lib| {
-        b.linkLibrary(lib);
-    } else {
-        b.linkLibC();
-        b.linkSystemLibrary("sqlite3");
-    }
-}
-
-pub const Options = struct {
-    use_bundled: bool = false,
-    ci: bool = false,
-};
+pub const Options = struct {};
 
 pub const path = getPath();
 
@@ -24,532 +11,154 @@ inline fn getPath() []const u8 {
     return std.fs.path.dirname(@src().file) orelse unreachable;
 }
 
-// const sqlite = b.addStaticLibrary(.{
-//     .name = "sqlite",
-//     .target = target,
-//     .optimize = optimize,
-// });
-// sqlite.linkLibC();
-// const sqliteHeaderPath = "libs/sqlite/c";
-// sqlite.addIncludePath(.{ .path = sqliteHeaderPath });
-// sqlite.addCSourceFile(.{
-//     .file = .{ .path = "libs/sqlite/c/sqlite3.c" },
-//     .flags = &[_][]const u8{
-//         "-std=c99",
-//         // "-fno-sanitize=undefined",
-//     },
-// });
-
-// std.debug.print("sqlite header path: {s}\n", .{sqliteHeaderPath});
-// exe.linkLibrary(sqlite);
-
-// const sqlite_module = b.addModule("sqlite", .{
-//     .root_source_file = .{ .path = path ++ "/libs/sqlite/sqlite.zig" },
-// });
-// exe.root_module.addImport("sqlite", sqlite_module);
-
 pub fn buildLibrary(
     b: *Build,
     target: Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
-    _: struct {
-        options: Options = .{},
-    },
+    _: struct { options: Options = .{} },
 ) *Build.Module {
-    const sqlite_lib = b.addStaticLibrary(.{
-        .name = "sqlite",
-        .target = target,
-        .optimize = optimize,
-    });
+    _ = optimize;
+    _ = target;
+    var flags = std.ArrayList([]const u8).init(b.allocator);
 
-    sqlite_lib.addIncludePath(.{ .path = path ++ "/c" });
-    sqlite_lib.addCSourceFile(.{
-        .file = .{ .path = path ++ "/c/sqlite3.c" },
-        .flags = &[_][]const u8{"-std=c99"},
-    });
-    sqlite_lib.linkLibC();
-    sqlite_lib.installHeader(path ++ "/c/sqlite3.h", "sqlite3.h");
-
-    b.installArtifact(sqlite_lib);
-
-    const preprocess_files_tool = b.addExecutable(.{
-        .name = "preprocess-files",
-        .root_source_file = .{ .path = "tools/preprocess_files.zig" },
-        .target = getTarget(target, true),
-        .optimize = optimize,
-    });
-
-    const preprocess_files_run = b.step("preprocess-files", "Run the preprocess-files tool");
-
-    const preprocess_files_tool_run = b.addRunArtifact(preprocess_files_tool);
-    preprocess_files_run.dependOn(&preprocess_files_tool_run.step);
-
-    const sqlite_module = b.addModule(
-        "sqlite",
-        .{ .root_source_file = .{ .path = path ++ "/sqlite.zig" } },
-    );
-    sqlite_module.addIncludePath(.{ .path = path ++ "/c" });
-    return sqlite_module;
-}
-
-fn getTarget(original_target: Build.ResolvedTarget, bundled: bool) Build.ResolvedTarget {
-    if (bundled) {
-        var tmp = original_target;
-
-        if (tmp.result.isGnuLibC()) {
-            const min_glibc_version = std.SemanticVersion{
-                .major = 2,
-                .minor = 28,
-                .patch = 0,
-            };
-            if (tmp.query.glibc_version) |ver| {
-                if (ver.order(min_glibc_version) == .lt) {
-                    std.debug.panic("sqlite requires glibc version >= 2.28", .{});
-                }
-            } else {
-                tmp.query.setGnuLibCVersion(2, 28, 0);
-            }
-        }
-
-        return tmp;
+    if (b.option(bool, "SQLITE_ENABLE_COLUMN_METADATA", "SQLITE_ENABLE_COLUMN_METADATA") orelse false) {
+        flags.append("-DSQLITE_ENABLE_COLUMN_METADATA") catch @panic("OOM");
     }
 
-    return original_target;
-}
-
-const TestTarget = struct {
-    target: std.zig.CrossTarget = @as(std.zig.CrossTarget, .{}),
-    single_threaded: bool = false,
-    bundled: bool,
-};
-
-const ci_targets = switch (builtin.target.cpu.arch) {
-    .x86_64 => switch (builtin.target.os.tag) {
-        .linux => [_]TestTarget{
-            // Targets linux but other CPU archs.
-            TestTarget{
-                .target = .{},
-                .bundled = false,
-            },
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86_64,
-                    .abi = .musl,
-                },
-                .bundled = true,
-            },
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86,
-                    .abi = .musl,
-                },
-                .bundled = true,
-            },
-        },
-        .windows => [_]TestTarget{
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86_64,
-                    .abi = .gnu,
-                },
-                .bundled = true,
-            },
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86,
-                    .abi = .gnu,
-                },
-                .bundled = true,
-            },
-        },
-        .macos => [_]TestTarget{
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86_64,
-                },
-                .bundled = true,
-            },
-            // TODO(vincent): this fails for some reason
-            // TestTarget{
-            //     .target = .{
-            //         .cpu_arch = .aarch64,
-            //     },
-            //     .bundled = true,
-            // },
-        },
-        else => [_]TestTarget{
-            TestTarget{
-                .target = .{},
-                .bundled = false,
-            },
-        },
-    },
-    else => [_]TestTarget{
-        TestTarget{
-            .target = .{},
-            .bundled = false,
-        },
-    },
-};
-
-const all_test_targets = switch (builtin.target.cpu.arch) {
-    .x86_64 => switch (builtin.target.os.tag) {
-        .linux => [_]TestTarget{
-            // Targets linux but other CPU archs.
-            TestTarget{
-                .target = .{},
-                .bundled = false,
-            },
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86_64,
-                    .abi = .musl,
-                },
-                .bundled = true,
-            },
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86,
-                    .abi = .musl,
-                },
-                .bundled = true,
-            },
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .aarch64,
-                    .abi = .musl,
-                },
-                .bundled = true,
-            },
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .riscv64,
-                    .abi = .musl,
-                },
-                .bundled = true,
-            },
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .mips,
-                    .abi = .musl,
-                },
-                .bundled = true,
-            },
-            // TODO(vincent): failing for some time for unknown reasons
-            // TestTarget{
-            //     .target = .{
-            //         .cpu_arch = .arm,
-            //         .abi = .musleabihf,
-            //     },
-            //     .bundled = true,
-            // },
-            // Targets windows
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86_64,
-                    .os_tag = .windows,
-                },
-                .bundled = true,
-            },
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86,
-                    .os_tag = .windows,
-                },
-                .bundled = true,
-            },
-            // Targets macOS
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86_64,
-                    .os_tag = .macos,
-                },
-                .bundled = true,
-            },
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .aarch64,
-                    .os_tag = .macos,
-                },
-                .bundled = true,
-            },
-        },
-        .windows => [_]TestTarget{
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86_64,
-                    .abi = .gnu,
-                },
-                .bundled = true,
-            },
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86,
-                    .abi = .gnu,
-                },
-                .bundled = true,
-            },
-        },
-        .freebsd => [_]TestTarget{
-            TestTarget{
-                .target = .{},
-                .bundled = false,
-            },
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86_64,
-                },
-                .bundled = true,
-            },
-        },
-        .macos => [_]TestTarget{
-            TestTarget{
-                .target = .{
-                    .cpu_arch = .x86_64,
-                },
-                .bundled = true,
-            },
-        },
-        else => [_]TestTarget{
-            TestTarget{
-                .target = .{},
-                .bundled = false,
-            },
-        },
-    },
-    else => [_]TestTarget{
-        TestTarget{
-            .target = .{},
-            .bundled = false,
-        },
-    },
-};
-
-fn computeTestTargets(target: std.zig.CrossTarget, ci: ?bool) ?[]const TestTarget {
-    if (ci != null and ci.?) return &ci_targets;
-
-    if (target.isNative()) {
-        // If the target is native we assume the user didn't change it with -Dtarget and run all test targets.
-        return &all_test_targets;
+    if (b.option(bool, "SQLITE_ENABLE_DBSTAT_VTAB", "SQLITE_ENABLE_DBSTAT_VTAB") orelse false) {
+        flags.append("-DSQLITE_ENABLE_DBSTAT_VTAB") catch @panic("OOM");
     }
 
-    // Otherwise we run a single test target.
-    return null;
-}
-
-pub fn build(b: *std.Build) !void {
-    const in_memory = b.option(bool, "in_memory", "Should the tests run with sqlite in memory (default true)") orelse true;
-    const dbfile = b.option([]const u8, "dbfile", "Always use this database file instead of a temporary one");
-    const use_bundled = b.option(bool, "use_bundled", "Use the bundled sqlite3 source instead of linking the system library (default false)");
-    const ci = b.option(bool, "ci", "Build and test in the CI on GitHub");
-
-    const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{});
-
-    _ = b.addModule("sqlite", .{ .source_file = .{ .path = "sqlite.zig" } });
-
-    const sqlite_lib = b.addStaticLibrary(.{
-        .name = "sqlite",
-        .target = target,
-        .optimize = optimize,
-    });
-
-    sqlite_lib.addIncludePath(.{ .path = "c/" });
-    sqlite_lib.addCSourceFile(.{
-        .file = .{ .path = "c/sqlite3.c" },
-        .flags = &[_][]const u8{"-std=c99"},
-    });
-    sqlite_lib.linkLibC();
-    sqlite_lib.installHeader("c/sqlite3.h", "sqlite3.h");
-
-    b.installArtifact(sqlite_lib);
-
-    // Tool to preprocess the sqlite header files.
-    //
-    // Due to limitations of translate-c the standard header files can't be used for building loadable extensions
-    // so we have this tool which creates usable header files.
-
-    const preprocess_files_tool = b.addExecutable(.{
-        .name = "preprocess-files",
-        .root_source_file = .{ .path = "tools/preprocess_files.zig" },
-        .target = getTarget(target, true),
-        .optimize = optimize,
-    });
-
-    // Add a top-level step to run the preprocess-files tool
-    const preprocess_files_run = b.step("preprocess-files", "Run the preprocess-files tool");
-
-    const preprocess_files_tool_run = b.addRunArtifact(preprocess_files_tool);
-    preprocess_files_run.dependOn(&preprocess_files_tool_run.step);
-
-    const test_targets = computeTestTargets(target, ci) orelse &[_]TestTarget{.{
-        .target = target,
-        .bundled = use_bundled orelse false,
-    }};
-    const test_step = b.step("test", "Run library tests");
-
-    // By default the tests will only be execute for native test targets, however they will be compiled
-    // for _all_ targets defined in `test_targets`.
-    //
-    // If you want to execute tests for other targets you can pass -fqemu, -fdarling, -fwine, -frosetta.
-
-    for (test_targets) |test_target| {
-        const bundled = use_bundled orelse test_target.bundled;
-        const cross_target = getTarget(test_target.target, bundled);
-        const single_threaded_txt = if (test_target.single_threaded) "single" else "multi";
-        const test_name = b.fmt("{s}-{s}-{s}", .{
-            try cross_target.zigTriple(b.allocator),
-            @tagName(optimize),
-            single_threaded_txt,
-        });
-
-        const tests = b.addTest(.{
-            .name = test_name,
-            .target = cross_target,
-            .optimize = optimize,
-            .root_source_file = .{ .path = "sqlite.zig" },
-            .single_threaded = test_target.single_threaded,
-        });
-        const run_tests = b.addRunArtifact(tests);
-
-        if (bundled) {
-            const lib = b.addStaticLibrary(.{
-                .name = "sqlite",
-                .target = cross_target,
-                .optimize = optimize,
-            });
-            lib.addCSourceFile(.{
-                .file = .{ .path = "c/sqlite3.c" },
-                .flags = &[_][]const u8{"-std=c99"},
-            });
-            lib.linkLibC();
-            sqlite3 = lib;
-        }
-
-        if (bundled) tests.addIncludePath(.{ .path = "c" });
-        linkSqlite(tests);
-
-        const lib = b.addStaticLibrary(.{
-            .name = "zig-sqlite",
-            .root_source_file = .{ .path = "sqlite.zig" },
-            .target = cross_target,
-            .optimize = optimize,
-        });
-        if (bundled) lib.addIncludePath(.{ .path = "c" });
-        linkSqlite(lib);
-
-        const tests_options = b.addOptions();
-        tests.addOptions("build_options", tests_options);
-
-        tests_options.addOption(bool, "in_memory", in_memory);
-        tests_options.addOption(?[]const u8, "dbfile", dbfile);
-
-        test_step.dependOn(&run_tests.step);
+    if (b.option(bool, "SQLITE_ENABLE_FTS3", "SQLITE_ENABLE_FTS3") orelse false) {
+        flags.append("-DSQLITE_ENABLE_FTS3") catch @panic("OOM");
     }
 
-    // Fuzzing
+    if (b.option(bool, "SQLITE_ENABLE_FTS4", "SQLITE_ENABLE_FTS4") orelse false) {
+        flags.append("-DSQLITE_ENABLE_FTS4") catch @panic("OOM");
+    }
 
-    const lib = b.addStaticLibrary(.{
-        .name = "sqlite",
-        .target = getTarget(target, true),
-        .optimize = optimize,
+    if (b.option(bool, "SQLITE_ENABLE_FTS5", "SQLITE_ENABLE_FTS5") orelse false) {
+        flags.append("-DSQLITE_ENABLE_FTS5") catch @panic("OOM");
+    }
+
+    if (b.option(bool, "SQLITE_ENABLE_GEOPOLY", "SQLITE_ENABLE_GEOPOLY") orelse false) {
+        flags.append("-DSQLITE_ENABLE_GEOPOLY") catch @panic("OOM");
+    }
+
+    if (b.option(bool, "SQLITE_ENABLE_ICU", "SQLITE_ENABLE_ICU") orelse false) {
+        flags.append("-DSQLITE_ENABLE_ICU") catch @panic("OOM");
+    }
+
+    if (b.option(bool, "SQLITE_ENABLE_MATH_FUNCTIONS", "SQLITE_ENABLE_MATH_FUNCTIONS") orelse false) {
+        flags.append("-DSQLITE_ENABLE_MATH_FUNCTIONS") catch @panic("OOM");
+    }
+
+    if (b.option(bool, "SQLITE_ENABLE_RBU", "SQLITE_ENABLE_RBU") orelse false) {
+        flags.append("-DSQLITE_ENABLE_RBU") catch @panic("OOM");
+    }
+
+    if (b.option(bool, "SQLITE_ENABLE_RTREE", "SQLITE_ENABLE_RTREE") orelse false) {
+        flags.append("-DSQLITE_ENABLE_RTREE") catch @panic("OOM");
+    }
+
+    if (b.option(bool, "SQLITE_ENABLE_STAT4", "SQLITE_ENABLE_STAT4") orelse false) {
+        flags.append("-DSQLITE_ENABLE_STAT4") catch @panic("OOM");
+    }
+
+    if (b.option(bool, "SQLITE_OMIT_DECLTYPE", "SQLITE_OMIT_DECLTYPE") orelse false) {
+        flags.append("-DSQLITE_OMIT_DECLTYPE") catch @panic("OOM");
+    }
+
+    if (b.option(bool, "SQLITE_OMIT_JSON", "SQLITE_OMIT_JSON") orelse false) {
+        flags.append("-DSQLITE_OMIT_JSON") catch @panic("OOM");
+    }
+
+    if (b.option(bool, "SQLITE_USE_URI", "SQLITE_USE_URI") orelse false) {
+        flags.append("-DSQLITE_USE_URI") catch @panic("OOM");
+    }
+
+    const sqlite = b.addModule("sqlite", .{
+        .root_source_file = .{ .path = path ++ "/src/sqlite.zig" },
     });
-    lib.addCSourceFile(.{
-        .file = .{ .path = "c/sqlite3.c" },
-        .flags = &[_][]const u8{"-std=c99"},
-    });
-    lib.addIncludePath(.{ .path = "c" });
-    lib.linkLibC();
+    const sqlite_amalgamation = b.dependency("sqlite_amalgamation", .{});
 
-    // The library
-    const fuzz_lib = b.addStaticLibrary(.{
-        .name = "fuzz-lib",
-        .root_source_file = .{ .path = "fuzz/main.zig" },
-        .target = getTarget(target, true),
-        .optimize = optimize,
-    });
-    fuzz_lib.addIncludePath(.{ .path = "c" });
-    fuzz_lib.linkLibrary(lib);
-    fuzz_lib.want_lto = true;
-    fuzz_lib.bundle_compiler_rt = true;
-    fuzz_lib.addAnonymousModule("sqlite", .{
-        .source_file = .{ .path = "sqlite.zig" },
-    });
+    sqlite.addIncludePath(sqlite_amalgamation.path("."));
+    sqlite.addCSourceFile(.{ .file = sqlite_amalgamation.path("sqlite3.c"), .flags = flags.items });
 
-    // Setup the output name
-    const fuzz_executable_name = "fuzz";
-    const fuzz_exe_path = try b.cache_root.join(b.allocator, &.{fuzz_executable_name});
+    return sqlite;
+}
 
-    // We want `afl-clang-lto -o path/to/output path/to/library`
-    const fuzz_compile = b.addSystemCommand(&.{ "afl-clang-lto", "-o", fuzz_exe_path });
-    fuzz_compile.addArtifactArg(lib);
-    fuzz_compile.addArtifactArg(fuzz_lib);
+pub fn build(b: *std.Build) void {
+    var flags = std.ArrayList([]const u8).init(b.allocator);
 
-    // Install the cached output to the install 'bin' path
-    const fuzz_install = b.addInstallBinFile(.{ .path = fuzz_exe_path }, fuzz_executable_name);
+    if (b.option(bool, "SQLITE_ENABLE_COLUMN_METADATA", "SQLITE_ENABLE_COLUMN_METADATA") orelse false) {
+        flags.append("-DSQLITE_ENABLE_COLUMN_METADATA") catch @panic("OOM");
+    }
 
-    // Add a top-level step that compiles and installs the fuzz executable
-    const fuzz_compile_run = b.step("fuzz", "Build executable for fuzz testing using afl-clang-lto");
-    // fuzz_compile_run.dependOn(&fuzz_lib.step);
-    fuzz_compile_run.dependOn(&fuzz_compile.step);
-    fuzz_compile_run.dependOn(&fuzz_install.step);
+    if (b.option(bool, "SQLITE_ENABLE_DBSTAT_VTAB", "SQLITE_ENABLE_DBSTAT_VTAB") orelse false) {
+        flags.append("-DSQLITE_ENABLE_DBSTAT_VTAB") catch @panic("OOM");
+    }
 
-    // Compile a companion exe for debugging crashes
-    const fuzz_debug_exe = b.addExecutable(.{
-        .name = "fuzz-debug",
-        .root_source_file = .{ .path = "fuzz/main.zig" },
-        .target = getTarget(target, true),
-        .optimize = optimize,
-    });
-    fuzz_debug_exe.addIncludePath(.{ .path = "c" });
-    fuzz_debug_exe.linkLibrary(lib);
-    fuzz_debug_exe.addAnonymousModule("sqlite", .{
-        .source_file = .{ .path = "sqlite.zig" },
-    });
+    if (b.option(bool, "SQLITE_ENABLE_FTS3", "SQLITE_ENABLE_FTS3") orelse false) {
+        flags.append("-DSQLITE_ENABLE_FTS3") catch @panic("OOM");
+    }
 
-    // Only install fuzz-debug when the fuzz step is run
-    const install_fuzz_debug_exe = b.addInstallArtifact(fuzz_debug_exe, .{});
-    fuzz_compile_run.dependOn(&install_fuzz_debug_exe.step);
+    if (b.option(bool, "SQLITE_ENABLE_FTS4", "SQLITE_ENABLE_FTS4") orelse false) {
+        flags.append("-DSQLITE_ENABLE_FTS4") catch @panic("OOM");
+    }
 
-    //
-    // Examples
-    //
+    if (b.option(bool, "SQLITE_ENABLE_FTS5", "SQLITE_ENABLE_FTS5") orelse false) {
+        flags.append("-DSQLITE_ENABLE_FTS5") catch @panic("OOM");
+    }
 
-    // Loadable extension
-    //
-    // This builds an example shared library with the extension and a binary that tests it.
+    if (b.option(bool, "SQLITE_ENABLE_GEOPOLY", "SQLITE_ENABLE_GEOPOLY") orelse false) {
+        flags.append("-DSQLITE_ENABLE_GEOPOLY") catch @panic("OOM");
+    }
 
-    const zigcrypto_loadable_ext = b.addSharedLibrary(.{
-        .name = "zigcrypto",
-        .root_source_file = .{ .path = "examples/zigcrypto.zig" },
-        .version = null,
-        .target = getTarget(target, true),
-        .optimize = optimize,
-    });
-    zigcrypto_loadable_ext.force_pic = true;
-    zigcrypto_loadable_ext.addIncludePath(.{ .path = "c" });
-    zigcrypto_loadable_ext.addAnonymousModule("sqlite", .{
-        .source_file = .{ .path = "sqlite.zig" },
-    });
-    zigcrypto_loadable_ext.linkLibrary(lib);
+    if (b.option(bool, "SQLITE_ENABLE_ICU", "SQLITE_ENABLE_ICU") orelse false) {
+        flags.append("-DSQLITE_ENABLE_ICU") catch @panic("OOM");
+    }
 
-    const install_zigcrypto_loadable_ext = b.addInstallArtifact(zigcrypto_loadable_ext, .{});
+    if (b.option(bool, "SQLITE_ENABLE_MATH_FUNCTIONS", "SQLITE_ENABLE_MATH_FUNCTIONS") orelse false) {
+        flags.append("-DSQLITE_ENABLE_MATH_FUNCTIONS") catch @panic("OOM");
+    }
 
-    const zigcrypto_test = b.addExecutable(.{
-        .name = "zigcrypto-test",
-        .root_source_file = .{ .path = "examples/zigcrypto_test.zig" },
-        .target = getTarget(target, true),
-        .optimize = optimize,
-    });
-    zigcrypto_test.addIncludePath(.{ .path = "c" });
-    zigcrypto_test.addAnonymousModule("sqlite", .{
-        .source_file = .{ .path = "sqlite.zig" },
-    });
-    zigcrypto_test.linkLibrary(lib);
+    if (b.option(bool, "SQLITE_ENABLE_RBU", "SQLITE_ENABLE_RBU") orelse false) {
+        flags.append("-DSQLITE_ENABLE_RBU") catch @panic("OOM");
+    }
 
-    const install_zigcrypto_test = b.addInstallArtifact(zigcrypto_test, .{});
+    if (b.option(bool, "SQLITE_ENABLE_RTREE", "SQLITE_ENABLE_RTREE") orelse false) {
+        flags.append("-DSQLITE_ENABLE_RTREE") catch @panic("OOM");
+    }
 
-    const zigcrypto_compile_run = b.step("zigcrypto", "Build the 'zigcrypto' SQLite loadable extension");
-    zigcrypto_compile_run.dependOn(&install_zigcrypto_loadable_ext.step);
-    zigcrypto_compile_run.dependOn(&install_zigcrypto_test.step);
+    if (b.option(bool, "SQLITE_ENABLE_STAT4", "SQLITE_ENABLE_STAT4") orelse false) {
+        flags.append("-DSQLITE_ENABLE_STAT4") catch @panic("OOM");
+    }
+
+    if (b.option(bool, "SQLITE_OMIT_DECLTYPE", "SQLITE_OMIT_DECLTYPE") orelse false) {
+        flags.append("-DSQLITE_OMIT_DECLTYPE") catch @panic("OOM");
+    }
+
+    if (b.option(bool, "SQLITE_OMIT_JSON", "SQLITE_OMIT_JSON") orelse false) {
+        flags.append("-DSQLITE_OMIT_JSON") catch @panic("OOM");
+    }
+
+    if (b.option(bool, "SQLITE_USE_URI", "SQLITE_USE_URI") orelse false) {
+        flags.append("-DSQLITE_USE_URI") catch @panic("OOM");
+    }
+
+    const sqlite = b.addModule("sqlite", .{ .root_source_file = LazyPath.relative("src/sqlite.zig") });
+    const sqlite_amalgamation = b.dependency("sqlite_amalgamation", .{});
+
+    sqlite.addIncludePath(sqlite_amalgamation.path("."));
+    sqlite.addCSourceFile(.{ .file = sqlite_amalgamation.path("sqlite3.c"), .flags = flags.items });
+
+    // Tests
+    const tests = b.addTest(.{ .root_source_file = LazyPath.relative("src/test.zig") });
+    tests.addIncludePath(sqlite_amalgamation.path("."));
+    tests.addCSourceFile(.{ .file = sqlite_amalgamation.path("sqlite3.c"), .flags = flags.items });
+
+    const run_tests = b.addRunArtifact(tests);
+
+    b.step("test", "Run tests").dependOn(&run_tests.step);
 }

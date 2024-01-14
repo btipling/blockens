@@ -25,60 +25,89 @@ const listBlockStmt = @embedFile("./sql/block/list.sql");
 const deleteBlockStmt = @embedFile("./sql/block/delete.sql");
 
 pub const RGBAColorTextureSize = 3 * 16 * 16; // 768
-// 768 u32s fit into 3072 u8s
+// 768 i32s fit into 3072 u8s
 pub const TextureBlobArrayStoreSize = 3072;
 
 pub const maxBlockSizeName = 20;
 
+pub const scriptOptionSQL = struct {
+    id: i32,
+    name: sqlite.Text,
+};
+
+pub const scriptSQL = struct {
+    id: i32,
+    name: sqlite.Text,
+    script: sqlite.Text,
+};
+
 pub const scriptOption = struct {
-    id: u32,
+    id: i32,
     name: [21]u8,
 };
 
 pub const script = struct {
-    id: u32,
+    id: i32,
     name: [21]u8,
     script: [360_001]u8,
 };
 
+pub const worldOptionSQL = struct {
+    id: i32,
+    name: sqlite.Text,
+};
+
+pub const worldSQL = struct {
+    id: i32,
+    name: sqlite.Text,
+};
+
 pub const worldOption = struct {
-    id: u32,
+    id: i32,
     name: [21]u8,
 };
 
 pub const world = struct {
-    id: u32,
+    id: i32,
     name: [21]u8,
 };
 
+pub const blockOptionSQL = struct {
+    id: i32,
+    name: sqlite.Text,
+};
+
+pub const blockSQL = struct {
+    id: i32,
+    name: sqlite.Text,
+    texture: sqlite.Blob,
+};
+
 pub const blockOption = struct {
-    id: u32,
+    id: i32,
     name: [21]u8,
 };
 
 pub const block = struct {
-    id: u32,
+    id: i32,
     name: [21]u8,
     texture: [RGBAColorTextureSize]gl.Uint,
 };
 
 pub const Data = struct {
-    db: sqlite.Db,
+    db: sqlite.Database,
     alloc: std.mem.Allocator,
 
     pub fn init(alloc: std.mem.Allocator) !Data {
-        const db = try sqlite.Db.init(.{
-            .mode = sqlite.Db.Mode{ .File = "./gamedata.db" },
-            .open_flags = .{
-                .write = true,
-                .create = true,
-            },
-            .threading_mode = .MultiThread,
-        });
+        const db = try sqlite.Database.init(.{ .path = "./gamedata.db" });
         return Data{
             .db = db,
             .alloc = alloc,
         };
+    }
+
+    pub fn deinit(self: *Data) void {
+        self.db.deinit();
     }
 
     pub fn ensureSchema(self: *Data) !void {
@@ -88,10 +117,7 @@ pub const Data = struct {
             createBlockTable,
         };
         for (createTableQueries) |query| {
-            var stmt = try self.db.prepareDynamic(query);
-            defer stmt.deinit();
-
-            stmt.exec(.{}, .{}) catch |err| {
+            self.db.exec(query, .{}) catch |err| {
                 std.log.err("Failed to create schema: {}", .{err});
                 return err;
             };
@@ -100,115 +126,137 @@ pub const Data = struct {
 
     pub fn ensureDefaultWorld(self: *Data) !void {
         // query for the default world
-        var selectStmt = try self.db.prepareDynamic(selectWorldByNameStmt);
+        var selectStmt = try self.db.prepare(
+            struct {
+                name: sqlite.Text,
+            },
+            struct {
+                name: sqlite.Text,
+            },
+            selectWorldByNameStmt,
+        );
         defer selectStmt.deinit();
 
-        const row = selectStmt.one(
-            struct {
-                name: [20:0]u8,
-            },
-            .{},
-            .{ .name = "default" },
-        ) catch |err| {
-            std.log.err("Failed to query for default world: {}", .{err});
-            return err;
-        };
-        if (row) |r| {
-            const n = std.mem.span(r.name[0..].ptr);
+        if (try selectStmt.get(.{ .name = sqlite.text("default") })) |r| {
+            const n = sqlNameToArray(r.name);
             std.debug.print("Found default world: {s}\n", .{n});
-            return;
+        } else {
+            try saveWorld(self, "default");
         }
-        // insert otherwise
-        try saveWorld(self, "default");
     }
 
     pub fn saveWorld(self: *Data, name: []const u8) !void {
-        var insertStmt = try self.db.prepareDynamic(insertWorldStmt);
+        var insertStmt = try self.db.prepare(
+            worldSQL,
+            void,
+            insertWorldStmt,
+        );
         defer insertStmt.deinit();
 
         insertStmt.exec(
-            .{},
-            .{
-                .name = name,
-            },
+            .{ .id = 0, .name = sqlite.text(name) },
         ) catch |err| {
             std.log.err("Failed to insert world: {}", .{err});
             return err;
         };
     }
 
+    fn sqlNameToArray(name: sqlite.Text) [21]u8 {
+        var n: [21]u8 = [_]u8{0} ** 21;
+        for (name.data, 0..) |c, i| {
+            n[i] = c;
+        }
+        return n;
+    }
+
     pub fn listWorlds(self: *Data, data: *std.ArrayList(worldOption)) !void {
-        var listStmt = try self.db.prepareDynamic(listWorldStmt);
+        var listStmt = try self.db.prepare(
+            struct {},
+            worldOptionSQL,
+            listWorldStmt,
+        );
         defer listStmt.deinit();
 
         data.clearRetainingCapacity();
-        const rows = listStmt.all(
-            struct {
-                id: u32,
-                name: [21:0]u8,
-            },
-            self.alloc,
-            .{},
-            .{},
-        ) catch |err| {
-            std.log.err("Failed to list worlds: {}", .{err});
-            return err;
-        };
-        for (rows) |row| {
-            try data.append(worldOption{
-                .id = row.id,
-                .name = row.name,
-            });
+        {
+            try listStmt.bind(.{});
+            defer listStmt.reset();
+
+            while (try listStmt.step()) |row| {
+                try data.append(
+                    worldOption{
+                        .id = row.id,
+                        .name = sqlNameToArray(row.name),
+                    },
+                );
+            }
         }
     }
 
-    pub fn loadWorld(self: *Data, id: u32, data: *world) !void {
+    pub fn loadWorld(self: *Data, id: i32, data: *world) !void {
         std.debug.print("Loading world: {d}\n", .{id});
-        var selectStmt = try self.db.prepareDynamic(selectWorldByIdStmt);
+        var selectStmt = try self.db.prepare(
+            struct {
+                id: i32,
+            },
+            worldSQL,
+            selectWorldByIdStmt,
+        );
         defer selectStmt.deinit();
 
-        const row = selectStmt.one(
-            struct {
-                id: u32,
-                name: [21:0]u8,
-            },
-            .{},
-            .{ .id = id },
-        ) catch |err| {
-            std.log.err("Failed to load world: {}", .{err});
-            return err;
-        };
-        if (row) |r| {
-            data.id = id;
-            data.name = r.name;
+        if (try selectStmt.get(.{ .id = id })) |r| {
+            data.id = r.id;
+            data.name = sqlNameToArray(r.name);
             return;
+        } else {
+            std.log.info("not found", .{});
         }
+
         return error.Unreachable;
     }
 
-    pub fn updateWorld(self: *Data, id: u32, name: []const u8) !void {
-        var updateStmt = try self.db.prepareDynamic(updateWorldStmt);
+    pub fn updateWorld(self: *Data, id: i32, name: []const u8) !void {
+        var updateStmt = try self.db.prepare(
+            worldSQL,
+            void,
+            updateWorldStmt,
+        );
         defer updateStmt.deinit();
 
         updateStmt.exec(
-            .{},
             .{
-                .name = name,
                 .id = id,
+                .name = sqlite.text(name),
             },
         ) catch |err| {
             std.log.err("Failed to update world: {}", .{err});
             return err;
         };
+
+        var insertStmt = try self.db.prepare(
+            worldSQL,
+            void,
+            insertWorldStmt,
+        );
+        defer insertStmt.deinit();
+
+        insertStmt.exec(
+            .{ .id = 0, .name = sqlite.text(name) },
+        ) catch |err| {
+            std.log.err("Failed to insert world: {}", .{err});
+            return err;
+        };
     }
 
-    pub fn deleteWorld(self: *Data, id: u32) !void {
-        var deleteStmt = try self.db.prepareDynamic(deleteWorldStmt);
-        defer deleteStmt.deinit();
+    pub fn deleteWorld(self: *Data, id: i32) !void {
+        var deleteStmt = try self.db.prepare(
+            worldSQL,
+            void,
+            deleteWorldStmt,
+        );
 
         deleteStmt.exec(
-            .{},
-            .{ .id = id },
+            .{ .id = id, .name = sqlite.text("") },
         ) catch |err| {
             std.log.err("Failed to delete world: {}", .{err});
             return err;
@@ -216,96 +264,108 @@ pub const Data = struct {
     }
 
     pub fn saveTextureScript(self: *Data, name: []const u8, textureScript: []const u8) !void {
-        var insertStmt = try self.db.prepareDynamic(insertTextureScriptStmt);
+        var insertStmt = try self.db.prepare(
+            scriptSQL,
+            void,
+            insertTextureScriptStmt,
+        );
         defer insertStmt.deinit();
 
         insertStmt.exec(
-            .{},
             .{
-                .name = name,
-                .script = textureScript,
+                .id = 0,
+                .name = sqlite.text(name),
+                .script = sqlite.text(textureScript),
             },
         ) catch |err| {
-            std.log.err("Failed to insert texture script: {}", .{err});
+            std.log.err("Failed to insert script: {}", .{err});
             return err;
         };
     }
 
-    pub fn updateTextureScript(self: *Data, id: u32, name: []const u8, textureScript: []const u8) !void {
-        var updateStmt = try self.db.prepareDynamic(updateTextureScriptStmt);
+    pub fn updateTextureScript(self: *Data, id: i32, name: []const u8, textureScript: []const u8) !void {
+        var updateStmt = try self.db.prepare(
+            scriptSQL,
+            void,
+            updateTextureScriptStmt,
+        );
         defer updateStmt.deinit();
 
         updateStmt.exec(
-            .{},
             .{
-                .name = name,
-                .script = textureScript,
                 .id = id,
+                .name = sqlite.text(name),
+                .script = sqlite.text(textureScript),
             },
         ) catch |err| {
-            std.log.err("Failed to update texture script: {}", .{err});
+            std.log.err("Failed to update script: {}", .{err});
             return err;
         };
     }
 
     pub fn listTextureScripts(self: *Data, data: *std.ArrayList(scriptOption)) !void {
-        var listStmt = try self.db.prepareDynamic(listTextureStmt);
+        var listStmt = try self.db.prepare(
+            struct {},
+            scriptOptionSQL,
+            listTextureStmt,
+        );
         defer listStmt.deinit();
 
         data.clearRetainingCapacity();
-        const rows = listStmt.all(
-            struct {
-                id: u32,
-                name: [21:0]u8,
-            },
-            self.alloc,
-            .{},
-            .{},
-        ) catch |err| {
-            std.log.err("Failed to list texture scripts: {}", .{err});
-            return err;
-        };
-        for (rows) |row| {
-            try data.append(scriptOption{
-                .id = row.id,
-                .name = row.name,
-            });
+        {
+            try listStmt.bind(.{});
+            defer listStmt.reset();
+
+            while (try listStmt.step()) |row| {
+                try data.append(
+                    scriptOption{
+                        .id = row.id,
+                        .name = sqlNameToArray(row.name),
+                    },
+                );
+            }
         }
     }
 
-    pub fn loadTextureScript(self: *Data, id: u32, data: *script) !void {
-        std.debug.print("Loading texture script: {d}\n", .{id});
-        var selectStmt = try self.db.prepareDynamic(selectTextureStmt);
+    fn sqlTextToScript(text: sqlite.Text) [360_001]u8 {
+        var n: [360_001]u8 = [_]u8{0} ** 360_001;
+        for (text.data, 0..) |c, i| {
+            n[i] = c;
+        }
+        return n;
+    }
+
+    pub fn loadTextureScript(self: *Data, id: i32, data: *script) !void {
+        var selectStmt = try self.db.prepare(
+            struct {
+                id: i32,
+            },
+            scriptSQL,
+            selectTextureStmt,
+        );
         defer selectStmt.deinit();
 
-        const row = selectStmt.one(
-            struct {
-                id: u32,
-                name: [21:0]u8,
-                script: [360_001:0]u8,
-            },
-            .{},
-            .{ .id = id },
-        ) catch |err| {
-            std.log.err("Failed to load texture script: {}", .{err});
-            return err;
-        };
-        if (row) |r| {
-            data.id = id;
-            data.name = r.name;
-            data.script = r.script;
+        if (try selectStmt.get(.{ .id = id })) |r| {
+            data.id = r.id;
+            data.name = sqlNameToArray(r.name);
+            data.script = sqlTextToScript(r.script);
             return;
+        } else {
+            std.log.info("not found", .{});
         }
+
         return error.Unreachable;
     }
 
-    pub fn deleteTextureScript(self: *Data, id: u32) !void {
-        var deleteStmt = try self.db.prepareDynamic(deleteTextureStmt);
-        defer deleteStmt.deinit();
+    pub fn deleteTextureScript(self: *Data, id: i32) !void {
+        var deleteStmt = try self.db.prepare(
+            scriptSQL,
+            void,
+            deleteTextureStmt,
+        );
 
         deleteStmt.exec(
-            .{},
-            .{ .id = id },
+            .{ .id = id, .name = sqlite.text(""), .script = sqlite.text("") },
         ) catch |err| {
             std.log.err("Failed to delete texture script: {}", .{err});
             return err;
@@ -313,8 +373,7 @@ pub const Data = struct {
     }
 
     // block crud:
-
-    fn textureToBlob(texture: [RGBAColorTextureSize]gl.Uint) ![TextureBlobArrayStoreSize]u8 {
+    fn textureToBlob(texture: [RGBAColorTextureSize]gl.Uint) [TextureBlobArrayStoreSize]u8 {
         var blob: [TextureBlobArrayStoreSize]u8 = undefined;
         for (texture, 0..) |t, i| {
             const offset = i * 4;
@@ -330,32 +389,33 @@ pub const Data = struct {
         return blob;
     }
 
-    fn blobToTexture(blob: [TextureBlobArrayStoreSize + 1:0]u8) ![RGBAColorTextureSize]gl.Uint {
+    fn blobToTexture(blob: sqlite.Blob) [RGBAColorTextureSize]gl.Uint {
         var texture: [RGBAColorTextureSize]gl.Uint = undefined;
         for (texture, 0..) |_, i| {
             const offset = i * 4;
-            const a = @as(gl.Uint, @intCast(blob[offset]));
-            const b = @as(gl.Uint, @intCast(blob[offset + 1]));
-            const g = @as(gl.Uint, @intCast(blob[offset + 2]));
-            const r = @as(gl.Uint, @intCast(blob[offset + 3]));
+            const a = @as(gl.Uint, @intCast(blob.data[offset]));
+            const b = @as(gl.Uint, @intCast(blob.data[offset + 1]));
+            const g = @as(gl.Uint, @intCast(blob.data[offset + 2]));
+            const r = @as(gl.Uint, @intCast(blob.data[offset + 3]));
             texture[i] = a << 24 | b << 16 | g << 8 | r;
         }
         return texture;
     }
 
     pub fn saveBlock(self: *Data, name: []const u8, texture: [RGBAColorTextureSize]gl.Uint) !void {
-        var insertStmt = self.db.prepareDynamic(insertBlockStmt) catch |err| {
-            std.log.err("Failed to prepare insert block statement: {}", .{err});
-            return err;
-        };
+        var insertStmt = try self.db.prepare(
+            blockSQL,
+            void,
+            insertBlockStmt,
+        );
         defer insertStmt.deinit();
 
-        const blob = try textureToBlob(texture);
+        var t = textureToBlob(texture);
         insertStmt.exec(
-            .{},
             .{
-                .name = name,
-                .texture = blob,
+                .id = 0,
+                .name = sqlite.text(name),
+                .texture = sqlite.blob(&t),
             },
         ) catch |err| {
             std.log.err("Failed to insert block: {}", .{err});
@@ -363,17 +423,20 @@ pub const Data = struct {
         };
     }
 
-    pub fn updateBlock(self: *Data, id: u32, name: []const u8, texture: [RGBAColorTextureSize]gl.Uint) !void {
-        var updateStmt = try self.db.prepareDynamic(updateBlockStmt);
+    pub fn updateBlock(self: *Data, id: i32, name: []const u8, texture: [RGBAColorTextureSize]gl.Uint) !void {
+        var updateStmt = try self.db.prepare(
+            blockSQL,
+            void,
+            updateBlockStmt,
+        );
         defer updateStmt.deinit();
 
-        const blob = try textureToBlob(texture);
+        var t = textureToBlob(texture);
         updateStmt.exec(
-            .{},
             .{
-                .name = name,
-                .table = blob,
                 .id = id,
+                .name = sqlite.text(name),
+                .texture = sqlite.blob(&t),
             },
         ) catch |err| {
             std.log.err("Failed to update block: {}", .{err});
@@ -382,62 +445,60 @@ pub const Data = struct {
     }
 
     pub fn listBlocks(self: *Data, data: *std.ArrayList(blockOption)) !void {
-        var listStmt = try self.db.prepareDynamic(listBlockStmt);
+        var listStmt = try self.db.prepare(
+            struct {},
+            blockOptionSQL,
+            listBlockStmt,
+        );
         defer listStmt.deinit();
 
         data.clearRetainingCapacity();
-        const rows = listStmt.all(
-            struct {
-                id: u32,
-                name: [21:0]u8,
-            },
-            self.alloc,
-            .{},
-            .{},
-        ) catch |err| {
-            std.log.err("Failed to list blocks: {}", .{err});
-            return err;
-        };
-        for (rows) |row| {
-            try data.append(blockOption{
-                .id = row.id,
-                .name = row.name,
-            });
+        {
+            try listStmt.bind(.{});
+            defer listStmt.reset();
+
+            while (try listStmt.step()) |row| {
+                try data.append(
+                    blockOption{
+                        .id = row.id,
+                        .name = sqlNameToArray(row.name),
+                    },
+                );
+            }
         }
     }
 
-    pub fn loadBlock(self: *Data, id: u32, data: *block) !void {
-        var selectStmt = try self.db.prepareDynamic(selectBlockStmt);
+    pub fn loadBlock(self: *Data, id: i32, data: *block) !void {
+        var selectStmt = try self.db.prepare(
+            struct {
+                id: i32,
+            },
+            blockSQL,
+            selectBlockStmt,
+        );
         defer selectStmt.deinit();
 
-        const row = selectStmt.one(
-            struct {
-                id: u32,
-                name: [21:0]u8,
-                texture: [TextureBlobArrayStoreSize + 1:0]u8,
-            },
-            .{},
-            .{ .id = id },
-        ) catch |err| {
-            std.log.err("Failed to load block: {}", .{err});
-            return err;
-        };
-        if (row) |r| {
-            data.id = id;
-            data.name = r.name;
-            data.texture = try blobToTexture(r.texture);
+        if (try selectStmt.get(.{ .id = id })) |r| {
+            data.id = r.id;
+            data.name = sqlNameToArray(r.name);
+            data.texture = blobToTexture(r.texture);
             return;
+        } else {
+            std.log.info("not found", .{});
         }
+
         return error.Unreachable;
     }
 
-    pub fn deleteBlock(self: *Data, id: u32) !void {
-        var deleteStmt = try self.db.prepareDynamic(deleteBlockStmt);
-        defer deleteStmt.deinit();
+    pub fn deleteBlock(self: *Data, id: i32) !void {
+        var deleteStmt = try self.db.prepare(
+            blockSQL,
+            void,
+            deleteBlockStmt,
+        );
 
         deleteStmt.exec(
-            .{},
-            .{ .id = id },
+            .{ .id = id, .name = sqlite.text(""), .texture = sqlite.blob(&[_]u8{0}) },
         ) catch |err| {
             std.log.err("Failed to delete block: {}", .{err});
             return err;
