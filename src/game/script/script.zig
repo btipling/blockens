@@ -124,6 +124,7 @@ pub const Script = struct {
             chunk[i - 1] = @as(gl.Uint, @intCast(blockId));
             self.luaInstance.pop(1);
         }
+        std.debug.print("\n", .{});
         return chunk;
     }
 };
