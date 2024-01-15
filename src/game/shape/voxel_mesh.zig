@@ -156,7 +156,7 @@ const normals: [36][3]gl.Float = .{
 pub const VoxelMesh = struct {
     blockId: i32,
     voxelShape: voxelShape.VoxelShape,
-    alloc: std.mem.Allocator,
+    voxel: zmesh.Shape,
 
     pub fn init(
         appState: *state.State,
@@ -166,6 +166,26 @@ pub const VoxelMesh = struct {
     ) !VoxelMesh {
         var block: data.block = undefined;
         try appState.db.loadBlock(blockId, &block);
+
+        var indicesAL = std.ArrayList(u32).init(alloc);
+        defer indicesAL.deinit();
+        var _i = indices;
+        try indicesAL.appendSlice(&_i);
+
+        var positionsAL = std.ArrayList([3]gl.Float).init(alloc);
+        defer positionsAL.deinit();
+        var _p = positions;
+        try positionsAL.appendSlice(&_p);
+
+        var normalsAL = std.ArrayList([3]gl.Float).init(alloc);
+        defer normalsAL.deinit();
+        var _n = normals;
+        try normalsAL.appendSlice(&_n);
+
+        var texcoordsAL = std.ArrayList([2]gl.Float).init(alloc);
+        defer texcoordsAL.deinit();
+        var _t = texcoords;
+        try texcoordsAL.appendSlice(&_t);
 
         const vertexShaderSource = @embedFile("../shaders/voxel.vs");
         const fragmentShaderSource = @embedFile("../shaders/voxel.fs");
@@ -178,15 +198,17 @@ pub const VoxelMesh = struct {
             &block.texture,
             alloc,
         );
+        const voxel = zmesh.Shape.init(indicesAL, positionsAL, normalsAL, texcoordsAL);
         return .{
             .blockId = blockId,
             .voxelShape = vs,
-            .alloc = alloc,
+            .voxel = voxel,
         };
     }
 
     pub fn deinit(self: *VoxelMesh) void {
         self.voxelShape.deinit();
+        self.voxel.deinit();
     }
 
     pub fn clear(self: *VoxelMesh) void {
@@ -197,30 +219,7 @@ pub const VoxelMesh = struct {
         self: *VoxelMesh,
         worldTransform: [16]gl.Float,
     ) !void {
-        var indicesAL = std.ArrayList(u32).init(self.alloc);
-        defer indicesAL.deinit();
-        var _i = indices;
-        try indicesAL.appendSlice(&_i);
-
-        var positionsAL = std.ArrayList([3]gl.Float).init(self.alloc);
-        defer positionsAL.deinit();
-        var _p = positions;
-        try positionsAL.appendSlice(&_p);
-
-        var normalsAL = std.ArrayList([3]gl.Float).init(self.alloc);
-        defer normalsAL.deinit();
-        var _n = normals;
-        try normalsAL.appendSlice(&_n);
-
-        var texcoordsAL = std.ArrayList([2]gl.Float).init(self.alloc);
-        defer texcoordsAL.deinit();
-        var _t = texcoords;
-        try texcoordsAL.appendSlice(&_t);
-
-        var voxel = zmesh.Shape.init(indicesAL, positionsAL, normalsAL, texcoordsAL);
-        defer voxel.deinit();
-
-        try self.voxelShape.addVoxelData(voxel, worldTransform);
+        try self.voxelShape.addVoxelData(self.voxel, worldTransform);
     }
 
     pub fn draw(self: *VoxelMesh) !void {

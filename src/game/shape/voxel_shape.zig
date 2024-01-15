@@ -185,16 +185,9 @@ pub const VoxelData = struct {
 
     pub fn draw(self: VoxelData) !void {
         gl.bindVertexArray(self.vao);
-        var e = gl.getError();
+        const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{d} voxel draw bind vertex array error: {d}\n", .{ self.blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, self.worldspaceVBO);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel draw bind worldspace vbo error: {d}\n", .{ self.blockId, e });
             return VoxelShapeErr.RenderError;
         }
 
