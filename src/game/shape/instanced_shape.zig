@@ -10,6 +10,11 @@ const data = @import("../data/data.zig");
 pub const ShapeErr = error{
     NotInitialized,
     RenderError,
+    UseProgramError,
+    HighlightError,
+    DrawingError,
+    BindInstanceError,
+    BindTextureError,
     UpdateError,
 };
 
@@ -466,6 +471,7 @@ pub const InstancedShape = struct {
     }
 
     pub fn updateInstanceData(self: *InstancedShape, transforms: []InstancedShapeTransform) !void {
+        gl.useProgram(self.program);
         const size = @as(isize, @intCast(transforms.len * @sizeOf(InstancedShapeTransform)));
         const dataptr: *const anyopaque = transforms.ptr;
         gl.bindVertexArray(self.vao);
@@ -487,7 +493,7 @@ pub const InstancedShape = struct {
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} error: {d}\n", .{ self.name, e });
-            return ShapeErr.RenderError;
+            return ShapeErr.UseProgramError;
         }
 
         gl.activeTexture(gl.TEXTURE0);
@@ -495,14 +501,14 @@ pub const InstancedShape = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} bind texture error: {d}\n", .{ self.name, e });
-            return ShapeErr.RenderError;
+            return ShapeErr.BindTextureError;
         }
 
         gl.bindVertexArray(self.vao);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} bind vertex array error: {d}\n", .{ self.name, e });
-            return ShapeErr.RenderError;
+            return ShapeErr.BindInstanceError;
         }
 
         // bind the instanceVBO
@@ -517,14 +523,14 @@ pub const InstancedShape = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("error setting highlighted: {d}\n", .{e});
-            return ShapeErr.RenderError;
+            return ShapeErr.HighlightError;
         }
 
         // std.debug.print("drawing {s} with {d} instances\n", .{ self.name, self.numInstances });
         gl.drawElementsInstanced(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null, self.numInstances);
         if (e != gl.NO_ERROR) {
             std.debug.print("{s} draw elements error: {d}\n", .{ self.name, e });
-            return ShapeErr.RenderError;
+            return ShapeErr.DrawingError;
         }
         // renable depth test
         gl.enable(gl.DEPTH_TEST);

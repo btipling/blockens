@@ -314,9 +314,11 @@ pub const ViewState = struct {
         var maxOptions = self.blockOptions.items.len;
         var chunk: [chunkSize]i32 = [_]i32{0} ** chunkSize;
         if (maxOptions == 0) {
+            std.debug.print("No blocks found\n", .{});
             return chunk;
         }
         maxOptions -= 1;
+
         for (chunk, 0..) |_, i| {
             const randomInt = random.uintAtMost(usize, maxOptions);
             const blockId = @as(i32, @intCast(randomInt + 1));
@@ -371,7 +373,6 @@ pub const ViewState = struct {
                 }
             }
         }
-
         self.view.unbind();
     }
 
@@ -392,7 +393,9 @@ pub const ViewState = struct {
     }
 
     pub fn initChunks(self: *ViewState, appState: *State) !void {
+        self.view.bind();
         try self.addBlocks(appState);
+        self.view.unbind();
     }
 
     pub fn clearChunks(self: *ViewState) void {
@@ -405,7 +408,6 @@ pub const ViewState = struct {
         while (cuv.next()) |v| {
             v.deinit();
         }
-        self.cubesMap.clearAndFree();
         var pbtv = self.perBlockTransforms.valueIterator();
         while (pbtv.next()) |v| {
             v.deinit();

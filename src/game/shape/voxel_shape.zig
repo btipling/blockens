@@ -256,6 +256,9 @@ pub const VoxelShape = struct {
     }
 
     pub fn clear(self: *VoxelShape) void {
+        for (self.voxelData.items) |vs| {
+            vs.deinit();
+        }
         self.voxelData.clearRetainingCapacity();
     }
 
