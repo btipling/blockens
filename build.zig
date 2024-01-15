@@ -5,6 +5,14 @@ const opengl = @import("libs/opengl/build.zig");
 const stbi = @import("libs/stbi/build.zig");
 const math = @import("libs/math/build.zig");
 const mesh = @import("libs/mesh/build.zig");
+const lua = @import("libs/lua/build.zig");
+const sqlite = @import("libs/sqlite/build.zig");
+
+pub const path = getPath();
+
+inline fn getPath() []const u8 {
+    return comptime std.fs.path.dirname(@src().file) orelse ".";
+}
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -41,23 +49,24 @@ pub fn build(b: *std.Build) void {
     ui_pkg.link(exe);
     mesh_pkg.link(exe);
 
-    const ziglua = b.dependency("ziglua", .{
-        .target = target,
-        .optimize = optimize,
-        .version = .lua_54,
-    });
-    exe.addModule("ziglua", ziglua.module("ziglua"));
-    exe.linkLibrary(ziglua.artifact("lua"));
+    const lua_module = lua.buildLibrary(
+        b,
+        target,
+        optimize,
+        .{
+            .options = .{ .lua_version = .lua54, .shared = false },
+        },
+    );
+    exe.root_module.addImport("ziglua", lua_module);
 
-    const sqlite = b.dependency("sqlite", .{
-        .target = target,
-        .optimize = optimize,
-    });
+    const sqlite_module = sqlite.buildLibrary(
+        b,
+        target,
+        optimize,
+        .{},
+    );
+    exe.root_module.addImport("sqlite", sqlite_module);
 
-    exe.addModule("sqlite", sqlite.module("sqlite"));
-
-    exe.linkLibrary(sqlite.artifact("sqlite"));
-
-    const run_step = b.step("run", "Run the app");
+    const run_step = b.step("run", "Run blockens");
     run_step.dependOn(&run_cmd.step);
 }

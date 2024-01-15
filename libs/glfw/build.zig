@@ -8,12 +8,12 @@ inline fn getPath() []const u8 {
 
 pub const Package = struct {
     zglfw: *std.Build.Module,
-    zglfw_c_cpp: *std.Build.CompileStep,
+    zglfw_c_cpp: *std.Build.Step.Compile,
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
-        exe.addModule("zglfw", pkg.zglfw);
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
+        exe.root_module.addImport("zglfw", pkg.zglfw);
 
-        const host = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
+        const host = (exe.root_module.resolved_target orelse unreachable).result;
 
         switch (host.os.tag) {
             .windows => {},
@@ -31,7 +31,8 @@ pub const Package = struct {
         }
 
         if (pkg.zglfw_c_cpp.linkage) |linkage| {
-            if (exe.target.isWindows() and linkage == .dynamic) {
+            const exeHost = (exe.root_module.resolved_target orelse unreachable).result;
+            if (exeHost.os.tag == .windows and linkage == .dynamic) {
                 exe.defineCMacro("GLFW_DLL", null);
             }
         }
@@ -46,7 +47,7 @@ pub const Options = struct {
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.Mode,
     args: struct {
         options: Options = .{},
@@ -56,7 +57,7 @@ pub fn package(
     step.addOption(bool, "shared", args.options.shared);
 
     const zglfw = b.addModule("zglfw", .{
-        .source_file = .{ .path = path ++ "/src/zglfw.zig" },
+        .root_source_file = .{ .path = path ++ "/src/zglfw.zig" },
     });
 
     const zglfw_c_cpp = if (args.options.shared) blk: {
@@ -66,7 +67,7 @@ pub fn package(
             .optimize = optimize,
         });
 
-        if (target.isWindows()) {
+        if (target.result.os.tag == .windows) {
             lib.defineCMacro("_GLFW_BUILD_DLL", null);
         }
 
@@ -80,15 +81,15 @@ pub fn package(
     zglfw_c_cpp.addIncludePath(.{ .path = path ++ "/libs/glfw/include" });
     zglfw_c_cpp.linkLibC();
 
-    const host = (std.zig.system.NativeTargetInfo.detect(zglfw_c_cpp.target) catch unreachable).target;
+    const host = (zglfw_c_cpp.root_module.resolved_target orelse unreachable).result;
 
     const src_dir = path ++ "/libs/glfw/src/";
 
     switch (host.os.tag) {
         .windows => {
-            zglfw_c_cpp.linkSystemLibraryName("gdi32");
-            zglfw_c_cpp.linkSystemLibraryName("user32");
-            zglfw_c_cpp.linkSystemLibraryName("shell32");
+            zglfw_c_cpp.root_module.linkSystemLibrary("gdi32", .{});
+            zglfw_c_cpp.root_module.linkSystemLibrary("user32", .{});
+            zglfw_c_cpp.root_module.linkSystemLibrary("shell32", .{});
             zglfw_c_cpp.addCSourceFiles(.{
                 .files = &.{
                     src_dir ++ "monitor.c",
@@ -116,7 +117,7 @@ pub fn package(
             );
             zglfw_c_cpp.addSystemIncludePath(.{ .path = path ++ "/macos12/usr/include" });
             zglfw_c_cpp.addLibraryPath(.{ .path = path ++ "/macos12/usr/lib" });
-            zglfw_c_cpp.linkSystemLibraryName("objc");
+            zglfw_c_cpp.root_module.linkSystemLibrary("objc", .{});
             zglfw_c_cpp.linkFramework("IOKit");
             zglfw_c_cpp.linkFramework("CoreFoundation");
             zglfw_c_cpp.linkFramework("Metal");
@@ -153,7 +154,7 @@ pub fn package(
             } else {
                 zglfw_c_cpp.addLibraryPath(.{ .path = path ++ "/linux/lib/aarch64-linux-gnu" });
             }
-            zglfw_c_cpp.linkSystemLibraryName("X11");
+            zglfw_c_cpp.root_module.linkSystemLibrary("X11", .{});
             zglfw_c_cpp.addCSourceFiles(.{
                 .files = &.{
                     src_dir ++ "monitor.c",
@@ -198,8 +199,8 @@ pub fn build(b: *std.Build) void {
 pub fn runTests(
     b: *std.Build,
     optimize: std.builtin.Mode,
-    target: std.zig.CrossTarget,
-) *std.Build.Step {
+    target: std.Build.ResolvedTarget,
+) *std.Build.Step.Compile {
     const tests = b.addTest(.{
         .name = "zglfw-tests",
         .root_source_file = .{ .path = path ++ "/src/zglfw.zig" },

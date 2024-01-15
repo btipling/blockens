@@ -9,6 +9,8 @@ const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
 
 pub const BlockEditor = struct {
+    loadedBlockId: i32,
+    loadedScriptId: i32,
     script: script.Script,
     appState: *state.State,
     createNameBuf: [data.maxBlockSizeName]u8,
@@ -16,13 +18,13 @@ pub const BlockEditor = struct {
     codeFont: zgui.Font,
     blockOptions: std.ArrayList(data.blockOption),
     scriptOptions: std.ArrayList(data.scriptOption),
-    loadedBlockId: u32 = 0,
-    loadedScriptId: u32 = 0,
 
     pub fn init(appState: *state.State, codeFont: zgui.Font, sc: script.Script, alloc: std.mem.Allocator) !BlockEditor {
         const createNameBuf = [_]u8{0} ** data.maxBlockSizeName;
         const updateNameBuf = [_]u8{0} ** data.maxBlockSizeName;
         var tv = BlockEditor{
+            .loadedBlockId = 0,
+            .loadedScriptId = 0,
             .script = sc,
             .appState = appState,
             .createNameBuf = createNameBuf,
@@ -103,7 +105,7 @@ pub const BlockEditor = struct {
         try self.listBlocks();
     }
 
-    fn loadBlock(self: *BlockEditor, blockId: u32) !void {
+    fn loadBlock(self: *BlockEditor, blockId: i32) !void {
         var blockData: data.block = undefined;
         try self.appState.db.loadBlock(blockId, &blockData);
         var nameBuf = [_]u8{0} ** data.maxBlockSizeName;
@@ -123,7 +125,7 @@ pub const BlockEditor = struct {
         self.appState.app.setTextureColor(textureRGBAColor);
     }
 
-    fn loadTextureScriptFunc(self: *BlockEditor, scriptId: u32) !void {
+    fn loadTextureScriptFunc(self: *BlockEditor, scriptId: i32) !void {
         var scriptData: data.script = undefined;
         try self.appState.db.loadTextureScript(scriptId, &scriptData);
         var buf = [_]u8{0} ** script.maxLuaScriptSize;

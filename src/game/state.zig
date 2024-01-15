@@ -76,6 +76,7 @@ pub const State = struct {
     pub fn deinit(self: *State) void {
         self.worldView.deinit();
         self.demoView.deinit();
+        self.db.deinit();
     }
 
     pub fn setGameView(self: *State) !void {
@@ -147,7 +148,7 @@ pub const ViewState = struct {
     alloc: std.mem.Allocator,
     view: view.View,
     blockOptions: std.ArrayList(data.blockOption),
-    cubesMap: std.AutoHashMap(u32, std.ArrayList(instancedShape.InstancedShape)),
+    cubesMap: std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShape)),
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
@@ -177,7 +178,7 @@ pub const ViewState = struct {
             .alloc = alloc,
             .view = v,
             .blockOptions = std.ArrayList(data.blockOption).init(alloc),
-            .cubesMap = std.AutoHashMap(u32, std.ArrayList(instancedShape.InstancedShape)).init(alloc),
+            .cubesMap = std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShape)).init(alloc),
             .cameraPos = initialCameraPos,
             .cameraFront = initialCameraFront,
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
@@ -228,7 +229,7 @@ pub const ViewState = struct {
         try appState.db.listBlocks(&self.blockOptions);
     }
 
-    pub fn addBlocks(self: *ViewState, appState: *State, blockOptionId: u32) !usize {
+    pub fn addBlocks(self: *ViewState, appState: *State, blockOptionId: i32) !usize {
         if (self.blockOptions.items.len == 0) {
             return StateErrors.NoBlocks;
         }
@@ -299,22 +300,22 @@ pub const ViewState = struct {
         try self.view.update(zm.mul(m, self.screenTransform));
     }
 
-    pub fn randomChunk(self: *ViewState, seed: u64) [chunkSize]u32 {
+    pub fn randomChunk(self: *ViewState, seed: u64) [chunkSize]i32 {
         var prng = std.rand.DefaultPrng.init(seed + @as(u64, @intCast(std.time.milliTimestamp())));
         const random = prng.random();
         const maxOptions = self.blockOptions.items.len - 1;
-        var chunk: [chunkSize]u32 = [_]u32{undefined} ** chunkSize;
+        var chunk: [chunkSize]i32 = [_]i32{undefined} ** chunkSize;
         for (chunk, 0..) |_, i| {
             const randomInt = random.uintAtMost(usize, maxOptions);
-            const blockId = @as(u32, @intCast(randomInt + 1));
+            const blockId = @as(i32, @intCast(randomInt + 1));
             chunk[i] = blockId;
         }
         return chunk;
     }
 
-    pub fn initChunk(self: *ViewState, appState: *State, chunk: [chunkSize]u32, alloc: std.mem.Allocator, chunkPosition: position.Position) !void {
+    pub fn initChunk(self: *ViewState, appState: *State, chunk: [chunkSize]i32, alloc: std.mem.Allocator, chunkPosition: position.Position) !void {
         self.view.bind();
-        var perBlockTransforms = std.AutoHashMap(u32, std.ArrayList(instancedShape.InstancedShapeTransform)).init(alloc);
+        var perBlockTransforms = std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShapeTransform)).init(alloc);
         defer perBlockTransforms.deinit();
         for (chunk, 0..) |blockId, i| {
             if (blockId == 0) {
@@ -344,7 +345,7 @@ pub const ViewState = struct {
 
         var keys = perBlockTransforms.keyIterator();
         while (keys.next()) |_k| {
-            if (@TypeOf(_k) == *u32) {
+            if (@TypeOf(_k) == *i32) {
                 const k = _k.*;
                 if (perBlockTransforms.get(k)) |blockTransforms| {
                     var _blockTransforms = blockTransforms;
@@ -359,7 +360,7 @@ pub const ViewState = struct {
         self.view.unbind();
     }
 
-    pub fn writeAndClear(self: *ViewState, appState: *State, blockId: u32, blockTransforms: *std.ArrayList(instancedShape.InstancedShapeTransform)) !void {
+    pub fn writeAndClear(self: *ViewState, appState: *State, blockId: i32, blockTransforms: *std.ArrayList(instancedShape.InstancedShapeTransform)) !void {
         const transforms = blockTransforms.items;
         const addedAt = try self.addBlocks(appState, blockId);
         if (self.cubesMap.get(blockId)) |shapes| {

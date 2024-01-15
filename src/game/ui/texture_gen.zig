@@ -14,7 +14,7 @@ pub const TextureGen = struct {
     nameBuf: [script.maxLuaScriptNameSize]u8,
     codeFont: zgui.Font,
     scriptOptions: std.ArrayList(data.scriptOption),
-    loadedScriptId: u32 = 0,
+    loadedScriptId: i32 = 0,
 
     pub fn init(appState: *state.State, codeFont: zgui.Font, sc: script.Script, alloc: std.mem.Allocator) !TextureGen {
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
@@ -88,7 +88,7 @@ pub const TextureGen = struct {
         try self.appState.db.listTextureScripts(&self.scriptOptions);
     }
 
-    fn loadTextureScriptFunc(self: *TextureGen, scriptId: u32) !void {
+    fn loadTextureScriptFunc(self: *TextureGen, scriptId: i32) !void {
         var scriptData: data.script = undefined;
         try self.appState.db.loadTextureScript(scriptId, &scriptData);
         var buf = [_]u8{0} ** script.maxLuaScriptSize;

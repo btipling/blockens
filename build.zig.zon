@@ -2,13 +2,33 @@
     .name = "btzig-blockens",
     .version = "0.0.1",
     .dependencies = .{
-        .ziglua = .{
-            .url = "https://github.com/natecraddock/ziglua/archive/3538e1710a21d24924d35ef274be1e127da63d7d.tar.gz",
-            .hash = "12202d1ee1975de6e494d5f81e5286bb25d7ae7e34e01c78d6a1f4b1667d2ddf72f6",
+        .lua51 = .{
+            .url = "https://github.com/natecraddock/lua/archive/refs/tags/5.1.5-1.tar.gz",
+            .hash = "12203fe1feebb81635f8df5a5a7242733e441fe3f3043989c8e6b4d6720e96988813",
         },
-        .sqlite = .{
-            .url = "https://github.com/vrischmann/zig-sqlite/archive/aa6f95b1279f633259406e67986ba5ac4e76544b.tar.gz",
-            .hash = "1220d751f09c5c18c45f0a42af71ff255e62ae73deb34567ca42e9e67c614a4daa5a",
+
+        .lua52 = .{
+            .url = "https://www.lua.org/ftp/lua-5.2.4.tar.gz",
+            .hash = "1220d5b2b39738f0644d9ed5b7431973f1a16b937ef86d4cf85887ef3e9fda7a3379",
+        },
+
+        .lua53 = .{
+            .url = "https://www.lua.org/ftp/lua-5.3.6.tar.gz",
+            .hash = "1220937a223531ef6b3fea8f653dc135310b0e84805e7efa148870191f5ab915c828",
+        },
+
+        .lua54 = .{
+            .url = "https://www.lua.org/ftp/lua-5.4.6.tar.gz",
+            .hash = "1220f93ada1fa077ab096bf88a5b159ad421dbf6a478edec78ddb186d0c21d3476d9",
+        },
+
+        .luau = .{
+            .url = "https://github.com/luau-lang/luau/archive/refs/tags/0.607.tar.gz",
+            .hash = "122003818ff2aa912db37d4bbda314ff9ff70d03d9243af4b639490be98e2bfa7cb6",
+        },
+        .sqlite_amalgamation = .{
+            .url = "https://www.sqlite.org/2023/sqlite-autoconf-3440200.tar.gz",
+            .hash = "1220808ebe54c856e5e024c42eb97eafc0844f617d47e9e6df11eb2fb881cff071fe",
         },
     },
     .paths = .{

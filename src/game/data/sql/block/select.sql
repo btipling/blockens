@@ -1,1 +1,1 @@
-SELECT id, name, texture FROM block WHERE id = ?;
+SELECT id, name, texture FROM block WHERE id = :id;

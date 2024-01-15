@@ -36,7 +36,7 @@ const bcV2 = @Vector(3, gl.Float){ 0.0, 1.0, 0.0 };
 const bcV3 = @Vector(3, gl.Float){ 0.0, 0.0, 1.0 };
 
 pub const Shape = struct {
-    blockId: u32,
+    blockId: i32,
     name: []const u8,
     vao: gl.Uint,
     texture: gl.Uint,
@@ -46,7 +46,7 @@ pub const Shape = struct {
     highlight: gl.Int,
 
     pub fn init(
-        blockId: u32,
+        blockId: i32,
         name: []const u8,
         shape: zmesh.Shape,
         vertexShaderSource: [:0]const u8,

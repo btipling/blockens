@@ -1,1 +1,1 @@
-DELETE FROM world WHERE id = ?;
+DELETE FROM world WHERE id = :id;

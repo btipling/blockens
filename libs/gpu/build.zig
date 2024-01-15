@@ -38,7 +38,7 @@ pub const Options = struct {
 };
 
 pub const Package = struct {
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     options: Options,
     zgpu: *std.Build.Module,
@@ -48,11 +48,11 @@ pub const Package = struct {
         zpool: zpool.Package,
     },
 
-    pub fn link(pkg: Package, exe: *std.Build.CompileStep) void {
+    pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
         const target = (std.zig.system.NativeTargetInfo.detect(exe.target) catch unreachable).target;
 
-        exe.addModule("zgpu", pkg.zgpu);
-        exe.addModule("zgpu_options", pkg.zgpu_options);
+        exe.root_module.addImport("zgpu", pkg.zgpu);
+        exe.root_module.addImport("zgpu_options", pkg.zgpu_options);
 
         const b = exe.step.owner;
 
@@ -62,8 +62,8 @@ pub const Package = struct {
                 exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
                 exe.addLibraryPath(.{ .path = path ++ "/windows/lib/x86_64-windows-gnu" });
 
-                exe.linkSystemLibraryName("ole32");
-                exe.linkSystemLibraryName("dxguid");
+                exe.root_module.linkSystemLibrary("ole32", .{});
+                exe.root_module.linkSystemLibrary("dxguid", .{});
             },
             .linux => {
                 if (target.cpu.arch.isX86()) {
@@ -87,7 +87,7 @@ pub const Package = struct {
                     exe.addLibraryPath(.{ .path = dawn_dep.builder.build_root.path.? });
                 }
 
-                exe.linkSystemLibraryName("objc");
+                exe.root_module.linkSystemLibrary("objc", .{});
                 exe.linkFramework("Metal");
                 exe.linkFramework("CoreGraphics");
                 exe.linkFramework("Foundation");
@@ -98,7 +98,7 @@ pub const Package = struct {
             else => unreachable,
         }
 
-        exe.linkSystemLibraryName("dawn");
+        exe.root_module.linkSystemLibrary("dawn", .{});
         exe.linkLibC();
         exe.linkLibCpp();
 
@@ -115,7 +115,7 @@ pub const Package = struct {
         });
     }
 
-    pub fn makeTestStep(pkg: Package, b: *std.Build) *std.Build.Step {
+    pub fn makeTestStep(pkg: Package, b: *std.Build) *std.Build.Step.Compile {
         const tests = b.addTest(.{
             .name = "zgpu-tests",
             .root_source_file = .{ .path = path ++ "/src/zgpu.zig" },
@@ -131,7 +131,7 @@ pub const Package = struct {
 
 pub fn package(
     b: *std.Build,
-    target: std.zig.CrossTarget,
+    target: std.Build.ResolvedTarget,
     optimize: std.builtin.Mode,
     args: struct {
         options: Options = .{},
@@ -157,8 +157,8 @@ pub fn package(
     const zgpu_options = step.createModule();
 
     const zgpu = b.addModule("zgpu", .{
-        .source_file = .{ .path = path ++ "/src/zgpu.zig" },
-        .dependencies = &.{
+        .root_source_file = .{ .path = path ++ "/src/zgpu.zig" },
+        .imports = &.{
             .{ .name = "zgpu_options", .module = zgpu_options },
             .{ .name = "zglfw", .module = args.deps.zglfw.zglfw },
             .{ .name = "zpool", .module = args.deps.zpool.zpool },
