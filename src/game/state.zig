@@ -297,7 +297,7 @@ pub const ViewState = struct {
 
     pub fn initChunk(self: *ViewState, chunk: [chunkSize]i32, chunkPosition: position.Position) !void {
         self.view.bind();
-        const temp_limit = 1000;
+        const temp_limit = 64 * 64 * 10;
         for (chunk, 0..) |blockId, i| {
             if (blockId == 0) {
                 continue;
