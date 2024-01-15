@@ -211,6 +211,7 @@ pub const ViewState = struct {
     }
 
     pub fn deinit(self: *ViewState) void {
+        self.clearChunks();
         self.blockOptions.deinit();
         var cuv = self.cubesMap.valueIterator();
         while (cuv.next()) |v| {
@@ -324,7 +325,7 @@ pub const ViewState = struct {
         return chunk;
     }
 
-    pub fn writeAndClear(self: *ViewState, blockId: i32, blockTransforms: *std.ArrayList(instancedShape.InstancedShapeTransform)) !void {
+    pub fn write(self: *ViewState, blockId: i32, blockTransforms: *std.ArrayList(instancedShape.InstancedShapeTransform)) !void {
         const transforms = blockTransforms.items;
         if (self.cubesMap.get(blockId)) |is| {
             var _is = is;
@@ -333,9 +334,6 @@ pub const ViewState = struct {
         } else {
             std.debug.print("blockId {d} not found in cubesMap\n", .{blockId});
         }
-        // reset transforms
-        var _b = blockTransforms;
-        _b.clearRetainingCapacity();
     }
 
     pub fn initChunk(self: *ViewState, chunk: [chunkSize]i32, chunkPosition: position.Position) !void {
@@ -386,18 +384,18 @@ pub const ViewState = struct {
                 const k = _k.*;
                 if (self.perBlockTransforms.get(k)) |blockTransforms| {
                     var _blockTransforms = blockTransforms;
-                    try self.writeAndClear(k, &_blockTransforms);
+                    try self.write(k, &_blockTransforms);
                 }
             }
-        }
-        var values = self.perBlockTransforms.valueIterator();
-        while (values.next()) |v| {
-            v.deinit();
         }
         self.view.unbind();
     }
 
-    pub fn clearChunks(self: *ViewState, appState: *State) !void {
+    pub fn initChunks(self: *ViewState, appState: *State) !void {
+        try self.addBlocks(appState);
+    }
+
+    pub fn clearChunks(self: *ViewState) void {
         self.view.bind();
         var values = self.voxelMeshes.valueIterator();
         while (values.next()) |v| {
@@ -407,8 +405,12 @@ pub const ViewState = struct {
         while (cuv.next()) |v| {
             v.deinit();
         }
-        self.cubesMap.clearRetainingCapacity();
-        try self.addBlocks(appState);
+        self.cubesMap.clearAndFree();
+        var pbtv = self.perBlockTransforms.valueIterator();
+        while (pbtv.next()) |v| {
+            v.deinit();
+        }
+        self.perBlockTransforms.clearAndFree();
         self.view.unbind();
     }
 

@@ -164,6 +164,7 @@ pub const Game = struct {
             }
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             gl.clearBufferfv(gl.COLOR, 0, &skyColor);
+            // gl.polygonMode(gl.FRONT_AND_BACK, gl.LINE);
 
             switch (appState.app.view) {
                 .game => {
@@ -182,7 +183,7 @@ pub const Game = struct {
                     try drawChunkGeneratorView(&demoWorld, &gameUI);
                 },
             }
-
+            // gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
             window.swapBuffers();
         }
     }
