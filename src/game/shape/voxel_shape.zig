@@ -329,19 +329,19 @@ pub const VoxelShape = struct {
         gl.bufferData(gl.ARRAY_BUFFER, tfSize, &worldspaceTF, gl.STATIC_DRAW);
         // have to set up 4 consecutive attributes for the matrix
 
+        gl.enableVertexAttribArray(4);
+        gl.vertexAttribPointer(4, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, null);
         gl.enableVertexAttribArray(5);
-        gl.vertexAttribPointer(5, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, null);
+        gl.vertexAttribPointer(5, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(@sizeOf(gl.Float) * 4)));
         gl.enableVertexAttribArray(6);
-        gl.vertexAttribPointer(6, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(@sizeOf(gl.Float) * 4)));
+        gl.vertexAttribPointer(6, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(2 * @sizeOf(gl.Float) * 4)));
         gl.enableVertexAttribArray(7);
-        gl.vertexAttribPointer(7, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(2 * @sizeOf(gl.Float) * 4)));
-        gl.enableVertexAttribArray(8);
-        gl.vertexAttribPointer(8, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(3 * @sizeOf(gl.Float) * 4)));
+        gl.vertexAttribPointer(7, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(3 * @sizeOf(gl.Float) * 4)));
 
+        gl.vertexAttribDivisor(4, 1);
         gl.vertexAttribDivisor(5, 1);
         gl.vertexAttribDivisor(6, 1);
         gl.vertexAttribDivisor(7, 1);
-        gl.vertexAttribDivisor(8, 1);
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
 
         return worldspaceVBO;

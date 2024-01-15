@@ -136,8 +136,8 @@ pub const Game = struct {
         const skyColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 };
 
         // uncomment to start in a specific view:
-        // try appState.setGameView();
-        try appState.setChunkGeneratorView();
+        try appState.setGameView();
+        // try appState.setChunkGeneratorView();
 
         main_loop: while (!window.shouldClose()) {
             glfw.pollEvents();

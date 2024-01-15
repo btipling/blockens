@@ -5,7 +5,6 @@ layout (location = 2) in vec3 barycentricCoord;
 layout (location = 3) in vec2 edgeCoord;
 layout (location = 4) in mat4 attribTransform;
 
-out vec3 eColor;
 out vec2 TexCoord;
 out vec3 barycentric;
 out vec2 edge;
@@ -19,7 +18,6 @@ layout(std140) uniform ViewMatrixBlock {
 void main()
 {
     gl_Position = projection * viewMatrix * attribTransform * vec4(position.xyz, 1.0);
-    eColor = vec3(1.0f, 1.0f, 1.0f);
     TexCoord = entityTexCoord;
     barycentric = barycentricCoord;
     edge = edgeCoord;
