@@ -35,6 +35,7 @@ pub const VoxelShape = struct {
     worldspaceVBO: gl.Uint,
 
     pub fn init(
+        vm: view.View,
         blockId: i32,
         shape: zmesh.Shape,
         vertexShaderSource: [:0]const u8,
@@ -51,6 +52,7 @@ pub const VoxelShape = struct {
         const program = try initProgram(blockId, &[_]gl.Uint{ vertexShader, fragmentShader });
         const texture = try initTextureFromColors(blockId, textureRGBAColor);
         const worldspaceVBO = try initData(blockId, shape, worldTransform, alloc);
+        try setUniforms(blockId, program, vm);
         return VoxelShape{
             .blockId = blockId,
             .vao = vao,
@@ -136,7 +138,7 @@ pub const VoxelShape = struct {
         return initShader(shaderMsg, fragmentShaderSource, gl.FRAGMENT_SHADER);
     }
 
-    pub fn initShader(blockId: i32, source: [:0]const u8, shaderType: c_uint) !gl.Uint {
+    pub fn initShader(msg: []u8, source: [:0]const u8, shaderType: c_uint) !gl.Uint {
         const shader: gl.Uint = gl.createShader(shaderType);
         gl.shaderSource(shader, 1, &[_][*c]const u8{source.ptr}, null);
         gl.compileShader(shader);
@@ -148,7 +150,7 @@ pub const VoxelShape = struct {
             var logSize: gl.Int = 0;
             gl.getShaderInfoLog(shader, 512, &logSize, &infoLog);
             const i: usize = @intCast(logSize);
-            std.debug.print("ERROR::SHADER::{d}::COMPILATION_FAILED\n{s}\n", .{ blockId, infoLog[0..i] });
+            std.debug.print("ERROR::SHADER::{s}::COMPILATION_FAILED\n{s}\n", .{ msg, infoLog[0..i] });
             return VoxelShapeErr.RenderError;
         }
 
@@ -228,7 +230,7 @@ pub const VoxelShape = struct {
         return texture;
     }
 
-    pub fn setUniforms(blockId: i32, program: gl.Uint, vm: *view.View) !void {
+    pub fn setUniforms(blockId: i32, program: gl.Uint, vm: view.View) !void {
         gl.useProgram(program);
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
@@ -368,10 +370,10 @@ pub const VoxelShape = struct {
             return VoxelShapeErr.RenderError;
         }
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, self.instanceVBO);
+        gl.bindBuffer(gl.ARRAY_BUFFER, self.worldspaceVBO);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel draw bind instance vbo error: {d}\n", .{ self.blockId, e });
+            std.debug.print("{d} voxel draw bind worldspace vbo error: {d}\n", .{ self.blockId, e });
             return VoxelShapeErr.RenderError;
         }
 

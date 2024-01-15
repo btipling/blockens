@@ -5,7 +5,8 @@ const position = @import("position.zig");
 const config = @import("config.zig");
 const cube = @import("./shape/cube.zig");
 const view = @import("./shape/view.zig");
-const instancedShape = @import("./shape/instanced_shape.zig");
+const voxelShape = @import("./shape/voxel_shape.zig");
+const voxelMesh = @import("./shape/voxel_mesh.zig");
 const data = @import("./data/data.zig");
 
 pub const StateErrors = error{
@@ -148,7 +149,8 @@ pub const ViewState = struct {
     alloc: std.mem.Allocator,
     view: view.View,
     blockOptions: std.ArrayList(data.blockOption),
-    cubesMap: std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShape)),
+    voxelMesh: voxelMesh.VoxelMesh,
+    shapes: std.ArrayList(voxelShape.VoxelShape),
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
@@ -178,7 +180,8 @@ pub const ViewState = struct {
             .alloc = alloc,
             .view = v,
             .blockOptions = std.ArrayList(data.blockOption).init(alloc),
-            .cubesMap = std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShape)).init(alloc),
+            .voxelMesh = try voxelMesh.VoxelMesh.init(v, alloc),
+            .shapes = std.ArrayList(voxelShape.VoxelShape).init(alloc),
             .cameraPos = initialCameraPos,
             .cameraFront = initialCameraFront,
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
@@ -200,14 +203,8 @@ pub const ViewState = struct {
     }
 
     pub fn deinit(self: *ViewState) void {
-        var iterator = self.cubesMap.iterator();
-        while (iterator.next()) |s| {
-            for (s.value_ptr.items) |shape| {
-                shape.deinit();
-            }
-            s.value_ptr.deinit();
-        }
-        self.cubesMap.deinit();
+        self.voxelMesh.deinit();
+        self.shapes.deinit();
         self.blockOptions.deinit();
     }
 
@@ -227,32 +224,6 @@ pub const ViewState = struct {
 
     pub fn initBlocks(self: *ViewState, appState: *State) !void {
         try appState.db.listBlocks(&self.blockOptions);
-    }
-
-    pub fn addBlocks(self: *ViewState, appState: *State, blockOptionId: i32) !usize {
-        if (self.blockOptions.items.len == 0) {
-            return StateErrors.NoBlocks;
-        }
-        for (self.blockOptions.items) |blockOption| {
-            if (blockOption.id != blockOptionId) {
-                continue;
-            }
-            var s = try cube.Cube.initBlockCube(&self.view, appState, blockOption.id, self.alloc);
-            _ = &s;
-            if (self.cubesMap.get(blockOption.id)) |shapes| {
-                var _shapes = shapes;
-                try _shapes.append(s);
-                try self.cubesMap.put(blockOption.id, _shapes);
-                return _shapes.items.len - 1;
-            } else {
-                var shapes = std.ArrayList(instancedShape.InstancedShape).init(self.alloc);
-                try shapes.append(s);
-                try self.cubesMap.put(blockOption.id, shapes);
-                return 0;
-            }
-        }
-        std.debug.print("Invalid block id: {}\n", .{blockOptionId});
-        return StateErrors.InvalidBlockID;
     }
 
     pub fn rotateWorld(self: *ViewState) !void {
@@ -315,8 +286,10 @@ pub const ViewState = struct {
 
     pub fn initChunk(self: *ViewState, appState: *State, chunk: [chunkSize]i32, alloc: std.mem.Allocator, chunkPosition: position.Position) !void {
         self.view.bind();
-        var perBlockTransforms = std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShapeTransform)).init(alloc);
-        defer perBlockTransforms.deinit();
+        var blockTransforms = std.ArrayList(voxelShape.VoxelShape).init(alloc);
+        defer blockTransforms.deinit();
+
+        try blockTransforms.ensureTotalCapacity(1);
         for (chunk, 0..) |blockId, i| {
             if (blockId == 0) {
                 continue;
@@ -325,73 +298,26 @@ pub const ViewState = struct {
             const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim))) + (chunkPosition.y * chunkDim);
             const z = @as(gl.Float, @floatFromInt(i / (chunkDim * chunkDim))) + (chunkPosition.z * chunkDim);
             const m = zm.translation(x, y, z);
-            var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
-            zm.storeMat(&transform, m);
-            const t = instancedShape.InstancedShapeTransform{ .transform = transform };
-
-            if (perBlockTransforms.get(blockId)) |blockTransforms| {
-                var _blockTransforms = blockTransforms;
-                try _blockTransforms.append(t);
-                if (_blockTransforms.items.len == drawSize) {
-                    try self.writeAndClear(appState, blockId, &_blockTransforms);
-                }
-                try perBlockTransforms.put(blockId, _blockTransforms);
-            } else {
-                var blockTransforms = std.ArrayList(instancedShape.InstancedShapeTransform).init(alloc);
-                try blockTransforms.append(t);
-                try perBlockTransforms.put(blockId, blockTransforms);
+            var worldTransform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+            zm.storeMat(&worldTransform, m);
+            const voxel = try self.voxelMesh.initVoxel(
+                appState,
+                blockId,
+                worldTransform,
+            );
+            blockTransforms.appendAssumeCapacity(voxel);
+            if (blockTransforms.items.len > 0) {
+                break;
             }
         }
+        try self.shapes.appendSlice(blockTransforms.items);
 
-        var keys = perBlockTransforms.keyIterator();
-        while (keys.next()) |_k| {
-            if (@TypeOf(_k) == *i32) {
-                const k = _k.*;
-                if (perBlockTransforms.get(k)) |blockTransforms| {
-                    var _blockTransforms = blockTransforms;
-                    try self.writeAndClear(appState, k, &_blockTransforms);
-                }
-            }
-        }
-        var values = perBlockTransforms.valueIterator();
-        while (values.next()) |v| {
-            v.deinit();
-        }
         self.view.unbind();
-    }
-
-    pub fn writeAndClear(self: *ViewState, appState: *State, blockId: i32, blockTransforms: *std.ArrayList(instancedShape.InstancedShapeTransform)) !void {
-        const transforms = blockTransforms.items;
-        const addedAt = try self.addBlocks(appState, blockId);
-        if (self.cubesMap.get(blockId)) |shapes| {
-            var _is = shapes.items[addedAt];
-            try cube.Cube.updateInstanced(transforms, &_is);
-            shapes.items[addedAt] = _is;
-        } else {
-            std.debug.print("blockId {d} not found in cubesMap\n", .{blockId});
-        }
-        // reset transforms
-        var _b = blockTransforms;
-        _b.clearRetainingCapacity();
     }
 
     pub fn clearChunks(self: *ViewState) !void {
         self.view.bind();
-        var keys = self.cubesMap.keyIterator();
-        while (keys.next()) |_k| {
-            const _blockId = _k.*;
-            if (self.cubesMap.get(_blockId)) |shapes| {
-                for (shapes.items) |is| {
-                    var _is = is;
-                    _is.deinit();
-                }
-                var _shapes = shapes;
-                _shapes.clearRetainingCapacity();
-                try self.cubesMap.put(_blockId, _shapes);
-            } else {
-                std.debug.print("blockId {d} not found in cubesMap\n", .{_blockId});
-            }
-        }
+        self.shapes.clearRetainingCapacity();
         self.view.unbind();
     }
 
