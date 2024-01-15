@@ -345,7 +345,6 @@ pub fn Statement(comptime Params: type, comptime Result: type) type {
                     c.SQLITE_TEXT => switch (binding.type) {
                         .text => @field(result, binding.name) = stmt.columnText(n),
                         else => {
-                            std.debug.print("binding.name: {s}\n", .{binding.name});
                             return error.InvalidColumnType;
                         },
                     },
