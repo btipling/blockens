@@ -297,7 +297,7 @@ pub const InstancedShape = struct {
 
             // Adjust the texture coordinates for the cube
             // There are 36 vertices in a cube, each cube texture has 3 textures in one png across the y axis
-            // The first texture is for the to, the second texture is for the sides and the third texture is for the top
+            // The first texture is for the top, the second texture is for the sides and the third texture is for the bottom
             // This function iterates through the 36 vertices and assigns the correct texture coordinates to each vertex
             // and adjusts for the width of each texture being a third of the total width of the png
             vertices[i].edge = vertices[i].texture;
