@@ -10,50 +10,51 @@ const data = @import("../data/data.zig");
 
 const positions: [36][3]gl.Float = .{
     // front
-    .{ -1.0, -1.0, 1.0 },
-    .{ 1.0, -1.0, 1.0 },
-    .{ 1.0, 1.0, 1.0 },
-    .{ -1.0, -1.0, 1.0 },
-    .{ 1.0, 1.0, 1.0 },
-    .{ -1.0, 1.0, 1.0 },
+    .{ -0.5, -0.5, 0.5 },
+    .{ 0.5, -0.5, 0.5 },
+    .{ 0.5, 0.5, 0.5 },
+    .{ -0.5, -0.5, 0.5 },
+    .{ 0.5, 0.5, 0.5 },
+    .{ -0.5, 0.5, 0.5 },
+
     // right
-    .{ 1.0, -1.0, 1.0 },
-    .{ 1.0, -1.0, -1.0 },
-    .{ 1.0, 1.0, -1.0 },
-    .{ 1.0, -1.0, 1.0 },
-    .{ 1.0, 1.0, -1.0 },
-    .{ 1.0, 1.0, 1.0 },
+    .{ 0.5, -0.5, 0.5 },
+    .{ 0.5, -0.5, -0.5 },
+    .{ 0.5, 0.5, -0.5 },
+    .{ 0.5, -0.5, 0.5 },
+    .{ 0.5, 0.5, -0.5 },
+    .{ 0.5, 0.5, 0.5 },
     // back
-    .{ 1.0, -1.0, -1.0 },
-    .{ -1.0, -1.0, -1.0 },
-    .{ -1.0, 1.0, -1.0 },
-    .{ 1.0, -1.0, -1.0 },
-    .{ -1.0, 1.0, -1.0 },
-    .{ 1.0, 1.0, -1.0 },
+    .{ 0.5, -0.5, -0.5 },
+    .{ -0.5, -0.5, -0.5 },
+    .{ -0.5, 0.5, -0.5 },
+    .{ 0.5, -0.5, -0.5 },
+    .{ -0.5, 0.5, -0.5 },
+    .{ 0.5, 0.5, -0.5 },
     // left
-    .{ -1.0, -1.0, -1.0 },
-    .{ -1.0, -1.0, 1.0 },
-    .{ -1.0, 1.0, 1.0 },
-    .{ -1.0, -1.0, -1.0 },
-    .{ -1.0, 1.0, 1.0 },
-    .{ -1.0, 1.0, -1.0 },
+    .{ -0.5, -0.5, -0.5 },
+    .{ -0.5, -0.5, 0.5 },
+    .{ -0.5, 0.5, 0.5 },
+    .{ -0.5, -0.5, -0.5 },
+    .{ -0.5, 0.5, 0.5 },
+    .{ -0.5, 0.5, -0.5 },
     // bottom
-    .{ -1.0, -1.0, -1.0 },
-    .{ 1.0, -1.0, -1.0 },
-    .{ 1.0, -1.0, 1.0 },
-    .{ -1.0, -1.0, -1.0 },
-    .{ 1.0, -1.0, 1.0 },
-    .{ -1.0, -1.0, 1.0 },
+    .{ -0.5, -0.5, -0.5 },
+    .{ 0.5, -0.5, -0.5 },
+    .{ 0.5, -0.5, 0.5 },
+    .{ -0.5, -0.5, -0.5 },
+    .{ 0.5, -0.5, 0.5 },
+    .{ -0.5, -0.5, 0.5 },
     // top
-    .{ -1.0, 1.0, 1.0 },
-    .{ 1.0, 1.0, 1.0 },
-    .{ 1.0, 1.0, -1.0 },
-    .{ -1.0, 1.0, 1.0 },
-    .{ 1.0, 1.0, -1.0 },
-    .{ -1.0, 1.0, -1.0 },
+    .{ -0.5, 0.5, 0.5 },
+    .{ 0.5, 0.5, 0.5 },
+    .{ 0.5, 0.5, -0.5 },
+    .{ -0.5, 0.5, 0.5 },
+    .{ 0.5, 0.5, -0.5 },
+    .{ -0.5, 0.5, -0.5 },
 };
 
-const indices: [36]gl.Uint = .{
+const indices: [36]u32 = .{
     0, 1, 2, 3, 4, 5, // front
     6, 7, 8, 9, 10, 11, // right
     12, 13, 14, 15, 16, 17, // back
@@ -62,122 +63,166 @@ const indices: [36]gl.Uint = .{
     30, 31, 32, 33, 34, 35, // top
 };
 
-const texcoords: [72]gl.Float = .{
+const texcoords: [36][2]gl.Float = .{
     // front
-    0.0, 0.666,
-    1.0, 0.666,
-    1.0, 1.0,
-    0.0, 0.666,
-    1.0, 1.0,
-    0.0, 1.0,
+    .{ 0.0, 0.666 },
+    .{ 1.0, 0.666 },
+    .{ 1.0, 0.333 },
+    .{ 0.0, 0.666 },
+    .{ 1.0, 0.333 },
+    .{ 0.0, 0.333 },
     // right
-    0.0, 0.666,
-    1.0, 0.666,
-    1.0, 1.0,
-    0.0, 0.666,
-    1.0, 1.0,
-    0.0, 1.0,
+    .{ 0.0, 0.666 },
+    .{ 1.0, 0.666 },
+    .{ 1.0, 0.333 },
+    .{ 0.0, 0.666 },
+    .{ 1.0, 0.333 },
+    .{ 0.0, 0.333 },
     // back
-    0.0, 0.666,
-    1.0, 0.666,
-    1.0, 1.0,
-    0.0, 0.666,
-    1.0, 1.0,
-    0.0, 1.0,
+    .{ 0.0, 0.666 },
+    .{ 1.0, 0.666 },
+    .{ 1.0, 0.333 },
+    .{ 0.0, 0.666 },
+    .{ 1.0, 0.333 },
+    .{ 0.0, 0.333 },
     // left
-    0.0, 0.666,
-    1.0, 0.666,
-    1.0, 1.0,
-    0.0, 0.666,
-    1.0, 1.0,
-    0.0, 1.0,
+    .{ 0.0, 0.666 },
+    .{ 1.0, 0.666 },
+    .{ 1.0, 0.333 },
+    .{ 0.0, 0.666 },
+    .{ 1.0, 0.333 },
+    .{ 0.0, 0.333 },
     // bottom
-    0.0, 0.333,
-    1.0, 0.333,
-    1.0, 0.666,
-    0.0, 0.333,
-    1.0, 0.666,
-    0.0, 0.666,
+    .{ 0.0, 0.666 },
+    .{ 1.0, 0.666 },
+    .{ 1.0, 1.0 },
+    .{ 0.0, 0.666 },
+    .{ 1.0, 1.0 },
+    .{ 0.0, 1.0 },
     // top
-    0.0, 0.0,
-    1.0, 0.0,
-    1.0, 0.333,
-    0.0, 0.0,
-    1.0, 0.333,
-    0.0, 0.333,
+    .{ 0.0, 0.0 },
+    .{ 1.0, 0.0 },
+    .{ 1.0, 0.333 },
+    .{ 0.0, 0.0 },
+    .{ 1.0, 0.333 },
+    .{ 0.0, 0.333 },
 };
 
-const normals: [108]gl.Float = .{
-    0.0,  0.0,  1.0, // front
-    0.0,  0.0,  1.0,
-    0.0,  0.0,  1.0,
-    0.0,  0.0,  1.0,
-    0.0,  0.0,  1.0,
-    0.0,  0.0,  1.0,
+const normals: [36][3]gl.Float = .{
+    // front
+    .{ 0.0, 0.0, 1.0 },
+    .{ 0.0, 0.0, 1.0 },
+    .{ 0.0, 0.0, 1.0 },
+    .{ 0.0, 0.0, 1.0 },
+    .{ 0.0, 0.0, 1.0 },
+    .{ 0.0, 0.0, 1.0 },
     // right
-    1.0,  0.0,  0.0,
-    1.0,  0.0,  0.0,
-    1.0,  0.0,  0.0,
-    1.0,  0.0,  0.0,
-    1.0,  0.0,  0.0,
-    1.0,  0.0,  0.0,
+    .{ 1.0, 0.0, 0.0 },
+    .{ 1.0, 0.0, 0.0 },
+    .{ 1.0, 0.0, 0.0 },
+    .{ 1.0, 0.0, 0.0 },
+    .{ 1.0, 0.0, 0.0 },
+    .{ 1.0, 0.0, 0.0 },
     // backl
-    0.0,  0.0,  -1.0,
-    0.0,  0.0,  -1.0,
-    0.0,  0.0,  -1.0,
-    0.0,  0.0,  -1.0,
-    0.0,  0.0,  -1.0,
-    0.0,  0.0,  -1.0,
+    .{ 0.0, 0.0, -1.0 },
+    .{ 0.0, 0.0, -1.0 },
+    .{ 0.0, 0.0, -1.0 },
+    .{ 0.0, 0.0, -1.0 },
+    .{ 0.0, 0.0, -1.0 },
+    .{ 0.0, 0.0, -1.0 },
     // left
-    -1.0, 0.0,  0.0,
-    -1.0, 0.0,  0.0,
-    -1.0, 0.0,  0.0,
-    -1.0, 0.0,  0.0,
-    -1.0, 0.0,  0.0,
-    -1.0, 0.0,  0.0,
+    .{ -1.0, 0.0, 0.0 },
+    .{ -1.0, 0.0, 0.0 },
+    .{ -1.0, 0.0, 0.0 },
+    .{ -1.0, 0.0, 0.0 },
+    .{ -1.0, 0.0, 0.0 },
+    .{ -1.0, 0.0, 0.0 },
     // bottom
-    0.0,  -1.0, 0.0,
-    0.0,  -1.0, 0.0,
-    0.0,  -1.0, 0.0,
-    0.0,  -1.0, 0.0,
-    0.0,  -1.0, 0.0,
-    0.0,  -1.0, 0.0,
+    .{ 0.0, -1.0, 0.0 },
+    .{ 0.0, -1.0, 0.0 },
+    .{ 0.0, -1.0, 0.0 },
+    .{ 0.0, -1.0, 0.0 },
+    .{ 0.0, -1.0, 0.0 },
+    .{ 0.0, -1.0, 0.0 },
     // top
-    0.0,  1.0,  0.0,
-    0.0,  1.0,  0.0,
-    0.0,  1.0,  0.0,
-    0.0,  1.0,  0.0,
-    0.0,  1.0,  0.0,
-    0.0,  1.0,  0.0,
+    .{ 0.0, 1.0, 0.0 },
+    .{ 0.0, 1.0, 0.0 },
+    .{ 0.0, 1.0, 0.0 },
+    .{ 0.0, 1.0, 0.0 },
+    .{ 0.0, 1.0, 0.0 },
+    .{ 0.0, 1.0, 0.0 },
 };
 
 pub const VoxelMesh = struct {
-    fn init(
+    blockId: i32,
+    voxelShape: voxelShape.VoxelShape,
+    voxel: zmesh.Shape,
+
+    pub fn init(
+        appState: *state.State,
+        vm: view.View,
         blockId: i32,
         alloc: std.mem.Allocator,
-        textureRGBAColors: []const gl.Uint,
-        worldTransform: [16]gl.Float,
-    ) !voxelShape.VoxelShape {
+    ) !VoxelMesh {
+        var block: data.block = undefined;
+        try appState.db.loadBlock(blockId, &block);
+
+        var indicesAL = std.ArrayList(u32).init(alloc);
+        defer indicesAL.deinit();
+        var _i = indices;
+        try indicesAL.appendSlice(&_i);
+
+        var positionsAL = std.ArrayList([3]gl.Float).init(alloc);
+        defer positionsAL.deinit();
+        var _p = positions;
+        try positionsAL.appendSlice(&_p);
+
+        var normalsAL = std.ArrayList([3]gl.Float).init(alloc);
+        defer normalsAL.deinit();
+        var _n = normals;
+        try normalsAL.appendSlice(&_n);
+
+        var texcoordsAL = std.ArrayList([2]gl.Float).init(alloc);
+        defer texcoordsAL.deinit();
+        var _t = texcoords;
+        try texcoordsAL.appendSlice(&_t);
+
         const vertexShaderSource = @embedFile("../shaders/voxel.vs");
         const fragmentShaderSource = @embedFile("../shaders/voxel.fs");
 
-        // positions and indices for a cube
-
-        var voxel = zmesh.Shape.init(indices, positions, normals, texcoords);
-        defer voxel.deinit();
-
-        return try voxelShape.VoxelShape.init(
+        const vs = try voxelShape.VoxelShape.init(
+            vm,
             blockId,
-            voxel,
             vertexShaderSource,
             fragmentShaderSource,
-            textureRGBAColors,
-            worldTransform,
+            &block.texture,
             alloc,
         );
+        const voxel = zmesh.Shape.init(indicesAL, positionsAL, normalsAL, texcoordsAL);
+        return .{
+            .blockId = blockId,
+            .voxelShape = vs,
+            .voxel = voxel,
+        };
     }
 
-    pub fn draw(s: *voxelShape.VoxelShape) !void {
-        try s.draw();
+    pub fn deinit(self: *VoxelMesh) void {
+        self.voxelShape.deinit();
+        self.voxel.deinit();
+    }
+
+    pub fn clear(self: *VoxelMesh) void {
+        self.voxelShape.clear();
+    }
+
+    pub fn initVoxel(
+        self: *VoxelMesh,
+        worldTransform: [16]gl.Float,
+    ) !void {
+        try self.voxelShape.addVoxelData(self.voxel, worldTransform);
+    }
+
+    pub fn draw(self: *VoxelMesh) !void {
+        try self.voxelShape.draw();
     }
 };

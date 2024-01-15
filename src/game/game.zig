@@ -123,12 +123,21 @@ pub const Game = struct {
         // init views
         var gameWorld = try world.World.initWithHUD(worldPlane, uiCursor, &appState.worldView);
         const chunk = appState.worldView.randomChunk(1337);
-        try appState.worldView.initChunk(&appState, chunk, self.allocator, position.Position{ .x = 0, .y = 0, .z = 0 });
+        try appState.worldView.initChunk(chunk, position.Position{ .x = 0, .y = 0, .z = 0 });
+        const chunk2 = appState.worldView.randomChunk(3000);
+        try appState.worldView.initChunk(chunk2, position.Position{ .x = 1, .y = 0, .z = 0 });
+        const chunk3 = appState.worldView.randomChunk(4000);
+        try appState.worldView.initChunk(chunk3, position.Position{ .x = -1, .y = 0, .z = 0 });
+        const chunk4 = appState.worldView.randomChunk(500);
+        try appState.worldView.initChunk(chunk4, position.Position{ .x = 0, .y = 0, .z = 1 });
+        try appState.worldView.writeChunks();
+
         var textureGen = try texture_gen.TextureGenerator.init(&appState, self.allocator);
         defer textureGen.deinit();
         var demoWorld = try world.World.init(&appState.demoView);
         const demoChunk = appState.demoView.randomChunk(9001);
-        try appState.demoView.initChunk(&appState, demoChunk, self.allocator, position.Position{ .x = 0, .y = 0, .z = 0 });
+        try appState.demoView.initChunk(demoChunk, position.Position{ .x = 0, .y = 0, .z = 0 });
+        try appState.demoView.writeChunks();
 
         var c = try controls.Controls.init(window, &appState);
         ctrls = &c;
@@ -136,8 +145,8 @@ pub const Game = struct {
         const skyColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 };
 
         // uncomment to start in a specific view:
-        // try appState.setGameView();
-        try appState.setChunkGeneratorView();
+        try appState.setGameView();
+        // try appState.setChunkGeneratorView();
 
         main_loop: while (!window.shouldClose()) {
             glfw.pollEvents();
