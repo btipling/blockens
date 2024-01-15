@@ -242,22 +242,6 @@ pub const Data = struct {
             std.log.err("Failed to update world: {}", .{err});
             return err;
         };
-
-        var insertStmt = try self.db.prepare(
-            struct {
-                name: sqlite.Text,
-            },
-            void,
-            insertWorldStmt,
-        );
-        defer insertStmt.deinit();
-
-        insertStmt.exec(
-            .{ .name = sqlite.text(name) },
-        ) catch |err| {
-            std.log.err("Failed to insert world: {}", .{err});
-            return err;
-        };
     }
 
     pub fn deleteWorld(self: *Data, id: i32) !void {
