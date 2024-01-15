@@ -154,44 +154,49 @@ const normals: [36][3]gl.Float = .{
 };
 
 pub const VoxelMesh = struct {
-    vm: view.View,
-    blocksMap: std.AutoHashMap(i32, data.block),
+    blockId: i32,
+    voxelShape: voxelShape.VoxelShape,
     alloc: std.mem.Allocator,
 
     pub fn init(
+        appState: *state.State,
         vm: view.View,
+        blockId: i32,
         alloc: std.mem.Allocator,
     ) !VoxelMesh {
+        var block: data.block = undefined;
+        try appState.db.loadBlock(blockId, &block);
+
+        const vertexShaderSource = @embedFile("../shaders/voxel.vs");
+        const fragmentShaderSource = @embedFile("../shaders/voxel.fs");
+
+        const vs = try voxelShape.VoxelShape.init(
+            vm,
+            blockId,
+            vertexShaderSource,
+            fragmentShaderSource,
+            &block.texture,
+            alloc,
+        );
         return .{
-            .vm = vm,
-            .blocksMap = std.AutoHashMap(i32, data.block).init(alloc),
+            .blockId = blockId,
+            .voxelShape = vs,
             .alloc = alloc,
         };
     }
 
-    pub fn deinit(mesh: *VoxelMesh) void {
-        mesh.blocksMap.deinit();
+    pub fn deinit(self: *VoxelMesh) void {
+        self.voxelShape.deinit();
     }
 
-    fn getBlock(self: *VoxelMesh, appState: *state.State, blockId: i32) !data.block {
-        if (self.blocksMap.get(blockId)) |block| {
-            return block;
-        }
-        var block: data.block = undefined;
-        try appState.db.loadBlock(blockId, &block);
-        try self.blocksMap.put(block.id, block);
-        return block;
+    pub fn clear(self: *VoxelMesh) void {
+        self.voxelShape.clear();
     }
 
     pub fn initVoxel(
         self: *VoxelMesh,
-        appState: *state.State,
-        blockId: i32,
         worldTransform: [16]gl.Float,
-    ) !voxelShape.VoxelShape {
-        const vertexShaderSource = @embedFile("../shaders/voxel.vs");
-        const fragmentShaderSource = @embedFile("../shaders/voxel.fs");
-
+    ) !void {
         var indicesAL = std.ArrayList(u32).init(self.alloc);
         defer indicesAL.deinit();
         var _i = indices;
@@ -215,17 +220,10 @@ pub const VoxelMesh = struct {
         var voxel = zmesh.Shape.init(indicesAL, positionsAL, normalsAL, texcoordsAL);
         defer voxel.deinit();
 
-        const block = try self.getBlock(appState, blockId);
+        try self.voxelShape.addVoxelData(voxel, worldTransform);
+    }
 
-        return try voxelShape.VoxelShape.init(
-            self.vm,
-            blockId,
-            voxel,
-            vertexShaderSource,
-            fragmentShaderSource,
-            &block.texture,
-            worldTransform,
-            self.alloc,
-        );
+    pub fn draw(self: *VoxelMesh) !void {
+        try self.voxelShape.draw();
     }
 };

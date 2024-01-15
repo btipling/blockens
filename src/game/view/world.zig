@@ -38,8 +38,9 @@ pub const World = struct {
             try _wp.draw(self.worldView.lookAt);
         }
 
-        for (self.worldView.shapes.items) |s| {
-            try s.draw();
+        var values = self.worldView.voxelMeshes.valueIterator();
+        while (values.next()) |v| {
+            try v.draw();
         }
 
         if (self.cursor) |c| {

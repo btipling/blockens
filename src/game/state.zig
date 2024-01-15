@@ -149,8 +149,7 @@ pub const ViewState = struct {
     alloc: std.mem.Allocator,
     view: view.View,
     blockOptions: std.ArrayList(data.blockOption),
-    voxelMesh: voxelMesh.VoxelMesh,
-    shapes: std.ArrayList(voxelShape.VoxelShape),
+    voxelMeshes: std.AutoHashMap(i32, voxelMesh.VoxelMesh),
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
@@ -180,8 +179,7 @@ pub const ViewState = struct {
             .alloc = alloc,
             .view = v,
             .blockOptions = std.ArrayList(data.blockOption).init(alloc),
-            .voxelMesh = try voxelMesh.VoxelMesh.init(v, alloc),
-            .shapes = std.ArrayList(voxelShape.VoxelShape).init(alloc),
+            .voxelMeshes = std.AutoHashMap(i32, voxelMesh.VoxelMesh).init(alloc),
             .cameraPos = initialCameraPos,
             .cameraFront = initialCameraFront,
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
@@ -203,9 +201,12 @@ pub const ViewState = struct {
     }
 
     pub fn deinit(self: *ViewState) void {
-        self.voxelMesh.deinit();
-        self.shapes.deinit();
         self.blockOptions.deinit();
+        var values = self.voxelMeshes.valueIterator();
+        while (values.next()) |v| {
+            v.deinit();
+        }
+        self.voxelMeshes.deinit();
     }
 
     fn clearViewState(self: *ViewState) !void {
@@ -224,6 +225,16 @@ pub const ViewState = struct {
 
     pub fn initBlocks(self: *ViewState, appState: *State) !void {
         try appState.db.listBlocks(&self.blockOptions);
+        for (self.blockOptions.items) |blockOption| {
+            var vm = try voxelMesh.VoxelMesh.init(
+                appState,
+                self.view,
+                blockOption.id,
+                self.alloc,
+            );
+            _ = &vm;
+            try self.voxelMeshes.put(blockOption.id, vm);
+        }
     }
 
     pub fn rotateWorld(self: *ViewState) !void {
@@ -284,12 +295,9 @@ pub const ViewState = struct {
         return chunk;
     }
 
-    pub fn initChunk(self: *ViewState, appState: *State, chunk: [chunkSize]i32, alloc: std.mem.Allocator, chunkPosition: position.Position) !void {
+    pub fn initChunk(self: *ViewState, chunk: [chunkSize]i32, chunkPosition: position.Position) !void {
         self.view.bind();
-        var blockTransforms = std.ArrayList(voxelShape.VoxelShape).init(alloc);
-        defer blockTransforms.deinit();
         const temp_limit = 1000;
-        try blockTransforms.ensureTotalCapacity(temp_limit);
         for (chunk, 0..) |blockId, i| {
             if (blockId == 0) {
                 continue;
@@ -300,24 +308,27 @@ pub const ViewState = struct {
             const m = zm.translation(x, y, z);
             var worldTransform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
             zm.storeMat(&worldTransform, m);
-            const voxel = try self.voxelMesh.initVoxel(
-                appState,
-                blockId,
-                worldTransform,
-            );
-            blockTransforms.appendAssumeCapacity(voxel);
-            if (blockTransforms.items.len >= temp_limit) {
+            if (self.voxelMeshes.get(blockId)) |vm| {
+                var _vm = vm;
+                try _vm.initVoxel(worldTransform);
+                try self.voxelMeshes.put(blockId, _vm);
+            } else {
+                std.debug.print("No voxel mesh for block id: {d}\n", .{blockId});
+            }
+            if (i >= temp_limit) {
                 break;
             }
         }
-        try self.shapes.appendSlice(blockTransforms.items);
 
         self.view.unbind();
     }
 
     pub fn clearChunks(self: *ViewState) !void {
         self.view.bind();
-        self.shapes.clearRetainingCapacity();
+        var values = self.voxelMeshes.valueIterator();
+        while (values.next()) |v| {
+            v.clear();
+        }
         self.view.unbind();
     }
 

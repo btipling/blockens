@@ -139,13 +139,13 @@ pub const ChunkGenerator = struct {
     fn generateRandomChunk(self: *ChunkGenerator) !void {
         try self.appState.demoView.clearChunks();
         const demoChunk = self.appState.demoView.randomChunk(9001);
-        try self.appState.demoView.initChunk(self.appState, demoChunk, self.alloc, position.Position{ .x = 0, .y = 0, .z = 0 });
+        try self.appState.demoView.initChunk(demoChunk, position.Position{ .x = 0, .y = 0, .z = 0 });
     }
 
     fn evalChunkFunc(self: *ChunkGenerator) !void {
         std.debug.print("chunk gen: evalChunkFunc from lua\n", .{});
         try self.appState.demoView.clearChunks();
         const demoChunk = try self.script.evalChunkFunc(self.buf);
-        try self.appState.demoView.initChunk(self.appState, demoChunk, self.alloc, position.Position{ .x = 0, .y = 0, .z = 0 });
+        try self.appState.demoView.initChunk(demoChunk, position.Position{ .x = 0, .y = 0, .z = 0 });
     }
 };

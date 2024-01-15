@@ -23,59 +23,40 @@ const bcV1 = @Vector(3, gl.Float){ 1.0, 0.0, 0.0 };
 const bcV2 = @Vector(3, gl.Float){ 0.0, 1.0, 0.0 };
 const bcV3 = @Vector(3, gl.Float){ 0.0, 0.0, 1.0 };
 
-pub const VoxelShape = struct {
+pub const VoxelData = struct {
     blockId: i32,
     vao: gl.Uint,
     vbo: gl.Uint,
     ebo: gl.Uint,
-    texture: gl.Uint,
     numIndices: gl.Int,
-    program: gl.Uint,
-    highlight: gl.Int,
     worldspaceVBO: gl.Uint,
-
     pub fn init(
-        vm: view.View,
         blockId: i32,
         shape: zmesh.Shape,
-        vertexShaderSource: [:0]const u8,
-        fragmentShaderSource: [:0]const u8,
-        textureRGBAColor: []const gl.Uint,
         worldTransform: [16]gl.Float,
         alloc: std.mem.Allocator,
-    ) !VoxelShape {
+    ) !VoxelData {
         const vao = try initVAO(blockId);
-        const vertexShader = try initVertexShader(blockId, vertexShaderSource);
-        const fragmentShader = try initFragmentShader(blockId, fragmentShaderSource);
         const vbo = try initVBO(blockId);
         const ebo = try initEBO(blockId, shape.indices);
-        const program = try initProgram(blockId, &[_]gl.Uint{ vertexShader, fragmentShader });
-        const texture = try initTextureFromColors(blockId, textureRGBAColor);
         const worldspaceVBO = try initData(blockId, shape, worldTransform, alloc);
-        try setUniforms(blockId, program, vm);
-        return VoxelShape{
+        return VoxelData{
             .blockId = blockId,
             .vao = vao,
             .vbo = vbo,
             .ebo = ebo,
-            .texture = texture,
             .numIndices = @intCast(shape.indices.len),
-            .program = program,
-            .highlight = 0,
             .worldspaceVBO = worldspaceVBO,
         };
     }
 
-    pub fn deinit(self: *const VoxelShape) void {
+    pub fn deinit(self: VoxelData) void {
         gl.deleteVertexArrays(1, &self.vao);
-        gl.deleteProgram(self.program);
         gl.deleteBuffers(1, &self.vbo);
         gl.deleteBuffers(1, &self.ebo);
-        gl.deleteTextures(1, &self.texture);
-        gl.deleteBuffers(1, &self.instanceVBO);
+        gl.deleteBuffers(1, &self.worldspaceVBO);
         return;
     }
-
     pub fn initVAO(blockId: i32) !gl.Uint {
         var VAO: gl.Uint = undefined;
         gl.genVertexArrays(1, &VAO);
@@ -124,6 +105,165 @@ pub const VoxelShape = struct {
             return VoxelShapeErr.RenderError;
         }
         return EBO;
+    }
+
+    fn initData(blockId: i32, shaderData: zmesh.Shape, worldspaceTF: [16]gl.Float, alloc: std.mem.Allocator) !gl.Uint {
+        var vertices = try std.ArrayList(VoxelShapeVertex).initCapacity(alloc, shaderData.positions.len);
+        defer vertices.deinit();
+
+        var tc: [2]gl.Float = [_]gl.Float{ 0.0, 0.0 };
+        for (0..shaderData.positions.len) |i| {
+            if (shaderData.texcoords) |t| {
+                tc = t[i];
+            }
+            const defaultBC = @Vector(3, gl.Float){ 0.0, 0.0, 0.0 };
+            const defaultEdge = @Vector(2, gl.Float){ 0.0, 0.0 };
+            const vtx = VoxelShapeVertex{
+                .position = shaderData.positions[i],
+                .texture = tc,
+                .barycentric = defaultBC,
+                .edge = defaultEdge,
+            };
+            vertices.appendAssumeCapacity(vtx);
+        }
+        const size = @as(isize, @intCast(vertices.items.len * @sizeOf(VoxelShapeVertex)));
+        const dataptr: *const anyopaque = vertices.items.ptr;
+        gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
+        const posSize: gl.Int = 3;
+        const texSize: gl.Int = 2;
+        const barycentricSize: gl.Int = 3;
+        const edgeSize: gl.Int = 2;
+        const stride: gl.Int = posSize + texSize + barycentricSize + edgeSize;
+        var offset: gl.Uint = posSize;
+        var curArr: gl.Uint = 0;
+        gl.vertexAttribPointer(curArr, posSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), null);
+        gl.enableVertexAttribArray(curArr);
+        curArr += 1;
+        gl.vertexAttribPointer(curArr, texSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
+        gl.enableVertexAttribArray(curArr);
+        offset += texSize;
+        curArr += 1;
+        gl.vertexAttribPointer(curArr, barycentricSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
+        gl.enableVertexAttribArray(curArr);
+        offset += barycentricSize;
+        curArr += 1;
+        gl.vertexAttribPointer(curArr, edgeSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
+        gl.enableVertexAttribArray(curArr);
+        const e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{d} voxel init data error: {d}\n", .{ blockId, e });
+            return VoxelShapeErr.RenderError;
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, 0);
+
+        // init worldspace VBO data
+        var worldspaceVBO: gl.Uint = undefined;
+        gl.genBuffers(1, &worldspaceVBO);
+        gl.bindBuffer(gl.ARRAY_BUFFER, worldspaceVBO);
+
+        const tfSize = @as(isize, @intCast(worldspaceTF.len * @sizeOf(gl.Float)));
+        gl.bufferData(gl.ARRAY_BUFFER, tfSize, &worldspaceTF, gl.STATIC_DRAW);
+        // have to set up 4 consecutive attributes for the matrix
+
+        gl.enableVertexAttribArray(4);
+        gl.vertexAttribPointer(4, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, null);
+        gl.enableVertexAttribArray(5);
+        gl.vertexAttribPointer(5, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(@sizeOf(gl.Float) * 4)));
+        gl.enableVertexAttribArray(6);
+        gl.vertexAttribPointer(6, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(2 * @sizeOf(gl.Float) * 4)));
+        gl.enableVertexAttribArray(7);
+        gl.vertexAttribPointer(7, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(3 * @sizeOf(gl.Float) * 4)));
+
+        gl.vertexAttribDivisor(4, 1);
+        gl.vertexAttribDivisor(5, 1);
+        gl.vertexAttribDivisor(6, 1);
+        gl.vertexAttribDivisor(7, 1);
+        gl.bindBuffer(gl.ARRAY_BUFFER, 0);
+
+        return worldspaceVBO;
+    }
+
+    pub fn draw(self: VoxelData) !void {
+        gl.bindVertexArray(self.vao);
+        var e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{d} voxel draw bind vertex array error: {d}\n", .{ self.blockId, e });
+            return VoxelShapeErr.RenderError;
+        }
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, self.worldspaceVBO);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{d} voxel draw bind worldspace vbo error: {d}\n", .{ self.blockId, e });
+            return VoxelShapeErr.RenderError;
+        }
+
+        gl.drawElements(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null);
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{d} voxel draw draw elements error: {d}\n", .{ self.blockId, e });
+            return VoxelShapeErr.RenderError;
+        }
+    }
+};
+
+pub const VoxelShape = struct {
+    blockId: i32,
+    texture: gl.Uint,
+    program: gl.Uint,
+    voxelData: std.ArrayList(VoxelData),
+    alloc: std.mem.Allocator,
+
+    pub fn init(
+        vm: view.View,
+        blockId: i32,
+        vertexShaderSource: [:0]const u8,
+        fragmentShaderSource: [:0]const u8,
+        textureRGBAColor: []const gl.Uint,
+        alloc: std.mem.Allocator,
+    ) !VoxelShape {
+        const vertexShader = try initVertexShader(blockId, vertexShaderSource);
+        const fragmentShader = try initFragmentShader(blockId, fragmentShaderSource);
+        const program = try initProgram(blockId, &[_]gl.Uint{ vertexShader, fragmentShader });
+        const texture = try initTextureFromColors(blockId, textureRGBAColor);
+        try setUniforms(blockId, program, vm);
+        return VoxelShape{
+            .blockId = blockId,
+            .texture = texture,
+            .program = program,
+            .voxelData = std.ArrayList(VoxelData).init(alloc),
+            .alloc = alloc,
+        };
+    }
+
+    pub fn deinit(self: *const VoxelShape) void {
+        gl.deleteProgram(self.program);
+        gl.deleteTextures(1, &self.texture);
+        for (self.voxelData.items) |vs| {
+            vs.deinit();
+        }
+        self.voxelData.deinit();
+        return;
+    }
+
+    pub fn addVoxelData(
+        self: *VoxelShape,
+        shape: zmesh.Shape,
+        worldTransform: [16]gl.Float,
+    ) !void {
+        gl.useProgram(self.program);
+        const e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{d} voxel draw error: {d}\n", .{ self.blockId, e });
+            return VoxelShapeErr.RenderError;
+        }
+        var vd = try VoxelData.init(self.blockId, shape, worldTransform, self.alloc);
+        _ = &vd;
+        try self.voxelData.append(vd);
+        return;
+    }
+
+    pub fn clear(self: *VoxelShape) void {
+        self.voxelData.clearRetainingCapacity();
     }
 
     pub fn initVertexShader(blockId: i32, vertexShaderSource: [:0]const u8) !gl.Uint {
@@ -271,82 +411,6 @@ pub const VoxelShape = struct {
         gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, vm.ubo);
     }
 
-    fn initData(blockId: i32, shaderData: zmesh.Shape, worldspaceTF: [16]gl.Float, alloc: std.mem.Allocator) !gl.Uint {
-        var vertices = try std.ArrayList(VoxelShapeVertex).initCapacity(alloc, shaderData.positions.len);
-        defer vertices.deinit();
-
-        var tc: [2]gl.Float = [_]gl.Float{ 0.0, 0.0 };
-        for (0..shaderData.positions.len) |i| {
-            if (shaderData.texcoords) |t| {
-                tc = t[i];
-            }
-            const defaultBC = @Vector(3, gl.Float){ 0.0, 0.0, 0.0 };
-            const defaultEdge = @Vector(2, gl.Float){ 0.0, 0.0 };
-            const vtx = VoxelShapeVertex{
-                .position = shaderData.positions[i],
-                .texture = tc,
-                .barycentric = defaultBC,
-                .edge = defaultEdge,
-            };
-            vertices.appendAssumeCapacity(vtx);
-        }
-        const size = @as(isize, @intCast(vertices.items.len * @sizeOf(VoxelShapeVertex)));
-        const dataptr: *const anyopaque = vertices.items.ptr;
-        gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
-        const posSize: gl.Int = 3;
-        const texSize: gl.Int = 2;
-        const barycentricSize: gl.Int = 3;
-        const edgeSize: gl.Int = 2;
-        const stride: gl.Int = posSize + texSize + barycentricSize + edgeSize;
-        var offset: gl.Uint = posSize;
-        var curArr: gl.Uint = 0;
-        gl.vertexAttribPointer(curArr, posSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), null);
-        gl.enableVertexAttribArray(curArr);
-        curArr += 1;
-        gl.vertexAttribPointer(curArr, texSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
-        gl.enableVertexAttribArray(curArr);
-        offset += texSize;
-        curArr += 1;
-        gl.vertexAttribPointer(curArr, barycentricSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
-        gl.enableVertexAttribArray(curArr);
-        offset += barycentricSize;
-        curArr += 1;
-        gl.vertexAttribPointer(curArr, edgeSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
-        gl.enableVertexAttribArray(curArr);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel init data error: {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
-        gl.bindBuffer(gl.ARRAY_BUFFER, 0);
-
-        // init worldspace VBO data
-        var worldspaceVBO: gl.Uint = undefined;
-        gl.genBuffers(1, &worldspaceVBO);
-        gl.bindBuffer(gl.ARRAY_BUFFER, worldspaceVBO);
-
-        const tfSize = @as(isize, @intCast(worldspaceTF.len * @sizeOf(gl.Float)));
-        gl.bufferData(gl.ARRAY_BUFFER, tfSize, &worldspaceTF, gl.STATIC_DRAW);
-        // have to set up 4 consecutive attributes for the matrix
-
-        gl.enableVertexAttribArray(4);
-        gl.vertexAttribPointer(4, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, null);
-        gl.enableVertexAttribArray(5);
-        gl.vertexAttribPointer(5, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(@sizeOf(gl.Float) * 4)));
-        gl.enableVertexAttribArray(6);
-        gl.vertexAttribPointer(6, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(2 * @sizeOf(gl.Float) * 4)));
-        gl.enableVertexAttribArray(7);
-        gl.vertexAttribPointer(7, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(3 * @sizeOf(gl.Float) * 4)));
-
-        gl.vertexAttribDivisor(4, 1);
-        gl.vertexAttribDivisor(5, 1);
-        gl.vertexAttribDivisor(6, 1);
-        gl.vertexAttribDivisor(7, 1);
-        gl.bindBuffer(gl.ARRAY_BUFFER, 0);
-
-        return worldspaceVBO;
-    }
-
     pub fn draw(self: VoxelShape) !void {
         gl.useProgram(self.program);
         var e = gl.getError();
@@ -363,34 +427,8 @@ pub const VoxelShape = struct {
             return VoxelShapeErr.RenderError;
         }
 
-        gl.bindVertexArray(self.vao);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel draw bind vertex array error: {d}\n", .{ self.blockId, e });
-            return VoxelShapeErr.RenderError;
+        for (self.voxelData.items) |vs| {
+            try vs.draw();
         }
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, self.worldspaceVBO);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel draw bind worldspace vbo error: {d}\n", .{ self.blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
-
-        gl.uniform1i(gl.getUniformLocation(self.program, "highlight"), self.highlight);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel draw error setting highlighted: {d}\n", .{ self.blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
-
-        gl.drawElements(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null);
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel draw draw elements error: {d}\n", .{ self.blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
-
-        // renable depth test
-        gl.enable(gl.DEPTH_TEST);
     }
 };
