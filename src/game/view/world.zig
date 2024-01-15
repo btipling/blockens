@@ -38,6 +38,11 @@ pub const World = struct {
             try _wp.draw(self.worldView.lookAt);
         }
 
+        var instanceShapes = self.worldView.cubesMap.valueIterator();
+        while (instanceShapes.next()) |is| {
+            try cube.Cube.drawInstanced(is);
+        }
+
         var values = self.worldView.voxelMeshes.valueIterator();
         while (values.next()) |v| {
             try v.draw();
