@@ -33,6 +33,10 @@ pub const World = struct {
     }
 
     pub fn draw(self: *World) !void {
+        if (self.worldView.wireframe) {
+            gl.polygonMode(gl.FRONT_AND_BACK, gl.LINE);
+        }
+
         if (self.worldPlane) |wp| {
             var _wp = wp;
             try _wp.draw(self.worldView.lookAt);
@@ -51,6 +55,9 @@ pub const World = struct {
         if (self.cursor) |c| {
             var _c = c;
             try _c.draw(self.worldView.lookAt);
+        }
+        if (self.worldView.wireframe) {
+            gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
         }
     }
 };

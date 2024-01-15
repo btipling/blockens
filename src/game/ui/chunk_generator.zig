@@ -134,6 +134,13 @@ pub const ChunkGenerator = struct {
             })) {
                 try self.evalChunkFunc();
             }
+            zgui.sameLine(.{});
+            if (zgui.button("Toggle wireframe", .{
+                .w = 500,
+                .h = 100,
+            })) {
+                self.appState.demoView.toggleWireframe();
+            }
             zgui.popStyleVar(.{ .count = 1 });
             zgui.pushFont(self.codeFont);
             _ = zgui.inputTextMultiline(" ", .{

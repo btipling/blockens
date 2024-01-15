@@ -173,6 +173,7 @@ pub const ViewState = struct {
     pitch: gl.Float,
     highlightedIndex: ?usize = 0,
     disableScreenTransform: bool,
+    wireframe: bool = false,
     pub fn init(
         alloc: std.mem.Allocator,
         v: view.View,
@@ -390,6 +391,10 @@ pub const ViewState = struct {
             }
         }
         self.view.unbind();
+    }
+
+    pub fn toggleWireframe(self: *ViewState) void {
+        self.wireframe = !self.wireframe;
     }
 
     pub fn initChunks(self: *ViewState, appState: *State) !void {
