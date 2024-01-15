@@ -288,7 +288,7 @@ pub const ViewState = struct {
         self.view.bind();
         var blockTransforms = std.ArrayList(voxelShape.VoxelShape).init(alloc);
         defer blockTransforms.deinit();
-        const temp_limit = 3;
+        const temp_limit = 1000;
         try blockTransforms.ensureTotalCapacity(temp_limit);
         for (chunk, 0..) |blockId, i| {
             if (blockId == 0) {
