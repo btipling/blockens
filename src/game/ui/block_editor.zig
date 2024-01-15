@@ -7,6 +7,7 @@ const shape = @import("../shape/shape.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
+const builder_menu = @import("builder_menu.zig");
 
 pub const BlockEditor = struct {
     loadedBlockId: i32,
@@ -18,8 +19,15 @@ pub const BlockEditor = struct {
     codeFont: zgui.Font,
     blockOptions: std.ArrayList(data.blockOption),
     scriptOptions: std.ArrayList(data.scriptOption),
+    bm: builder_menu.BuilderMenu,
 
-    pub fn init(appState: *state.State, codeFont: zgui.Font, sc: script.Script, alloc: std.mem.Allocator) !BlockEditor {
+    pub fn init(
+        appState: *state.State,
+        codeFont: zgui.Font,
+        sc: script.Script,
+        bm: builder_menu.BuilderMenu,
+        alloc: std.mem.Allocator,
+    ) !BlockEditor {
         const createNameBuf = [_]u8{0} ** data.maxBlockSizeName;
         const updateNameBuf = [_]u8{0} ** data.maxBlockSizeName;
         var tv = BlockEditor{
@@ -32,6 +40,7 @@ pub const BlockEditor = struct {
             .codeFont = codeFont,
             .blockOptions = std.ArrayList(data.blockOption).init(alloc),
             .scriptOptions = std.ArrayList(data.scriptOption).init(alloc),
+            .bm = bm,
         };
         try BlockEditor.listBlocks(&tv);
         try BlockEditor.listTextureScripts(&tv);
@@ -74,6 +83,7 @@ pub const BlockEditor = struct {
                 .no_collapse = true,
             },
         })) {
+            try self.bm.draw(window);
             try self.drawBlockOptions();
             if (self.loadedBlockId != 0) {
                 zgui.sameLine(.{});

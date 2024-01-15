@@ -61,33 +61,18 @@ pub const Controls = struct {
     }
 
     pub fn handleKey(self: *Controls) !bool {
-        if (self.window.getKey(.escape) == .press) {
+        if (self.window.getKey(.escape) == .press and self.window.getKey(.left_shift) == .press) {
             return true;
+        }
+
+        if (self.window.getKey(.F1) == .press) {
+            self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.normal);
+            try self.appState.setTextureGeneratorView();
         }
 
         if (self.window.getKey(.F2) == .press) {
             self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.disabled);
             try self.appState.setGameView();
-        }
-
-        if (self.window.getKey(.F3) == .press) {
-            self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.normal);
-            try self.appState.setTextureGeneratorView();
-        }
-
-        if (self.window.getKey(.F4) == .press) {
-            self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.normal);
-            try self.appState.setWorldEditorView();
-        }
-
-        if (self.window.getKey(.F5) == .press) {
-            self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.normal);
-            try self.appState.setBlockEditorView();
-        }
-
-        if (self.window.getKey(.F6) == .press) {
-            self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.normal);
-            try self.appState.setChunkGeneratorView();
         }
 
         switch (self.appState.app.view) {

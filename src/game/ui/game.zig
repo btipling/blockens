@@ -38,7 +38,7 @@ pub const Game = struct {
             },
         })) {
             zgui.text("Hello btzig-blockens!", .{});
-            zgui.text("Press escape to quit.", .{});
+            zgui.text("F1 for settings", .{});
             const x = @as(i32, @intFromFloat(self.appState.worldView.cameraPos[0]));
             const y = @as(i32, @intFromFloat(self.appState.worldView.cameraPos[1]));
             const z = @as(i32, @intFromFloat(self.appState.worldView.cameraPos[2]));

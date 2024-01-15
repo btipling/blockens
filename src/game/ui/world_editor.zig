@@ -6,6 +6,7 @@ const config = @import("../config.zig");
 const shape = @import("../shape/shape.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
+const builder_menu = @import("builder_menu.zig");
 
 const maxWorldSizeName = 20;
 
@@ -16,8 +17,14 @@ pub const WorldEditor = struct {
     codeFont: zgui.Font,
     worldOptions: std.ArrayList(data.worldOption),
     loadedWorldId: u32 = 0,
+    bm: builder_menu.BuilderMenu,
 
-    pub fn init(appState: *state.State, codeFont: zgui.Font, alloc: std.mem.Allocator) !WorldEditor {
+    pub fn init(
+        appState: *state.State,
+        codeFont: zgui.Font,
+        bm: builder_menu.BuilderMenu,
+        alloc: std.mem.Allocator,
+    ) !WorldEditor {
         const createNameBuf = [_]u8{0} ** maxWorldSizeName;
         const updateNameBuf = [_]u8{0} ** maxWorldSizeName;
         var tv = WorldEditor{
@@ -26,6 +33,7 @@ pub const WorldEditor = struct {
             .updateNameBuf = updateNameBuf,
             .codeFont = codeFont,
             .worldOptions = std.ArrayList(data.worldOption).init(alloc),
+            .bm = bm,
         };
         try WorldEditor.listWorlds(&tv);
         return tv;
@@ -66,6 +74,7 @@ pub const WorldEditor = struct {
                 .no_collapse = true,
             },
         })) {
+            try self.bm.draw(window);
             try self.drawWorldOptions();
             if (self.loadedWorldId != 0) {
                 zgui.sameLine(.{});

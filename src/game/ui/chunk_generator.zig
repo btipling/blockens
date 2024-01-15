@@ -8,6 +8,7 @@ const shape = @import("../shape/shape.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
+const builder_menu = @import("builder_menu.zig");
 
 const maxWorldSizeName = 20;
 
@@ -17,8 +18,15 @@ pub const ChunkGenerator = struct {
     alloc: std.mem.Allocator,
     buf: [script.maxLuaScriptSize]u8,
     codeFont: zgui.Font,
+    bm: builder_menu.BuilderMenu,
 
-    pub fn init(appState: *state.State, codeFont: zgui.Font, sc: script.Script, alloc: std.mem.Allocator) !ChunkGenerator {
+    pub fn init(
+        appState: *state.State,
+        codeFont: zgui.Font,
+        sc: script.Script,
+        bm: builder_menu.BuilderMenu,
+        alloc: std.mem.Allocator,
+    ) !ChunkGenerator {
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
         const defaultLuaScript = @embedFile("../script/lua/chunk_gen_hole.lua");
         for (defaultLuaScript, 0..) |c, i| {
@@ -30,6 +38,7 @@ pub const ChunkGenerator = struct {
             .alloc = alloc,
             .buf = buf,
             .codeFont = codeFont,
+            .bm = bm,
         };
         return tv;
     }
@@ -72,6 +81,7 @@ pub const ChunkGenerator = struct {
                 .no_collapse = true,
             },
         })) {
+            try self.bm.draw(window);
             try self.drawControls();
             try self.drawInput();
         }

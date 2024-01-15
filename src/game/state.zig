@@ -24,6 +24,7 @@ pub const State = struct {
     worldView: ViewState,
     demoView: ViewState,
     db: data.Data,
+    exit: bool = false,
 
     pub fn init(alloc: std.mem.Allocator, sqliteAlloc: std.mem.Allocator) !State {
         var db = try data.Data.init(sqliteAlloc);
@@ -106,6 +107,10 @@ pub const State = struct {
         try self.clearViewState();
         try self.demoView.focusView();
         self.app.view = View.chunkGenerator;
+    }
+
+    pub fn exitGame(self: *State) !void {
+        self.exit = true;
     }
 };
 

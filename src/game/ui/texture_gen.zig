@@ -6,6 +6,7 @@ const config = @import("../config.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
+const builder_menu = @import("builder_menu.zig");
 
 pub const TextureGen = struct {
     script: script.Script,
@@ -15,8 +16,15 @@ pub const TextureGen = struct {
     codeFont: zgui.Font,
     scriptOptions: std.ArrayList(data.scriptOption),
     loadedScriptId: i32 = 0,
+    bm: builder_menu.BuilderMenu,
 
-    pub fn init(appState: *state.State, codeFont: zgui.Font, sc: script.Script, alloc: std.mem.Allocator) !TextureGen {
+    pub fn init(
+        appState: *state.State,
+        codeFont: zgui.Font,
+        sc: script.Script,
+        bm: builder_menu.BuilderMenu,
+        alloc: std.mem.Allocator,
+    ) !TextureGen {
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
         const nameBuf = [_]u8{0} ** script.maxLuaScriptNameSize;
         const defaultLuaScript = @embedFile("../script/lua/gen_wood_texture.lua");
@@ -30,6 +38,7 @@ pub const TextureGen = struct {
             .nameBuf = nameBuf,
             .codeFont = codeFont,
             .scriptOptions = std.ArrayList(data.scriptOption).init(alloc),
+            .bm = bm,
         };
         try TextureGen.listTextureScripts(&tv);
         return tv;
@@ -70,6 +79,7 @@ pub const TextureGen = struct {
                 .no_collapse = true,
             },
         })) {
+            try self.bm.draw(window);
             try self.drawInput();
             zgui.sameLine(.{});
             try self.drawScriptList();
