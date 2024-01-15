@@ -344,9 +344,10 @@ pub const ViewState = struct {
             if (blockId == 0) {
                 continue;
             }
-            const x = @as(gl.Float, @floatFromInt(@mod(i, chunk.chunkDim))) + (chunkPosition.x * chunk.chunkDim);
-            const y = @as(gl.Float, @floatFromInt(@mod(i / chunk.chunkDim, chunk.chunkDim))) + (chunkPosition.y * chunk.chunkDim);
-            const z = @as(gl.Float, @floatFromInt(i / (chunk.chunkDim * chunk.chunkDim))) + (chunkPosition.z * chunk.chunkDim);
+            const p = chunk.Chunk.getPositionAtIndex(i);
+            const x = p.x + (chunkPosition.x * chunk.chunkDim);
+            const y = p.y + (chunkPosition.y * chunk.chunkDim);
+            const z = p.z + (chunkPosition.z * chunk.chunkDim);
             const m = zm.translation(x, y, z);
             var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
             zm.storeMat(&transform, m);
