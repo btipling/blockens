@@ -345,7 +345,7 @@ pub const ViewState = struct {
 
         var keys = perBlockTransforms.keyIterator();
         while (keys.next()) |_k| {
-            if (@TypeOf(_k) == *u32) {
+            if (@TypeOf(_k) == *i32) {
                 const k = _k.*;
                 if (perBlockTransforms.get(k)) |blockTransforms| {
                     var _blockTransforms = blockTransforms;
