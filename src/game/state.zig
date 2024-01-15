@@ -152,6 +152,7 @@ pub const ViewState = struct {
     blockOptions: std.ArrayList(data.blockOption),
     cubesMap: std.AutoHashMap(i32, instancedShape.InstancedShape),
     voxelMeshes: std.AutoHashMap(i32, voxelMesh.VoxelMesh),
+    perBlockTransforms: std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShapeTransform)),
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
@@ -183,6 +184,7 @@ pub const ViewState = struct {
             .blockOptions = std.ArrayList(data.blockOption).init(alloc),
             .cubesMap = std.AutoHashMap(i32, instancedShape.InstancedShape).init(alloc),
             .voxelMeshes = std.AutoHashMap(i32, voxelMesh.VoxelMesh).init(alloc),
+            .perBlockTransforms = std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShapeTransform)).init(alloc),
             .cameraPos = initialCameraPos,
             .cameraFront = initialCameraFront,
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
@@ -215,6 +217,7 @@ pub const ViewState = struct {
             v.deinit();
         }
         self.voxelMeshes.deinit();
+        self.perBlockTransforms.deinit();
     }
 
     fn clearViewState(self: *ViewState) !void {
@@ -328,8 +331,6 @@ pub const ViewState = struct {
 
     pub fn initChunk(self: *ViewState, chunk: [chunkSize]i32, chunkPosition: position.Position) !void {
         self.view.bind();
-        var perBlockTransforms = std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShapeTransform)).init(self.alloc);
-        defer perBlockTransforms.deinit();
 
         const meshVoxels = false;
         for (chunk, 0..) |blockId, i| {
@@ -352,29 +353,35 @@ pub const ViewState = struct {
                 }
             } else {
                 const t = instancedShape.InstancedShapeTransform{ .transform = transform };
-                if (perBlockTransforms.get(blockId)) |blockTransforms| {
+                if (self.perBlockTransforms.get(blockId)) |blockTransforms| {
                     var _blockTransforms = blockTransforms;
                     try _blockTransforms.append(t);
-                    try perBlockTransforms.put(blockId, _blockTransforms);
+                    try self.perBlockTransforms.put(blockId, _blockTransforms);
                 } else {
                     var blockTransforms = std.ArrayList(instancedShape.InstancedShapeTransform).init(self.alloc);
                     try blockTransforms.append(t);
-                    try perBlockTransforms.put(blockId, blockTransforms);
+                    try self.perBlockTransforms.put(blockId, blockTransforms);
                 }
             }
         }
 
-        var keys = perBlockTransforms.keyIterator();
+        self.view.unbind();
+    }
+
+    pub fn writeChunks(self: *ViewState) !void {
+        self.view.bind();
+
+        var keys = self.perBlockTransforms.keyIterator();
         while (keys.next()) |_k| {
             if (@TypeOf(_k) == *i32) {
                 const k = _k.*;
-                if (perBlockTransforms.get(k)) |blockTransforms| {
+                if (self.perBlockTransforms.get(k)) |blockTransforms| {
                     var _blockTransforms = blockTransforms;
                     try self.writeAndClear(k, &_blockTransforms);
                 }
             }
         }
-        var values = perBlockTransforms.valueIterator();
+        var values = self.perBlockTransforms.valueIterator();
         while (values.next()) |v| {
             v.deinit();
         }
