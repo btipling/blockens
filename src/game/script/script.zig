@@ -3,6 +3,7 @@ const ziglua = @import("ziglua");
 const gl = @import("zopengl");
 const data = @import("../data/data.zig");
 const state = @import("../state.zig");
+const chunk = @import("../chunk.zig");
 
 const Lua = ziglua.Lua;
 
@@ -77,7 +78,7 @@ pub const Script = struct {
         return textureRGBAColor;
     }
 
-    pub fn evalChunkFunc(self: *Script, buf: [maxLuaScriptSize]u8) ![state.chunkSize]gl.Int {
+    pub fn evalChunkFunc(self: *Script, buf: [maxLuaScriptSize]u8) !chunk.Chunk {
         std.debug.print("evalChunkFunc from lua {d}\n", .{buf.len});
         var luaCode: [maxLuaScriptSize]u8 = [_]u8{0} ** maxLuaScriptSize;
         var nullIndex: usize = 0;
@@ -114,17 +115,17 @@ pub const Script = struct {
             std.log.err("evalChunkFunc: chunks is not back to a table", .{});
             return ScriptError.ExpectedTable;
         }
-        var chunk: [state.chunkSize]gl.Int = [_]gl.Int{0} ** state.chunkSize;
+        var c = chunk.Chunk.init();
         for (1..(ts + 1)) |i| {
             _ = self.luaInstance.rawGetIndex(-1, @intCast(i));
             const blockId = self.luaInstance.toInteger(-1) catch |err| {
                 std.log.err("evalChunkFunc: failed to get color", .{});
                 return err;
             };
-            chunk[i - 1] = @as(gl.Int, @intCast(blockId));
+            c.data[i - 1] = @as(gl.Int, @intCast(blockId));
             self.luaInstance.pop(1);
         }
         std.debug.print("\n", .{});
-        return chunk;
+        return c;
     }
 };

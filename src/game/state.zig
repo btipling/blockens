@@ -2,6 +2,7 @@ const std = @import("std");
 const gl = @import("zopengl");
 const zm = @import("zmath");
 const position = @import("position.zig");
+const chunk = @import("chunk.zig");
 const config = @import("config.zig");
 const cube = @import("./shape/cube.zig");
 const view = @import("./shape/view.zig");
@@ -14,10 +15,6 @@ pub const StateErrors = error{
     NoBlocks,
     InvalidBlockID,
 };
-
-pub const chunkDim = 64;
-pub const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
-const drawSize = chunkDim * chunkDim;
 
 pub const State = struct {
     app: App,
@@ -309,23 +306,23 @@ pub const ViewState = struct {
         try self.view.update(zm.mul(m, self.screenTransform));
     }
 
-    pub fn randomChunk(self: *ViewState, seed: u64) [chunkSize]i32 {
+    pub fn randomChunk(self: *ViewState, seed: u64) chunk.Chunk {
         var prng = std.rand.DefaultPrng.init(seed + @as(u64, @intCast(std.time.milliTimestamp())));
         const random = prng.random();
         var maxOptions = self.blockOptions.items.len;
-        var chunk: [chunkSize]i32 = [_]i32{0} ** chunkSize;
+        var c = chunk.Chunk.init();
         if (maxOptions == 0) {
             std.debug.print("No blocks found\n", .{});
-            return chunk;
+            return c;
         }
         maxOptions -= 1;
 
-        for (chunk, 0..) |_, i| {
+        for (c.data, 0..) |_, i| {
             const randomInt = random.uintAtMost(usize, maxOptions);
             const blockId = @as(i32, @intCast(randomInt + 1));
-            chunk[i] = blockId;
+            c.data[i] = blockId;
         }
-        return chunk;
+        return c;
     }
 
     pub fn write(self: *ViewState, blockId: i32, blockTransforms: *std.ArrayList(instancedShape.InstancedShapeTransform)) !void {
@@ -339,17 +336,17 @@ pub const ViewState = struct {
         }
     }
 
-    pub fn initChunk(self: *ViewState, chunk: [chunkSize]i32, chunkPosition: position.Position) !void {
+    pub fn initChunk(self: *ViewState, c: chunk.Chunk, chunkPosition: position.Position) !void {
         self.view.bind();
 
         const meshVoxels = false;
-        for (chunk, 0..) |blockId, i| {
+        for (c.data, 0..) |blockId, i| {
             if (blockId == 0) {
                 continue;
             }
-            const x = @as(gl.Float, @floatFromInt(@mod(i, chunkDim))) + (chunkPosition.x * chunkDim);
-            const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim))) + (chunkPosition.y * chunkDim);
-            const z = @as(gl.Float, @floatFromInt(i / (chunkDim * chunkDim))) + (chunkPosition.z * chunkDim);
+            const x = @as(gl.Float, @floatFromInt(@mod(i, chunk.chunkDim))) + (chunkPosition.x * chunk.chunkDim);
+            const y = @as(gl.Float, @floatFromInt(@mod(i / chunk.chunkDim, chunk.chunkDim))) + (chunkPosition.y * chunk.chunkDim);
+            const z = @as(gl.Float, @floatFromInt(i / (chunk.chunkDim * chunk.chunkDim))) + (chunkPosition.z * chunk.chunkDim);
             const m = zm.translation(x, y, z);
             var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
             zm.storeMat(&transform, m);
