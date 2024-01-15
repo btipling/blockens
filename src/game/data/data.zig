@@ -80,7 +80,7 @@ pub const blockOptionSQL = struct {
 pub const blockSQL = struct {
     id: i32,
     name: sqlite.Text,
-    texture: sqlite.Blob,
+    texture: sqlite.Text,
 };
 
 pub const blockOption = struct {
@@ -137,12 +137,16 @@ pub const Data = struct {
         );
         defer selectStmt.deinit();
 
-        if (try selectStmt.get(.{ .name = sqlite.text("default") })) |r| {
-            const n = sqlNameToArray(r.name);
-            std.debug.print("Found default world: {s}\n", .{n});
-        } else {
-            try saveWorld(self, "default");
+        {
+            try selectStmt.bind(.{ .name = sqlite.text("default") });
+            defer selectStmt.reset();
+
+            while (try selectStmt.step()) |r| {
+                std.debug.print("Found default world: {s}\n", .{r.name.data});
+                return;
+            }
         }
+        try saveWorld(self, "default");
     }
 
     pub fn saveWorld(self: *Data, name: []const u8) !void {
@@ -204,12 +208,16 @@ pub const Data = struct {
         );
         defer selectStmt.deinit();
 
-        if (try selectStmt.get(.{ .id = id })) |r| {
-            data.id = r.id;
-            data.name = sqlNameToArray(r.name);
-            return;
-        } else {
-            std.log.info("not found", .{});
+        {
+            try selectStmt.bind(.{ .id = id });
+            defer selectStmt.reset();
+
+            while (try selectStmt.step()) |r| {
+                std.debug.print("Found world: {s}\n", .{r.name.data});
+                data.id = r.id;
+                data.name = sqlNameToArray(r.name);
+                return;
+            }
         }
 
         return error.Unreachable;
@@ -345,13 +353,16 @@ pub const Data = struct {
         );
         defer selectStmt.deinit();
 
-        if (try selectStmt.get(.{ .id = id })) |r| {
-            data.id = r.id;
-            data.name = sqlNameToArray(r.name);
-            data.script = sqlTextToScript(r.script);
-            return;
-        } else {
-            std.log.info("not found", .{});
+        {
+            try selectStmt.bind(.{ .id = id });
+            defer selectStmt.reset();
+
+            while (try selectStmt.step()) |r| {
+                data.id = r.id;
+                data.name = sqlNameToArray(r.name);
+                data.script = sqlTextToScript(r.script);
+                return;
+            }
         }
 
         return error.Unreachable;
@@ -389,7 +400,7 @@ pub const Data = struct {
         return blob;
     }
 
-    fn blobToTexture(blob: sqlite.Blob) [RGBAColorTextureSize]gl.Uint {
+    fn blobToTexture(blob: sqlite.Text) [RGBAColorTextureSize]gl.Uint {
         var texture: [RGBAColorTextureSize]gl.Uint = undefined;
         for (texture, 0..) |_, i| {
             const offset = i * 4;
@@ -415,7 +426,7 @@ pub const Data = struct {
             .{
                 .id = 0,
                 .name = sqlite.text(name),
-                .texture = sqlite.blob(&t),
+                .texture = sqlite.text(&t),
             },
         ) catch |err| {
             std.log.err("Failed to insert block: {}", .{err});
@@ -436,7 +447,7 @@ pub const Data = struct {
             .{
                 .id = id,
                 .name = sqlite.text(name),
-                .texture = sqlite.blob(&t),
+                .texture = sqlite.text(&t),
             },
         ) catch |err| {
             std.log.err("Failed to update block: {}", .{err});
@@ -478,13 +489,16 @@ pub const Data = struct {
         );
         defer selectStmt.deinit();
 
-        if (try selectStmt.get(.{ .id = id })) |r| {
-            data.id = r.id;
-            data.name = sqlNameToArray(r.name);
-            data.texture = blobToTexture(r.texture);
-            return;
-        } else {
-            std.log.info("not found", .{});
+        {
+            try selectStmt.bind(.{ .id = id });
+            defer selectStmt.reset();
+
+            while (try selectStmt.step()) |r| {
+                data.id = r.id;
+                data.name = sqlNameToArray(r.name);
+                data.texture = blobToTexture(r.texture);
+                return;
+            }
         }
 
         return error.Unreachable;
@@ -498,7 +512,7 @@ pub const Data = struct {
         );
 
         deleteStmt.exec(
-            .{ .id = id, .name = sqlite.text(""), .texture = sqlite.blob(&[_]u8{0}) },
+            .{ .id = id, .name = sqlite.text(""), .texture = sqlite.text("") },
         ) catch |err| {
             std.log.err("Failed to delete block: {}", .{err});
             return err;
