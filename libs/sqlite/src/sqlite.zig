@@ -344,7 +344,10 @@ pub fn Statement(comptime Params: type, comptime Result: type) type {
 
                     c.SQLITE_TEXT => switch (binding.type) {
                         .text => @field(result, binding.name) = stmt.columnText(n),
-                        else => return error.InvalidColumnType,
+                        else => {
+                            std.debug.print("binding.name: {s}\n", .{binding.name});
+                            return error.InvalidColumnType;
+                        },
                     },
 
                     else => @panic("internal SQLite error"),

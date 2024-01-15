@@ -80,7 +80,7 @@ pub const blockOptionSQL = struct {
 pub const blockSQL = struct {
     id: i32,
     name: sqlite.Text,
-    texture: sqlite.Text,
+    texture: sqlite.Blob,
 };
 
 pub const blockOption = struct {
@@ -151,14 +151,16 @@ pub const Data = struct {
 
     pub fn saveWorld(self: *Data, name: []const u8) !void {
         var insertStmt = try self.db.prepare(
-            worldSQL,
+            struct {
+                name: sqlite.Text,
+            },
             void,
             insertWorldStmt,
         );
         defer insertStmt.deinit();
 
         insertStmt.exec(
-            .{ .id = 0, .name = sqlite.text(name) },
+            .{ .name = sqlite.text(name) },
         ) catch |err| {
             std.log.err("Failed to insert world: {}", .{err});
             return err;
@@ -242,14 +244,16 @@ pub const Data = struct {
         };
 
         var insertStmt = try self.db.prepare(
-            worldSQL,
+            struct {
+                name: sqlite.Text,
+            },
             void,
             insertWorldStmt,
         );
         defer insertStmt.deinit();
 
         insertStmt.exec(
-            .{ .id = 0, .name = sqlite.text(name) },
+            .{ .name = sqlite.text(name) },
         ) catch |err| {
             std.log.err("Failed to insert world: {}", .{err});
             return err;
@@ -258,13 +262,15 @@ pub const Data = struct {
 
     pub fn deleteWorld(self: *Data, id: i32) !void {
         var deleteStmt = try self.db.prepare(
-            worldSQL,
+            struct {
+                id: i32,
+            },
             void,
             deleteWorldStmt,
         );
 
         deleteStmt.exec(
-            .{ .id = id, .name = sqlite.text("") },
+            .{ .id = id },
         ) catch |err| {
             std.log.err("Failed to delete world: {}", .{err});
             return err;
@@ -273,7 +279,10 @@ pub const Data = struct {
 
     pub fn saveTextureScript(self: *Data, name: []const u8, textureScript: []const u8) !void {
         var insertStmt = try self.db.prepare(
-            scriptSQL,
+            struct {
+                name: sqlite.Text,
+                script: sqlite.Text,
+            },
             void,
             insertTextureScriptStmt,
         );
@@ -281,7 +290,6 @@ pub const Data = struct {
 
         insertStmt.exec(
             .{
-                .id = 0,
                 .name = sqlite.text(name),
                 .script = sqlite.text(textureScript),
             },
@@ -370,13 +378,15 @@ pub const Data = struct {
 
     pub fn deleteTextureScript(self: *Data, id: i32) !void {
         var deleteStmt = try self.db.prepare(
-            scriptSQL,
+            struct {
+                id: i32,
+            },
             void,
             deleteTextureStmt,
         );
 
         deleteStmt.exec(
-            .{ .id = id, .name = sqlite.text(""), .script = sqlite.text("") },
+            .{ .id = id },
         ) catch |err| {
             std.log.err("Failed to delete texture script: {}", .{err});
             return err;
@@ -400,7 +410,7 @@ pub const Data = struct {
         return blob;
     }
 
-    fn blobToTexture(blob: sqlite.Text) [RGBAColorTextureSize]gl.Uint {
+    fn blobToTexture(blob: sqlite.Blob) [RGBAColorTextureSize]gl.Uint {
         var texture: [RGBAColorTextureSize]gl.Uint = undefined;
         for (texture, 0..) |_, i| {
             const offset = i * 4;
@@ -415,7 +425,10 @@ pub const Data = struct {
 
     pub fn saveBlock(self: *Data, name: []const u8, texture: [RGBAColorTextureSize]gl.Uint) !void {
         var insertStmt = try self.db.prepare(
-            blockSQL,
+            struct {
+                name: sqlite.Text,
+                texture: sqlite.Blob,
+            },
             void,
             insertBlockStmt,
         );
@@ -424,9 +437,8 @@ pub const Data = struct {
         var t = textureToBlob(texture);
         insertStmt.exec(
             .{
-                .id = 0,
                 .name = sqlite.text(name),
-                .texture = sqlite.text(&t),
+                .texture = sqlite.blob(&t),
             },
         ) catch |err| {
             std.log.err("Failed to insert block: {}", .{err});
@@ -436,7 +448,11 @@ pub const Data = struct {
 
     pub fn updateBlock(self: *Data, id: i32, name: []const u8, texture: [RGBAColorTextureSize]gl.Uint) !void {
         var updateStmt = try self.db.prepare(
-            blockSQL,
+            struct {
+                id: i32,
+                name: sqlite.Text,
+                texture: sqlite.Blob,
+            },
             void,
             updateBlockStmt,
         );
@@ -447,7 +463,7 @@ pub const Data = struct {
             .{
                 .id = id,
                 .name = sqlite.text(name),
-                .texture = sqlite.text(&t),
+                .texture = sqlite.blob(&t),
             },
         ) catch |err| {
             std.log.err("Failed to update block: {}", .{err});
@@ -484,7 +500,11 @@ pub const Data = struct {
             struct {
                 id: i32,
             },
-            blockSQL,
+            struct {
+                id: i32,
+                name: sqlite.Text,
+                texture: sqlite.Blob,
+            },
             selectBlockStmt,
         );
         defer selectStmt.deinit();
@@ -506,13 +526,15 @@ pub const Data = struct {
 
     pub fn deleteBlock(self: *Data, id: i32) !void {
         var deleteStmt = try self.db.prepare(
-            blockSQL,
+            struct {
+                id: i32,
+            },
             void,
             deleteBlockStmt,
         );
 
         deleteStmt.exec(
-            .{ .id = id, .name = sqlite.text(""), .texture = sqlite.text("") },
+            .{ .id = id },
         ) catch |err| {
             std.log.err("Failed to delete block: {}", .{err});
             return err;
