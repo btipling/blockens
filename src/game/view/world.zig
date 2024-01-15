@@ -33,10 +33,10 @@ pub const World = struct {
     }
 
     pub fn draw(self: *World) !void {
-        if (self.worldPlane) |wp| {
-            var _wp = wp;
-            try _wp.draw(self.worldView.lookAt);
-        }
+        // if (self.worldPlane) |wp| {
+        //     var _wp = wp;
+        //     try _wp.draw(self.worldView.lookAt);
+        // }
 
         for (self.worldView.shapes.items) |s| {
             try s.draw();

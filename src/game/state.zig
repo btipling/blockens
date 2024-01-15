@@ -44,10 +44,14 @@ pub const State = struct {
             .worldView = try ViewState.init(
                 alloc,
                 v,
-                @Vector(4, gl.Float){ -68.0, 78.0, -70.0, 1.0 },
-                @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 },
-                41.6,
-                -19.4,
+                // @Vector(4, gl.Float){ -68.0, 78.0, -70.0, 1.0 },
+                @Vector(4, gl.Float){ -28.0, 2.0, -28.0, 1.0 },
+                // @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 },
+                @Vector(4, gl.Float){ -4.0, -3.0, -5.0, -4.0 },
+                // 41.6,
+                2,
+                // -19.4,
+                -1,
                 zm.translationV(@Vector(4, gl.Float){ -32.0, 0.0, -32.0, 0.0 }),
                 zm.identity(),
             ),
@@ -288,8 +292,8 @@ pub const ViewState = struct {
         self.view.bind();
         var blockTransforms = std.ArrayList(voxelShape.VoxelShape).init(alloc);
         defer blockTransforms.deinit();
-
-        try blockTransforms.ensureTotalCapacity(1);
+        const temp_limit = 1;
+        try blockTransforms.ensureTotalCapacity(temp_limit);
         for (chunk, 0..) |blockId, i| {
             if (blockId == 0) {
                 continue;
@@ -302,11 +306,11 @@ pub const ViewState = struct {
             zm.storeMat(&worldTransform, m);
             const voxel = try self.voxelMesh.initVoxel(
                 appState,
-                blockId,
+                2,
                 worldTransform,
             );
             blockTransforms.appendAssumeCapacity(voxel);
-            if (blockTransforms.items.len > 0) {
+            if (blockTransforms.items.len >= temp_limit) {
                 break;
             }
         }
