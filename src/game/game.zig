@@ -122,14 +122,16 @@ pub const Game = struct {
 
         // init views
         var gameWorld = try world.World.initWithHUD(worldPlane, uiCursor, &appState.worldView);
-        const chunk = appState.worldView.randomChunk(1337);
-        try appState.worldView.initChunk(chunk, position.Position{ .x = 0, .y = 0, .z = 0 });
-        const chunk2 = appState.worldView.randomChunk(3000);
-        try appState.worldView.initChunk(chunk2, position.Position{ .x = 1, .y = 0, .z = 0 });
-        const chunk3 = appState.worldView.randomChunk(4000);
-        try appState.worldView.initChunk(chunk3, position.Position{ .x = -1, .y = 0, .z = 0 });
-        const chunk4 = appState.worldView.randomChunk(500);
-        try appState.worldView.initChunk(chunk4, position.Position{ .x = 0, .y = 0, .z = 1 });
+        const worldDims = 1;
+        const chunks = worldDims * worldDims;
+        for (0..chunks) |i| {
+            const x = @as(gl.Float, @floatFromInt(@mod(i, worldDims)));
+            const y = 0;
+            const z = @as(gl.Float, @floatFromInt(i / worldDims));
+            const pos = position.Position{ .x = x - worldDims / 2, .y = y, .z = z - worldDims / 2 };
+            const chunk = appState.worldView.randomChunk(i);
+            try appState.worldView.initChunk(chunk, pos);
+        }
         try appState.worldView.writeChunks();
 
         var textureGen = try texture_gen.TextureGenerator.init(&appState, self.allocator);

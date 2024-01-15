@@ -305,8 +305,12 @@ pub const ViewState = struct {
     pub fn randomChunk(self: *ViewState, seed: u64) [chunkSize]i32 {
         var prng = std.rand.DefaultPrng.init(seed + @as(u64, @intCast(std.time.milliTimestamp())));
         const random = prng.random();
-        const maxOptions = self.blockOptions.items.len - 1;
-        var chunk: [chunkSize]i32 = [_]i32{undefined} ** chunkSize;
+        var maxOptions = self.blockOptions.items.len;
+        var chunk: [chunkSize]i32 = [_]i32{0} ** chunkSize;
+        if (maxOptions == 0) {
+            return chunk;
+        }
+        maxOptions -= 1;
         for (chunk, 0..) |_, i| {
             const randomInt = random.uintAtMost(usize, maxOptions);
             const blockId = @as(i32, @intCast(randomInt + 1));
