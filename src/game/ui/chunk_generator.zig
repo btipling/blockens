@@ -141,6 +141,14 @@ pub const ChunkGenerator = struct {
             })) {
                 self.appState.demoView.toggleWireframe();
             }
+            zgui.sameLine(.{});
+            if (zgui.button("Mesh chunks", .{
+                .w = 500,
+                .h = 100,
+            })) {
+                self.appState.demoView.toggleMeshChunks();
+                try self.evalChunkFunc();
+            }
             zgui.popStyleVar(.{ .count = 1 });
             zgui.pushFont(self.codeFont);
             _ = zgui.inputTextMultiline(" ", .{
@@ -157,7 +165,10 @@ pub const ChunkGenerator = struct {
         self.appState.demoView.clearChunks();
         try self.appState.demoView.initChunks(self.appState);
         const demoChunk = self.appState.demoView.randomChunk(9001);
-        try self.appState.demoView.initChunk(demoChunk, position.Position{ .x = 0, .y = 0, .z = 0 });
+        var _c = demoChunk;
+        var __c = &_c;
+        defer __c.deinit();
+        try self.appState.demoView.initChunk(__c, position.Position{ .x = 0, .y = 0, .z = 0 });
         try self.appState.demoView.writeChunks();
     }
 
@@ -165,7 +176,10 @@ pub const ChunkGenerator = struct {
         self.appState.demoView.clearChunks();
         try self.appState.demoView.initChunks(self.appState);
         const demoChunk = try self.script.evalChunkFunc(self.buf);
-        try self.appState.demoView.initChunk(demoChunk, position.Position{ .x = 0, .y = 0, .z = 0 });
+        var _c = demoChunk;
+        var __c = &_c;
+        defer __c.deinit();
+        try self.appState.demoView.initChunk(__c, position.Position{ .x = 0, .y = 0, .z = 0 });
         try self.appState.demoView.writeChunks();
     }
 };

@@ -16,11 +16,13 @@ pub const maxLuaScriptNameSize = 20;
 
 pub const Script = struct {
     luaInstance: Lua,
+    alloc: std.mem.Allocator,
     pub fn init(alloc: std.mem.Allocator) !Script {
         var lua: Lua = try Lua.init(alloc);
         lua.openLibs();
         return Script{
             .luaInstance = lua,
+            .alloc = alloc,
         };
     }
 
@@ -115,7 +117,7 @@ pub const Script = struct {
             std.log.err("evalChunkFunc: chunks is not back to a table", .{});
             return ScriptError.ExpectedTable;
         }
-        var c = chunk.Chunk.init();
+        var c = chunk.Chunk.init(self.alloc);
         for (1..(ts + 1)) |i| {
             _ = self.luaInstance.rawGetIndex(-1, @intCast(i));
             const blockId = self.luaInstance.toInteger(-1) catch |err| {

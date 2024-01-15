@@ -171,6 +171,7 @@ pub const ViewState = struct {
     highlightedIndex: ?usize = 0,
     disableScreenTransform: bool,
     wireframe: bool = false,
+    meshChunks: bool = false,
     pub fn init(
         alloc: std.mem.Allocator,
         v: view.View,
@@ -310,7 +311,7 @@ pub const ViewState = struct {
         var prng = std.rand.DefaultPrng.init(seed + @as(u64, @intCast(std.time.milliTimestamp())));
         const random = prng.random();
         var maxOptions = self.blockOptions.items.len;
-        var c = chunk.Chunk.init();
+        var c = chunk.Chunk.init(self.alloc);
         if (maxOptions == 0) {
             std.debug.print("No blocks found\n", .{});
             return c;
@@ -336,12 +337,19 @@ pub const ViewState = struct {
         }
     }
 
-    pub fn initChunk(self: *ViewState, c: chunk.Chunk, chunkPosition: position.Position) !void {
+    pub fn initChunk(self: *ViewState, c: *chunk.Chunk, chunkPosition: position.Position) !void {
         self.view.bind();
+        if (self.meshChunks) {
+            try c.findMeshes();
+            c.printMeshes();
+        }
 
         const meshVoxels = false;
         for (c.data, 0..) |blockId, i| {
             if (blockId == 0) {
+                continue;
+            }
+            if (self.meshChunks and c.isMeshed(i)) {
                 continue;
             }
             const p = chunk.Chunk.getPositionAtIndex(i);
@@ -393,6 +401,10 @@ pub const ViewState = struct {
 
     pub fn toggleWireframe(self: *ViewState) void {
         self.wireframe = !self.wireframe;
+    }
+
+    pub fn toggleMeshChunks(self: *ViewState) void {
+        self.meshChunks = !self.meshChunks;
     }
 
     pub fn initChunks(self: *ViewState, appState: *State) !void {

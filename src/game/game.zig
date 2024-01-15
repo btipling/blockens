@@ -130,15 +130,23 @@ pub const Game = struct {
             const z = @as(gl.Float, @floatFromInt(i / worldDims));
             const pos = position.Position{ .x = x - worldDims / 2, .y = y, .z = z - worldDims / 2 };
             const chunk = appState.worldView.randomChunk(i);
-            try appState.worldView.initChunk(chunk, pos);
+            var _c = chunk;
+            var __c = &_c;
+            defer __c.deinit();
+            try appState.worldView.initChunk(__c, pos);
         }
         try appState.worldView.writeChunks();
 
         var textureGen = try texture_gen.TextureGenerator.init(&appState, self.allocator);
         defer textureGen.deinit();
         var demoWorld = try world.World.init(&appState.demoView);
-        const demoChunk = appState.demoView.randomChunk(9001);
-        try appState.demoView.initChunk(demoChunk, position.Position{ .x = 0, .y = 0, .z = 0 });
+        {
+            const demoChunk = appState.demoView.randomChunk(9001);
+            var _c = demoChunk;
+            var __c = &_c;
+            defer __c.deinit();
+            try appState.demoView.initChunk(__c, position.Position{ .x = 0, .y = 0, .z = 0 });
+        }
         try appState.demoView.writeChunks();
 
         var c = try controls.Controls.init(window, &appState);
