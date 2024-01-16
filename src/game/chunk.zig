@@ -41,43 +41,89 @@ pub const Chunk = struct {
     }
 
     pub fn findMeshes(self: *Chunk) !void {
-        var p = position.Position{ .x = 0.0, .y = 0.0, .z = 0.0 };
+        const op = position.Position{ .x = 0.0, .y = 0.0, .z = 0.0 };
+        var p = op;
         const i = getIndexFromPosition(p);
         const blockId = self.data[i];
         std.debug.print("block id: {d}\n", .{blockId});
-        while (true) {
+        var endX: gl.Float = 0;
+        var numDimsTravelled: u8 = 1;
+        var numXAdded: gl.Float = 0;
+        outer: while (true) {
             p.x += 1.0;
             if (p.x >= chunkDim) {
-                break;
+                endX = op.x + numXAdded;
+                if (numDimsTravelled == 1) {
+                    numDimsTravelled += 1;
+                }
+                p.y += 1.0;
+                p.x = op.x;
+                continue :outer;
             }
-            std.debug.print("p.x: {d}\n", .{p.x});
             const ii = getIndexFromPosition(p);
-            if (blockId == self.data[ii]) {
-                try self.meshed.put(i, {});
-                try self.meshed.put(ii, {});
+            if (numDimsTravelled == 1) {
+                if (blockId == self.data[ii]) {
+                    try self.meshed.put(i, {});
+                    try self.meshed.put(ii, {});
+                    numXAdded += 1;
+                    if (self.meshes.get(i)) |vp| {
+                        var _vp = vp;
+                        _vp.x += 1.0;
+                        try self.meshes.put(i, _vp);
+                    } else {
+                        var vp = position.Position{ .x = 1.0, .y = 1.0, .z = 1.0 };
+                        vp.x += 1.0;
+                        try self.meshes.put(i, vp);
+                    }
+                } else {
+                    if (numXAdded > 0) {
+                        endX = op.x + numXAdded;
+                        p.x = op.x;
+                        numDimsTravelled += 1;
+                        p.y += 1.0;
+                        continue :outer;
+                    } else {
+                        std.debug.print("ending: nothing added in x\n", .{});
+                        break :outer;
+                    }
+                }
+            } else {
+                // just doing y here, only add if all x along the y are the same
+                if (blockId != self.data[ii]) {
+                    std.debug.print("ending: x didn't match on other y\n", .{});
+                    break :outer;
+                }
+                if (p.x != endX) {
+                    p.x += 1.0;
+                    continue :outer;
+                }
+                std.debug.print("adding y {d}\n", .{p.y});
                 if (self.meshes.get(i)) |vp| {
                     var _vp = vp;
-                    _vp.x += 1.0;
+                    _vp.y += 1.0;
                     try self.meshes.put(i, _vp);
                 } else {
                     var vp = position.Position{ .x = 1.0, .y = 1.0, .z = 1.0 };
-                    vp.x += 1.0;
+                    vp.y += 1.0;
                     try self.meshes.put(i, vp);
                 }
-            } else {
-                break;
-            }
-        }
-    }
-
-    pub fn printMeshes(self: *Chunk) void {
-        var keys = self.meshes.keyIterator();
-        while (keys.next()) |_k| {
-            if (@TypeOf(_k) == *usize) {
-                const k = _k.*;
-                if (self.meshes.get(k)) |vp| {
-                    std.debug.print("mesh beings at: {d}, members: \n\t", .{k});
-                    std.debug.print("voxel needs to grow: x:{d} y:{d} y:{d} ", .{ vp.x, vp.y, vp.z });
+                // need to add all x's along the y to meshed map
+                for (op.x..@as(usize, @intFromFloat(endX))) |xToAdd| {
+                    const _xToAdd = @as(gl.Float, @floatFromInt(xToAdd));
+                    const iii = getIndexFromPosition(position.Position{ .x = _xToAdd, .y = p.y, .z = p.z });
+                    try self.meshed.put(iii, {});
+                }
+                p.y += 1.0;
+                p.x = op.x;
+                if (p.y >= chunkDim) {
+                    // p.z += 1.0;
+                    // if (p.z >= chunkDim) {
+                    //     break: outer;
+                    // }
+                    // p.y = op.y;
+                    // continue :outer;
+                    std.debug.print("ending: end of chunk in y\n", .{});
+                    break :outer;
                 }
             }
         }

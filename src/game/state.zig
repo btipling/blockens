@@ -341,7 +341,6 @@ pub const ViewState = struct {
         self.view.bind();
         if (self.meshChunks) {
             try c.findMeshes();
-            c.printMeshes();
 
             var keys = c.meshes.keyIterator();
             while (keys.next()) |_k| {
@@ -359,7 +358,7 @@ pub const ViewState = struct {
                             zm.storeMat(&transform, m);
                             var _vm = vm;
                             try _vm.initVoxel();
-                            _vm.expandVoxelX(vp.x);
+                            _vm.expandVoxel(vp);
                             try _vm.writeVoxel(transform);
                             std.debug.print("\n", .{});
                             try self.voxelMeshes.put(blockId, _vm);
