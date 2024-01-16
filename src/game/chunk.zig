@@ -8,23 +8,17 @@ const drawSize = chunkDim * chunkDim;
 
 pub const Chunk = struct {
     data: [chunkSize]i32,
-    meshes: std.AutoHashMap(usize, std.ArrayList(usize)),
+    meshes: std.AutoHashMap(usize, position.Position),
     meshed: std.AutoHashMap(usize, void),
-    alloc: std.mem.Allocator,
     pub fn init(alloc: std.mem.Allocator) Chunk {
         return Chunk{
             .data = [_]i32{0} ** chunkSize,
-            .meshes = std.AutoHashMap(usize, std.ArrayList(usize)).init(alloc),
+            .meshes = std.AutoHashMap(usize, position.Position).init(alloc),
             .meshed = std.AutoHashMap(usize, void).init(alloc),
-            .alloc = alloc,
         };
     }
 
     pub fn deinit(self: *Chunk) void {
-        var mv = self.meshes.valueIterator();
-        while (mv.next()) |v| {
-            v.deinit();
-        }
         self.meshes.deinit();
         self.meshed.deinit();
     }
@@ -48,28 +42,31 @@ pub const Chunk = struct {
 
     pub fn findMeshes(self: *Chunk) !void {
         var p = position.Position{ .x = 0.0, .y = 0.0, .z = 0.0 };
-        _ = &p;
-        var i = getIndexFromPosition(p);
-        _ = &i;
-        var blockId = self.data[i];
-        _ = &blockId;
+        const i = getIndexFromPosition(p);
+        const blockId = self.data[i];
         std.debug.print("block id: {d}\n", .{blockId});
-        p.x += 1.0;
-        const ii = getIndexFromPosition(p);
-        if (blockId == self.data[ii]) {
-            try self.meshed.put(i, {});
-            try self.meshed.put(ii, {});
-            if (self.meshes.get(i)) |m| {
-                var _m = m;
-                try _m.append(ii);
-                try self.meshes.put(i, _m);
-            } else {
-                var m = std.ArrayList(usize).init(self.alloc);
-                try m.append(ii);
-                try self.meshes.put(i, m);
+        while (true) {
+            p.x += 1.0;
+            if (p.x >= chunkDim) {
+                break;
             }
-        } else {
-            std.debug.print("different block\n", .{});
+            std.debug.print("p.x: {d}\n", .{p.x});
+            const ii = getIndexFromPosition(p);
+            if (blockId == self.data[ii]) {
+                try self.meshed.put(i, {});
+                try self.meshed.put(ii, {});
+                if (self.meshes.get(i)) |vp| {
+                    var _vp = vp;
+                    _vp.x += 1.0;
+                    try self.meshes.put(i, _vp);
+                } else {
+                    var vp = position.Position{ .x = 1.0, .y = 1.0, .z = 1.0 };
+                    vp.x += 1.0;
+                    try self.meshes.put(i, vp);
+                }
+            } else {
+                break;
+            }
         }
     }
 
@@ -78,12 +75,9 @@ pub const Chunk = struct {
         while (keys.next()) |_k| {
             if (@TypeOf(_k) == *usize) {
                 const k = _k.*;
-                if (self.meshes.get(k)) |voxels| {
+                if (self.meshes.get(k)) |vp| {
                     std.debug.print("mesh beings at: {d}, members: \n\t", .{k});
-                    for (voxels.items) |v| {
-                        std.debug.print("{d} ", .{v});
-                    }
-                    std.debug.print("\n", .{});
+                    std.debug.print("voxel needs to grow: x:{d} y:{d} y:{d} ", .{ vp.x, vp.y, vp.z });
                 }
             }
         }

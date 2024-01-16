@@ -227,11 +227,10 @@ pub const VoxelMesh = struct {
         self.currentVoxel = __v.*;
     }
 
-    pub fn expandVoxelX(self: *VoxelMesh) void {
+    pub fn expandVoxelX(self: *VoxelMesh, xScale: gl.Float) void {
         var v = self.currentVoxel;
         var __v = &v;
-        // scale(mesh: *Shape, x: f32, y: f32, z: f32) void {
-        __v.scale(2.0, 1.0, 1.0);
+        __v.scale(xScale, 1.0, 1.0);
         self.currentVoxel = __v.*;
     }
 

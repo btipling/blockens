@@ -347,7 +347,7 @@ pub const ViewState = struct {
             while (keys.next()) |_k| {
                 if (@TypeOf(_k) == *usize) {
                     const i = _k.*;
-                    if (c.meshes.get(i)) |voxels| {
+                    if (c.meshes.get(i)) |vp| {
                         const blockId = c.data[i];
                         if (self.voxelMeshes.get(blockId)) |vm| {
                             const p = chunk.Chunk.getPositionAtIndex(i);
@@ -359,14 +359,10 @@ pub const ViewState = struct {
                             zm.storeMat(&transform, m);
                             var _vm = vm;
                             try _vm.initVoxel();
-                            for (voxels.items) |v| {
-                                std.debug.print("{d} ", .{v});
-                                _vm.expandVoxelX();
-                            }
+                            _vm.expandVoxelX(vp.x);
                             try _vm.writeVoxel(transform);
                             std.debug.print("\n", .{});
                             try self.voxelMeshes.put(blockId, _vm);
-                            std.debug.print("need to grow mesh for {d} voxels \n\t", .{voxels.items.len});
                         } else {
                             std.debug.print("No voxel mesh for block id: {d}\n", .{blockId});
                         }
