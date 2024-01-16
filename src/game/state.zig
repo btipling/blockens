@@ -342,9 +342,39 @@ pub const ViewState = struct {
         if (self.meshChunks) {
             try c.findMeshes();
             c.printMeshes();
+
+            var keys = c.meshes.keyIterator();
+            while (keys.next()) |_k| {
+                if (@TypeOf(_k) == *usize) {
+                    const i = _k.*;
+                    if (c.meshes.get(i)) |voxels| {
+                        const blockId = c.data[i];
+                        if (self.voxelMeshes.get(blockId)) |vm| {
+                            const p = chunk.Chunk.getPositionAtIndex(i);
+                            const x = p.x + (chunkPosition.x * chunk.chunkDim);
+                            const y = p.y + (chunkPosition.y * chunk.chunkDim);
+                            const z = p.z + (chunkPosition.z * chunk.chunkDim);
+                            var m = zm.translation(x, y, z);
+                            // voxel meshes are centered around origin and range fro -0.5 to 0.5 so need a translation
+                            m = zm.mul(m, zm.translationV(@Vector(4, gl.Float){ 0.5, 0.5, 0.5, 1.0 }));
+                            var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+                            zm.storeMat(&transform, m);
+                            var _vm = vm;
+                            try _vm.initVoxel(transform);
+                            for (voxels.items) |v| {
+                                std.debug.print("{d} ", .{v});
+                            }
+                            std.debug.print("\n", .{});
+                            try self.voxelMeshes.put(blockId, _vm);
+                            std.debug.print("need to grow mesh for {d} voxels \n\t", .{voxels.items.len});
+                        } else {
+                            std.debug.print("No voxel mesh for block id: {d}\n", .{blockId});
+                        }
+                    }
+                }
+            }
         }
 
-        const meshVoxels = false;
         for (c.data, 0..) |blockId, i| {
             if (blockId == 0) {
                 continue;
@@ -359,25 +389,15 @@ pub const ViewState = struct {
             const m = zm.translation(x, y, z);
             var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
             zm.storeMat(&transform, m);
-            if (meshVoxels) {
-                if (self.voxelMeshes.get(blockId)) |vm| {
-                    var _vm = vm;
-                    try _vm.initVoxel(transform);
-                    try self.voxelMeshes.put(blockId, _vm);
-                } else {
-                    std.debug.print("No voxel mesh for block id: {d}\n", .{blockId});
-                }
+            const t = instancedShape.InstancedShapeTransform{ .transform = transform };
+            if (self.perBlockTransforms.get(blockId)) |blockTransforms| {
+                var _blockTransforms = blockTransforms;
+                try _blockTransforms.append(t);
+                try self.perBlockTransforms.put(blockId, _blockTransforms);
             } else {
-                const t = instancedShape.InstancedShapeTransform{ .transform = transform };
-                if (self.perBlockTransforms.get(blockId)) |blockTransforms| {
-                    var _blockTransforms = blockTransforms;
-                    try _blockTransforms.append(t);
-                    try self.perBlockTransforms.put(blockId, _blockTransforms);
-                } else {
-                    var blockTransforms = std.ArrayList(instancedShape.InstancedShapeTransform).init(self.alloc);
-                    try blockTransforms.append(t);
-                    try self.perBlockTransforms.put(blockId, blockTransforms);
-                }
+                var blockTransforms = std.ArrayList(instancedShape.InstancedShapeTransform).init(self.alloc);
+                try blockTransforms.append(t);
+                try self.perBlockTransforms.put(blockId, blockTransforms);
             }
         }
         self.view.unbind();

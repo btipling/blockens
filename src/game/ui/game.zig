@@ -10,6 +10,7 @@ pub const Game = struct {
     }
 
     fn drawInfo(self: Game, window: *glfw.Window) !void {
+        window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
         const fb_size = window.getFramebufferSize();
         const w: u32 = @intCast(fb_size[0]);
         const h: u32 = @intCast(fb_size[1]);

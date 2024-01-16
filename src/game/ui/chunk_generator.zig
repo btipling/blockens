@@ -93,7 +93,7 @@ pub const ChunkGenerator = struct {
         if (zgui.beginChild(
             "Create World",
             .{
-                .w = 850,
+                .w = 2000,
                 .h = 200,
                 .border = false,
             },
@@ -109,6 +109,34 @@ pub const ChunkGenerator = struct {
             })) {
                 try self.generateRandomChunk();
             }
+            zgui.sameLine(.{});
+            if (zgui.button("Generate chunk", .{
+                .w = 450,
+                .h = 100,
+            })) {
+                try self.evalChunkFunc();
+            }
+            zgui.sameLine(.{});
+            if (zgui.button("Mesh chunks", .{
+                .w = 500,
+                .h = 100,
+            })) {
+                self.appState.demoView.toggleMeshChunks();
+                try self.evalChunkFunc();
+            }
+            if (zgui.button("Toggle wireframe", .{
+                .w = 500,
+                .h = 100,
+            })) {
+                self.appState.demoView.toggleWireframe();
+            }
+            zgui.sameLine(.{});
+            if (zgui.button("Generate to world", .{
+                .w = 500,
+                .h = 100,
+            })) {
+                try self.evalWorldChunkFunc();
+            }
             zgui.popStyleVar(.{ .count = 1 });
         }
         zgui.endChild();
@@ -123,33 +151,6 @@ pub const ChunkGenerator = struct {
                 .border = true,
             },
         )) {
-            zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
-            const style = zgui.getStyle();
-            var text_color = style.getColor(.text);
-            text_color = .{ 0.0, 0.0, 0.0, 1.00 };
-            style.setColor(.text, text_color);
-            if (zgui.button("Generate chunk", .{
-                .w = 450,
-                .h = 100,
-            })) {
-                try self.evalChunkFunc();
-            }
-            zgui.sameLine(.{});
-            if (zgui.button("Toggle wireframe", .{
-                .w = 500,
-                .h = 100,
-            })) {
-                self.appState.demoView.toggleWireframe();
-            }
-            zgui.sameLine(.{});
-            if (zgui.button("Mesh chunks", .{
-                .w = 500,
-                .h = 100,
-            })) {
-                self.appState.demoView.toggleMeshChunks();
-                try self.evalChunkFunc();
-            }
-            zgui.popStyleVar(.{ .count = 1 });
             zgui.pushFont(self.codeFont);
             _ = zgui.inputTextMultiline(" ", .{
                 .buf = self.buf[0..],
@@ -181,5 +182,17 @@ pub const ChunkGenerator = struct {
         defer __c.deinit();
         try self.appState.demoView.initChunk(__c, position.Position{ .x = 0, .y = 0, .z = 0 });
         try self.appState.demoView.writeChunks();
+    }
+
+    fn evalWorldChunkFunc(self: *ChunkGenerator) !void {
+        self.appState.worldView.clearChunks();
+        try self.appState.worldView.initChunks(self.appState);
+        const worldChunk = try self.script.evalChunkFunc(self.buf);
+        var _c = worldChunk;
+        var __c = &_c;
+        defer __c.deinit();
+        try self.appState.worldView.initChunk(__c, position.Position{ .x = 0, .y = 0, .z = 0 });
+        try self.appState.worldView.writeChunks();
+        try self.appState.setGameView();
     }
 };

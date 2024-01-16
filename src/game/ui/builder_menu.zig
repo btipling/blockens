@@ -25,19 +25,15 @@ pub const BuilderMenu = struct {
                 try self.appState.setGameView();
             }
             if (zgui.menuItem("textures", .{})) {
-                window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
                 try self.appState.setTextureGeneratorView();
             }
             if (zgui.menuItem("blocks", .{})) {
-                window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
                 try self.appState.setBlockEditorView();
             }
             if (zgui.menuItem("worlds", .{})) {
-                window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
                 try self.appState.setWorldEditorView();
             }
             if (zgui.menuItem("chunks", .{})) {
-                window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
                 try self.appState.setChunkGeneratorView();
             }
             const ww = zgui.getWindowWidth();

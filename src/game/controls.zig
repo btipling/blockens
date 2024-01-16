@@ -127,6 +127,20 @@ pub const Controls = struct {
         if (self.window.getKey(.t) == .press) {
             try self.appState.worldView.rotateWorldInReverse();
         }
+        if (self.window.getKey(.F3) == .press) {
+            const now = std.time.milliTimestamp();
+            if (now - self.controlsLastUpdated >= 250) {
+                self.controlsLastUpdated = now;
+                self.appState.worldView.toggleWireframe();
+            }
+        }
+        if (self.window.getKey(.F4) == .press) {
+            const now = std.time.milliTimestamp();
+            if (now - self.controlsLastUpdated >= 250) {
+                self.controlsLastUpdated = now;
+                self.appState.worldView.toggleMeshChunks();
+            }
+        }
     }
 
     fn handleTextureGeneratorKey(_: *Controls) !void {}
