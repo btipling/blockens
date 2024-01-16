@@ -354,16 +354,16 @@ pub const ViewState = struct {
                             const x = p.x + (chunkPosition.x * chunk.chunkDim);
                             const y = p.y + (chunkPosition.y * chunk.chunkDim);
                             const z = p.z + (chunkPosition.z * chunk.chunkDim);
-                            var m = zm.translation(x, y, z);
-                            // voxel meshes are centered around origin and range fro -0.5 to 0.5 so need a translation
-                            m = zm.mul(m, zm.translationV(@Vector(4, gl.Float){ 0.5, 0.5, 0.5, 1.0 }));
+                            const m = zm.translation(x, y, z);
                             var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
                             zm.storeMat(&transform, m);
                             var _vm = vm;
-                            try _vm.initVoxel(transform);
+                            try _vm.initVoxel();
                             for (voxels.items) |v| {
                                 std.debug.print("{d} ", .{v});
+                                _vm.expandVoxelX();
                             }
+                            try _vm.writeVoxel(transform);
                             std.debug.print("\n", .{});
                             try self.voxelMeshes.put(blockId, _vm);
                             std.debug.print("need to grow mesh for {d} voxels \n\t", .{voxels.items.len});
