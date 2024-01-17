@@ -157,7 +157,7 @@ pub const VoxelMesh = struct {
     blockId: i32,
     voxelShape: voxelShape.VoxelShape,
     voxel: zmesh.Shape,
-    currentVoxel: zmesh.Shape,
+    currentVoxel: ?zmesh.Shape,
 
     pub fn init(
         appState: *state.State,
@@ -214,32 +214,36 @@ pub const VoxelMesh = struct {
     }
 
     pub fn clear(self: *VoxelMesh) void {
+        self.currentVoxel = self.voxel;
         self.voxelShape.clear();
     }
 
     pub fn initVoxel(
         self: *VoxelMesh,
     ) !void {
-        var v = self.voxel;
-        var __v = &v;
+        var v = self.voxel.clone();
         // voxel meshes are centered around origin and range fro -0.5 to 0.5 so need a translation
-        __v.translate(0.5, 0.5, 0.5);
-        self.currentVoxel = __v.*;
+        v.translate(0.5, 0.5, 0.5);
+        self.currentVoxel = v;
     }
 
     pub fn expandVoxel(self: *VoxelMesh, scale: position.Position) void {
-        var v = self.currentVoxel;
-        var _v = &v;
-        _v.scale(scale.x, scale.y, scale.z);
-        self.currentVoxel = _v.*;
+        if (self.currentVoxel) |_v| {
+            var v = _v;
+            v.scale(scale.x, scale.y, scale.z);
+        }
     }
 
     pub fn writeVoxel(
         self: *VoxelMesh,
         worldTransform: [16]gl.Float,
     ) !void {
-        try self.voxelShape.addVoxelData(self.currentVoxel, worldTransform);
-        self.currentVoxel = self.voxel;
+        if (self.currentVoxel) |_v| {
+            var v = _v;
+            try self.voxelShape.addVoxelData(v, worldTransform);
+            v.deinit();
+        }
+        self.currentVoxel = null;
     }
 
     pub fn draw(self: *VoxelMesh) !void {

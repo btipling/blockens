@@ -40,6 +40,15 @@ pub const Chunk = struct {
         );
     }
 
+    pub fn updateMeshForIndex(self: *Chunk, i: usize, vp: position.Position) !void {
+        if (vp.x == 1 and vp.y == 1 and vp.z == 1) {
+            return;
+        }
+        const blockId = self.data[i];
+        std.debug.print("updating mesh for block id: {d}\n", .{blockId});
+        try self.meshes.put(i, vp);
+    }
+
     pub fn findMeshes(self: *Chunk) !void {
         const op = position.Position{ .x = 0.0, .y = 0.0, .z = 0.0 };
         var p = op;
@@ -69,11 +78,11 @@ pub const Chunk = struct {
                     if (self.meshes.get(i)) |vp| {
                         var _vp = vp;
                         _vp.x += 1.0;
-                        try self.meshes.put(i, _vp);
+                        try self.updateMeshForIndex(i, _vp);
                     } else {
                         var vp = position.Position{ .x = 1.0, .y = 1.0, .z = 1.0 };
                         vp.x += 1.0;
-                        try self.meshes.put(i, vp);
+                        try self.updateMeshForIndex(i, vp);
                     }
                 } else {
                     if (numXAdded > 0) {
@@ -101,11 +110,11 @@ pub const Chunk = struct {
                 if (self.meshes.get(i)) |vp| {
                     var _vp = vp;
                     _vp.y += 1.0;
-                    try self.meshes.put(i, _vp);
+                    try self.updateMeshForIndex(i, _vp);
                 } else {
                     var vp = position.Position{ .x = 1.0, .y = 1.0, .z = 1.0 };
                     vp.y += 1.0;
-                    try self.meshes.put(i, vp);
+                    try self.updateMeshForIndex(i, vp);
                 }
                 // need to add all x's along the y to meshed map
                 for (op.x..@as(usize, @intFromFloat(endX + 1))) |xToAdd| {

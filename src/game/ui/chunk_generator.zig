@@ -122,7 +122,6 @@ pub const ChunkGenerator = struct {
                 .h = 100,
             })) {
                 self.appState.demoView.toggleMeshChunks();
-                try self.evalChunkFunc();
             }
             if (zgui.button("Toggle wireframe", .{
                 .w = 500,

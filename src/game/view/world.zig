@@ -13,6 +13,7 @@ pub const World = struct {
     worldPlane: ?plane.Plane = null,
     cursor: ?cursor.Cursor = null,
     worldView: *state.ViewState,
+    numVoxelMeshesDrawn: usize = 0,
 
     pub fn init(worldView: *state.ViewState) !World {
         return World{
@@ -47,9 +48,31 @@ pub const World = struct {
             try cube.Cube.drawInstanced(is);
         }
 
-        var values = self.worldView.voxelMeshes.valueIterator();
-        while (values.next()) |v| {
-            try v.draw();
+        var totalItemsDrawn: usize = 0;
+        var keys = self.worldView.voxelMeshes.keyIterator();
+        while (keys.next()) |_k| {
+            if (@TypeOf(_k) == *i32) {
+                const blockId = _k.*;
+                if (self.worldView.voxelMeshes.get(blockId)) |vm| {
+                    if (vm.voxelShape.voxelData.items.len == 0) {
+                        continue;
+                    }
+                    var _vm = vm;
+                    var v = &_vm;
+                    try v.draw();
+                    totalItemsDrawn += v.voxelShape.voxelData.items.len;
+                }
+            }
+        }
+        if (totalItemsDrawn != self.numVoxelMeshesDrawn) {
+            std.debug.print(
+                "num voxel meshes drawn changed from {d} to {d}\n",
+                .{
+                    self.numVoxelMeshesDrawn,
+                    totalItemsDrawn,
+                },
+            );
+            self.numVoxelMeshesDrawn = totalItemsDrawn;
         }
 
         if (self.cursor) |c| {
