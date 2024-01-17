@@ -229,18 +229,15 @@ pub const VoxelMesh = struct {
 
     pub fn expandVoxel(self: *VoxelMesh, scale: position.Position) void {
         var v = self.currentVoxel;
-        var __v = &v;
-        std.debug.print("scale: {d}, {d}, {d}\n", .{ scale.x, scale.y, scale.z });
-        __v.scale(scale.x, scale.y, scale.z);
-        self.currentVoxel = __v.*;
+        var _v = &v;
+        _v.scale(scale.x, scale.y, scale.z);
+        self.currentVoxel = _v.*;
     }
 
     pub fn writeVoxel(
         self: *VoxelMesh,
         worldTransform: [16]gl.Float,
     ) !void {
-        var v = self.currentVoxel;
-        v.texcoords = self.voxel.texcoords;
         try self.voxelShape.addVoxelData(self.currentVoxel, worldTransform);
         self.currentVoxel = self.voxel;
     }
