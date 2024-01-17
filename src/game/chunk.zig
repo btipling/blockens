@@ -108,7 +108,7 @@ pub const Chunk = struct {
                     try self.meshes.put(i, vp);
                 }
                 // need to add all x's along the y to meshed map
-                for (op.x..@as(usize, @intFromFloat(endX))) |xToAdd| {
+                for (op.x..@as(usize, @intFromFloat(endX + 1))) |xToAdd| {
                     const _xToAdd = @as(gl.Float, @floatFromInt(xToAdd));
                     const iii = getIndexFromPosition(position.Position{ .x = _xToAdd, .y = p.y, .z = p.z });
                     try self.meshed.put(iii, {});
