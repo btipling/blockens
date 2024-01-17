@@ -158,12 +158,26 @@ pub const Game = struct {
         // try appState.setGameView();
         try appState.setChunkGeneratorView();
 
+        var focusedAt: gl.Float = 0.0;
         main_loop: while (!window.shouldClose()) {
             glfw.pollEvents();
 
             const currentFrame: gl.Float = @as(gl.Float, @floatCast(glfw.getTime()));
             appState.worldView.deltaTime = currentFrame - appState.worldView.lastFrame;
             appState.worldView.lastFrame = currentFrame;
+            const focused = window.getAttribute(glfw.Window.Attribute.focused);
+            if (!focused and appState.app.view != .paused) {
+                try appState.pauseGame();
+            } else if (appState.app.view == .paused) {
+                if (focused and focusedAt == 0.0) {
+                    focusedAt = currentFrame;
+                    std.debug.print("focusedAt: {d}\n", .{focusedAt});
+                } else if (focused and (currentFrame - focusedAt) > 0.07) {
+                    focusedAt = 0.0;
+                    try appState.resumeGame();
+                }
+            }
+
             if (try ctrls.handleKey()) {
                 try appState.exitGame();
             }
@@ -189,6 +203,9 @@ pub const Game = struct {
                 },
                 .chunkGenerator => {
                     try drawChunkGeneratorView(&demoWorld, &gameUI);
+                },
+                .paused => {
+                    window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
                 },
             }
             // gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);

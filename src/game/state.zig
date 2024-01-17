@@ -67,7 +67,9 @@ pub const State = struct {
         return s;
     }
 
-    fn clearViewState(self: *State) !void {
+    fn clearViewState(self: *State, newView: View) !void {
+        self.app.previousView = newView;
+        self.app.view = newView;
         try self.app.clearViewState();
         try self.worldView.clearViewState();
         try self.demoView.clearViewState();
@@ -80,30 +82,36 @@ pub const State = struct {
     }
 
     pub fn setGameView(self: *State) !void {
-        try self.clearViewState();
         try self.worldView.focusView();
-        self.app.view = View.game;
+        try self.clearViewState(View.game);
     }
 
     pub fn setTextureGeneratorView(self: *State) !void {
-        try self.clearViewState();
-        self.app.view = View.textureGenerator;
+        try self.clearViewState(View.textureGenerator);
     }
 
     pub fn setWorldEditorView(self: *State) !void {
-        try self.clearViewState();
-        self.app.view = View.worldEditor;
+        try self.clearViewState(View.worldEditor);
     }
 
     pub fn setBlockEditorView(self: *State) !void {
-        try self.clearViewState();
-        self.app.view = View.blockEditor;
+        try self.clearViewState(View.blockEditor);
     }
 
     pub fn setChunkGeneratorView(self: *State) !void {
-        try self.clearViewState();
         try self.demoView.focusView();
-        self.app.view = View.chunkGenerator;
+        try self.clearViewState(View.chunkGenerator);
+    }
+
+    pub fn pauseGame(self: *State) !void {
+        self.app.view = View.paused;
+    }
+
+    pub fn resumeGame(self: *State) !void {
+        if (self.app.previousView == .game) {
+            try self.worldView.focusView();
+        }
+        self.app.view = self.app.previousView;
     }
 
     pub fn exitGame(self: *State) !void {
@@ -117,17 +125,20 @@ pub const View = enum {
     worldEditor,
     blockEditor,
     chunkGenerator,
+    paused,
 };
 
+const defaultView = View.game;
+
 pub const App = struct {
-    view: View = View.game,
+    view: View = defaultView,
+    previousView: View = defaultView,
     demoCubeVersion: u32 = 0,
     demoTextureColors: ?[data.RGBAColorTextureSize]gl.Uint,
     showChunkGeneratorUI: bool = true,
 
     pub fn init() !App {
         return App{
-            .view = View.game,
             .demoCubeVersion = 0,
             .demoTextureColors = null,
         };

@@ -81,6 +81,7 @@ pub const Controls = struct {
             .worldEditor => try self.handleWorldEditorKey(),
             .blockEditor => try self.handleBlockEditorKey(),
             .chunkGenerator => try self.handleChunkGeneratorKey(),
+            .paused => {},
         }
 
         return false;
