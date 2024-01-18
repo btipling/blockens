@@ -52,26 +52,24 @@ pub const Chunk = struct {
         var p = op;
         const i = getIndexFromPosition(p);
         const blockId = self.data[i];
-        var endX: gl.Float = 0;
         var numDimsTravelled: u8 = 1;
+        var endX: gl.Float = 0;
+        var endY: gl.Float = 0;
         var numXAdded: gl.Float = 0;
+        var numYAdded: gl.Float = 0;
+        p.x += 1.0;
         outer: while (true) {
-            p.x += 1.0;
-            if (p.x >= chunkDim) {
-                endX = op.x + numXAdded;
-                if (numDimsTravelled == 1) {
-                    numDimsTravelled += 1;
-                }
-                p.y += 1.0;
-                p.x = op.x;
-                continue :outer;
-            }
             const ii = getIndexFromPosition(p);
             if (numDimsTravelled == 1) {
+                std.debug.print("d1 - {d} {d} {d}: \n", .{ p.x, p.y, p.z });
                 if (blockId == self.data[ii]) {
-                    try self.meshed.put(i, {});
+                    if (numXAdded == 0) {
+                        try self.meshed.put(i, {});
+                        numXAdded += 1;
+                    }
                     try self.meshed.put(ii, {});
                     numXAdded += 1;
+                    std.debug.print("numXAdded +1: {d}\n", .{numXAdded});
                     if (self.meshes.get(i)) |vp| {
                         var _vp = vp;
                         _vp.x += 1.0;
@@ -93,11 +91,24 @@ pub const Chunk = struct {
                         break :outer;
                     }
                 }
-            } else {
-                // just doing y here, only add if all x along the y are the same
+                p.x += 1.0;
+                if (p.x >= chunkDim) {
+                    endX = op.x + numXAdded;
+                    // std.debug.print("numXAdded: {d}\n", .{numXAdded});
+                    numDimsTravelled += 1;
+                    p.y += 1.0;
+                    p.x = op.x;
+                    continue :outer;
+                }
+            } else if (numDimsTravelled == 2) {
+                std.debug.print("d2 - {d} {d} {d}: \n", .{ p.x, p.y, p.z });
+                // doing y here, only add if all x along the y are the same
                 if (blockId != self.data[ii]) {
-                    std.debug.print("ending: x didn't match on other y\n", .{});
-                    break :outer;
+                    endY = op.y + numYAdded;
+                    p.y = op.y;
+                    p.z += 1.0;
+                    numDimsTravelled += 1;
+                    continue :outer;
                 }
                 if (p.x != endX) {
                     p.x += 1.0;
@@ -113,23 +124,63 @@ pub const Chunk = struct {
                     try self.updateMeshForIndex(i, vp);
                 }
                 // need to add all x's along the y to meshed map
-                for (op.x..@as(usize, @intFromFloat(endX + 1))) |xToAdd| {
+                for (op.x..@as(usize, @intFromFloat(endX))) |xToAdd| {
                     const _xToAdd = @as(gl.Float, @floatFromInt(xToAdd));
                     const iii = getIndexFromPosition(position.Position{ .x = _xToAdd, .y = p.y, .z = p.z });
                     try self.meshed.put(iii, {});
                 }
+                numYAdded += 1;
                 p.y += 1.0;
                 p.x = op.x;
-                if (p.y >= chunkDim) {
-                    // p.z += 1.0;
-                    // if (p.z >= chunkDim) {
-                    //     break: outer;
-                    // }
-                    // p.y = op.y;
-                    // continue :outer;
-                    std.debug.print("ending: end of chunk in y\n", .{});
+                if (p.y >= chunkDim - 1) {
+                    endY = op.y + numYAdded;
+                    p.y = op.y;
+                    p.z += 1.0;
+                    numDimsTravelled += 1;
+                    continue :outer;
+                }
+            } else {
+                if (blockId != self.data[ii]) {
+                    std.debug.print("ending: x, y didn't match on other y at {d}, {d}, {d}, \n", .{ p.x, p.y, p.z });
                     break :outer;
                 }
+                if (p.x != endX) {
+                    p.x += 1.0;
+                    continue :outer;
+                }
+                p.y += 1.0;
+                if (p.y != endY) {
+                    std.debug.print("d3 continuing incrementing y - {d} {d} {d}: \n", .{ p.x, p.y, p.z });
+                    p.x = op.x;
+                    continue :outer;
+                }
+                // need to add all x's along the y to meshed map
+                for (op.x..@as(usize, @intFromFloat(endX + 1))) |xToAdd| {
+                    const _xToAdd = @as(gl.Float, @floatFromInt(xToAdd));
+                    for (op.x..@as(usize, @intFromFloat(endY + 1))) |yToAdd| {
+                        const _yToAdd = @as(gl.Float, @floatFromInt(yToAdd));
+                        const iii = getIndexFromPosition(position.Position{ .x = _xToAdd, .y = _yToAdd, .z = p.z });
+                        try self.meshed.put(iii, {});
+                    }
+                }
+                if (self.meshes.get(i)) |vp| {
+                    var _vp = vp;
+                    _vp.z += 1.0;
+                    try self.updateMeshForIndex(i, _vp);
+                } else {
+                    var vp = position.Position{ .x = 1.0, .y = 1.0, .z = 1.0 };
+                    vp.z += 1.0;
+                    try self.updateMeshForIndex(i, vp);
+                }
+                p.z += 1.0;
+                p.x = op.x;
+                p.y = op.y;
+                if (p.z >= chunkDim) {
+                    std.debug.print("d3 ending z - {d} {d} {d}: \n", .{ p.x, p.y, p.z });
+                    break :outer;
+                }
+                std.debug.print("d3 continuing incrementing z - {d} {d} {d}: \n", .{ p.x, p.y, p.z });
+                continue :outer;
             }
         }
     }

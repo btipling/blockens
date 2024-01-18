@@ -133,6 +133,7 @@ pub const Controls = struct {
             if (now - self.controlsLastUpdated >= 250) {
                 self.controlsLastUpdated = now;
                 self.appState.worldView.toggleWireframe();
+                self.appState.demoView.toggleWireframe();
             }
         }
         if (self.window.getKey(.F4) == .press) {

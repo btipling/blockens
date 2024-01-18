@@ -122,6 +122,7 @@ pub const ChunkGenerator = struct {
                 .h = 100,
             })) {
                 self.appState.demoView.toggleMeshChunks();
+                self.appState.worldView.toggleMeshChunks();
             }
             if (zgui.button("Toggle wireframe", .{
                 .w = 500,
