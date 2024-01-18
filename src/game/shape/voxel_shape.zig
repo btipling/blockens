@@ -149,6 +149,7 @@ pub const VoxelData = struct {
         curArr += 1;
         gl.vertexAttribPointer(curArr, edgeSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
         gl.enableVertexAttribArray(curArr);
+        curArr += 1;
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{d} voxel init data error: {d}\n", .{ blockId, e });
@@ -164,20 +165,18 @@ pub const VoxelData = struct {
         const tfSize = @as(isize, @intCast(worldspaceTF.len * @sizeOf(gl.Float)));
         gl.bufferData(gl.ARRAY_BUFFER, tfSize, &worldspaceTF, gl.STATIC_DRAW);
         // have to set up 4 consecutive attributes for the matrix
-
-        gl.enableVertexAttribArray(4);
-        gl.vertexAttribPointer(4, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, null);
-        gl.enableVertexAttribArray(5);
-        gl.vertexAttribPointer(5, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(@sizeOf(gl.Float) * 4)));
-        gl.enableVertexAttribArray(6);
-        gl.vertexAttribPointer(6, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(2 * @sizeOf(gl.Float) * 4)));
-        gl.enableVertexAttribArray(7);
-        gl.vertexAttribPointer(7, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(3 * @sizeOf(gl.Float) * 4)));
-
-        gl.vertexAttribDivisor(4, 1);
-        gl.vertexAttribDivisor(5, 1);
-        gl.vertexAttribDivisor(6, 1);
-        gl.vertexAttribDivisor(7, 1);
+        offset = 0;
+        for (0..4) |i| {
+            gl.enableVertexAttribArray(curArr);
+            if (i == 0) {
+                gl.vertexAttribPointer(curArr, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, null);
+            } else {
+                gl.vertexAttribPointer(curArr, 4, gl.FLOAT, gl.FALSE, @sizeOf(gl.Float) * 16, @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
+            }
+            gl.vertexAttribDivisor(curArr, 1);
+            curArr += 1;
+            offset += 4;
+        }
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
 
         return worldspaceVBO;
