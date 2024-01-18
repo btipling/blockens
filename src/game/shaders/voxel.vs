@@ -3,7 +3,8 @@ layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 entityTexCoord;
 layout (location = 2) in vec3 barycentricCoord;
 layout (location = 3) in vec2 edgeCoord;
-layout (location = 4) in mat4 attribTransform;
+layout (location = 4) in vec3 normal;
+layout (location = 5) in mat4 attribTransform;
 
 out vec2 TexCoord;
 out vec3 barycentric;

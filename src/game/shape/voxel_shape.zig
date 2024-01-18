@@ -17,6 +17,7 @@ pub const VoxelShapeVertex = struct {
     texture: [2]gl.Float,
     barycentric: [3]gl.Float,
     edge: [2]gl.Float,
+    normal: [3]gl.Float,
 };
 
 const bcV1 = @Vector(3, gl.Float){ 1.0, 0.0, 0.0 };
@@ -112,9 +113,13 @@ pub const VoxelData = struct {
         defer vertices.deinit();
 
         var tc: [2]gl.Float = [_]gl.Float{ 0.0, 0.0 };
+        var nm: [3]gl.Float = [_]gl.Float{ 0.0, 0.0, 0.0 };
         for (0..shaderData.positions.len) |i| {
             if (shaderData.texcoords) |t| {
                 tc = t[i];
+            }
+            if (shaderData.normals) |n| {
+                nm = n[i];
             }
             const defaultBC = @Vector(3, gl.Float){ 0.0, 0.0, 0.0 };
             const defaultEdge = @Vector(2, gl.Float){ 0.0, 0.0 };
@@ -123,6 +128,7 @@ pub const VoxelData = struct {
                 .texture = tc,
                 .barycentric = defaultBC,
                 .edge = defaultEdge,
+                .normal = nm,
             };
             vertices.appendAssumeCapacity(vtx);
         }
@@ -133,7 +139,8 @@ pub const VoxelData = struct {
         const texSize: gl.Int = 2;
         const barycentricSize: gl.Int = 3;
         const edgeSize: gl.Int = 2;
-        const stride: gl.Int = posSize + texSize + barycentricSize + edgeSize;
+        const normalSize: gl.Int = 3;
+        const stride: gl.Int = posSize + texSize + barycentricSize + edgeSize + normalSize;
         var offset: gl.Uint = posSize;
         var curArr: gl.Uint = 0;
         gl.vertexAttribPointer(curArr, posSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), null);
@@ -148,6 +155,10 @@ pub const VoxelData = struct {
         offset += barycentricSize;
         curArr += 1;
         gl.vertexAttribPointer(curArr, edgeSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
+        gl.enableVertexAttribArray(curArr);
+        curArr += 1;
+        offset += edgeSize;
+        gl.vertexAttribPointer(curArr, normalSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
         gl.enableVertexAttribArray(curArr);
         curArr += 1;
         const e = gl.getError();
