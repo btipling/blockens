@@ -128,6 +128,7 @@ pub const ChunkGenerator = struct {
                 .h = 100,
             })) {
                 self.appState.demoView.toggleWireframe();
+                self.appState.worldView.toggleWireframe();
             }
             zgui.sameLine(.{});
             if (zgui.button("Generate to world", .{

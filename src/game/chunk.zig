@@ -44,8 +44,6 @@ pub const Chunk = struct {
         if (vp.x == 1 and vp.y == 1 and vp.z == 1) {
             return;
         }
-        const blockId = self.data[i];
-        std.debug.print("updating mesh for block id: {d}\n", .{blockId});
         try self.meshes.put(i, vp);
     }
 
@@ -54,7 +52,6 @@ pub const Chunk = struct {
         var p = op;
         const i = getIndexFromPosition(p);
         const blockId = self.data[i];
-        std.debug.print("block id: {d}\n", .{blockId});
         var endX: gl.Float = 0;
         var numDimsTravelled: u8 = 1;
         var numXAdded: gl.Float = 0;
@@ -106,7 +103,6 @@ pub const Chunk = struct {
                     p.x += 1.0;
                     continue :outer;
                 }
-                std.debug.print("adding y {d}\n", .{p.y});
                 if (self.meshes.get(i)) |vp| {
                     var _vp = vp;
                     _vp.y += 1.0;

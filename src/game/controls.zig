@@ -140,6 +140,7 @@ pub const Controls = struct {
             if (now - self.controlsLastUpdated >= 250) {
                 self.controlsLastUpdated = now;
                 self.appState.worldView.toggleMeshChunks();
+                self.appState.demoView.toggleMeshChunks();
             }
         }
     }
