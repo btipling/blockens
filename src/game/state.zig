@@ -166,6 +166,7 @@ pub const ViewState = struct {
     cubesMap: std.AutoHashMap(i32, instancedShape.InstancedShape),
     voxelMeshes: std.AutoHashMap(i32, voxelMesh.VoxelMesh),
     perBlockTransforms: std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShapeTransform)),
+    chunks: std.AutoHashMap(i32, [chunk.chunkSize]i32),
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
@@ -200,6 +201,7 @@ pub const ViewState = struct {
             .cubesMap = std.AutoHashMap(i32, instancedShape.InstancedShape).init(alloc),
             .voxelMeshes = std.AutoHashMap(i32, voxelMesh.VoxelMesh).init(alloc),
             .perBlockTransforms = std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShapeTransform)).init(alloc),
+            .chunks = std.AutoHashMap(i32, [chunk.chunkSize]i32).init(alloc),
             .cameraPos = initialCameraPos,
             .cameraFront = initialCameraFront,
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
@@ -215,7 +217,6 @@ pub const ViewState = struct {
             .pitch = initialPitch,
             .disableScreenTransform = false,
         };
-
         try ViewState.updateLookAt(&g);
         return g;
     }
@@ -234,6 +235,7 @@ pub const ViewState = struct {
         }
         self.voxelMeshes.deinit();
         self.perBlockTransforms.deinit();
+        self.chunks.deinit();
     }
 
     fn clearViewState(self: *ViewState) !void {
@@ -348,7 +350,7 @@ pub const ViewState = struct {
         }
     }
 
-    pub fn initChunk(self: *ViewState, cData: [chunk.chunkSize]i32, chunkPosition: position.Position) !void {
+    fn initChunk(self: *ViewState, cData: [chunk.chunkSize]i32, chunkPosition: position.Position) !void {
         var chu = try chunk.Chunk.init(self.alloc);
         var c = &chu;
         defer c.deinit();
@@ -437,9 +439,14 @@ pub const ViewState = struct {
         self.meshChunks = !self.meshChunks;
     }
 
+    pub fn addChunk(self: *ViewState, cData: [chunk.chunkSize]i32, _: position.Position) !void {
+        try self.chunks.put(0, cData);
+    }
+
     pub fn initChunks(self: *ViewState, appState: *State) !void {
         self.view.bind();
         try self.addBlocks(appState);
+        try self.initChunk(self.chunks.get(0).?, position.Position{ .x = 0, .y = 0, .z = 0 });
         self.view.unbind();
     }
 
