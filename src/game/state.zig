@@ -246,7 +246,9 @@ pub const ViewState = struct {
     }
 
     pub fn deinit(self: *ViewState) void {
-        self.clearChunks();
+        self.clearChunks() catch |err| {
+            std.debug.print("Failed to clear chunks: {}\n", .{err});
+        };
         self.blockOptions.deinit();
         var cuv = self.cubesMap.valueIterator();
         while (cuv.next()) |v| {
@@ -444,6 +446,12 @@ pub const ViewState = struct {
     pub fn writeChunks(self: *ViewState) !void {
         self.view.bind();
 
+        var chunkKeys = self.chunks.keyIterator();
+        while (chunkKeys.next()) |k| {
+            if (@TypeOf(k) == *u64) {
+                try self.initChunk(k.*);
+            }
+        }
         var keys = self.perBlockTransforms.keyIterator();
         while (keys.next()) |_k| {
             if (@TypeOf(_k) == *i32) {
@@ -473,25 +481,19 @@ pub const ViewState = struct {
     pub fn initChunks(self: *ViewState, appState: *State) !void {
         self.view.bind();
         try self.addBlocks(appState);
-
-        var chunkKeys = self.chunks.keyIterator();
-        while (chunkKeys.next()) |k| {
-            if (@TypeOf(k) == *u64) {
-                try self.initChunk(k.*);
-            }
-        }
         self.view.unbind();
     }
 
-    pub fn clearChunks(self: *ViewState) void {
+    pub fn clearChunks(self: *ViewState) !void {
         self.view.bind();
         var values = self.voxelMeshes.valueIterator();
         while (values.next()) |v| {
             v.clear();
         }
         var cuv = self.cubesMap.valueIterator();
+        const t = [0]instancedShape.InstancedShapeTransform{};
         while (cuv.next()) |v| {
-            v.deinit();
+            try v.updateInstanceData(&t);
         }
         var pbtv = self.perBlockTransforms.valueIterator();
         while (pbtv.next()) |v| {

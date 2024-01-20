@@ -165,26 +165,23 @@ pub const ChunkGenerator = struct {
     }
 
     fn generateRandomChunk(self: *ChunkGenerator) !void {
-        self.appState.demoView.clearChunks();
+        try self.appState.demoView.clearChunks();
         const cData = self.appState.demoView.randomChunk(9001);
         try self.appState.demoView.addChunk(cData, position.Position{ .x = 0, .y = 0, .z = 0 });
-        try self.appState.demoView.initChunks(self.appState);
         try self.appState.demoView.writeChunks();
     }
 
     fn evalChunkFunc(self: *ChunkGenerator) !void {
-        self.appState.demoView.clearChunks();
+        try self.appState.demoView.clearChunks();
         const cData = try self.script.evalChunkFunc(self.buf);
         try self.appState.demoView.addChunk(cData, position.Position{ .x = 0, .y = 0, .z = 0 });
-        try self.appState.demoView.initChunks(self.appState);
         try self.appState.demoView.writeChunks();
     }
 
     fn evalWorldChunkFunc(self: *ChunkGenerator) !void {
-        self.appState.worldView.clearChunks();
+        try self.appState.worldView.clearChunks();
         const cData = try self.script.evalChunkFunc(self.buf);
         try self.appState.worldView.addChunk(cData, position.Position{ .x = 0, .y = 0, .z = 0 });
-        try self.appState.worldView.initChunks(self.appState);
         try self.appState.worldView.writeChunks();
         try self.appState.setGameView();
     }

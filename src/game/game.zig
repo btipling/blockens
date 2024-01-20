@@ -125,6 +125,7 @@ pub const Game = struct {
         var gameWorld = try world.World.initWithHUD(worldPlane, uiCursor, &appState.worldView);
         const worldDims = 1;
         const chunks = worldDims * worldDims;
+        try appState.worldView.initChunks(&appState);
         for (0..chunks) |i| {
             const x = @as(gl.Float, @floatFromInt(@mod(i, worldDims)));
             const y = 0;
@@ -133,17 +134,16 @@ pub const Game = struct {
             const cData = appState.demoView.randomChunk(i);
             try appState.worldView.addChunk(cData, pos);
         }
-        try appState.worldView.initChunks(&appState);
         try appState.worldView.writeChunks();
 
         var textureGen = try texture_gen.TextureGenerator.init(&appState, self.allocator);
         defer textureGen.deinit();
+        try appState.demoView.initChunks(&appState);
         var demoWorld = try world.World.init(&appState.demoView);
         {
             const cData = appState.demoView.randomChunk(9001);
             try appState.demoView.addChunk(cData, position.Position{ .x = 0, .y = 0, .z = 0 });
         }
-        try appState.demoView.initChunks(&appState);
         try appState.demoView.writeChunks();
 
         var c = try controls.Controls.init(window, &appState);
