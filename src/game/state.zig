@@ -318,21 +318,21 @@ pub const ViewState = struct {
         try self.view.update(zm.mul(m, self.screenTransform));
     }
 
-    pub fn randomChunk(self: *ViewState, seed: u64) !chunk.Chunk {
+    pub fn randomChunk(self: *ViewState, seed: u64) [chunk.chunkSize]i32 {
         var prng = std.rand.DefaultPrng.init(seed + @as(u64, @intCast(std.time.milliTimestamp())));
         const random = prng.random();
         var maxOptions = self.blockOptions.items.len;
-        var c = try chunk.Chunk.init(self.alloc);
+        var c: [chunk.chunkSize]i32 = [_]i32{0} ** chunk.chunkSize;
         if (maxOptions == 0) {
             std.debug.print("No blocks found\n", .{});
             return c;
         }
         maxOptions -= 1;
 
-        for (c.data, 0..) |_, i| {
+        for (c, 0..) |_, i| {
             const randomInt = random.uintAtMost(usize, maxOptions);
             const blockId = @as(i32, @intCast(randomInt + 1));
-            c.data[i] = blockId;
+            c[i] = blockId;
         }
         return c;
     }

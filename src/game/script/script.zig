@@ -80,7 +80,7 @@ pub const Script = struct {
         return textureRGBAColor;
     }
 
-    pub fn evalChunkFunc(self: *Script, buf: [maxLuaScriptSize]u8) !chunk.Chunk {
+    pub fn evalChunkFunc(self: *Script, buf: [maxLuaScriptSize]u8) ![chunk.chunkSize]i32 {
         std.debug.print("evalChunkFunc from lua {d}\n", .{buf.len});
         var luaCode: [maxLuaScriptSize]u8 = [_]u8{0} ** maxLuaScriptSize;
         var nullIndex: usize = 0;
@@ -117,14 +117,14 @@ pub const Script = struct {
             std.log.err("evalChunkFunc: chunks is not back to a table", .{});
             return ScriptError.ExpectedTable;
         }
-        var c = try chunk.Chunk.init(self.alloc);
+        var c: [chunk.chunkSize]i32 = [_]i32{0} ** chunk.chunkSize;
         for (1..(ts + 1)) |i| {
             _ = self.luaInstance.rawGetIndex(-1, @intCast(i));
             const blockId = self.luaInstance.toInteger(-1) catch |err| {
                 std.log.err("evalChunkFunc: failed to get color", .{});
                 return err;
             };
-            c.data[i - 1] = @as(gl.Int, @intCast(blockId));
+            c[i - 1] = @as(gl.Int, @intCast(blockId));
             self.luaInstance.pop(1);
         }
         std.debug.print("\n", .{});

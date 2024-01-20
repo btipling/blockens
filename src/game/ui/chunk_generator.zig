@@ -6,6 +6,7 @@ const config = @import("../config.zig");
 const position = @import("../position.zig");
 const shape = @import("../shape/shape.zig");
 const state = @import("../state.zig");
+const chunk = @import("../chunk.zig");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
 const builder_menu = @import("builder_menu.zig");
@@ -166,33 +167,33 @@ pub const ChunkGenerator = struct {
     fn generateRandomChunk(self: *ChunkGenerator) !void {
         self.appState.demoView.clearChunks();
         try self.appState.demoView.initChunks(self.appState);
-        const demoChunk = try self.appState.demoView.randomChunk(9001);
-        var _c = demoChunk;
-        var __c = &_c;
-        defer __c.deinit();
-        try self.appState.demoView.initChunk(__c, position.Position{ .x = 0, .y = 0, .z = 0 });
+        var chu = try chunk.Chunk.init(self.alloc);
+        var _c = &chu;
+        defer _c.deinit();
+        chu.data = self.appState.demoView.randomChunk(9001);
+        try self.appState.demoView.initChunk(_c, position.Position{ .x = 0, .y = 0, .z = 0 });
         try self.appState.demoView.writeChunks();
     }
 
     fn evalChunkFunc(self: *ChunkGenerator) !void {
         self.appState.demoView.clearChunks();
         try self.appState.demoView.initChunks(self.appState);
-        const demoChunk = try self.script.evalChunkFunc(self.buf);
-        var _c = demoChunk;
-        var __c = &_c;
-        defer __c.deinit();
-        try self.appState.demoView.initChunk(__c, position.Position{ .x = 0, .y = 0, .z = 0 });
+        var chu = try chunk.Chunk.init(self.alloc);
+        var _c = &chu;
+        defer _c.deinit();
+        chu.data = try self.script.evalChunkFunc(self.buf);
+        try self.appState.demoView.initChunk(_c, position.Position{ .x = 0, .y = 0, .z = 0 });
         try self.appState.demoView.writeChunks();
     }
 
     fn evalWorldChunkFunc(self: *ChunkGenerator) !void {
         self.appState.worldView.clearChunks();
         try self.appState.worldView.initChunks(self.appState);
-        const worldChunk = try self.script.evalChunkFunc(self.buf);
-        var _c = worldChunk;
-        var __c = &_c;
-        defer __c.deinit();
-        try self.appState.worldView.initChunk(__c, position.Position{ .x = 0, .y = 0, .z = 0 });
+        var chu = try chunk.Chunk.init(self.alloc);
+        var _c = &chu;
+        defer _c.deinit();
+        chu.data = try self.script.evalChunkFunc(self.buf);
+        try self.appState.worldView.initChunk(_c, position.Position{ .x = 0, .y = 0, .z = 0 });
         try self.appState.worldView.writeChunks();
         try self.appState.setGameView();
     }

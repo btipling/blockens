@@ -15,6 +15,7 @@ const position = @import("position.zig");
 const world = @import("./view/world.zig");
 const texture_gen = @import("./view/texture_gen.zig");
 const state = @import("state.zig");
+const chunk = @import("chunk.zig");
 
 var ctrls: *controls.Controls = undefined;
 
@@ -129,11 +130,11 @@ pub const Game = struct {
             const y = 0;
             const z = @as(gl.Float, @floatFromInt(i / worldDims));
             const pos = position.Position{ .x = x - worldDims / 2, .y = y, .z = z - worldDims / 2 };
-            const chunk = try appState.worldView.randomChunk(i);
-            var _c = chunk;
-            var __c = &_c;
-            defer __c.deinit();
-            try appState.worldView.initChunk(__c, pos);
+            var chu = try chunk.Chunk.init(self.allocator);
+            var _c = &chu;
+            defer _c.deinit();
+            chu.data = appState.worldView.randomChunk(i);
+            try appState.worldView.initChunk(_c, pos);
         }
         try appState.worldView.writeChunks();
 
@@ -141,11 +142,11 @@ pub const Game = struct {
         defer textureGen.deinit();
         var demoWorld = try world.World.init(&appState.demoView);
         {
-            const demoChunk = try appState.demoView.randomChunk(9001);
-            var _c = demoChunk;
-            var __c = &_c;
-            defer __c.deinit();
-            try appState.demoView.initChunk(__c, position.Position{ .x = 0, .y = 0, .z = 0 });
+            var chu = try chunk.Chunk.init(self.allocator);
+            var _c = &chu;
+            defer _c.deinit();
+            chu.data = appState.demoView.randomChunk(9001);
+            try appState.demoView.initChunk(_c, position.Position{ .x = 0, .y = 0, .z = 0 });
         }
         try appState.demoView.writeChunks();
 
