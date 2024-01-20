@@ -166,7 +166,7 @@ pub const ChunkGenerator = struct {
     fn generateRandomChunk(self: *ChunkGenerator) !void {
         self.appState.demoView.clearChunks();
         try self.appState.demoView.initChunks(self.appState);
-        const demoChunk = self.appState.demoView.randomChunk(9001);
+        const demoChunk = try self.appState.demoView.randomChunk(9001);
         var _c = demoChunk;
         var __c = &_c;
         defer __c.deinit();

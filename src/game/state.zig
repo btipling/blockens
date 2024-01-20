@@ -318,11 +318,11 @@ pub const ViewState = struct {
         try self.view.update(zm.mul(m, self.screenTransform));
     }
 
-    pub fn randomChunk(self: *ViewState, seed: u64) chunk.Chunk {
+    pub fn randomChunk(self: *ViewState, seed: u64) !chunk.Chunk {
         var prng = std.rand.DefaultPrng.init(seed + @as(u64, @intCast(std.time.milliTimestamp())));
         const random = prng.random();
         var maxOptions = self.blockOptions.items.len;
-        var c = chunk.Chunk.init(self.alloc);
+        var c = try chunk.Chunk.init(self.alloc);
         if (maxOptions == 0) {
             std.debug.print("No blocks found\n", .{});
             return c;
@@ -360,7 +360,7 @@ pub const ViewState = struct {
                     if (c.meshes.get(i)) |vp| {
                         const blockId = c.data[i];
                         if (self.voxelMeshes.get(blockId)) |vm| {
-                            const p = chunk.Chunk.getPositionAtIndex(i);
+                            const p = chunk.getPositionAtIndex(i);
                             const x = p.x + (chunkPosition.x * chunk.chunkDim);
                             const y = p.y + (chunkPosition.y * chunk.chunkDim);
                             const z = p.z + (chunkPosition.z * chunk.chunkDim);
@@ -388,7 +388,7 @@ pub const ViewState = struct {
             if (self.meshChunks and c.isMeshed(i)) {
                 continue;
             }
-            const p = chunk.Chunk.getPositionAtIndex(i);
+            const p = chunk.getPositionAtIndex(i);
             const x = p.x + (chunkPosition.x * chunk.chunkDim);
             const y = p.y + (chunkPosition.y * chunk.chunkDim);
             const z = p.z + (chunkPosition.z * chunk.chunkDim);

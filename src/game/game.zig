@@ -129,7 +129,7 @@ pub const Game = struct {
             const y = 0;
             const z = @as(gl.Float, @floatFromInt(i / worldDims));
             const pos = position.Position{ .x = x - worldDims / 2, .y = y, .z = z - worldDims / 2 };
-            const chunk = appState.worldView.randomChunk(i);
+            const chunk = try appState.worldView.randomChunk(i);
             var _c = chunk;
             var __c = &_c;
             defer __c.deinit();
@@ -141,7 +141,7 @@ pub const Game = struct {
         defer textureGen.deinit();
         var demoWorld = try world.World.init(&appState.demoView);
         {
-            const demoChunk = appState.demoView.randomChunk(9001);
+            const demoChunk = try appState.demoView.randomChunk(9001);
             var _c = demoChunk;
             var __c = &_c;
             defer __c.deinit();
