@@ -469,8 +469,10 @@ pub const ViewState = struct {
         self.wireframe = !self.wireframe;
     }
 
-    pub fn toggleMeshChunks(self: *ViewState) void {
+    pub fn toggleMeshChunks(self: *ViewState) !void {
         self.meshChunks = !self.meshChunks;
+        try self.clearChunks();
+        try self.writeChunks();
     }
 
     pub fn addChunk(self: *ViewState, cData: [chunk.chunkSize]i32, p: position.Position) !void {

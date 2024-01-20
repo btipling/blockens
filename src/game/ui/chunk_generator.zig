@@ -118,19 +118,17 @@ pub const ChunkGenerator = struct {
                 try self.evalChunkFunc();
             }
             zgui.sameLine(.{});
-            if (zgui.button("Mesh chunks", .{
+            if (zgui.button("Toggle meshing", .{
                 .w = 500,
                 .h = 100,
             })) {
-                self.appState.demoView.toggleMeshChunks();
-                self.appState.worldView.toggleMeshChunks();
+                try self.toggleMeshChunks();
             }
             if (zgui.button("Toggle wireframe", .{
                 .w = 500,
                 .h = 100,
             })) {
-                self.appState.demoView.toggleWireframe();
-                self.appState.worldView.toggleWireframe();
+                self.toggleWireframe();
             }
             zgui.sameLine(.{});
             if (zgui.button("Generate to world", .{
@@ -162,6 +160,15 @@ pub const ChunkGenerator = struct {
             zgui.popFont();
         }
         zgui.endChild();
+    }
+
+    fn toggleWireframe(self: *ChunkGenerator) void {
+        self.appState.demoView.toggleWireframe();
+        self.appState.worldView.toggleWireframe();
+    }
+
+    fn toggleMeshChunks(self: *ChunkGenerator) !void {
+        try self.appState.demoView.toggleMeshChunks();
     }
 
     fn generateRandomChunk(self: *ChunkGenerator) !void {
