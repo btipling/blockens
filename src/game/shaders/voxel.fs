@@ -19,27 +19,27 @@ void main()
    if (abs(fragNormal.y) > 0.5) {
       // top or bottom of voxel
       if (fragNormal.y > 0) {
-         FragColor = texture(ourTexture, vec2(fract(fragPos.x), fract(fragPos.z * -1.0) * 0.333));
+         FragColor = texture(ourTexture, vec2(fract(fragPos.x), fract(fragPos.z * -1.0) * 0.33333));
       } else {
-         FragColor = texture(ourTexture, vec2(fract(fragPos.x), (fract(fragPos.z) * 0.333) + 0.666));
+         FragColor = texture(ourTexture, vec2(fract(fragPos.z * -1.0), (fract(fragPos.x) * 0.33333) + 0.66666));
       }
    } else if (abs(fragNormal.x) > 0.5) {
       // side of voxel
       if (fragNormal.x > 0) {
          // right
-         FragColor = texture(ourTexture, vec2(fract(fragPos.z), (fract(fragPos.y * -1.0) * 0.333) + 0.333));
+         FragColor = texture(ourTexture, vec2(fract(fragPos.z), (fract(fragPos.y * -1.0) * 0.33333) + 0.33333));
       } else {
          // left
-         FragColor = texture(ourTexture, vec2(fract(fragPos.z * -1.0), (fract(fragPos.y * -1.0) * 0.333) + 0.333));
+         FragColor = texture(ourTexture, vec2(fract(fragPos.z * -1.0), (fract(fragPos.y * -1.0) * 0.33333) + 0.33333));
       }
    } else {
       // front or back of voxel
       if (fragNormal.z > 0) {
          // front
-         FragColor = texture(ourTexture, vec2(fract(fragPos.x), (fract(fragPos.y * -1.0) * 0.333) + 0.333));
+         FragColor = texture(ourTexture, vec2(fract(fragPos.x * -1.0), (fract(fragPos.y * -1.0) * 0.33333) + 0.33333));
       } else {
          // back
-         FragColor = texture(ourTexture, vec2(fract(fragPos.x), (fract(fragPos.y * -1.0) * 0.333) + 0.333));
+         FragColor = texture(ourTexture, vec2(fract(fragPos.x), (fract(fragPos.y * -1.0) * 0.33333) + 0.33333));
       }
    }
 }
