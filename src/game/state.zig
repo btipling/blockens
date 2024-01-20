@@ -348,7 +348,11 @@ pub const ViewState = struct {
         }
     }
 
-    pub fn initChunk(self: *ViewState, c: *chunk.Chunk, chunkPosition: position.Position) !void {
+    pub fn initChunk(self: *ViewState, cData: [chunk.chunkSize]i32, chunkPosition: position.Position) !void {
+        var chu = try chunk.Chunk.init(self.alloc);
+        var c = &chu;
+        defer c.deinit();
+        chu.data = cData;
         self.view.bind();
         if (self.meshChunks) {
             try c.findMeshes();

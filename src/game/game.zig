@@ -130,11 +130,8 @@ pub const Game = struct {
             const y = 0;
             const z = @as(gl.Float, @floatFromInt(i / worldDims));
             const pos = position.Position{ .x = x - worldDims / 2, .y = y, .z = z - worldDims / 2 };
-            var chu = try chunk.Chunk.init(self.allocator);
-            var _c = &chu;
-            defer _c.deinit();
-            chu.data = appState.worldView.randomChunk(i);
-            try appState.worldView.initChunk(_c, pos);
+            const cData = appState.demoView.randomChunk(i);
+            try appState.worldView.initChunk(cData, pos);
         }
         try appState.worldView.writeChunks();
 
@@ -142,11 +139,8 @@ pub const Game = struct {
         defer textureGen.deinit();
         var demoWorld = try world.World.init(&appState.demoView);
         {
-            var chu = try chunk.Chunk.init(self.allocator);
-            var _c = &chu;
-            defer _c.deinit();
-            chu.data = appState.demoView.randomChunk(9001);
-            try appState.demoView.initChunk(_c, position.Position{ .x = 0, .y = 0, .z = 0 });
+            const cData = appState.demoView.randomChunk(9001);
+            try appState.demoView.initChunk(cData, position.Position{ .x = 0, .y = 0, .z = 0 });
         }
         try appState.demoView.writeChunks();
 
