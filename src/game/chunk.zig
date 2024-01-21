@@ -145,15 +145,11 @@ pub const Chunker = struct {
                 const ii = getIndexFromPosition(p);
                 if (numDimsTravelled == 1) {
                     if (blockId != self.chunk.data[ii] or self.chunk.meshed.contains(ii)) {
-                        if (numXAdded > 0) {
-                            endX = op.x + numXAdded;
-                            numDimsTravelled += 1;
-                            p.y += 1.0;
-                            p.x = op.x;
-                            continue :inner;
-                        } else {
-                            break :inner;
-                        }
+                        endX = op.x + numXAdded;
+                        numDimsTravelled += 1;
+                        p.y += 1.0;
+                        p.x = op.x;
+                        continue :inner;
                     }
                     if (numXAdded == 0) {
                         try self.updateMeshed(i);
