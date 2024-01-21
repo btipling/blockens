@@ -148,7 +148,7 @@ pub const Game = struct {
 
         var c = try controls.Controls.init(window, &appState);
         ctrls = &c;
-        // _ = window.setCursorPosCallback(cursorPosCallback);
+        _ = window.setCursorPosCallback(cursorPosCallback);
         const skyColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 };
 
         // uncomment to start in a specific view:

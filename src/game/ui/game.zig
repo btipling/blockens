@@ -19,13 +19,8 @@ pub const Game = struct {
             .h = 200,
         });
         zgui.setNextItemWidth(-1);
-        const style = zgui.getStyle();
-        var window_bg = style.getColor(.window_bg);
-        window_bg = .{ 1.00, 1.00, 1.00, 0.5 };
-        style.setColor(.window_bg, window_bg);
-        var text_color = style.getColor(.text);
-        text_color = .{ 0.0, 0.0, 0.0, 1.00 };
-        style.setColor(.text, text_color);
+        zgui.pushStyleColor4f(.{ .idx = .window_bg, .c = [_]f32{ 1.00, 1.00, 1.00, 1.0 } });
+        zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
         if (zgui.begin("Hello, world!", .{
             .flags = .{
                 .no_title_bar = true,
@@ -51,5 +46,6 @@ pub const Game = struct {
             zgui.text("meshChunks: {}.", .{self.appState.worldView.meshChunks});
         }
         zgui.end();
+        zgui.popStyleColor(.{ .count = 2 });
     }
 };

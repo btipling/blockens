@@ -69,14 +69,8 @@ pub const ChunkGenerator = struct {
             .h = 2000,
         });
         zgui.setNextItemWidth(-1);
-        const style = zgui.getStyle();
-        var window_bg = style.getColor(.window_bg);
-        window_bg = .{ 1.00, 1.00, 1.00, 1.0 };
-        style.setColor(.window_bg, window_bg);
-        var text_color = style.getColor(.text);
-        text_color = .{ 0.0, 0.0, 0.0, 1.00 };
-        const title_color = .{ 1.0, 1.0, 1.0, 1.00 };
-        style.setColor(.text, title_color);
+        zgui.pushStyleColor4f(.{ .idx = .window_bg, .c = [_]f32{ 1.00, 1.00, 1.00, 1.0 } });
+        zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
         if (zgui.begin("Chunk Generator", .{
             .flags = .{
                 .no_title_bar = false,
@@ -91,6 +85,7 @@ pub const ChunkGenerator = struct {
             try self.bm.draw(window);
         }
         zgui.end();
+        zgui.popStyleColor(.{ .count = 2 });
     }
 
     fn drawControls(self: *ChunkGenerator) !void {
@@ -103,10 +98,7 @@ pub const ChunkGenerator = struct {
             },
         )) {
             zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
-            const style = zgui.getStyle();
-            var text_color = style.getColor(.text);
-            text_color = .{ 0.0, 0.0, 0.0, 1.00 };
-            style.setColor(.text, text_color);
+            zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
             if (zgui.button("Random chunk", .{
                 .w = 500,
                 .h = 75,
@@ -195,6 +187,7 @@ pub const ChunkGenerator = struct {
                 }
             }
             zgui.endListBox();
+            zgui.popStyleColor(.{ .count = 1 });
             zgui.popStyleVar(.{ .count = 1 });
         }
         zgui.endChild();
@@ -210,15 +203,13 @@ pub const ChunkGenerator = struct {
             },
         )) {
             zgui.pushFont(self.codeFont);
-            const style = zgui.getStyle();
-            var text_color = style.getColor(.text);
-            text_color = .{ 0.0, 0.0, 0.0, 1.00 };
-            style.setColor(.text, text_color);
+            zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
             _ = zgui.inputTextMultiline(" ", .{
                 .buf = self.buf[0..],
                 .w = 1984,
                 .h = 1900,
             });
+            zgui.popStyleColor(.{ .count = 1 });
             zgui.popFont();
         }
         zgui.endChild();
