@@ -20,7 +20,7 @@ pub const ChunkGenerator = struct {
     buf: [script.maxLuaScriptSize]u8,
     nameBuf: [script.maxLuaScriptNameSize]u8,
     codeFont: zgui.Font,
-    scriptOptions: std.ArrayList(data.scriptOption),
+    scriptOptions: std.ArrayList(data.chunkScriptOption),
     loadedScriptId: i32 = 0,
     scriptColor: [3]f32,
     bm: builder_menu.BuilderMenu,
@@ -45,7 +45,7 @@ pub const ChunkGenerator = struct {
             .buf = buf,
             .nameBuf = nameBuf,
             .codeFont = codeFont,
-            .scriptOptions = std.ArrayList(data.scriptOption).init(alloc),
+            .scriptOptions = std.ArrayList(data.chunkScriptOption).init(alloc),
             .scriptColor = .{ 1.0, 0.0, 0.0 },
             .bm = bm,
         };
@@ -247,7 +247,7 @@ pub const ChunkGenerator = struct {
     }
 
     fn loadChunkScriptFunc(self: *ChunkGenerator, scriptId: i32) !void {
-        var scriptData: data.script = undefined;
+        var scriptData: data.chunkScript = undefined;
         try self.appState.db.loadChunkScript(scriptId, &scriptData);
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
         var nameBuf = [_]u8{0} ** script.maxLuaScriptNameSize;
@@ -277,7 +277,7 @@ pub const ChunkGenerator = struct {
                 return;
             }
         }
-        try self.appState.db.saveChunkScript(&self.nameBuf, &self.buf);
+        try self.appState.db.saveChunkScript(&self.nameBuf, &self.buf, self.scriptColor);
         try self.listChunkScripts();
     }
 
@@ -289,7 +289,7 @@ pub const ChunkGenerator = struct {
                 return;
             }
         }
-        try self.appState.db.updateChunkScript(self.loadedScriptId, &self.nameBuf, &self.buf);
+        try self.appState.db.updateChunkScript(self.loadedScriptId, &self.nameBuf, &self.buf, self.scriptColor);
         try self.listChunkScripts();
         try self.loadChunkScriptFunc(self.loadedScriptId);
     }

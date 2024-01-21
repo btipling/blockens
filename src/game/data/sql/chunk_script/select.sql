@@ -1,1 +1,1 @@
-SELECT id, name, script FROM chunk_script WHERE id = :id;
+SELECT id, name, script, color FROM chunk_script WHERE id = :id;

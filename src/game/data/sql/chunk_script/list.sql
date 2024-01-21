@@ -1,1 +1,1 @@
-SELECT id, name FROM chunk_script;
+SELECT id, name, color FROM chunk_script;

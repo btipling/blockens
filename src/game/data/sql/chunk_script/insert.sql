@@ -1,1 +1,1 @@
-INSERT INTO chunk_script (name, script, created_at, updated_at) VALUES (:name, :script, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO chunk_script (name, script, created_at, updated_at) VALUES (:name, :script, :color, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

@@ -101,6 +101,32 @@ pub const block = struct {
     texture: [RGBAColorTextureSize]gl.Uint,
 };
 
+pub const chunkScriptOptionSQL = struct {
+    id: i32,
+    name: sqlite.Text,
+    color: i32,
+};
+
+pub const chunkScriptSQL = struct {
+    id: i32,
+    name: sqlite.Text,
+    script: sqlite.Text,
+    color: i32,
+};
+
+pub const chunkScriptOption = struct {
+    id: i32,
+    name: [21]u8,
+    color: [3]f32,
+};
+
+pub const chunkScript = struct {
+    id: i32,
+    name: [21]u8,
+    script: [360_001]u8,
+    color: [3]f32,
+};
+
 pub const Data = struct {
     db: sqlite.Database,
     alloc: std.mem.Allocator,
@@ -181,6 +207,36 @@ pub const Data = struct {
             n[i] = c;
         }
         return n;
+    }
+
+    fn colorToInteger3(color: [3]f32) i32 {
+        const c: [4]f32 = .{ color[0], color[1], color[2], 1.0 };
+        return colorToInteger4(c);
+    }
+
+    fn integerToColor3(color: i32) [3]f32 {
+        const c: [4]f32 = integerToColor4(color);
+        return .{ c[0], c[1], c[2] };
+    }
+
+    fn colorToInteger4(color: [4]f32) i32 {
+        _ = color;
+        // const a = @as(i32, @intFromFloat(color[3] * 255.0));
+        // const b = @as(i32, @intFromFloat(color[2] * 255.0));
+        // const g = @as(i32, @intFromFloat(color[1] * 255.0));
+        // const r = @as(i32, @intFromFloat(color[0] * 255.0));
+        // return a << 24 | b << 16 | g << 8 | r;
+        return 0;
+    }
+
+    fn integerToColor4(color: i32) [4]f32 {
+        _ = color;
+        // const a = @as(f32, @floatFromInt(color >> 24)) / 255.0;
+        // const b = @as(f32, @floatFromInt(color >> 16)) / 255.0;
+        // const g = @as(f32, @floatFromInt(color >> 8)) / 255.0;
+        // const r = @as(f32, @floatFromInt(color)) / 255.0;
+        // return .{ r, g, b, a };
+        return .{ 0, 0, 0, 1 };
     }
 
     pub fn listWorlds(self: *Data, data: *std.ArrayList(worldOption)) !void {
@@ -332,11 +388,11 @@ pub const Data = struct {
             try listStmt.bind(.{});
             defer listStmt.reset();
 
-            while (try listStmt.step()) |row| {
+            while (try listStmt.step()) |r| {
                 try data.append(
                     scriptOption{
-                        .id = row.id,
-                        .name = sqlNameToArray(row.name),
+                        .id = r.id,
+                        .name = sqlNameToArray(r.name),
                     },
                 );
             }
@@ -385,11 +441,12 @@ pub const Data = struct {
         };
     }
 
-    pub fn saveChunkScript(self: *Data, name: []const u8, chunkScript: []const u8) !void {
+    pub fn saveChunkScript(self: *Data, name: []const u8, cScript: []const u8, color: [3]f32) !void {
         var insertStmt = try self.db.prepare(
             struct {
                 name: sqlite.Text,
                 script: sqlite.Text,
+                color: i32,
             },
             void,
             insertChunkScriptStmt,
@@ -399,7 +456,8 @@ pub const Data = struct {
         insertStmt.exec(
             .{
                 .name = sqlite.text(name),
-                .script = sqlite.text(chunkScript),
+                .script = sqlite.text(cScript),
+                .color = colorToInteger3(color),
             },
         ) catch |err| {
             std.log.err("Failed to insert script: {}", .{err});
@@ -407,9 +465,9 @@ pub const Data = struct {
         };
     }
 
-    pub fn updateChunkScript(self: *Data, id: i32, name: []const u8, chunkScript: []const u8) !void {
+    pub fn updateChunkScript(self: *Data, id: i32, name: []const u8, cScript: []const u8, color: [3]f32) !void {
         var updateStmt = try self.db.prepare(
-            scriptSQL,
+            chunkScriptSQL,
             void,
             updateChunkScriptStmt,
         );
@@ -419,7 +477,8 @@ pub const Data = struct {
             .{
                 .id = id,
                 .name = sqlite.text(name),
-                .script = sqlite.text(chunkScript),
+                .script = sqlite.text(cScript),
+                .color = colorToInteger3(color),
             },
         ) catch |err| {
             std.log.err("Failed to update script: {}", .{err});
@@ -427,10 +486,10 @@ pub const Data = struct {
         };
     }
 
-    pub fn listChunkScripts(self: *Data, data: *std.ArrayList(scriptOption)) !void {
+    pub fn listChunkScripts(self: *Data, data: *std.ArrayList(chunkScriptOption)) !void {
         var listStmt = try self.db.prepare(
             struct {},
-            scriptOptionSQL,
+            chunkScriptOptionSQL,
             listChunkStmt,
         );
         defer listStmt.deinit();
@@ -440,23 +499,24 @@ pub const Data = struct {
             try listStmt.bind(.{});
             defer listStmt.reset();
 
-            while (try listStmt.step()) |row| {
+            while (try listStmt.step()) |r| {
                 try data.append(
-                    scriptOption{
-                        .id = row.id,
-                        .name = sqlNameToArray(row.name),
+                    chunkScriptOption{
+                        .id = r.id,
+                        .name = sqlNameToArray(r.name),
+                        .color = integerToColor3(r.color),
                     },
                 );
             }
         }
     }
 
-    pub fn loadChunkScript(self: *Data, id: i32, data: *script) !void {
+    pub fn loadChunkScript(self: *Data, id: i32, data: *chunkScript) !void {
         var selectStmt = try self.db.prepare(
             struct {
                 id: i32,
             },
-            scriptSQL,
+            chunkScriptSQL,
             selectChunkStmt,
         );
         defer selectStmt.deinit();
@@ -469,6 +529,7 @@ pub const Data = struct {
                 data.id = r.id;
                 data.name = sqlNameToArray(r.name);
                 data.script = sqlTextToScript(r.script);
+                data.color = integerToColor3(r.color);
                 return;
             }
         }
