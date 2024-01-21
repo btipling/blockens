@@ -220,23 +220,20 @@ pub const Data = struct {
     }
 
     fn colorToInteger4(color: [4]f32) i32 {
-        _ = color;
-        // const a = @as(i32, @intFromFloat(color[3] * 255.0));
-        // const b = @as(i32, @intFromFloat(color[2] * 255.0));
-        // const g = @as(i32, @intFromFloat(color[1] * 255.0));
-        // const r = @as(i32, @intFromFloat(color[0] * 255.0));
-        // return a << 24 | b << 16 | g << 8 | r;
-        return 0;
+        const a = @as(i32, @intFromFloat(color[3] * 255.0));
+        const b = @as(i32, @intFromFloat(color[2] * 255.0));
+        const g = @as(i32, @intFromFloat(color[1] * 255.0));
+        const r = @as(i32, @intFromFloat(color[0] * 255.0));
+        const rv: i32 = a << 24 | b << 16 | g << 8 | r;
+        return rv;
     }
 
     fn integerToColor4(color: i32) [4]f32 {
-        _ = color;
-        // const a = @as(f32, @floatFromInt(color >> 24)) / 255.0;
-        // const b = @as(f32, @floatFromInt(color >> 16)) / 255.0;
-        // const g = @as(f32, @floatFromInt(color >> 8)) / 255.0;
-        // const r = @as(f32, @floatFromInt(color)) / 255.0;
-        // return .{ r, g, b, a };
-        return .{ 0, 0, 0, 1 };
+        const a = @as(f32, @floatFromInt(color >> 24 & 0xFF)) / 255.0;
+        const b = @as(f32, @floatFromInt(color >> 16 & 0xFF)) / 255.0;
+        const g = @as(f32, @floatFromInt(color >> 8 & 0xFF)) / 255.0;
+        const r = @as(f32, @floatFromInt(color & 0xFF)) / 255.0;
+        return .{ r, g, b, a };
     }
 
     pub fn listWorlds(self: *Data, data: *std.ArrayList(worldOption)) !void {

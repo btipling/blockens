@@ -265,6 +265,7 @@ pub const ChunkGenerator = struct {
         }
         self.buf = buf;
         self.nameBuf = nameBuf;
+        self.scriptColor = scriptData.color;
         try self.evalChunkFunc();
         self.loadedScriptId = scriptId;
     }
