@@ -202,15 +202,18 @@ pub const Chunker = struct {
                         continue :inner;
                     }
                 } else {
-                    if (blockId != self.chunk.data[ii] or self.chunk.meshed.contains(ii)) {
+                    if (blockId != self.chunk.data[ii]) {
+                        break :inner;
+                    }
+                    if (self.chunk.meshed.contains(ii)) {
                         break :inner;
                     }
                     if (p.x != endX) {
                         p.x += 1.0;
                         continue :inner;
                     }
-                    p.y += 1.0;
                     if (p.y != endY) {
+                        p.y += 1.0;
                         p.x = op.x;
                         continue :inner;
                     }

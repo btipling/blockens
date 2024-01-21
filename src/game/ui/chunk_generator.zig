@@ -33,7 +33,7 @@ pub const ChunkGenerator = struct {
     ) !ChunkGenerator {
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
         const nameBuf = [_]u8{0} ** script.maxLuaScriptNameSize;
-        const defaultLuaScript = @embedFile("../script/lua/chunk_gen_hole.lua");
+        const defaultLuaScript = @embedFile("../script/lua/chunk_gen_surface.lua");
         for (defaultLuaScript, 0..) |c, i| {
             buf[i] = c;
         }

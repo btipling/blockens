@@ -405,7 +405,6 @@ pub const ViewState = struct {
                             try _vm.initVoxel();
                             _vm.expandVoxel(vp);
                             try _vm.writeVoxel(transform);
-                            std.debug.print("\n", .{});
                             try self.voxelMeshes.put(blockId, _vm);
                         } else {
                             std.debug.print("No voxel mesh for block id: {d}\n", .{blockId});
