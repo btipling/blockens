@@ -19,7 +19,7 @@ pub const Game = struct {
             .h = 200,
         });
         zgui.setNextItemWidth(-1);
-        zgui.pushStyleColor4f(.{ .idx = .window_bg, .c = [_]f32{ 1.00, 1.00, 1.00, 1.0 } });
+        zgui.pushStyleColor4f(.{ .idx = .window_bg, .c = [_]f32{ 1.00, 1.00, 1.00, 0.25 } });
         zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
         if (zgui.begin("Hello, world!", .{
             .flags = .{

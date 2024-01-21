@@ -69,8 +69,6 @@ pub const ChunkGenerator = struct {
             .h = 2000,
         });
         zgui.setNextItemWidth(-1);
-        zgui.pushStyleColor4f(.{ .idx = .window_bg, .c = [_]f32{ 1.00, 1.00, 1.00, 1.0 } });
-        zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
         if (zgui.begin("Chunk Generator", .{
             .flags = .{
                 .no_title_bar = false,
@@ -85,7 +83,6 @@ pub const ChunkGenerator = struct {
             try self.bm.draw(window);
         }
         zgui.end();
-        zgui.popStyleColor(.{ .count = 2 });
     }
 
     fn drawControls(self: *ChunkGenerator) !void {
@@ -98,7 +95,6 @@ pub const ChunkGenerator = struct {
             },
         )) {
             zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
-            zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
             if (zgui.button("Random chunk", .{
                 .w = 500,
                 .h = 75,
@@ -187,7 +183,6 @@ pub const ChunkGenerator = struct {
                 }
             }
             zgui.endListBox();
-            zgui.popStyleColor(.{ .count = 1 });
             zgui.popStyleVar(.{ .count = 1 });
         }
         zgui.endChild();
@@ -203,13 +198,11 @@ pub const ChunkGenerator = struct {
             },
         )) {
             zgui.pushFont(self.codeFont);
-            zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
             _ = zgui.inputTextMultiline(" ", .{
                 .buf = self.buf[0..],
                 .w = 1984,
                 .h = 1900,
             });
-            zgui.popStyleColor(.{ .count = 1 });
             zgui.popFont();
         }
         zgui.endChild();

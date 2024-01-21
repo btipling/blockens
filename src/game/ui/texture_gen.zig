@@ -57,8 +57,6 @@ pub const TextureGen = struct {
             .h = 2000,
         });
         zgui.setNextItemWidth(-1);
-        zgui.pushStyleColor4f(.{ .idx = .window_bg, .c = [_]f32{ 1.00, 1.00, 1.00, 1.0 } });
-        zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
         if (zgui.begin("Texture Editor", .{
             .flags = .{
                 .no_title_bar = false,
@@ -73,7 +71,6 @@ pub const TextureGen = struct {
             try self.drawScriptList();
         }
         zgui.end();
-        zgui.popStyleColor(.{ .count = 2 });
     }
 
     fn evalTextureFunc(self: *TextureGen) !void {
@@ -150,7 +147,6 @@ pub const TextureGen = struct {
             },
         )) {
             zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
-            zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
             if (zgui.button("Change texture", .{
                 .w = 450,
                 .h = 100,
@@ -164,7 +160,6 @@ pub const TextureGen = struct {
             })) {
                 try self.saveTextureScriptFunc();
             }
-            zgui.popStyleColor(.{ .count = 1 });
             zgui.popStyleVar(.{ .count = 1 });
             zgui.sameLine(.{});
             zgui.pushFont(self.codeFont);

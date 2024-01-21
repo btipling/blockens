@@ -52,8 +52,6 @@ pub const WorldEditor = struct {
             .h = 2000,
         });
         zgui.setNextItemWidth(-1);
-        zgui.pushStyleColor4f(.{ .idx = .window_bg, .c = [_]f32{ 1.00, 1.00, 1.00, 1.0 } });
-        zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
         if (zgui.begin("World Editor", .{
             .flags = .{
                 .no_title_bar = false,
@@ -70,7 +68,6 @@ pub const WorldEditor = struct {
             }
         }
         zgui.end();
-        zgui.popStyleColor(.{ .count = 2 });
     }
 
     fn listWorlds(self: *WorldEditor) !void {
@@ -149,14 +146,12 @@ pub const WorldEditor = struct {
             },
         )) {
             zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
-            zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
             if (zgui.button("Update world", .{
                 .w = 500,
                 .h = 100,
             })) {
                 try self.updateWorld();
             }
-            zgui.popStyleColor(.{ .count = 1 });
             zgui.popStyleVar(.{ .count = 1 });
             zgui.pushFont(self.codeFont);
             zgui.pushItemWidth(400);
@@ -239,14 +234,12 @@ pub const WorldEditor = struct {
             },
         )) {
             zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
-            zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
             if (zgui.button("Create world", .{
                 .w = 500,
                 .h = 100,
             })) {
                 try self.saveWorld();
             }
-            zgui.popStyleColor(.{ .count = 1 });
             zgui.popStyleVar(.{ .count = 1 });
             zgui.pushFont(self.codeFont);
             zgui.pushItemWidth(400);

@@ -18,9 +18,6 @@ pub const BuilderMenu = struct {
 
     pub fn draw(self: *BuilderMenu, window: *glfw.Window) !void {
         window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.normal);
-        zgui.pushStyleColor4f(.{ .idx = .window_bg, .c = [_]f32{ 1.00, 1.00, 1.00, 1.0 } });
-        zgui.pushStyleColor4f(.{ .idx = .popup_bg, .c = [_]f32{ 1.00, 1.00, 1.00, 1.0 } });
-        zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
         if (self.appState.demoView.showUILog) {
             var show = true;
             zgui.showDemoWindow(&show);
@@ -29,7 +26,6 @@ pub const BuilderMenu = struct {
             var show = true;
             zgui.showMetricsWindow(&show);
         }
-        zgui.popStyleColor(.{ .count = 3 });
         if (zgui.beginMainMenuBar()) {
             zgui.pushStyleVar2f(.{ .idx = .item_spacing, .v = [2]f32{ 20.0, 20.0 } });
             if (zgui.menuItem("game", .{})) {

@@ -61,8 +61,6 @@ pub const BlockEditor = struct {
             .h = 2000,
         });
         zgui.setNextItemWidth(-1);
-        zgui.pushStyleColor4f(.{ .idx = .window_bg, .c = [_]f32{ 1.00, 1.00, 1.00, 1.0 } });
-        zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
         if (zgui.begin("Block Editor", .{
             .flags = .{
                 .no_title_bar = false,
@@ -79,7 +77,6 @@ pub const BlockEditor = struct {
             }
         }
         zgui.end();
-        zgui.popStyleColor(.{ .count = 2 });
     }
 
     fn listBlocks(self: *BlockEditor) !void {
@@ -185,14 +182,12 @@ pub const BlockEditor = struct {
             },
         )) {
             zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
-            zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
             if (zgui.button("Update block", .{
                 .w = 500,
                 .h = 100,
             })) {
                 try self.updateBlock();
             }
-            zgui.popStyleColor(.{ .count = 1 });
             zgui.popStyleVar(.{ .count = 1 });
             zgui.pushFont(self.codeFont);
             zgui.pushItemWidth(400);
@@ -296,14 +291,12 @@ pub const BlockEditor = struct {
             },
         )) {
             zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
-            zgui.pushStyleColor4f(.{ .idx = .text, .c = [_]f32{ 0.0, 0.0, 0.0, 1.00 } });
             if (zgui.button("Create block", .{
                 .w = 500,
                 .h = 100,
             })) {
                 try self.saveBlock();
             }
-            zgui.popStyleColor(.{ .count = 1 });
             zgui.popStyleVar(.{ .count = 1 });
             zgui.pushFont(self.codeFont);
             zgui.pushItemWidth(400);
