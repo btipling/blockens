@@ -69,6 +69,7 @@ pub const UI = struct {
         self.TextureGen.deinit();
         self.BlockEditor.deinit();
         self.WorldEditor.deinit();
+        self.ChunkGenerator.deinit();
         self.script.deinit();
     }
 

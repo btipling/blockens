@@ -18,7 +18,10 @@ pub const ChunkGenerator = struct {
     appState: *state.State,
     alloc: std.mem.Allocator,
     buf: [script.maxLuaScriptSize]u8,
+    nameBuf: [script.maxLuaScriptNameSize]u8,
     codeFont: zgui.Font,
+    scriptOptions: std.ArrayList(data.scriptOption),
+    loadedScriptId: i32 = 0,
     bm: builder_menu.BuilderMenu,
 
     pub fn init(
@@ -29,23 +32,27 @@ pub const ChunkGenerator = struct {
         alloc: std.mem.Allocator,
     ) !ChunkGenerator {
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
+        const nameBuf = [_]u8{0} ** script.maxLuaScriptNameSize;
         const defaultLuaScript = @embedFile("../script/lua/chunk_gen_hole.lua");
         for (defaultLuaScript, 0..) |c, i| {
             buf[i] = c;
         }
-        const tv = ChunkGenerator{
+        var cg = ChunkGenerator{
             .script = sc,
             .appState = appState,
             .alloc = alloc,
             .buf = buf,
+            .nameBuf = nameBuf,
             .codeFont = codeFont,
+            .scriptOptions = std.ArrayList(data.scriptOption).init(alloc),
             .bm = bm,
         };
-        return tv;
+        try ChunkGenerator.listChunkScripts(&cg);
+        return cg;
     }
 
     pub fn deinit(self: *ChunkGenerator) void {
-        _ = self;
+        self.scriptOptions.deinit();
     }
 
     pub fn draw(self: *ChunkGenerator, window: *glfw.Window) !void {
@@ -56,12 +63,12 @@ pub const ChunkGenerator = struct {
         const w: u32 = @intCast(fb_size[0]);
         const h: u32 = @intCast(fb_size[1]);
         zgui.backend.newFrame(w, h);
-        const xPos: f32 = 1700.0;
+        const xPos: f32 = 1200.0;
         const yPos: f32 = 50.0;
         zgui.setNextWindowFocus();
         zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
         zgui.setNextWindowSize(.{
-            .w = 1850,
+            .w = 2600,
             .h = 2000,
         });
         zgui.setItemDefaultFocus();
@@ -83,8 +90,9 @@ pub const ChunkGenerator = struct {
             },
         })) {
             try self.bm.draw(window);
-            try self.drawControls();
             try self.drawInput();
+            zgui.sameLine(.{});
+            try self.drawControls();
         }
         zgui.end();
         zgui.backend.draw();
@@ -94,8 +102,8 @@ pub const ChunkGenerator = struct {
         if (zgui.beginChild(
             "Create World",
             .{
-                .w = 2000,
-                .h = 200,
+                .w = 500,
+                .h = 1950,
                 .border = false,
             },
         )) {
@@ -104,39 +112,88 @@ pub const ChunkGenerator = struct {
             var text_color = style.getColor(.text);
             text_color = .{ 0.0, 0.0, 0.0, 1.00 };
             style.setColor(.text, text_color);
-            if (zgui.button("Generate random chunk", .{
-                .w = 700,
-                .h = 100,
+            if (zgui.button("Random chunk", .{
+                .w = 500,
+                .h = 75,
             })) {
                 try self.generateRandomChunk();
             }
-            zgui.sameLine(.{});
             if (zgui.button("Generate chunk", .{
-                .w = 450,
-                .h = 100,
+                .w = 500,
+                .h = 75,
             })) {
                 try self.evalChunkFunc();
             }
-            zgui.sameLine(.{});
             if (zgui.button("Toggle meshing", .{
                 .w = 500,
-                .h = 100,
+                .h = 75,
             })) {
                 try self.toggleMeshChunks();
             }
             if (zgui.button("Toggle wireframe", .{
                 .w = 500,
-                .h = 100,
+                .h = 75,
             })) {
                 self.toggleWireframe();
             }
-            zgui.sameLine(.{});
             if (zgui.button("Generate to world", .{
                 .w = 500,
-                .h = 100,
+                .h = 75,
             })) {
                 try self.evalWorldChunkFunc();
             }
+            zgui.pushFont(self.codeFont);
+            zgui.pushItemWidth(500);
+            _ = zgui.inputTextWithHint("Script name", .{
+                .buf = self.nameBuf[0..],
+                .hint = "chunk_script",
+            });
+            zgui.popItemWidth();
+            zgui.popFont();
+            if (zgui.button("Create script", .{
+                .w = 500,
+                .h = 75,
+            })) {
+                try self.saveChunkScriptFunc();
+            }
+            if (zgui.button("Update script", .{
+                .w = 500,
+                .h = 75,
+            })) {
+                try self.updateChunkScriptFunc();
+            }
+            if (zgui.button("Delete script", .{
+                .w = 500,
+                .h = 75,
+            })) {
+                try self.deleteChunkScriptFunc();
+            }
+            if (zgui.button("Refresh list", .{
+                .w = 500,
+                .h = 100,
+            })) {
+                try self.listChunkScripts();
+            }
+            _ = zgui.beginListBox("##listbox", .{
+                .w = 800,
+                .h = 1100,
+            });
+            for (self.scriptOptions.items) |scriptOption| {
+                var buffer: [script.maxLuaScriptNameSize + 10]u8 = undefined;
+                const selectableName = try std.fmt.bufPrint(&buffer, "{d}: {s}", .{ scriptOption.id, scriptOption.name });
+                var name: [script.maxLuaScriptNameSize:0]u8 = undefined;
+                for (name, 0..) |_, i| {
+                    if (selectableName.len <= i) {
+                        name[i] = 0;
+                        break;
+                    }
+                    name[i] = selectableName[i];
+                }
+                if (zgui.selectable(&name, .{})) {
+                    try self.loadChunkScriptFunc(scriptOption.id);
+                }
+            }
+            zgui.endListBox();
             zgui.popStyleVar(.{ .count = 1 });
         }
         zgui.endChild();
@@ -147,15 +204,19 @@ pub const ChunkGenerator = struct {
             "script_input",
             .{
                 .w = 2000,
-                .h = 1500,
+                .h = 1950,
                 .border = true,
             },
         )) {
             zgui.pushFont(self.codeFont);
+            const style = zgui.getStyle();
+            var text_color = style.getColor(.text);
+            text_color = .{ 0.0, 0.0, 0.0, 1.00 };
+            style.setColor(.text, text_color);
             _ = zgui.inputTextMultiline(" ", .{
                 .buf = self.buf[0..],
                 .w = 1984,
-                .h = 1840,
+                .h = 1900,
             });
             zgui.popFont();
         }
@@ -180,7 +241,10 @@ pub const ChunkGenerator = struct {
 
     fn evalChunkFunc(self: *ChunkGenerator) !void {
         try self.appState.demoView.clearChunks();
-        const cData = try self.script.evalChunkFunc(self.buf);
+        const cData = self.script.evalChunkFunc(self.buf) catch |err| {
+            std.debug.print("Error evaluating chunk function: {}\n", .{err});
+            return;
+        };
         try self.appState.demoView.addChunk(cData, position.Position{ .x = 0, .y = 0, .z = 0 });
         try self.appState.demoView.writeChunks();
     }
@@ -191,5 +255,63 @@ pub const ChunkGenerator = struct {
         try self.appState.worldView.addChunk(cData, position.Position{ .x = 0, .y = 0, .z = 0 });
         try self.appState.worldView.writeChunks();
         try self.appState.setGameView();
+    }
+
+    fn listChunkScripts(self: *ChunkGenerator) !void {
+        try self.appState.db.listChunkScripts(&self.scriptOptions);
+    }
+
+    fn loadChunkScriptFunc(self: *ChunkGenerator, scriptId: i32) !void {
+        var scriptData: data.script = undefined;
+        try self.appState.db.loadChunkScript(scriptId, &scriptData);
+        var buf = [_]u8{0} ** script.maxLuaScriptSize;
+        var nameBuf = [_]u8{0} ** script.maxLuaScriptNameSize;
+        for (scriptData.name, 0..) |c, i| {
+            if (i >= script.maxLuaScriptNameSize) {
+                break;
+            }
+            nameBuf[i] = c;
+        }
+        for (scriptData.script, 0..) |c, i| {
+            if (i >= script.maxLuaScriptSize) {
+                break;
+            }
+            buf[i] = c;
+        }
+        self.buf = buf;
+        self.nameBuf = nameBuf;
+        try self.evalChunkFunc();
+        self.loadedScriptId = scriptId;
+    }
+
+    fn saveChunkScriptFunc(self: *ChunkGenerator) !void {
+        const n = std.mem.indexOf(u8, &self.nameBuf, &([_]u8{0}));
+        if (n) |i| {
+            if (i < 3) {
+                std.log.err("Script name is too short", .{});
+                return;
+            }
+        }
+        try self.appState.db.saveChunkScript(&self.nameBuf, &self.buf);
+        try self.listChunkScripts();
+    }
+
+    fn updateChunkScriptFunc(self: *ChunkGenerator) !void {
+        const n = std.mem.indexOf(u8, &self.nameBuf, &([_]u8{0}));
+        if (n) |i| {
+            if (i < 3) {
+                std.log.err("Script name is too short", .{});
+                return;
+            }
+        }
+        try self.appState.db.updateChunkScript(self.loadedScriptId, &self.nameBuf, &self.buf);
+        try self.listChunkScripts();
+        try self.loadChunkScriptFunc(self.loadedScriptId);
+    }
+
+    fn deleteChunkScriptFunc(self: *ChunkGenerator) !void {
+        try self.appState.db.deleteChunkScript(self.loadedScriptId);
+        try self.listChunkScripts();
+        self.loadedScriptId = 0;
     }
 };

@@ -17,6 +17,13 @@ const selectTextureStmt = @embedFile("./sql/texture_script/select.sql");
 const listTextureStmt = @embedFile("./sql/texture_script/list.sql");
 const deleteTextureStmt = @embedFile("./sql/texture_script/delete.sql");
 
+const createChunkScriptTable = @embedFile("./sql/chunk_script/create.sql");
+const insertChunkScriptStmt = @embedFile("./sql/chunk_script/insert.sql");
+const updateChunkScriptStmt = @embedFile("./sql/chunk_script/update.sql");
+const selectChunkStmt = @embedFile("./sql/chunk_script/select.sql");
+const listChunkStmt = @embedFile("./sql/chunk_script/list.sql");
+const deleteChunkStmt = @embedFile("./sql/chunk_script/delete.sql");
+
 const createBlockTable = @embedFile("./sql/block/create.sql");
 const insertBlockStmt = @embedFile("./sql/block/insert.sql");
 const updateBlockStmt = @embedFile("./sql/block/update.sql");
@@ -115,6 +122,7 @@ pub const Data = struct {
             createWorldTable,
             createTextureScriptTable,
             createBlockTable,
+            createChunkScriptTable,
         };
         for (createTableQueries) |query| {
             self.db.exec(query, .{}) catch |err| {
@@ -261,6 +269,14 @@ pub const Data = struct {
         };
     }
 
+    fn sqlTextToScript(text: sqlite.Text) [360_001]u8 {
+        var n: [360_001]u8 = [_]u8{0} ** 360_001;
+        for (text.data, 0..) |c, i| {
+            n[i] = c;
+        }
+        return n;
+    }
+
     pub fn saveTextureScript(self: *Data, name: []const u8, textureScript: []const u8) !void {
         var insertStmt = try self.db.prepare(
             struct {
@@ -327,14 +343,6 @@ pub const Data = struct {
         }
     }
 
-    fn sqlTextToScript(text: sqlite.Text) [360_001]u8 {
-        var n: [360_001]u8 = [_]u8{0} ** 360_001;
-        for (text.data, 0..) |c, i| {
-            n[i] = c;
-        }
-        return n;
-    }
-
     pub fn loadTextureScript(self: *Data, id: i32, data: *script) !void {
         var selectStmt = try self.db.prepare(
             struct {
@@ -373,6 +381,114 @@ pub const Data = struct {
             .{ .id = id },
         ) catch |err| {
             std.log.err("Failed to delete texture script: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn saveChunkScript(self: *Data, name: []const u8, chunkScript: []const u8) !void {
+        var insertStmt = try self.db.prepare(
+            struct {
+                name: sqlite.Text,
+                script: sqlite.Text,
+            },
+            void,
+            insertChunkScriptStmt,
+        );
+        defer insertStmt.deinit();
+
+        insertStmt.exec(
+            .{
+                .name = sqlite.text(name),
+                .script = sqlite.text(chunkScript),
+            },
+        ) catch |err| {
+            std.log.err("Failed to insert script: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn updateChunkScript(self: *Data, id: i32, name: []const u8, chunkScript: []const u8) !void {
+        var updateStmt = try self.db.prepare(
+            scriptSQL,
+            void,
+            updateChunkScriptStmt,
+        );
+        defer updateStmt.deinit();
+
+        updateStmt.exec(
+            .{
+                .id = id,
+                .name = sqlite.text(name),
+                .script = sqlite.text(chunkScript),
+            },
+        ) catch |err| {
+            std.log.err("Failed to update script: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn listChunkScripts(self: *Data, data: *std.ArrayList(scriptOption)) !void {
+        var listStmt = try self.db.prepare(
+            struct {},
+            scriptOptionSQL,
+            listChunkStmt,
+        );
+        defer listStmt.deinit();
+
+        data.clearRetainingCapacity();
+        {
+            try listStmt.bind(.{});
+            defer listStmt.reset();
+
+            while (try listStmt.step()) |row| {
+                try data.append(
+                    scriptOption{
+                        .id = row.id,
+                        .name = sqlNameToArray(row.name),
+                    },
+                );
+            }
+        }
+    }
+
+    pub fn loadChunkScript(self: *Data, id: i32, data: *script) !void {
+        var selectStmt = try self.db.prepare(
+            struct {
+                id: i32,
+            },
+            scriptSQL,
+            selectChunkStmt,
+        );
+        defer selectStmt.deinit();
+
+        {
+            try selectStmt.bind(.{ .id = id });
+            defer selectStmt.reset();
+
+            while (try selectStmt.step()) |r| {
+                data.id = r.id;
+                data.name = sqlNameToArray(r.name);
+                data.script = sqlTextToScript(r.script);
+                return;
+            }
+        }
+
+        return error.Unreachable;
+    }
+
+    pub fn deleteChunkScript(self: *Data, id: i32) !void {
+        var deleteStmt = try self.db.prepare(
+            struct {
+                id: i32,
+            },
+            void,
+            deleteChunkStmt,
+        );
+
+        deleteStmt.exec(
+            .{ .id = id },
+        ) catch |err| {
+            std.log.err("Failed to delete chunk script: {}", .{err});
             return err;
         };
     }
