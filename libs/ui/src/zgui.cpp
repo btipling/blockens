@@ -1001,6 +1001,14 @@ ZGUI_API void zguiShowDemoWindow(bool* p_open) {
     ImGui::ShowDemoWindow(p_open);
 }
 
+ZGUI_API void zguiShowMetricsWindow(bool* p_open) {
+    ImGui::ShowMetricsWindow(p_open);
+}
+
+ZGUI_API void zguiShowDebugLogWindow(bool* p_open) {
+    ImGui::ShowDebugLogWindow(p_open);
+}
+
 ZGUI_API void zguiBeginDisabled(bool disabled) {
     ImGui::BeginDisabled(disabled);
 }

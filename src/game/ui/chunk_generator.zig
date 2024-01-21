@@ -22,6 +22,7 @@ pub const ChunkGenerator = struct {
     codeFont: zgui.Font,
     scriptOptions: std.ArrayList(data.scriptOption),
     loadedScriptId: i32 = 0,
+    scriptColor: [3]f32,
     bm: builder_menu.BuilderMenu,
 
     pub fn init(
@@ -45,6 +46,7 @@ pub const ChunkGenerator = struct {
             .nameBuf = nameBuf,
             .codeFont = codeFont,
             .scriptOptions = std.ArrayList(data.scriptOption).init(alloc),
+            .scriptColor = .{ 1.0, 0.0, 0.0 },
             .bm = bm,
         };
         try ChunkGenerator.listChunkScripts(&cg);
@@ -59,19 +61,13 @@ pub const ChunkGenerator = struct {
         if (!self.appState.app.showChunkGeneratorUI) {
             return;
         }
-        const fb_size = window.getFramebufferSize();
-        const w: u32 = @intCast(fb_size[0]);
-        const h: u32 = @intCast(fb_size[1]);
-        zgui.backend.newFrame(w, h);
         const xPos: f32 = 1200.0;
         const yPos: f32 = 50.0;
-        zgui.setNextWindowFocus();
         zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
         zgui.setNextWindowSize(.{
             .w = 2600,
             .h = 2000,
         });
-        zgui.setItemDefaultFocus();
         zgui.setNextItemWidth(-1);
         const style = zgui.getStyle();
         var window_bg = style.getColor(.window_bg);
@@ -84,18 +80,17 @@ pub const ChunkGenerator = struct {
         if (zgui.begin("Chunk Generator", .{
             .flags = .{
                 .no_title_bar = false,
-                .no_resize = true,
+                .no_resize = false,
                 .no_scrollbar = false,
-                .no_collapse = true,
+                .no_collapse = false,
             },
         })) {
-            try self.bm.draw(window);
             try self.drawInput();
             zgui.sameLine(.{});
             try self.drawControls();
+            try self.bm.draw(window);
         }
         zgui.end();
-        zgui.backend.draw();
     }
 
     fn drawControls(self: *ChunkGenerator) !void {
@@ -142,6 +137,12 @@ pub const ChunkGenerator = struct {
             })) {
                 try self.evalWorldChunkFunc();
             }
+            if (zgui.colorEdit3("Script color", .{
+                .col = &self.scriptColor,
+                .flags = .{
+                    .picker_hue_bar = true,
+                },
+            })) {}
             zgui.pushFont(self.codeFont);
             zgui.pushItemWidth(500);
             _ = zgui.inputTextWithHint("Script name", .{

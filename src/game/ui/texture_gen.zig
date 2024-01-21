@@ -55,13 +55,11 @@ pub const TextureGen = struct {
         zgui.backend.newFrame(w, h);
         const xPos: f32 = 700.0;
         const yPos: f32 = 50.0;
-        zgui.setNextWindowFocus();
         zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
         zgui.setNextWindowSize(.{
             .w = 2850,
             .h = 2000,
         });
-        zgui.setItemDefaultFocus();
         zgui.setNextItemWidth(-1);
         const style = zgui.getStyle();
         var window_bg = style.getColor(.window_bg);

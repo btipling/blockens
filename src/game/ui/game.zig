@@ -11,12 +11,8 @@ pub const Game = struct {
 
     fn drawInfo(self: Game, window: *glfw.Window) !void {
         window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
-        const fb_size = window.getFramebufferSize();
-        const w: u32 = @intCast(fb_size[0]);
-        const h: u32 = @intCast(fb_size[1]);
         const xPos: f32 = 50.0;
         const yPos: f32 = 50.0;
-        zgui.backend.newFrame(w, h);
         zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
         zgui.setNextWindowSize(.{
             .w = 1500,
@@ -55,6 +51,5 @@ pub const Game = struct {
             zgui.text("meshChunks: {}.", .{self.appState.worldView.meshChunks});
         }
         zgui.end();
-        zgui.backend.draw();
     }
 };

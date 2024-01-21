@@ -53,19 +53,13 @@ pub const BlockEditor = struct {
     }
 
     pub fn draw(self: *BlockEditor, window: *glfw.Window) !void {
-        const fb_size = window.getFramebufferSize();
-        const w: u32 = @intCast(fb_size[0]);
-        const h: u32 = @intCast(fb_size[1]);
-        zgui.backend.newFrame(w, h);
         const xPos: f32 = 700.0;
         const yPos: f32 = 50.0;
-        zgui.setNextWindowFocus();
         zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
         zgui.setNextWindowSize(.{
             .w = 2850,
             .h = 2000,
         });
-        zgui.setItemDefaultFocus();
         zgui.setNextItemWidth(-1);
         const style = zgui.getStyle();
         var window_bg = style.getColor(.window_bg);
@@ -91,7 +85,6 @@ pub const BlockEditor = struct {
             }
         }
         zgui.end();
-        zgui.backend.draw();
     }
 
     fn listBlocks(self: *BlockEditor) !void {

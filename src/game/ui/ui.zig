@@ -73,23 +73,44 @@ pub const UI = struct {
         self.script.deinit();
     }
 
+    pub fn beginDraw(self: *UI) void {
+        const fb_size = self.window.getFramebufferSize();
+        const w: u32 = @intCast(fb_size[0]);
+        const h: u32 = @intCast(fb_size[1]);
+        zgui.backend.newFrame(w, h);
+    }
+
+    pub fn endDraw(_: *UI) void {
+        zgui.backend.draw();
+    }
+
     pub fn drawGame(self: *UI) !void {
+        self.beginDraw();
         try self.Game.draw(self.window);
+        self.endDraw();
     }
 
     pub fn drawTextureGen(self: *UI) !void {
+        self.beginDraw();
         try self.TextureGen.draw(self.window);
+        self.endDraw();
     }
 
     pub fn drawWorldEditor(self: *UI) !void {
+        self.beginDraw();
         try self.WorldEditor.draw(self.window);
+        self.endDraw();
     }
 
     pub fn drawBlockEditor(self: *UI) !void {
+        self.beginDraw();
         try self.BlockEditor.draw(self.window);
+        self.endDraw();
     }
 
     pub fn drawChunkGenerator(self: *UI) !void {
+        self.beginDraw();
         try self.ChunkGenerator.draw(self.window);
+        self.endDraw();
     }
 };

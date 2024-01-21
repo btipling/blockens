@@ -208,6 +208,8 @@ pub const ViewState = struct {
     disableScreenTransform: bool,
     wireframe: bool = false,
     meshChunks: bool = false,
+    showUIMetrics: bool = false,
+    showUILog: bool = false,
     pub fn init(
         alloc: std.mem.Allocator,
         v: view.View,
@@ -472,6 +474,14 @@ pub const ViewState = struct {
         self.meshChunks = !self.meshChunks;
         try self.clearChunks();
         try self.writeChunks();
+    }
+
+    pub fn toggleUIMetrics(self: *ViewState) void {
+        self.showUIMetrics = !self.showUIMetrics;
+    }
+
+    pub fn toggleUILog(self: *ViewState) void {
+        self.showUILog = !self.showUILog;
     }
 
     pub fn addChunk(self: *ViewState, cData: [chunk.chunkSize]i32, p: position.Position) !void {

@@ -144,9 +144,35 @@ pub const Controls = struct {
         }
     }
 
-    fn handleTextureGeneratorKey(_: *Controls) !void {}
-    fn handleWorldEditorKey(_: *Controls) !void {}
-    fn handleBlockEditorKey(_: *Controls) !void {}
+    fn uiControls(self: *Controls) !void {
+        if (self.window.getKey(.F11) == .press) {
+            const now = std.time.milliTimestamp();
+            if (now - self.controlsLastUpdated >= 250) {
+                self.controlsLastUpdated = now;
+                self.appState.demoView.toggleUIMetrics();
+            }
+        }
+        if (self.window.getKey(.F12) == .press) {
+            const now = std.time.milliTimestamp();
+            if (now - self.controlsLastUpdated >= 250) {
+                self.controlsLastUpdated = now;
+                self.appState.demoView.toggleUILog();
+            }
+        }
+    }
+
+    fn handleTextureGeneratorKey(self: *Controls) !void {
+        try self.uiControls();
+    }
+
+    fn handleWorldEditorKey(self: *Controls) !void {
+        try self.uiControls();
+    }
+
+    fn handleBlockEditorKey(self: *Controls) !void {
+        try self.uiControls();
+    }
+
     fn handleChunkGeneratorKey(self: *Controls) !void {
         if (self.window.getKey(.right) == .press) {
             try self.appState.demoView.rotateWorld();
@@ -176,5 +202,6 @@ pub const Controls = struct {
                 try self.appState.demoView.toggleMeshChunks();
             }
         }
+        try self.uiControls();
     }
 };

@@ -559,6 +559,14 @@ extern fn zguiGetDrawData() DrawData;
 /// `pub fn showDemoWindow(popen: ?*bool) void`
 pub const showDemoWindow = zguiShowDemoWindow;
 extern fn zguiShowDemoWindow(popen: ?*bool) void;
+// -------------------------------------------------------------------------------------------------
+/// `pub fn showMetricsWindow(popen: ?*bool) void`
+pub const showMetricsWindow = zguiShowMetricsWindow;
+extern fn zguiShowMetricsWindow(popen: ?*bool) void;
+//--------------------------------------------------------------------------------------------------
+/// `pub fn showDebugLogWindow(popen: ?*bool) void`
+pub const showDebugLogWindow = zguiShowDebugLogWindow;
+extern fn zguiShowDebugLogWindow(popen: ?*bool) void;
 //--------------------------------------------------------------------------------------------------
 //
 // Windows
