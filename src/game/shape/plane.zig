@@ -76,8 +76,8 @@ pub const Plane = struct {
     }
 
     pub fn draw(self: *Plane, givenM: zm.Mat) !void {
-        var m = zm.scaling(200.0, 200.0, 200.0);
-        m = zm.mul(m, zm.translation(-100.0, -0.001, 100.0));
+        var m = zm.scaling(500.0, 500.0, 500.0);
+        m = zm.mul(m, zm.translation(-250.0, -0.001, 250.0));
         m = zm.mul(m, zm.translation(self.position.x, self.position.y, self.position.z));
         try self.shape.draw(zm.mul(m, givenM));
     }

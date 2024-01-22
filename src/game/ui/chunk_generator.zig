@@ -19,6 +19,9 @@ pub const ChunkGenerator = struct {
     alloc: std.mem.Allocator,
     buf: [script.maxLuaScriptSize]u8,
     nameBuf: [script.maxLuaScriptNameSize]u8,
+    chunkXBuf: [5]u8,
+    chunkYBuf: [5]u8,
+    chunkZBuf: [5]u8,
     codeFont: zgui.Font,
     scriptOptions: std.ArrayList(data.chunkScriptOption),
     loadedScriptId: i32 = 0,
@@ -38,12 +41,17 @@ pub const ChunkGenerator = struct {
         for (defaultLuaScript, 0..) |c, i| {
             buf[i] = c;
         }
+        var defaultPos: [5]u8 = [_]u8{0} ** 5;
+        defaultPos[0] = '0';
         var cg = ChunkGenerator{
             .script = sc,
             .appState = appState,
             .alloc = alloc,
             .buf = buf,
             .nameBuf = nameBuf,
+            .chunkXBuf = defaultPos,
+            .chunkYBuf = defaultPos,
+            .chunkZBuf = defaultPos,
             .codeFont = codeFont,
             .scriptOptions = std.ArrayList(data.chunkScriptOption).init(alloc),
             .scriptColor = .{ 1.0, 0.0, 0.0 },
@@ -119,6 +127,24 @@ pub const ChunkGenerator = struct {
             })) {
                 self.toggleWireframe();
             }
+            zgui.text("Chunk xyz:", .{});
+            zgui.sameLine(.{});
+            zgui.pushItemWidth(75);
+            _ = zgui.inputTextWithHint("##chunkXPos", .{
+                .buf = self.chunkXBuf[0..],
+                .hint = "x",
+            });
+            zgui.sameLine(.{});
+            _ = zgui.inputTextWithHint("##chunkYPos", .{
+                .buf = self.chunkYBuf[0..],
+                .hint = "y",
+            });
+            zgui.sameLine(.{});
+            _ = zgui.inputTextWithHint("##chunkZPos", .{
+                .buf = self.chunkZBuf[0..],
+                .hint = "z",
+            });
+            zgui.popItemWidth();
             if (zgui.button("Generate to world", .{
                 .w = 500,
                 .h = 75,
@@ -166,7 +192,7 @@ pub const ChunkGenerator = struct {
             zgui.popStyleVar(.{ .count = 1 });
             _ = zgui.beginListBox("##listbox", .{
                 .w = 500,
-                .h = 1100,
+                .h = 900,
             });
 
             zgui.pushStyleColor4f(.{ .idx = .header_hovered, .c = .{ 1.0, 1.0, 1.0, 0.25 } });
@@ -244,10 +270,23 @@ pub const ChunkGenerator = struct {
         try self.appState.demoView.writeChunks();
     }
 
+    fn floatFromChunkBuf(buf: []u8) f32 {
+        const r = [_]u8{0};
+        const b = std.mem.trim(u8, buf, &r);
+        return std.fmt.parseFloat(f32, b) catch |err| {
+            std.debug.print("Error parsing chunk position: {}\n", .{err});
+            return 0.0;
+        };
+    }
+
     fn evalWorldChunkFunc(self: *ChunkGenerator) !void {
         try self.appState.worldView.clearChunks();
         const cData = try self.script.evalChunkFunc(self.buf);
-        try self.appState.worldView.addChunk(cData, position.Position{ .x = 0, .y = 0, .z = 0 });
+        const x = floatFromChunkBuf(&self.chunkXBuf);
+        const y = floatFromChunkBuf(&self.chunkYBuf);
+        const z = floatFromChunkBuf(&self.chunkZBuf);
+        std.debug.print("Writing chunk to world at position: {}, {}, {}\n", .{ x, y, z });
+        try self.appState.worldView.addChunk(cData, position.Position{ .x = x, .y = y, .z = z });
         try self.appState.worldView.writeChunks();
         try self.appState.setGameView();
     }

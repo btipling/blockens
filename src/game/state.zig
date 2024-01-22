@@ -17,25 +17,27 @@ pub const StateErrors = error{
 };
 
 const worldPosition = struct {
-    pos: u64,
+    x: u32,
+    y: u32,
+    z: u32,
     fn initFromPosition(p: position.Position) worldPosition {
-        const x = @as(u64, @intFromFloat(p.x));
-        const y = @as(u64, @intFromFloat(p.y));
-        const z = @as(u64, @intFromFloat(p.z));
+        const x = @as(u32, @bitCast(p.x));
+        const y = @as(u32, @bitCast(p.y));
+        const z = @as(u32, @bitCast(p.z));
         return worldPosition{
-            .pos = z << 12 | y << 6 | x,
-        };
-    }
-    fn initFromWorldPosition(p: u64) worldPosition {
-        return worldPosition{
-            .pos = p,
+            .x = x,
+            .y = y,
+            .z = z,
         };
     }
     fn positionFromWorldPosition(self: worldPosition) position.Position {
+        const x = @as(f32, @bitCast(self.x));
+        const y = @as(f32, @bitCast(self.y));
+        const z = @as(f32, @bitCast(self.z));
         return position.Position{
-            .x = @as(gl.Float, @floatFromInt(self.pos & 0xFFF)),
-            .y = @as(gl.Float, @floatFromInt((self.pos >> 6) & 0xFFF)),
-            .z = @as(gl.Float, @floatFromInt((self.pos >> 12) & 0xFFF)),
+            .x = x,
+            .y = y,
+            .z = z,
         };
     }
 };
@@ -190,7 +192,7 @@ pub const ViewState = struct {
     cubesMap: std.AutoHashMap(i32, instancedShape.InstancedShape),
     voxelMeshes: std.AutoHashMap(i32, voxelMesh.VoxelMesh),
     perBlockTransforms: std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShapeTransform)),
-    chunks: std.AutoHashMap(u64, [chunk.chunkSize]i32),
+    chunks: std.AutoHashMap(worldPosition, [chunk.chunkSize]i32),
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
@@ -227,7 +229,7 @@ pub const ViewState = struct {
             .cubesMap = std.AutoHashMap(i32, instancedShape.InstancedShape).init(alloc),
             .voxelMeshes = std.AutoHashMap(i32, voxelMesh.VoxelMesh).init(alloc),
             .perBlockTransforms = std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShapeTransform)).init(alloc),
-            .chunks = std.AutoHashMap(u64, [chunk.chunkSize]i32).init(alloc),
+            .chunks = std.AutoHashMap(worldPosition, [chunk.chunkSize]i32).init(alloc),
             .cameraPos = initialCameraPos,
             .cameraFront = initialCameraFront,
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
@@ -378,9 +380,9 @@ pub const ViewState = struct {
         }
     }
 
-    fn initChunk(self: *ViewState, wpData: u64) !void {
-        const wp = worldPosition.initFromWorldPosition(wpData);
-        const chunkPosition = wp.positionFromWorldPosition();
+    fn initChunk(self: *ViewState, wpData: worldPosition) !void {
+        const chunkPosition = wpData.positionFromWorldPosition();
+        std.debug.print("initChunk: {d}, {d}, {d}\n", .{ chunkPosition.x, chunkPosition.y, chunkPosition.z });
         var chu = try chunk.Chunk.init(self.alloc);
         var c = &chu;
         defer c.deinit();
@@ -412,6 +414,8 @@ pub const ViewState = struct {
                             std.debug.print("No voxel mesh for block id: {d}\n", .{blockId});
                         }
                     }
+                } else {
+                    @panic("Invalid key type");
                 }
             }
         }
@@ -449,8 +453,10 @@ pub const ViewState = struct {
 
         var chunkKeys = self.chunks.keyIterator();
         while (chunkKeys.next()) |k| {
-            if (@TypeOf(k) == *u64) {
+            if (@TypeOf(k) == *worldPosition) {
                 try self.initChunk(k.*);
+            } else {
+                @panic("Invalid key type");
             }
         }
         var keys = self.perBlockTransforms.keyIterator();
@@ -486,7 +492,7 @@ pub const ViewState = struct {
 
     pub fn addChunk(self: *ViewState, cData: [chunk.chunkSize]i32, p: position.Position) !void {
         const wp = worldPosition.initFromPosition(p);
-        try self.chunks.put(wp.pos, cData);
+        try self.chunks.put(wp, cData);
     }
 
     pub fn initChunks(self: *ViewState, appState: *State) !void {
