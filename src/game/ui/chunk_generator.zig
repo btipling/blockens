@@ -89,7 +89,7 @@ pub const ChunkGenerator = struct {
         if (zgui.beginChild(
             "Create World",
             .{
-                .w = 500,
+                .w = 700,
                 .h = 1950,
                 .border = false,
             },
@@ -125,7 +125,7 @@ pub const ChunkGenerator = struct {
             })) {
                 try self.evalWorldChunkFunc();
             }
-            if (zgui.colorEdit3("Script color", .{
+            if (zgui.colorEdit3("##Script color", .{
                 .col = &self.scriptColor,
                 .flags = .{
                     .picker_hue_bar = true,
@@ -133,7 +133,7 @@ pub const ChunkGenerator = struct {
             })) {}
             zgui.pushFont(self.codeFont);
             zgui.pushItemWidth(500);
-            _ = zgui.inputTextWithHint("Script name", .{
+            _ = zgui.inputTextWithHint("##script name", .{
                 .buf = self.nameBuf[0..],
                 .hint = "chunk_script",
             });
@@ -163,13 +163,16 @@ pub const ChunkGenerator = struct {
             })) {
                 try self.listChunkScripts();
             }
+            zgui.popStyleVar(.{ .count = 1 });
             _ = zgui.beginListBox("##listbox", .{
-                .w = 800,
+                .w = 500,
                 .h = 1100,
             });
+
+            zgui.pushStyleColor4f(.{ .idx = .header_hovered, .c = .{ 1.0, 1.0, 1.0, 0.25 } });
             for (self.scriptOptions.items) |scriptOption| {
                 var buffer: [script.maxLuaScriptNameSize + 10]u8 = undefined;
-                const selectableName = try std.fmt.bufPrint(&buffer, "{d}: {s}", .{ scriptOption.id, scriptOption.name });
+                const selectableName = try std.fmt.bufPrint(&buffer, "  {d}: {s}", .{ scriptOption.id, scriptOption.name });
                 var name: [script.maxLuaScriptNameSize:0]u8 = undefined;
                 for (name, 0..) |_, i| {
                     if (selectableName.len <= i) {
@@ -178,12 +181,19 @@ pub const ChunkGenerator = struct {
                     }
                     name[i] = selectableName[i];
                 }
-                if (zgui.selectable(&name, .{})) {
+                var dl = zgui.getWindowDrawList();
+                const pmin = zgui.getCursorScreenPos();
+                // const pmin = [2]f32{ p[0], p[1] - 5.0 };
+                const pmax = [2]f32{ pmin[0] + 35.0, pmin[1] + 30.0 };
+                const col = zgui.colorConvertFloat4ToU32(.{ scriptOption.color[0], scriptOption.color[1], scriptOption.color[2], 1.0 });
+                dl.addRectFilled(.{ .pmin = pmin, .pmax = pmax, .col = col });
+
+                if (zgui.selectable(&name, .{ .h = 60 })) {
                     try self.loadChunkScriptFunc(scriptOption.id);
                 }
             }
+            zgui.popStyleColor(.{ .count = 1 });
             zgui.endListBox();
-            zgui.popStyleVar(.{ .count = 1 });
         }
         zgui.endChild();
     }
@@ -192,7 +202,7 @@ pub const ChunkGenerator = struct {
         if (zgui.beginChild(
             "script_input",
             .{
-                .w = 2000,
+                .w = 1800,
                 .h = 1950,
                 .border = true,
             },
@@ -200,7 +210,7 @@ pub const ChunkGenerator = struct {
             zgui.pushFont(self.codeFont);
             _ = zgui.inputTextMultiline(" ", .{
                 .buf = self.buf[0..],
-                .w = 1984,
+                .w = 1784,
                 .h = 1900,
             });
             zgui.popFont();

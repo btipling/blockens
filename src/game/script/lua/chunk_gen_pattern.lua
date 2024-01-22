@@ -1,5 +1,4 @@
 function generate_chunk()
-    -- block id 0 is air
     math.randomseed(os.time())
     local blocks = {}
     for i = 1, 64 * 64 * 64 do
@@ -19,6 +18,4 @@ function generate_chunk()
     return blocks
 end
 
--- Calling the function to generate the chunk
 chunk = generate_chunk()
--- chunk now contains a 64x64x64 chunk

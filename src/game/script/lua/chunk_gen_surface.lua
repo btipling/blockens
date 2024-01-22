@@ -1,5 +1,4 @@
 function generate_chunk()
-    -- block id 0 is air
     local blocks = {}
     for i = 1, 64 * 64 * 64 do
         local _i = i - 1
@@ -7,7 +6,6 @@ function generate_chunk()
         local y = math.floor(_i / 64) % 64
         local z = math.floor(_i / (64 * 64)) % 64
         blocks[i] = 0
-        -- Check if the current block is within the hole boundaries
         if y <= 63 and y > 55 and x < 20 and z < 20 then
             blocks[i] = 5 -- water
             goto continue
@@ -26,6 +24,4 @@ function generate_chunk()
     return blocks
 end
 
--- Calling the function to generate the chunk
 chunk = generate_chunk()
--- chunk now contains a 64x64x64 chunk with a hole in the center
