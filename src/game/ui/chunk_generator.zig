@@ -288,7 +288,6 @@ pub const ChunkGenerator = struct {
         std.debug.print("Writing chunk to world at position: {}, {}, {}\n", .{ x, y, z });
         try self.appState.worldView.addChunk(cData, position.Position{ .x = x, .y = y, .z = z });
         try self.appState.worldView.writeChunks();
-        try self.appState.setGameView();
     }
 
     fn listChunkScripts(self: *ChunkGenerator) !void {
