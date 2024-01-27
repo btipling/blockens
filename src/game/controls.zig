@@ -135,13 +135,6 @@ pub const Controls = struct {
                 self.appState.worldView.toggleWireframe();
             }
         }
-        if (self.window.getKey(.F4) == .press) {
-            const now = std.time.milliTimestamp();
-            if (now - self.controlsLastUpdated >= 250) {
-                self.controlsLastUpdated = now;
-                try self.appState.worldView.toggleMeshChunks();
-            }
-        }
     }
 
     fn uiControls(self: *Controls) !void {
@@ -193,13 +186,6 @@ pub const Controls = struct {
             if (now - self.controlsLastUpdated >= 250) {
                 self.controlsLastUpdated = now;
                 self.appState.demoView.toggleWireframe();
-            }
-        }
-        if (self.window.getKey(.F4) == .press) {
-            const now = std.time.milliTimestamp();
-            if (now - self.controlsLastUpdated >= 250) {
-                self.controlsLastUpdated = now;
-                try self.appState.demoView.toggleMeshChunks();
             }
         }
         try self.uiControls();

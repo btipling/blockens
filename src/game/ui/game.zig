@@ -42,8 +42,6 @@ pub const Game = struct {
             const yaw = self.appState.worldView.yaw;
             const pitch = self.appState.worldView.pitch;
             zgui.text("yaw: {e:.2}, pitch: {e:.2}.", .{ yaw, pitch });
-            zgui.sameLine(.{});
-            zgui.text("meshChunks: {}.", .{self.appState.worldView.meshChunks});
         }
         zgui.end();
         zgui.popStyleColor(.{ .count = 2 });

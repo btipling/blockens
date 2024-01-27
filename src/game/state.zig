@@ -209,7 +209,6 @@ pub const ViewState = struct {
     highlightedIndex: ?usize = 0,
     disableScreenTransform: bool,
     wireframe: bool = false,
-    meshChunks: bool = false,
     showUIMetrics: bool = false,
     showUILog: bool = false,
     pub fn init(
@@ -350,25 +349,6 @@ pub const ViewState = struct {
         try self.view.update(zm.mul(m, self.screenTransform));
     }
 
-    pub fn randomChunk(self: *ViewState, seed: u64) [chunk.chunkSize]i32 {
-        var prng = std.rand.DefaultPrng.init(seed + @as(u64, @intCast(std.time.milliTimestamp())));
-        const random = prng.random();
-        var maxOptions = self.blockOptions.items.len;
-        var c: [chunk.chunkSize]i32 = [_]i32{0} ** chunk.chunkSize;
-        if (maxOptions == 0) {
-            std.debug.print("No blocks found\n", .{});
-            return c;
-        }
-        maxOptions -= 1;
-
-        for (c, 0..) |_, i| {
-            const randomInt = random.uintAtMost(usize, maxOptions);
-            const blockId = @as(i32, @intCast(randomInt + 1));
-            c[i] = blockId;
-        }
-        return c;
-    }
-
     pub fn write(self: *ViewState, blockId: i32, blockTransforms: *std.ArrayList(instancedShape.InstancedShapeTransform)) !void {
         const transforms = blockTransforms.items;
         if (self.cubesMap.get(blockId)) |is| {
@@ -388,35 +368,33 @@ pub const ViewState = struct {
         defer c.deinit();
         chu.data = self.chunks.get(wpData).?;
         self.view.bind();
-        if (self.meshChunks) {
-            try c.findMeshes();
+        try c.findMeshes();
 
-            var keys = c.meshes.keyIterator();
-            while (keys.next()) |_k| {
-                if (@TypeOf(_k) == *usize) {
-                    const i = _k.*;
-                    if (c.meshes.get(i)) |vp| {
-                        const blockId = c.data[i];
-                        if (self.voxelMeshes.get(blockId)) |vm| {
-                            const p = chunk.getPositionAtIndex(i);
-                            const x = p.x + (chunkPosition.x * chunk.chunkDim);
-                            const y = p.y + (chunkPosition.y * chunk.chunkDim);
-                            const z = p.z + (chunkPosition.z * chunk.chunkDim);
-                            const m = zm.translation(x, y, z);
-                            var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
-                            zm.storeMat(&transform, m);
-                            var _vm = vm;
-                            try _vm.initVoxel();
-                            _vm.expandVoxel(vp);
-                            try _vm.writeVoxel(transform);
-                            try self.voxelMeshes.put(blockId, _vm);
-                        } else {
-                            std.debug.print("No voxel mesh for block id: {d}\n", .{blockId});
-                        }
+        var keys = c.meshes.keyIterator();
+        while (keys.next()) |_k| {
+            if (@TypeOf(_k) == *usize) {
+                const i = _k.*;
+                if (c.meshes.get(i)) |vp| {
+                    const blockId = c.data[i];
+                    if (self.voxelMeshes.get(blockId)) |vm| {
+                        const p = chunk.getPositionAtIndex(i);
+                        const x = p.x + (chunkPosition.x * chunk.chunkDim);
+                        const y = p.y + (chunkPosition.y * chunk.chunkDim);
+                        const z = p.z + (chunkPosition.z * chunk.chunkDim);
+                        const m = zm.translation(x, y, z);
+                        var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+                        zm.storeMat(&transform, m);
+                        var _vm = vm;
+                        try _vm.initVoxel();
+                        _vm.expandVoxel(vp);
+                        try _vm.writeVoxel(transform);
+                        try self.voxelMeshes.put(blockId, _vm);
+                    } else {
+                        std.debug.print("No voxel mesh for block id: {d}\n", .{blockId});
                     }
-                } else {
-                    @panic("Invalid key type");
                 }
+            } else {
+                @panic("Invalid key type");
             }
         }
 
@@ -424,7 +402,7 @@ pub const ViewState = struct {
             if (blockId == 0) {
                 continue;
             }
-            if (self.meshChunks and c.isMeshed(i)) {
+            if (c.isMeshed(i)) {
                 continue;
             }
             const p = chunk.getPositionAtIndex(i);
@@ -474,12 +452,6 @@ pub const ViewState = struct {
 
     pub fn toggleWireframe(self: *ViewState) void {
         self.wireframe = !self.wireframe;
-    }
-
-    pub fn toggleMeshChunks(self: *ViewState) !void {
-        self.meshChunks = !self.meshChunks;
-        try self.clearChunks();
-        try self.writeChunks();
     }
 
     pub fn toggleUIMetrics(self: *ViewState) void {
