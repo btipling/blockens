@@ -114,13 +114,26 @@ pub const Chunker = struct {
         self.currentScale = position.Position{ .x = 1.0, .y = 1.0, .z = 1.0 };
     }
 
+    fn _shouldLog(numLoops: u64, p: position.Position) bool {
+        _ = p;
+        _ = numLoops;
+        return false;
+        // if (numLoops == 1) return false;
+        // if (p.x > 11) return false;
+        // if (p.y < 62) return false;
+        // if (p.z > 3) return false;
+        // return true;
+    }
+
     pub fn run(self: *Chunker) !void {
         var op = position.Position{ .x = 0.0, .y = 0.0, .z = 0.0 };
         var p = op;
         p.x += 1.0;
         var i: usize = 0;
         var firstLoop = true;
+        var numLoops: u64 = 0;
         outer: while (true) {
+            numLoops += 1;
             while (true) {
                 if (firstLoop) {
                     // first loop, skip iterating
@@ -154,6 +167,15 @@ pub const Chunker = struct {
             if (self.chunk.meshed.contains(i)) {
                 continue :outer;
             }
+            std.debug.print("starting mesh at i {d} op ({d}, {d}, {d}) and p ({d}, {d}, {d})\n", .{
+                i,
+                op.x,
+                op.y,
+                op.z,
+                p.x,
+                p.y,
+                p.z,
+            });
             self.currentVoxel = i;
             var numDimsTravelled: u8 = 1;
             var endX: gl.Float = 0;
@@ -163,40 +185,80 @@ pub const Chunker = struct {
             inner: while (true) {
                 const ii = getIndexFromPosition(p);
                 if (numDimsTravelled == 1) {
+                    if (_shouldLog(numLoops, p)) {
+                        std.debug.print("d1 meshing ({d}, {d}, {d})\n", .{
+                            p.x,
+                            p.y,
+                            p.z,
+                        });
+                    }
                     if (blockId != self.chunk.data[ii] or self.chunk.meshed.contains(ii)) {
-                        endX = op.x + numXAdded;
                         numDimsTravelled += 1;
                         p.y += 1.0;
                         p.x = op.x;
                         continue :inner;
                     }
                     if (numXAdded == 0) {
+                        numXAdded += 1;
                         try self.updateMeshed(i);
                     }
                     try self.updateMeshed(ii);
-                    numXAdded += 1;
                     self.currentScale.x += 1.0;
+                    endX = p.x;
                     p.x += 1.0;
                     if (p.x >= chunkDim) {
-                        endX = op.x + numXAdded;
-                        if (endX >= chunkDim) {
-                            endX = chunkDim - 1;
-                        }
+                        std.debug.print("setting endX to: {d} op.x: {d}, numXAdded: {d}\n", .{ endX, op.x, numXAdded });
                         numDimsTravelled += 1;
                         p.y += 1.0;
                         p.x = op.x;
                         continue :inner;
                     }
+                    numXAdded += 1;
                 } else if (numDimsTravelled == 2) {
+                    if (_shouldLog(numLoops, p)) {
+                        std.debug.print("d2 meshing ({d}, {d}, {d})\n", .{
+                            p.x,
+                            p.y,
+                            p.z,
+                        });
+                    }
                     // doing y here, only add if all x along the y are the same
                     if (blockId != self.chunk.data[ii] or self.chunk.meshed.contains(ii)) {
-                        endY = op.y + numYAdded;
+                        if (_shouldLog(numLoops, p)) {
+                            if (blockId != self.chunk.data[ii]) {
+                                std.debug.print("d2 block not equal {d} vs {d} ({d}, {d}, {d}) endX: {d} endY: {d} \n", .{
+                                    blockId,
+                                    self.chunk.data[ii],
+                                    p.x,
+                                    p.y,
+                                    p.z,
+                                    endX,
+                                    endY,
+                                });
+                            } else {
+                                std.debug.print("d2 meshed ({d}, {d}, {d})\n", .{
+                                    p.x,
+                                    p.y,
+                                    p.z,
+                                });
+                            }
+                        }
                         p.y = op.y;
                         p.z += 1.0;
                         numDimsTravelled += 1;
                         continue :inner;
                     }
+                    if (numYAdded == 0) {
+                        try self.updateMeshed(i);
+                    }
                     if (p.x != endX) {
+                        if (_shouldLog(numLoops, p)) {
+                            std.debug.print("d2 x incremented ({d}, {d}, {d})\n", .{
+                                p.x,
+                                p.y,
+                                p.z,
+                            });
+                        }
                         p.x += 1.0;
                         continue :inner;
                     }
@@ -206,31 +268,95 @@ pub const Chunker = struct {
                     const _end = @as(usize, @intFromFloat(endX)) + 1;
                     for (_beg.._end) |xToAdd| {
                         const _xToAdd = @as(gl.Float, @floatFromInt(xToAdd));
-                        const iii = getIndexFromPosition(position.Position{ .x = _xToAdd, .y = p.y, .z = p.z });
+                        const np = position.Position{ .x = _xToAdd, .y = p.y, .z = p.z };
+                        if (_shouldLog(numLoops, np)) {
+                            std.debug.print("d2 np meshing endX: {d} _end: {d} ({d}, {d}, {d})\n", .{
+                                endX,
+                                _end,
+                                np.x,
+                                np.y,
+                                np.z,
+                            });
+                        }
+                        const iii = getIndexFromPosition(np);
                         try self.updateMeshed(iii);
                     }
                     numYAdded += 1;
+                    endY = p.y;
                     p.y += 1.0;
                     p.x = op.x;
                     if (p.y >= chunkDim) {
-                        endY = op.y + numYAdded;
+                        if (_shouldLog(numLoops, p)) {
+                            std.debug.print("d2 y incremented ({d}, {d}, {d})\n", .{
+                                p.x,
+                                p.y,
+                                p.z,
+                            });
+                        }
                         p.y = op.y;
                         p.z += 1.0;
                         numDimsTravelled += 1;
                         continue :inner;
                     }
+
+                    if (_shouldLog(numLoops, p)) {
+                        std.debug.print("d2 end ({d}, {d}, {d})\n", .{
+                            p.x,
+                            p.y,
+                            p.z,
+                        });
+                    }
                 } else {
+                    if (_shouldLog(numLoops, p)) {
+                        std.debug.print("d3 meshing ({d}, {d}, {d})\n", .{
+                            p.x,
+                            p.y,
+                            p.z,
+                        });
+                    }
                     if (blockId != self.chunk.data[ii]) {
+                        if (_shouldLog(numLoops, p)) {
+                            std.debug.print("d3 block not equal {d} vs {d} ({d}, {d}, {d}) endX: {d} endY: {d} \n", .{
+                                blockId,
+                                self.chunk.data[ii],
+                                p.x,
+                                p.y,
+                                p.z,
+                                endX,
+                                endY,
+                            });
+                        }
                         break :inner;
                     }
                     if (self.chunk.meshed.contains(ii)) {
+                        if (_shouldLog(numLoops, p)) {
+                            std.debug.print("d3 contains ii in meshed ({d}, {d}, {d})\n", .{
+                                p.x,
+                                p.y,
+                                p.z,
+                            });
+                        }
                         break :inner;
                     }
                     if (p.x != endX) {
+                        if (_shouldLog(numLoops, p)) {
+                            std.debug.print("d3 incrementing x ({d}, {d}, {d})\n", .{
+                                p.x,
+                                p.y,
+                                p.z,
+                            });
+                        }
                         p.x += 1.0;
                         continue :inner;
                     }
                     if (p.y != endY) {
+                        if (_shouldLog(numLoops, p)) {
+                            std.debug.print("d3 inrementing y ({d}, {d}, {d})\n", .{
+                                p.x,
+                                p.y,
+                                p.z,
+                            });
+                        }
                         p.y += 1.0;
                         p.x = op.x;
                         continue :inner;
@@ -249,11 +375,33 @@ pub const Chunker = struct {
                         }
                     }
                     self.currentScale.z += 1.0;
+                    if (_shouldLog(numLoops, p)) {
+                        std.debug.print("d3 inrementing z ({d}, {d}, {d})\n", .{
+                            p.x,
+                            p.y,
+                            p.z,
+                        });
+                    }
                     p.z += 1.0;
                     p.x = op.x;
                     p.y = op.y;
                     if (p.z >= chunkDim) {
+                        if (_shouldLog(numLoops, p)) {
+                            std.debug.print("d3 rip z ({d}, {d}, {d})\n", .{
+                                p.x,
+                                p.y,
+                                p.z,
+                            });
+                        }
                         break :inner;
+                    }
+
+                    if (_shouldLog(numLoops, p)) {
+                        std.debug.print("d3 end  ({d}, {d}, {d})\n", .{
+                            p.x,
+                            p.y,
+                            p.z,
+                        });
                     }
                     continue :inner;
                 }
