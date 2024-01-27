@@ -120,9 +120,7 @@ pub const Chunker = struct {
         p.x += 1.0;
         var i: usize = 0;
         var firstLoop = true;
-        var numLoops: u64 = 0;
         outer: while (true) {
-            numLoops += 1;
             while (true) {
                 if (firstLoop) {
                     // first loop, skip iterating
