@@ -18,9 +18,6 @@ pub const Controls = struct {
     }
 
     pub fn cursorPosCallback(self: *Controls, xpos: f64, ypos: f64) void {
-        if (self.appState.app.view != .game) {
-            return;
-        }
         var viewState = self.appState.worldView;
         const x = @as(gl.Float, @floatCast(xpos));
         const y = @as(gl.Float, @floatCast(ypos));
@@ -53,6 +50,11 @@ pub const Controls = struct {
         const frontZ = @sin(yaw) * @cos(pitch);
         const front: @Vector(4, gl.Float) = @Vector(4, gl.Float){ frontX, frontY, frontZ, 1.0 };
 
+        if (self.appState.app.view != .game) {
+            // This keeps the camera from jerking around after having used the mouse in non-game view
+            self.appState.worldView.updateCameraState(x, y);
+            return;
+        }
         if (self.appState.worldView.updateCameraFront(viewState.pitch, viewState.yaw, x, y, zm.normalize4(front))) {
             return;
         } else |err| {
