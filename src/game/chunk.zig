@@ -47,8 +47,12 @@ pub const Chunk = struct {
     }
 
     pub fn findMeshes(self: *Chunk) !void {
+        const start = std.time.milliTimestamp();
         var chunker = try Chunker.init(self);
         try chunker.run();
+        const done = std.time.milliTimestamp();
+        const duration = (done - start);
+        std.debug.print("meshing took {d}ms\n", .{duration});
     }
 };
 
