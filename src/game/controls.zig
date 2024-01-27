@@ -124,12 +124,6 @@ pub const Controls = struct {
             const np = viewState.cameraPos + viewState.cameraUp * cameraSpeed * downDirection;
             try self.appState.worldView.updateCameraPosition(np);
         }
-        if (self.window.getKey(.r) == .press) {
-            try self.appState.worldView.rotateWorld();
-        }
-        if (self.window.getKey(.t) == .press) {
-            try self.appState.worldView.rotateWorldInReverse();
-        }
         if (self.window.getKey(.F3) == .press) {
             const now = std.time.milliTimestamp();
             if (now - self.controlsLastUpdated >= 250) {
