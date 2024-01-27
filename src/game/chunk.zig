@@ -175,7 +175,6 @@ pub const Chunker = struct {
                     }
                     try self.updateMeshed(ii);
                     endX = p.x;
-
                     self.currentScale.x = endX - op.x + 1;
                     p.x += 1.0;
                     if (p.x >= chunkDim) {
