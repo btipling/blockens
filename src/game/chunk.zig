@@ -82,20 +82,18 @@ pub const Chunker = struct {
                 try self.chunk.meshed.put(ii, {});
             }
             self.cachingMeshed = false;
+            self.toBeMeshed = [_]usize{0} ** minVoxelsInMesh;
         }
         try self.chunk.meshed.put(i, {});
     }
 
     fn updateChunk(self: *Chunker) !void {
-        if (self.numVoxelsInMesh < minVoxelsInMesh) {
-            self.numVoxelsInMesh = 0;
-            self.initScale();
-            return;
+        if (!self.cachingMeshed) {
+            try self.chunk.meshes.put(self.currentVoxel, self.currentScale);
         }
-        try self.chunk.meshes.put(self.currentVoxel, self.currentScale);
+        self.toBeMeshed = [_]usize{0} ** minVoxelsInMesh;
         self.numVoxelsInMesh = 0;
         self.initScale();
-        self.toBeMeshed = [_]usize{0} ** minVoxelsInMesh;
         self.cachingMeshed = true;
     }
 
@@ -122,11 +120,19 @@ pub const Chunker = struct {
                 }
                 op = getPositionAtIndex(i);
                 p = op;
-                p.x += 1.0;
-                if (p.x >= chunkDim or p.y >= chunkDim or p.z >= chunkDim) {
-                    continue;
+                if (p.x + 1 < chunkDim) {
+                    p.x += 1.0;
+                    break;
                 }
-                break;
+                if (p.y + 1 < chunkDim) {
+                    p.y += 1.0;
+                    break;
+                }
+                if (p.z + 1 < chunkDim) {
+                    p.z += 1.0;
+                    break;
+                }
+                continue;
             }
             const blockId = self.chunk.data[i];
             if (blockId == 0) {
@@ -160,6 +166,9 @@ pub const Chunker = struct {
                     p.x += 1.0;
                     if (p.x >= chunkDim) {
                         endX = op.x + numXAdded;
+                        if (endX >= chunkDim) {
+                            endX = chunkDim - 1;
+                        }
                         numDimsTravelled += 1;
                         p.y += 1.0;
                         p.x = op.x;
