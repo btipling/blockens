@@ -32,6 +32,7 @@ pub const Script = struct {
 
     pub fn evalTextureFunc(self: *Script, buf: [maxLuaScriptSize]u8) ![data.RGBAColorTextureSize]gl.Uint {
         std.debug.print("evalTextureFunc from lua {d}\n", .{buf.len});
+        self.luaInstance.setTop(0);
         var textureRGBAColor: [data.RGBAColorTextureSize]gl.Uint = [_]gl.Uint{0} ** data.RGBAColorTextureSize;
         var luaCode: [maxLuaScriptSize]u8 = [_]u8{0} ** maxLuaScriptSize;
         var nullIndex: usize = 0;
@@ -82,6 +83,7 @@ pub const Script = struct {
 
     pub fn evalChunkFunc(self: *Script, buf: [maxLuaScriptSize]u8) ![chunk.chunkSize]i32 {
         std.debug.print("evalChunkFunc from lua {d}\n", .{buf.len});
+        self.luaInstance.setTop(0);
         var luaCode: [maxLuaScriptSize]u8 = [_]u8{0} ** maxLuaScriptSize;
         var nullIndex: usize = 0;
         for (buf) |c| {
