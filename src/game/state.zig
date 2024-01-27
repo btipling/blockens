@@ -402,29 +402,30 @@ pub const ViewState = struct {
             }
         }
 
-        for (c.data, 0..) |blockId, i| {
-            if (blockId == 0) {
-                continue;
-            }
-            if (c.isMeshed(i)) {
-                continue;
-            }
-            const p = chunk.getPositionAtIndex(i);
-            const x = p.x + (chunkPosition.x * chunk.chunkDim);
-            const y = p.y + (chunkPosition.y * chunk.chunkDim);
-            const z = p.z + (chunkPosition.z * chunk.chunkDim);
-            const m = zm.translation(x, y, z);
-            var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
-            zm.storeMat(&transform, m);
-            const t = instancedShape.InstancedShapeTransform{ .transform = transform };
-            if (self.perBlockTransforms.get(blockId)) |blockTransforms| {
-                var _blockTransforms = blockTransforms;
-                try _blockTransforms.append(t);
-                try self.perBlockTransforms.put(blockId, _blockTransforms);
+        var instancedKeys = c.instanced.keyIterator();
+        while (instancedKeys.next()) |_k| {
+            if (@TypeOf(_k) == *usize) {
+                const i = _k.*;
+                const blockId = c.data[i];
+                const p = chunk.getPositionAtIndex(i);
+                const x = p.x + (chunkPosition.x * chunk.chunkDim);
+                const y = p.y + (chunkPosition.y * chunk.chunkDim);
+                const z = p.z + (chunkPosition.z * chunk.chunkDim);
+                const m = zm.translation(x, y, z);
+                var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+                zm.storeMat(&transform, m);
+                const t = instancedShape.InstancedShapeTransform{ .transform = transform };
+                if (self.perBlockTransforms.get(blockId)) |blockTransforms| {
+                    var _blockTransforms = blockTransforms;
+                    try _blockTransforms.append(t);
+                    try self.perBlockTransforms.put(blockId, _blockTransforms);
+                } else {
+                    var blockTransforms = std.ArrayList(instancedShape.InstancedShapeTransform).init(self.alloc);
+                    try blockTransforms.append(t);
+                    try self.perBlockTransforms.put(blockId, blockTransforms);
+                }
             } else {
-                var blockTransforms = std.ArrayList(instancedShape.InstancedShapeTransform).init(self.alloc);
-                try blockTransforms.append(t);
-                try self.perBlockTransforms.put(blockId, blockTransforms);
+                @panic("Invalid instanced key type");
             }
         }
         self.view.unbind();

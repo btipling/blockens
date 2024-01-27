@@ -28,12 +28,14 @@ pub const Chunk = struct {
     data: [chunkSize]i32,
     meshes: std.AutoHashMap(usize, position.Position),
     meshed: std.AutoHashMap(usize, void),
+    instanced: std.AutoHashMap(usize, void),
     alloc: std.mem.Allocator,
     pub fn init(alloc: std.mem.Allocator) !Chunk {
         return Chunk{
             .data = [_]i32{0} ** chunkSize,
             .meshes = std.AutoHashMap(usize, position.Position).init(alloc),
             .meshed = std.AutoHashMap(usize, void).init(alloc),
+            .instanced = std.AutoHashMap(usize, void).init(alloc),
             .alloc = alloc,
         };
     }
@@ -41,7 +43,9 @@ pub const Chunk = struct {
     pub fn deinit(self: *Chunk) void {
         self.meshes.deinit();
         self.meshed.deinit();
+        self.instanced.deinit();
     }
+
     pub fn isMeshed(self: *Chunk, i: usize) bool {
         return self.meshed.contains(i);
     }
@@ -91,9 +95,14 @@ pub const Chunker = struct {
         try self.chunk.meshed.put(i, {});
     }
 
-    fn updateChunk(self: *Chunker) !void {
+    fn updateChunk(self: *Chunker, i: usize) !void {
         if (!self.cachingMeshed) {
             try self.chunk.meshes.put(self.currentVoxel, self.currentScale);
+        } else {
+            try self.chunk.instanced.put(i, {});
+            for (self.toBeMeshed) |ii| {
+                try self.chunk.instanced.put(ii, {});
+            }
         }
         self.toBeMeshed = [_]usize{0} ** minVoxelsInMesh;
         self.numVoxelsInMesh = 0;
@@ -249,7 +258,7 @@ pub const Chunker = struct {
                     continue :inner;
                 }
             }
-            try self.updateChunk();
+            try self.updateChunk(i);
         }
     }
 };
