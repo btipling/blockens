@@ -178,7 +178,6 @@ pub const Chunker = struct {
                     self.currentScale.x = endX - op.x + 1;
                     p.x += 1.0;
                     if (p.x >= chunkDim) {
-                        std.debug.print("setting endX to: {d} op.x: {d}, numXAdded: {d}\n", .{ endX, op.x, numXAdded });
                         numDimsTravelled += 1;
                         p.y += 1.0;
                         p.x = op.x;
