@@ -115,14 +115,12 @@ pub const Chunker = struct {
     }
 
     fn _shouldLog(numLoops: u64, p: position.Position) bool {
-        _ = p;
         _ = numLoops;
-        return false;
         // if (numLoops == 1) return false;
-        // if (p.x > 11) return false;
-        // if (p.y < 62) return false;
-        // if (p.z > 3) return false;
-        // return true;
+        if (p.x != 10) return false;
+        if (p.y < 62) return false;
+        if (p.z < 3 or p.z > 4) return false;
+        return true;
     }
 
     pub fn run(self: *Chunker) !void {
@@ -167,19 +165,21 @@ pub const Chunker = struct {
             if (self.chunk.meshed.contains(i)) {
                 continue :outer;
             }
-            std.debug.print("starting mesh at i {d} op ({d}, {d}, {d}) and p ({d}, {d}, {d})\n", .{
-                i,
-                op.x,
-                op.y,
-                op.z,
-                p.x,
-                p.y,
-                p.z,
-            });
+            if (_shouldLog(numLoops, op)) {
+                std.debug.print("starting mesh at i {d} op ({d}, {d}, {d}) and p ({d}, {d}, {d})\n", .{
+                    i,
+                    op.x,
+                    op.y,
+                    op.z,
+                    p.x,
+                    p.y,
+                    p.z,
+                });
+            }
             self.currentVoxel = i;
             var numDimsTravelled: u8 = 1;
-            var endX: gl.Float = 0;
-            var endY: gl.Float = 0;
+            var endX: gl.Float = op.x;
+            var endY: gl.Float = op.y;
             var numXAdded: gl.Float = 0;
             var numYAdded: gl.Float = 0;
             inner: while (true) {
@@ -253,7 +253,8 @@ pub const Chunker = struct {
                     }
                     if (p.x != endX) {
                         if (_shouldLog(numLoops, p)) {
-                            std.debug.print("d2 x incremented ({d}, {d}, {d})\n", .{
+                            std.debug.print("d2 x incremented, endX is {d} ({d}, {d}, {d})\n", .{
+                                endX,
                                 p.x,
                                 p.y,
                                 p.z,
