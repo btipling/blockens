@@ -241,7 +241,35 @@ pub const WorldEditor = struct {
         }
     }
 
+    const chunkConfigInfo = struct {
+        col: u32,
+        name: [:0]u8,
+    };
+
     fn drawChunkConfigColumn(self: *WorldEditor, p: position.Position, w: f32, h: f32) !void {
+        const wp = state.worldPosition.initFromPosition(p);
+        var info: ?chunkConfigInfo = null;
+        if (self.chunkTableData.get(wp)) |ch_cfg| {
+            for (self.scriptOptions.items) |so| {
+                if (so.id == ch_cfg.scriptId) {
+                    var sn = so.name;
+                    var st: usize = 0;
+                    for (0..so.name.len) |i| {
+                        if (so.name[i] == 0) {
+                            st = i;
+                            break;
+                        }
+                    }
+                    if (st == 0) {
+                        break;
+                    }
+                    info = .{
+                        .col = zgui.colorConvertFloat3ToU32(so.color),
+                        .name = sn[0..st :0],
+                    };
+                }
+            }
+        }
         if (zgui.tableNextColumn()) {
             const cFlags = zgui.tableGetColumnFlags(.{});
             if (cFlags.is_hovered) {
@@ -257,15 +285,28 @@ pub const WorldEditor = struct {
                 self.currentChunk = p;
                 zgui.openPopup("ScriptsPicker", .{});
             }
+
             var dl = zgui.getWindowDrawList();
             var pmin = zgui.getCursorScreenPos();
-            const pmax = [2]f32{ pmin[0] + w, pmin[1] };
+            var pmax = [2]f32{ pmin[0] + w, pmin[1] };
             pmin[1] = pmin[1] - h;
             var col = zgui.colorConvertFloat4ToU32(.{ 0.25, 0.25, 0.25, 1.0 });
-            if (zgui.isItemHovered(.{})) {
+            const hovering = zgui.isItemHovered(.{});
+            if (hovering) {
                 col = zgui.colorConvertFloat4ToU32(.{ 0.5, 0.5, 0.5, 1.0 });
             }
             dl.addRectFilled(.{ .pmin = pmin, .pmax = pmax, .col = col });
+            if (info) |ci| {
+                pmin = zgui.getCursorScreenPos();
+                const yStart = pmin[1] - h;
+                pmin[1] = yStart;
+                pmax = [2]f32{ pmin[0] + 50, yStart + 50 };
+                dl.addRectFilled(.{ .pmin = pmin, .pmax = pmax, .col = ci.col });
+                if (hovering and zgui.beginTooltip()) {
+                    zgui.text("{s}", .{ci.name[0.. :0]});
+                    zgui.endTooltip();
+                }
+            }
         }
     }
 

@@ -116,7 +116,7 @@ pub const chunkScriptSQL = struct {
 
 pub const chunkScriptOption = struct {
     id: i32,
-    name: [21]u8,
+    name: [21:0]u8,
     color: [3]f32,
 };
 
@@ -201,10 +201,13 @@ pub const Data = struct {
         };
     }
 
-    fn sqlNameToArray(name: sqlite.Text) [21]u8 {
-        var n: [21]u8 = [_]u8{0} ** 21;
+    fn sqlNameToArray(name: sqlite.Text) [21:0]u8 {
+        var n: [21:0]u8 = [_:0]u8{0} ** 21;
         for (name.data, 0..) |c, i| {
             n[i] = c;
+            if (c == 0) {
+                break;
+            }
         }
         return n;
     }
