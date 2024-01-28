@@ -39,6 +39,10 @@ const selectChunkDataByCoordsStmt = @embedFile("./sql/chunk/select_by_coords.sql
 const listChunkDataStmt = @embedFile("./sql/chunk/list.sql");
 const deleteChunkDataStmt = @embedFile("./sql/chunk/delete.sql");
 
+pub const DataErr = error{
+    NotFound,
+};
+
 pub const RGBAColorTextureSize = 3 * 16 * 16; // 768
 // 768 i32s fit into 3072 u8s
 pub const TextureBlobArrayStoreSize = 3072;
@@ -151,13 +155,13 @@ pub const chunkDataSQL = struct {
 };
 
 pub const chunkData = struct {
-    id: i32,
-    worldId: i32,
-    x: i32,
-    y: i32,
-    z: i32,
-    scriptId: i32,
-    voxels: [chunkSize]i32,
+    id: i32 = 0,
+    worldId: i32 = 0,
+    x: i32 = 0,
+    y: i32 = 0,
+    z: i32 = 0,
+    scriptId: i32 = 0,
+    voxels: [chunkSize]i32 = [_]i32{0} ** chunkSize,
 };
 
 pub const Data = struct {
@@ -754,13 +758,13 @@ pub const Data = struct {
     }
 
     fn blobToChunk(blob: sqlite.Blob) [chunkSize]i32 {
-        var chunk: [chunkSize]gl.Uint = undefined;
+        var chunk: [chunkSize]i32 = undefined;
         for (chunk, 0..) |_, i| {
             const offset = i * 4;
-            const a = @as(gl.Uint, @intCast(blob.data[offset]));
-            const b = @as(gl.Uint, @intCast(blob.data[offset + 1]));
-            const c = @as(gl.Uint, @intCast(blob.data[offset + 2]));
-            const d = @as(gl.Uint, @intCast(blob.data[offset + 3]));
+            const a = @as(i32, @intCast(blob.data[offset]));
+            const b = @as(i32, @intCast(blob.data[offset + 1]));
+            const c = @as(i32, @intCast(blob.data[offset + 2]));
+            const d = @as(i32, @intCast(blob.data[offset + 3]));
             chunk[i] = a << 24 | b << 16 | c << 8 | d;
         }
         return chunk;
@@ -867,12 +871,12 @@ pub const Data = struct {
                 data.y = r.y;
                 data.z = r.z;
                 data.scriptId = r.script_id;
-                data.voxels = blobToChunk(r.texture);
+                data.voxels = blobToChunk(r.voxels);
                 return;
             }
         }
 
-        return error.Unreachable;
+        return DataErr.NotFound;
     }
 
     pub fn deleteChunkData(self: *Data, worldId: i32) !void {

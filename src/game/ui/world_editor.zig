@@ -22,7 +22,7 @@ pub const WorldEditor = struct {
     worldOptions: std.ArrayList(data.worldOption),
     scriptOptions: std.ArrayList(data.chunkScriptOption),
     chunkTableData: std.AutoHashMap(state.worldPosition, chunkConfig),
-    loadedWorldId: u32 = 0,
+    loadedWorldId: i32 = 0,
     chunkY: i32 = 0,
     currentChunk: position.Position = position.Position{ .x = 0, .y = 0, .z = 0 },
     bm: menus.BuilderMenu,
@@ -34,7 +34,7 @@ pub const WorldEditor = struct {
         alloc: std.mem.Allocator,
     ) !WorldEditor {
         const createNameBuf = [_]u8{0} ** maxWorldSizeName;
-        var tv = WorldEditor{
+        var we = WorldEditor{
             .appState = appState,
             .createNameBuf = createNameBuf,
             .codeFont = codeFont,
@@ -43,9 +43,10 @@ pub const WorldEditor = struct {
             .chunkTableData = std.AutoHashMap(state.worldPosition, chunkConfig).init(alloc),
             .bm = bm,
         };
-        try WorldEditor.listWorlds(&tv);
-        try WorldEditor.loadWorld(&tv, 1);
-        return tv;
+        try WorldEditor.listWorlds(&we);
+        try WorldEditor.loadWorld(&we, 1);
+        try WorldEditor.loadChunkDatas(&we);
+        return we;
     }
 
     pub fn deinit(self: *WorldEditor) void {
@@ -112,7 +113,7 @@ pub const WorldEditor = struct {
             nameBuf[i] = c;
         }
         self.createNameBuf = nameBuf;
-        self.loadedWorldId = @as(u32, @intCast(worldId));
+        self.loadedWorldId = worldId;
     }
 
     fn updateWorld(self: *WorldEditor) !void {
@@ -345,5 +346,28 @@ pub const WorldEditor = struct {
             }
             zgui.endTable();
         }
+    }
+
+    fn loadChunkDatas(self: *WorldEditor) !void {
+        for (0..config.worldChunkDims) |i| {
+            const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
+            for (0..config.worldChunkDims) |ii| {
+                const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
+                const y = self.chunkY;
+                std.debug.print("loading chunk data for ({d}, {d}, {d})\n", .{
+                    x,
+                    y,
+                    z,
+                });
+                var chunkData = data.chunkData{};
+                self.appState.db.loadChunkData(self.loadedWorldId, x, y, z, &chunkData) catch |err| {
+                    if (err == data.DataErr.NotFound) {
+                        continue;
+                    }
+                    return err;
+                };
+            }
+        }
+        std.debug.print("we made it!\n", .{});
     }
 };
