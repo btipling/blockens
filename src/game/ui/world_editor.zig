@@ -223,7 +223,14 @@ pub const WorldEditor = struct {
                     .w = 500,
                     .h = 100,
                 })) {
-                    try self.generateChunks();
+                    try self.evalChunksFunc();
+                }
+
+                if (zgui.button("Load world", .{
+                    .w = 500,
+                    .h = 100,
+                })) {
+                    try self.loadChunksInWorld();
                 }
             }
             zgui.popStyleVar(.{ .count = 1 });
@@ -381,21 +388,31 @@ pub const WorldEditor = struct {
         }
     }
 
-    fn generateChunks(self: *WorldEditor) !void {
-        try self.evalChunksFunc();
+    fn loadChunksInWorld(self: *WorldEditor) !void {
+        try self.appState.worldView.clearChunks();
+        var instancedKeys = self.chunkTableData.keyIterator();
+        while (instancedKeys.next()) |_k| {
+            if (@TypeOf(_k) == *state.worldPosition) {
+                const wp = _k.*;
+                const ch_cfg = self.chunkTableData.get(wp).?;
+                const p = wp.positionFromWorldPosition();
+                try self.appState.worldView.addChunk(ch_cfg.chunkData, p);
+            } else {
+                @panic("unexpected key type in load chunks in world func");
+            }
+        }
+        try self.appState.worldView.writeChunks();
     }
 
     fn evalChunksFunc(self: *WorldEditor) !void {
         var scriptCache = std.AutoHashMap(i32, [script.maxLuaScriptSize]u8).init(self.alloc);
         defer scriptCache.deinit();
 
-        try self.appState.worldView.clearChunks();
-
         var instancedKeys = self.chunkTableData.keyIterator();
         while (instancedKeys.next()) |_k| {
             if (@TypeOf(_k) == *state.worldPosition) {
                 const wp = _k.*;
-                const ch_cfg = self.chunkTableData.get(wp).?;
+                var ch_cfg = self.chunkTableData.get(wp).?;
                 var ch_script: [script.maxLuaScriptSize]u8 = undefined;
                 if (scriptCache.get(ch_cfg.scriptId)) |sc| {
                     ch_script = sc;
@@ -409,13 +426,14 @@ pub const WorldEditor = struct {
                     std.debug.print("Error evaluating chunk in eval chunks function: {}\n", .{err});
                     return;
                 };
+                ch_cfg.chunkData = cData;
+                try self.chunkTableData.put(wp, ch_cfg);
                 const p = wp.positionFromWorldPosition();
                 try self.appState.worldView.addChunk(cData, p);
             } else {
                 @panic("unexpected key type in eval chunks func");
             }
         }
-        try self.appState.worldView.writeChunks();
     }
 
     fn saveChunkDatas(self: *WorldEditor) !void {
@@ -436,7 +454,7 @@ pub const WorldEditor = struct {
                         try self.appState.db.updateChunkData(
                             ch_cfg.id,
                             ch_cfg.scriptId,
-                            emptyVoxels,
+                            ch_cfg.chunkData,
                         );
                         continue :inner;
                     }
@@ -447,7 +465,7 @@ pub const WorldEditor = struct {
                         y,
                         z,
                         ch_cfg.scriptId,
-                        emptyVoxels,
+                        ch_cfg.chunkData,
                     );
                     continue :inner;
                 }
@@ -478,7 +496,7 @@ pub const WorldEditor = struct {
                 const cfg = chunkConfig{
                     .id = chunkData.id,
                     .scriptId = chunkData.scriptId,
-                    .chunkData = emptyVoxels,
+                    .chunkData = chunkData.voxels,
                 };
                 try self.chunkTableData.put(wp, cfg);
             }
