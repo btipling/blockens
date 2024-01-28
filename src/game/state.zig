@@ -16,7 +16,7 @@ pub const StateErrors = error{
     InvalidBlockID,
 };
 
-const worldPosition = struct {
+pub const worldPosition = struct {
     x: u32,
     y: u32,
     z: u32,

@@ -10,13 +10,19 @@ const menus = @import("menus.zig");
 
 const maxWorldSizeName = 20;
 
+const chunkConfig = struct {
+    scriptId: i32,
+};
+
 pub const WorldEditor = struct {
     appState: *state.State,
     createNameBuf: [maxWorldSizeName]u8,
     codeFont: zgui.Font,
     worldOptions: std.ArrayList(data.worldOption),
     scriptOptions: std.ArrayList(data.chunkScriptOption),
+    chunkTableData: std.AutoHashMap(state.worldPosition, chunkConfig),
     loadedWorldId: u32 = 0,
+    chunkY: u32 = 0,
     bm: menus.BuilderMenu,
 
     pub fn init(
@@ -32,6 +38,7 @@ pub const WorldEditor = struct {
             .codeFont = codeFont,
             .worldOptions = std.ArrayList(data.worldOption).init(alloc),
             .scriptOptions = std.ArrayList(data.chunkScriptOption).init(alloc),
+            .chunkTableData = std.AutoHashMap(state.worldPosition, chunkConfig).init(alloc),
             .bm = bm,
         };
         try WorldEditor.listWorlds(&tv);
@@ -42,6 +49,7 @@ pub const WorldEditor = struct {
     pub fn deinit(self: *WorldEditor) void {
         self.worldOptions.deinit();
         self.scriptOptions.deinit();
+        self.chunkTableData.deinit();
     }
 
     fn listChunkScripts(self: *WorldEditor) !void {
@@ -209,6 +217,20 @@ pub const WorldEditor = struct {
         zgui.endChild();
     }
 
+    fn drawChunkConfigPopup(self: *WorldEditor) !void {
+        if (zgui.beginPopup("ScriptsPicker", .{})) {
+            zgui.text("Select a script for this chunk", .{});
+            if (zgui.smallButton("x")) {
+                zgui.closeCurrentPopup();
+            }
+            try self.listChunkScripts();
+            if (menus.scriptOptionsListBox(self.scriptOptions, .{ .w = 700 })) |scriptOptionId| {
+                std.debug.print("selected {d}\n", .{scriptOptionId});
+            }
+            zgui.endPopup();
+        }
+    }
+
     fn drawTopDownChunkConfig(self: *WorldEditor) !void {
         const colWidth: f32 = 1500 / config.worldChunkDims;
         if (zgui.beginTable("chunks", .{
@@ -223,17 +245,7 @@ pub const WorldEditor = struct {
                 zgui.tableSetupColumn(colHeader, .{});
             }
             zgui.tableHeadersRow();
-            if (zgui.beginPopup("ScriptsPicker", .{})) {
-                zgui.text("Select a script for this chunk", .{});
-                if (zgui.smallButton("x")) {
-                    zgui.closeCurrentPopup();
-                }
-                try self.listChunkScripts();
-                if (menus.scriptOptionsListBox(self.scriptOptions, .{ .w = 700 })) |scriptOptionId| {
-                    std.debug.print("selected {d}\n", .{scriptOptionId});
-                }
-                zgui.endPopup();
-            }
+            try self.drawChunkConfigPopup();
             for (0..config.worldChunkDims) |i| {
                 const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
                 zgui.tableNextRow(.{
@@ -255,7 +267,6 @@ pub const WorldEditor = struct {
                             .w = colWidth,
                             .h = colWidth,
                         })) {
-                            std.debug.print("i button pressed\n", .{});
                             zgui.openPopup("ScriptsPicker", .{});
                         }
                         var dl = zgui.getWindowDrawList();
