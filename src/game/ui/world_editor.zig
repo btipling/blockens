@@ -224,9 +224,29 @@ pub const WorldEditor = struct {
                     zgui.text("{d}", .{i});
                 }
                 for (0..config.worldChunkDims) |ii| {
-                    _ = ii;
                     if (zgui.tableNextColumn()) {
-                        zgui.text("tb", .{});
+                        const cFlags = zgui.tableGetColumnFlags(.{});
+                        if (cFlags.is_hovered) {
+                            // do something?
+                        }
+                        var buffer: [10]u8 = undefined;
+                        const colHeader: [:0]const u8 = try std.fmt.bufPrintZ(&buffer, "{d}_{d}", .{ i, ii });
+
+                        if (zgui.invisibleButton(colHeader, .{
+                            .w = colWidth,
+                            .h = colWidth,
+                        })) {
+                            std.debug.print("i button pressed\n", .{});
+                        }
+                        var dl = zgui.getWindowDrawList();
+                        var pmin = zgui.getCursorScreenPos();
+                        const pmax = [2]f32{ pmin[0] + colWidth, pmin[1] };
+                        pmin[1] = pmin[1] - colWidth;
+                        var col = zgui.colorConvertFloat4ToU32(.{ 0.25, 0.25, 0.25, 1.0 });
+                        if (zgui.isItemHovered(.{})) {
+                            col = zgui.colorConvertFloat4ToU32(.{ 0.5, 0.5, 0.5, 1.0 });
+                        }
+                        dl.addRectFilled(.{ .pmin = pmin, .pmax = pmax, .col = col });
                     }
                 }
             }
