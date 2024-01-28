@@ -744,11 +744,12 @@ pub const Data = struct {
     fn chunkToBlob(chunk: [chunkSize]i32) [ChunkBlobArrayStoreSize]u8 {
         var blob: [ChunkBlobArrayStoreSize]u8 = undefined;
         for (chunk, 0..) |t, i| {
+            const u = @as(u32, @bitCast(t));
             const offset = i * 4;
-            const a = @as(u8, @truncate(t >> 24));
-            const b = @as(u8, @truncate(t >> 16));
-            const c = @as(u8, @truncate(t >> 8));
-            const d = @as(u8, @truncate(t));
+            const a = @as(u8, @truncate(u >> 24));
+            const b = @as(u8, @truncate(u >> 16));
+            const c = @as(u8, @truncate(u >> 8));
+            const d = @as(u8, @truncate(u));
             blob[offset] = a;
             blob[offset + 1] = b;
             blob[offset + 2] = c;
@@ -761,11 +762,12 @@ pub const Data = struct {
         var chunk: [chunkSize]i32 = undefined;
         for (chunk, 0..) |_, i| {
             const offset = i * 4;
-            const a = @as(i32, @intCast(blob.data[offset]));
-            const b = @as(i32, @intCast(blob.data[offset + 1]));
-            const c = @as(i32, @intCast(blob.data[offset + 2]));
-            const d = @as(i32, @intCast(blob.data[offset + 3]));
-            chunk[i] = a << 24 | b << 16 | c << 8 | d;
+            const a = @as(u32, @intCast(blob.data[offset]));
+            const b = @as(u32, @intCast(blob.data[offset + 1]));
+            const c = @as(u32, @intCast(blob.data[offset + 2]));
+            const d = @as(u32, @intCast(blob.data[offset + 3]));
+            const cd: u32 = a << 24 | b << 16 | c << 8 | d;
+            chunk[i] = @as(i32, @bitCast(cd));
         }
         return chunk;
     }

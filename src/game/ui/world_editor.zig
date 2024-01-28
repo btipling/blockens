@@ -201,6 +201,12 @@ pub const WorldEditor = struct {
                 })) {
                     try self.deleteWorld();
                 }
+                if (zgui.button("Save chunks", .{
+                    .w = 500,
+                    .h = 100,
+                })) {
+                    try self.saveChunkDatas();
+                }
             }
             zgui.popStyleVar(.{ .count = 1 });
         }
