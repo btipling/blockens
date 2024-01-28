@@ -217,6 +217,13 @@ pub const WorldEditor = struct {
                 zgui.tableSetupColumn(colHeader, .{});
             }
             zgui.tableHeadersRow();
+            if (zgui.beginPopup("ScriptsPicker", .{})) {
+                zgui.text("Select a script for this chunk", .{});
+                if (zgui.smallButton("x")) {
+                    zgui.closeCurrentPopup();
+                }
+                zgui.endPopup();
+            }
             for (0..config.worldChunkDims) |i| {
                 const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
                 zgui.tableNextRow(.{
@@ -239,6 +246,7 @@ pub const WorldEditor = struct {
                             .h = colWidth,
                         })) {
                             std.debug.print("i button pressed\n", .{});
+                            zgui.openPopup("ScriptsPicker", .{});
                         }
                         var dl = zgui.getWindowDrawList();
                         var pmin = zgui.getCursorScreenPos();
