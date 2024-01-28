@@ -14,6 +14,11 @@ const maxWorldSizeName = 20;
 
 const emptyVoxels: [data.chunkSize]i32 = [_]i32{0} ** data.chunkSize;
 
+const yOptions = enum {
+    below,
+    above,
+};
+
 const chunkConfig = struct {
     id: i32 = 0, // from sqlite
     scriptId: i32,
@@ -247,9 +252,27 @@ pub const WorldEditor = struct {
                 .border = true,
             },
         )) {
+            try self.drawTopDownChunkConfgOptions();
             try self.drawTopDownChunkConfig();
         }
         zgui.endChild();
+    }
+
+    fn drawTopDownChunkConfgOptions(self: *WorldEditor) !void {
+        var enum_val: yOptions = .below;
+        if (self.chunkY == 1) {
+            enum_val = .above;
+        }
+        zgui.setNextItemWidth(500);
+        if (zgui.comboFromEnum("select y", &enum_val)) {
+            if (self.chunkY == 1 and enum_val == .below) {
+                self.chunkY = 0;
+                try self.loadChunkDatas();
+            } else if (self.chunkY == 0 and enum_val == .above) {
+                self.chunkY = 1;
+                try self.loadChunkDatas();
+            }
+        }
     }
 
     fn drawChunkConfigPopup(self: *WorldEditor) !void {
