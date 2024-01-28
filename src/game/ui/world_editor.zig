@@ -47,6 +47,7 @@ pub const WorldEditor = struct {
         try WorldEditor.listWorlds(&we);
         try WorldEditor.loadWorld(&we, 1);
         try WorldEditor.loadChunkDatas(&we);
+        try WorldEditor.listChunkScripts(&we);
         return we;
     }
 
@@ -407,6 +408,24 @@ pub const WorldEditor = struct {
                     }
                     return err;
                 };
+                const p = position.Position{
+                    .x = @as(gl.Float, @floatFromInt(x)),
+                    .y = @as(gl.Float, @floatFromInt(y)),
+                    .z = @as(gl.Float, @floatFromInt(z)),
+                };
+                const wp = state.worldPosition.initFromPosition(p);
+                const cfg = chunkConfig{
+                    .id = chunkData.id,
+                    .scriptId = chunkData.scriptId,
+                };
+                std.debug.print("found chunk config with data {d}, {d} at ({d}, {d}, {d})\n", .{
+                    cfg.id,
+                    cfg.scriptId,
+                    x,
+                    y,
+                    z,
+                });
+                try self.chunkTableData.put(wp, cfg);
             }
         }
         std.debug.print("we made it!\n", .{});
