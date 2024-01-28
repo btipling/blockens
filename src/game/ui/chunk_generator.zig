@@ -247,7 +247,6 @@ pub const ChunkGenerator = struct {
     fn loadChunkScriptFunc(self: *ChunkGenerator, scriptId: i32) !void {
         var scriptData: data.chunkScript = undefined;
         try self.appState.db.loadChunkScript(scriptId, &scriptData);
-        var buf = [_]u8{0} ** script.maxLuaScriptSize;
         var nameBuf = [_]u8{0} ** script.maxLuaScriptNameSize;
         for (scriptData.name, 0..) |c, i| {
             if (i >= script.maxLuaScriptNameSize) {
@@ -255,13 +254,7 @@ pub const ChunkGenerator = struct {
             }
             nameBuf[i] = c;
         }
-        for (scriptData.script, 0..) |c, i| {
-            if (i >= script.maxLuaScriptSize) {
-                break;
-            }
-            buf[i] = c;
-        }
-        self.buf = buf;
+        self.buf = script.Script.dataScriptToScript(scriptData.script);
         self.nameBuf = nameBuf;
         self.scriptColor = scriptData.color;
         try self.evalChunkFunc();

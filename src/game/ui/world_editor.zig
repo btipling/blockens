@@ -7,6 +7,7 @@ const shape = @import("../shape/shape.zig");
 const state = @import("../state.zig");
 const position = @import("../position.zig");
 const data = @import("../data/data.zig");
+const script = @import("../script/script.zig");
 const menus = @import("menus.zig");
 
 const maxWorldSizeName = 20;
@@ -17,6 +18,7 @@ const chunkConfig = struct {
 };
 
 pub const WorldEditor = struct {
+    script: script.Script,
     appState: *state.State,
     createNameBuf: [maxWorldSizeName]u8,
     codeFont: zgui.Font,
@@ -27,15 +29,18 @@ pub const WorldEditor = struct {
     chunkY: i32 = 0,
     currentChunk: position.Position = position.Position{ .x = 0, .y = 0, .z = 0 },
     bm: menus.BuilderMenu,
+    alloc: std.mem.Allocator,
 
     pub fn init(
         appState: *state.State,
         codeFont: zgui.Font,
+        sc: script.Script,
         bm: menus.BuilderMenu,
         alloc: std.mem.Allocator,
     ) !WorldEditor {
         const createNameBuf = [_]u8{0} ** maxWorldSizeName;
         var we = WorldEditor{
+            .script = sc,
             .appState = appState,
             .createNameBuf = createNameBuf,
             .codeFont = codeFont,
@@ -43,6 +48,7 @@ pub const WorldEditor = struct {
             .scriptOptions = std.ArrayList(data.chunkScriptOption).init(alloc),
             .chunkTableData = std.AutoHashMap(state.worldPosition, chunkConfig).init(alloc),
             .bm = bm,
+            .alloc = alloc,
         };
         try WorldEditor.listWorlds(&we);
         try WorldEditor.loadWorld(&we, 1);
@@ -208,6 +214,13 @@ pub const WorldEditor = struct {
                 })) {
                     try self.saveChunkDatas();
                 }
+
+                if (zgui.button("Generate chunks", .{
+                    .w = 500,
+                    .h = 100,
+                })) {
+                    try self.generateChunks();
+                }
             }
             zgui.popStyleVar(.{ .count = 1 });
         }
@@ -356,6 +369,43 @@ pub const WorldEditor = struct {
         }
     }
 
+    fn generateChunks(self: *WorldEditor) !void {
+        try self.evalChunksFunc();
+    }
+
+    fn evalChunksFunc(self: *WorldEditor) !void {
+        var scriptCache = std.AutoHashMap(i32, [script.maxLuaScriptSize]u8).init(self.alloc);
+        defer scriptCache.deinit();
+
+        try self.appState.worldView.clearChunks();
+
+        var instancedKeys = self.chunkTableData.keyIterator();
+        while (instancedKeys.next()) |_k| {
+            if (@TypeOf(_k) == *state.worldPosition) {
+                const wp = _k.*;
+                const ch_cfg = self.chunkTableData.get(wp).?;
+                var ch_script: [script.maxLuaScriptSize]u8 = undefined;
+                if (scriptCache.get(ch_cfg.scriptId)) |sc| {
+                    ch_script = sc;
+                } else {
+                    var scriptData: data.chunkScript = undefined;
+                    try self.appState.db.loadChunkScript(ch_cfg.scriptId, &scriptData);
+                    ch_script = script.Script.dataScriptToScript(scriptData.script);
+                    try scriptCache.put(ch_cfg.scriptId, ch_script);
+                }
+                const cData = self.script.evalChunkFunc(ch_script) catch |err| {
+                    std.debug.print("Error evaluating chunk in eval chunks function: {}\n", .{err});
+                    return;
+                };
+                const p = wp.positionFromWorldPosition();
+                try self.appState.worldView.addChunk(cData, p);
+            } else {
+                @panic("unexpected key type in eval chunks func");
+            }
+        }
+        try self.appState.worldView.writeChunks();
+    }
+
     fn saveChunkDatas(self: *WorldEditor) !void {
         const emptyVoxels: [data.chunkSize]i32 = [_]i32{0} ** data.chunkSize;
         for (0..config.worldChunkDims) |i| {
@@ -418,13 +468,6 @@ pub const WorldEditor = struct {
                     .id = chunkData.id,
                     .scriptId = chunkData.scriptId,
                 };
-                std.debug.print("found chunk config with data {d}, {d} at ({d}, {d}, {d})\n", .{
-                    cfg.id,
-                    cfg.scriptId,
-                    x,
-                    y,
-                    z,
-                });
                 try self.chunkTableData.put(wp, cfg);
             }
         }

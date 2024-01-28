@@ -45,6 +45,7 @@ pub const UI = struct {
             .WorldEditor = try world_editor.WorldEditor.init(
                 appState,
                 codeFont,
+                sc,
                 bm,
                 alloc,
             ),
