@@ -12,9 +12,12 @@ const menus = @import("menus.zig");
 
 const maxWorldSizeName = 20;
 
+const emptyVoxels: [data.chunkSize]i32 = [_]i32{0} ** data.chunkSize;
+
 const chunkConfig = struct {
     id: i32 = 0, // from sqlite
     scriptId: i32,
+    chunkData: [data.chunkSize]i32 = emptyVoxels,
 };
 
 pub const WorldEditor = struct {
@@ -122,6 +125,7 @@ pub const WorldEditor = struct {
         }
         self.createNameBuf = nameBuf;
         self.loadedWorldId = worldId;
+        try self.loadChunkDatas();
     }
 
     fn updateWorld(self: *WorldEditor) !void {
@@ -256,7 +260,15 @@ pub const WorldEditor = struct {
                     self.currentChunk.z,
                 });
                 const wp = state.worldPosition.initFromPosition(self.currentChunk);
-                const ch_cfg: chunkConfig = .{ .scriptId = scriptOptionId };
+
+                var id: i32 = 0;
+                if (self.chunkTableData.get(wp)) |ch_cfg| {
+                    id = ch_cfg.id;
+                }
+                const ch_cfg: chunkConfig = .{
+                    .id = id,
+                    .scriptId = scriptOptionId,
+                };
                 try self.chunkTableData.put(wp, ch_cfg);
             }
             zgui.endPopup();
@@ -407,7 +419,6 @@ pub const WorldEditor = struct {
     }
 
     fn saveChunkDatas(self: *WorldEditor) !void {
-        const emptyVoxels: [data.chunkSize]i32 = [_]i32{0} ** data.chunkSize;
         for (0..config.worldChunkDims) |i| {
             const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
             inner: for (0..config.worldChunkDims) |ii| {
@@ -442,10 +453,10 @@ pub const WorldEditor = struct {
                 }
             }
         }
-        std.debug.print("we made it!\n", .{});
     }
 
     fn loadChunkDatas(self: *WorldEditor) !void {
+        self.chunkTableData.clearAndFree();
         for (0..config.worldChunkDims) |i| {
             const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
             for (0..config.worldChunkDims) |ii| {
@@ -467,10 +478,10 @@ pub const WorldEditor = struct {
                 const cfg = chunkConfig{
                     .id = chunkData.id,
                     .scriptId = chunkData.scriptId,
+                    .chunkData = emptyVoxels,
                 };
                 try self.chunkTableData.put(wp, cfg);
             }
         }
-        std.debug.print("we made it!\n", .{});
     }
 };
