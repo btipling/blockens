@@ -33,6 +33,7 @@ pub const WorldEditor = struct {
             .bm = bm,
         };
         try WorldEditor.listWorlds(&tv);
+        try WorldEditor.loadWorld(&tv, 1);
         return tv;
     }
 
@@ -188,7 +189,6 @@ pub const WorldEditor = struct {
     }
 
     fn drawWorldConfig(self: *WorldEditor) !void {
-        _ = self;
         if (zgui.beginChild(
             "Configure World",
             .{
@@ -196,7 +196,41 @@ pub const WorldEditor = struct {
                 .h = 2100,
                 .border = true,
             },
-        )) {}
+        )) {
+            try self.drawTopDownChunkConfig();
+        }
         zgui.endChild();
+    }
+
+    fn drawTopDownChunkConfig(self: *WorldEditor) !void {
+        _ = self;
+        const colWidth: f32 = 1500 / config.worldChunkDims;
+        if (zgui.beginTable("chunks", .{
+            .outer_size = .{ 1500, 1500 },
+            .column = config.worldChunkDims + 1,
+        })) {
+            zgui.tableSetupColumn("x,z", .{});
+            for (0..config.worldChunkDims) |i| {
+                var buffer: [10]u8 = undefined;
+                const colHeader: [:0]const u8 = try std.fmt.bufPrintZ(&buffer, "{d}", .{i});
+                zgui.tableSetupColumn(colHeader, .{});
+            }
+            zgui.tableHeadersRow();
+            for (0..config.worldChunkDims) |i| {
+                zgui.tableNextRow(.{
+                    .min_row_height = colWidth,
+                });
+                if (zgui.tableNextColumn()) {
+                    zgui.text("{d}", .{i});
+                }
+                for (0..config.worldChunkDims) |ii| {
+                    _ = ii;
+                    if (zgui.tableNextColumn()) {
+                        zgui.text("tb", .{});
+                    }
+                }
+            }
+            zgui.endTable();
+        }
     }
 };

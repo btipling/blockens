@@ -197,7 +197,6 @@ pub const ChunkGenerator = struct {
                 }
                 var dl = zgui.getWindowDrawList();
                 const pmin = zgui.getCursorScreenPos();
-                // const pmin = [2]f32{ p[0], p[1] - 5.0 };
                 const pmax = [2]f32{ pmin[0] + 35.0, pmin[1] + 30.0 };
                 const col = zgui.colorConvertFloat4ToU32(.{ scriptOption.color[0], scriptOption.color[1], scriptOption.color[2], 1.0 });
                 dl.addRectFilled(.{ .pmin = pmin, .pmax = pmax, .col = col });
