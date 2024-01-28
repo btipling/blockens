@@ -241,6 +241,34 @@ pub const WorldEditor = struct {
         }
     }
 
+    fn drawChunkConfigColumn(self: *WorldEditor, p: position.Position, w: f32, h: f32) !void {
+        if (zgui.tableNextColumn()) {
+            const cFlags = zgui.tableGetColumnFlags(.{});
+            if (cFlags.is_hovered) {
+                // do something?
+            }
+            var buffer: [10]u8 = undefined;
+            const colHeader: [:0]const u8 = try std.fmt.bufPrintZ(&buffer, "{d}_{d}", .{ p.x, p.z });
+
+            if (zgui.invisibleButton(colHeader, .{
+                .w = w,
+                .h = h,
+            })) {
+                self.currentChunk = p;
+                zgui.openPopup("ScriptsPicker", .{});
+            }
+            var dl = zgui.getWindowDrawList();
+            var pmin = zgui.getCursorScreenPos();
+            const pmax = [2]f32{ pmin[0] + w, pmin[1] };
+            pmin[1] = pmin[1] - h;
+            var col = zgui.colorConvertFloat4ToU32(.{ 0.25, 0.25, 0.25, 1.0 });
+            if (zgui.isItemHovered(.{})) {
+                col = zgui.colorConvertFloat4ToU32(.{ 0.5, 0.5, 0.5, 1.0 });
+            }
+            dl.addRectFilled(.{ .pmin = pmin, .pmax = pmax, .col = col });
+        }
+    }
+
     fn drawTopDownChunkConfig(self: *WorldEditor) !void {
         const colWidth: f32 = 1500 / config.worldChunkDims;
         if (zgui.beginTable("chunks", .{
@@ -266,35 +294,12 @@ pub const WorldEditor = struct {
                 }
                 for (0..config.worldChunkDims) |ii| {
                     const x: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
-                    if (zgui.tableNextColumn()) {
-                        const cFlags = zgui.tableGetColumnFlags(.{});
-                        if (cFlags.is_hovered) {
-                            // do something?
-                        }
-                        var buffer: [10]u8 = undefined;
-                        const colHeader: [:0]const u8 = try std.fmt.bufPrintZ(&buffer, "{d}_{d}", .{ i, ii });
-
-                        if (zgui.invisibleButton(colHeader, .{
-                            .w = colWidth,
-                            .h = colWidth,
-                        })) {
-                            self.currentChunk = position.Position{
-                                .x = @as(gl.Float, @floatFromInt(x)),
-                                .y = @as(gl.Float, @floatFromInt(self.chunkY)),
-                                .z = @as(gl.Float, @floatFromInt(z)),
-                            };
-                            zgui.openPopup("ScriptsPicker", .{});
-                        }
-                        var dl = zgui.getWindowDrawList();
-                        var pmin = zgui.getCursorScreenPos();
-                        const pmax = [2]f32{ pmin[0] + colWidth, pmin[1] };
-                        pmin[1] = pmin[1] - colWidth;
-                        var col = zgui.colorConvertFloat4ToU32(.{ 0.25, 0.25, 0.25, 1.0 });
-                        if (zgui.isItemHovered(.{})) {
-                            col = zgui.colorConvertFloat4ToU32(.{ 0.5, 0.5, 0.5, 1.0 });
-                        }
-                        dl.addRectFilled(.{ .pmin = pmin, .pmax = pmax, .col = col });
-                    }
+                    const p = position.Position{
+                        .x = @as(gl.Float, @floatFromInt(x)),
+                        .y = @as(gl.Float, @floatFromInt(self.chunkY)),
+                        .z = @as(gl.Float, @floatFromInt(z)),
+                    };
+                    try self.drawChunkConfigColumn(p, colWidth, colWidth);
                 }
             }
             zgui.endTable();
