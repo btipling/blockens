@@ -1,6 +1,7 @@
 const std = @import("std");
 const zglfw = @import("zglfw");
 const gl = @import("zopengl");
+const zgui = @import("zgui");
 const zm = @import("zmath");
 const state = @import("state.zig");
 
@@ -50,7 +51,8 @@ pub const Controls = struct {
         const frontZ = @sin(yaw) * @cos(pitch);
         const front: @Vector(4, gl.Float) = @Vector(4, gl.Float){ frontX, frontY, frontZ, 1.0 };
 
-        if (self.appState.app.view != .game) {
+        const imguiWantsMouse = zgui.io.getWantCaptureMouse();
+        if (imguiWantsMouse or self.appState.app.view != .game) {
             // This keeps the camera from jerking around after having used the mouse in non-game view
             self.appState.worldView.updateCameraState(x, y);
             return;
@@ -63,6 +65,11 @@ pub const Controls = struct {
     }
 
     pub fn handleKey(self: *Controls) !bool {
+        const imguiWantsKey = zgui.io.getWantCaptureKeyboard();
+        if (imguiWantsKey) {
+            return false;
+        }
+
         if (self.window.getKey(.escape) == .press and self.window.getKey(.left_shift) == .press) {
             return true;
         }
