@@ -92,15 +92,18 @@ pub const Game = struct {
         const gl_minor = 6;
 
         const window = try initWindow(gl_major, gl_minor);
-        defer window.destroy();
 
         try initGL(gl_major, gl_minor, window);
+
+        _ = window.setCursorPosCallback(cursorPosCallback);
 
         zgui.init(self.allocator);
         defer zgui.deinit();
 
-        zgui.backend.init(window);
+        const gslf_version: [*c]const u8 = "#version 130";
+        zgui.backend.initWithGlSlVersion(window, gslf_version);
         defer zgui.backend.deinit();
+        defer window.destroy();
 
         zmesh.init(self.allocator);
         defer zmesh.deinit();
@@ -131,7 +134,6 @@ pub const Game = struct {
 
         var c = try controls.Controls.init(window, &appState);
         ctrls = &c;
-        _ = window.setCursorPosCallback(cursorPosCallback);
         const skyColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 };
 
         // uncomment to start in a specific view:
