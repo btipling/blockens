@@ -92,6 +92,7 @@ pub const Game = struct {
         const gl_minor = 6;
 
         const window = try initWindow(gl_major, gl_minor);
+        defer window.destroy();
 
         try initGL(gl_major, gl_minor, window);
 
@@ -103,7 +104,6 @@ pub const Game = struct {
         const glsl_version: [*c]const u8 = "#version 130";
         zgui.backend.initWithGlSlVersion(window, glsl_version);
         defer zgui.backend.deinit();
-        defer window.destroy();
 
         zmesh.init(self.allocator);
         defer zmesh.deinit();
