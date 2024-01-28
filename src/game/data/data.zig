@@ -31,9 +31,22 @@ const selectBlockStmt = @embedFile("./sql/block/select.sql");
 const listBlockStmt = @embedFile("./sql/block/list.sql");
 const deleteBlockStmt = @embedFile("./sql/block/delete.sql");
 
+const createChunkDataTable = @embedFile("./sql/chunk/create.sql");
+const insertChunkDataStmt = @embedFile("./sql/chunk/insert.sql");
+const updateChunkDataStmt = @embedFile("./sql/chunk/update.sql");
+const selectChunkDataByIDStmt = @embedFile("./sql/chunk/select_by_id.sql");
+const selectChunkDataByCoordsStmt = @embedFile("./sql/chunk/select_by_coords.sql");
+const listChunkDataStmt = @embedFile("./sql/chunk/list.sql");
+const deleteChunkDataStmt = @embedFile("./sql/chunk/delete.sql");
+
 pub const RGBAColorTextureSize = 3 * 16 * 16; // 768
 // 768 i32s fit into 3072 u8s
 pub const TextureBlobArrayStoreSize = 3072;
+
+pub const chunkDim = 64;
+pub const chunkSize = chunkDim * chunkDim * chunkDim;
+// each i32 fits into 4 u8s
+pub const ChunkBlobArrayStoreSize = chunkSize * 4;
 
 pub const maxBlockSizeName = 20;
 
@@ -127,6 +140,26 @@ pub const chunkScript = struct {
     color: [3]f32,
 };
 
+pub const chunkDataSQL = struct {
+    id: i32,
+    worldId: i32,
+    x: i32,
+    y: i32,
+    z: i32,
+    scriptId: i32,
+    voxels: sqlite.Blob,
+};
+
+pub const chunkData = struct {
+    id: i32,
+    worldId: i32,
+    x: i32,
+    y: i32,
+    z: i32,
+    scriptId: i32,
+    voxels: [chunkSize]i32,
+};
+
 pub const Data = struct {
     db: sqlite.Database,
     alloc: std.mem.Allocator,
@@ -149,6 +182,7 @@ pub const Data = struct {
             createTextureScriptTable,
             createBlockTable,
             createChunkScriptTable,
+            createChunkDataTable,
         };
         for (createTableQueries) |query| {
             self.db.exec(query, .{}) catch |err| {
@@ -698,6 +732,162 @@ pub const Data = struct {
             .{ .id = id },
         ) catch |err| {
             std.log.err("Failed to delete block: {}", .{err});
+            return err;
+        };
+    }
+
+    // chunk crud:
+    fn chunkToBlob(chunk: [chunkSize]i32) [ChunkBlobArrayStoreSize]u8 {
+        var blob: [ChunkBlobArrayStoreSize]u8 = undefined;
+        for (chunk, 0..) |t, i| {
+            const offset = i * 4;
+            const a = @as(u8, @truncate(t >> 24));
+            const b = @as(u8, @truncate(t >> 16));
+            const c = @as(u8, @truncate(t >> 8));
+            const d = @as(u8, @truncate(t));
+            blob[offset] = a;
+            blob[offset + 1] = b;
+            blob[offset + 2] = c;
+            blob[offset + 3] = d;
+        }
+        return blob;
+    }
+
+    fn blobToChunk(blob: sqlite.Blob) [chunkSize]i32 {
+        var chunk: [chunkSize]gl.Uint = undefined;
+        for (chunk, 0..) |_, i| {
+            const offset = i * 4;
+            const a = @as(gl.Uint, @intCast(blob.data[offset]));
+            const b = @as(gl.Uint, @intCast(blob.data[offset + 1]));
+            const c = @as(gl.Uint, @intCast(blob.data[offset + 2]));
+            const d = @as(gl.Uint, @intCast(blob.data[offset + 3]));
+            chunk[i] = a << 24 | b << 16 | c << 8 | d;
+        }
+        return chunk;
+    }
+
+    pub fn saveChunkData(
+        self: *Data,
+        worldId: i32,
+        x: i32,
+        y: i32,
+        z: i32,
+        scriptId: i32,
+        voxels: [chunkSize]i32,
+    ) !void {
+        var insertStmt = try self.db.prepare(
+            struct {
+                world_id: i32,
+                x: i32,
+                y: i32,
+                z: i32,
+                script_id: i32,
+                voxels: sqlite.Blob,
+            },
+            void,
+            insertChunkDataStmt,
+        );
+        defer insertStmt.deinit();
+
+        var t = chunkToBlob(voxels);
+        insertStmt.exec(
+            .{
+                .world_id = worldId,
+                .x = x,
+                .y = y,
+                .z = z,
+                .script_id = scriptId,
+                .voxels = sqlite.blob(&t),
+            },
+        ) catch |err| {
+            std.log.err("Failed to insert chunkdata: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn updateChunkData(self: *Data, id: i32, script_id: i32, voxels: [chunkSize]i32) !void {
+        var updateStmt = try self.db.prepare(
+            struct {
+                id: i32,
+                script_id: i32,
+                voxels: sqlite.Blob,
+            },
+            void,
+            updateChunkDataStmt,
+        );
+        defer updateStmt.deinit();
+
+        var c = chunkToBlob(voxels);
+        updateStmt.exec(
+            .{
+                .id = id,
+                .script_id = script_id,
+                .voxels = sqlite.blob(&c),
+            },
+        ) catch |err| {
+            std.log.err("Failed to update chunkdata: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn loadChunkData(self: *Data, world_id: i32, x: i32, y: i32, z: i32, data: *chunkData) !void {
+        var selectStmt = try self.db.prepare(
+            struct {
+                x: i32,
+                y: i32,
+                z: i32,
+                world_id: i32,
+            },
+            struct {
+                id: i32,
+                world_id: i32,
+                x: i32,
+                y: i32,
+                z: i32,
+                script_id: i32,
+                voxels: sqlite.Blob,
+            },
+            selectChunkDataByCoordsStmt,
+        );
+        defer selectStmt.deinit();
+
+        {
+            try selectStmt.bind(.{
+                .x = x,
+                .y = y,
+                .z = z,
+                .world_id = world_id,
+            });
+            defer selectStmt.reset();
+
+            while (try selectStmt.step()) |r| {
+                data.id = r.id;
+                data.worldId = r.world_id;
+                data.x = r.x;
+                data.y = r.y;
+                data.z = r.z;
+                data.scriptId = r.script_id;
+                data.voxels = blobToChunk(r.texture);
+                return;
+            }
+        }
+
+        return error.Unreachable;
+    }
+
+    pub fn deleteChunkData(self: *Data, worldId: i32) !void {
+        var deleteStmt = try self.db.prepare(
+            struct {
+                world_id: i32,
+            },
+            void,
+            deleteChunkDataStmt,
+        );
+
+        deleteStmt.exec(
+            .{ .world_id = worldId },
+        ) catch |err| {
+            std.log.err("Failed to delete chunkdata: {}", .{err});
             return err;
         };
     }
