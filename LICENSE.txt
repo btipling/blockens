@@ -1,0 +1,6 @@
+Blockens
+Copyright (c) 2024 Bjorn Tipling
+
+All rights reserved.
+
+This program is distributed under the terms of the End-User License Agreement for Blockens
