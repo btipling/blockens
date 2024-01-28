@@ -29,7 +29,7 @@ pub const Game = struct {
                 .no_collapse = true,
             },
         })) {
-            zgui.text("Hello btzig-blockens!", .{});
+            zgui.text("Hello blockens!", .{});
             zgui.text("F1 for settings", .{});
             const x = @as(i32, @intFromFloat(self.appState.worldView.cameraPos[0]));
             const y = @as(i32, @intFromFloat(self.appState.worldView.cameraPos[1]));

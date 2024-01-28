@@ -19,7 +19,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const exe = b.addExecutable(.{
-        .name = "btzig-blockens",
+        .name = "blockens",
         .root_source_file = .{ .path = "src/main.zig" },
         .target = target,
         .optimize = optimize,

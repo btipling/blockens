@@ -75,13 +75,13 @@ pub const Game = struct {
 
     pub fn deinit(self: *Game) void {
         _ = self;
-        std.debug.print("\nGoodbye btzig-blockens!\n", .{});
+        std.debug.print("\nGoodbye blockens!\n", .{});
     }
 
     pub fn run(self: *Game) !void {
         // TODO: move alot of this into init and create a separate render loop in a thread
         // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
-        std.debug.print("\nHello btzig-blockens!\n", .{});
+        std.debug.print("\nHello blockens!\n", .{});
         glfw.init() catch {
             std.log.err("Failed to initialize GLFW library.", .{});
             return;

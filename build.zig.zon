@@ -1,5 +1,5 @@
 .{
-    .name = "btzig-blockens",
+    .name = "blockens",
     .version = "0.0.1",
     .dependencies = .{
         .lua51 = .{
