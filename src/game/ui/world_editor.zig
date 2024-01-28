@@ -12,6 +12,7 @@ const menus = @import("menus.zig");
 const maxWorldSizeName = 20;
 
 const chunkConfig = struct {
+    id: i32 = 0, // from sqlite
     scriptId: i32,
 };
 
@@ -346,6 +347,50 @@ pub const WorldEditor = struct {
             }
             zgui.endTable();
         }
+    }
+
+    fn saveChunkDatas(self: *WorldEditor) !void {
+        const emptyVoxels: [data.chunkSize]i32 = [_]i32{0} ** data.chunkSize;
+        for (0..config.worldChunkDims) |i| {
+            const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
+            inner: for (0..config.worldChunkDims) |ii| {
+                const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
+                const y = self.chunkY;
+                std.debug.print("loading chunk data for ({d}, {d}, {d})\n", .{
+                    x,
+                    y,
+                    z,
+                });
+                const p = position.Position{
+                    .x = @as(f32, @floatFromInt(x)),
+                    .y = @as(f32, @floatFromInt(y)),
+                    .z = @as(f32, @floatFromInt(z)),
+                };
+                const wp = state.worldPosition.initFromPosition(p);
+                if (self.chunkTableData.get(wp)) |ch_cfg| {
+                    if (ch_cfg.id != 0) {
+                        // update
+                        try self.appState.db.updateChunkData(
+                            ch_cfg.id,
+                            ch_cfg.scriptId,
+                            emptyVoxels,
+                        );
+                        continue :inner;
+                    }
+                    // insert
+                    try self.appState.db.saveChunkData(
+                        self.loadedWorldId,
+                        x,
+                        y,
+                        z,
+                        ch_cfg.scriptId,
+                        emptyVoxels,
+                    );
+                    continue :inner;
+                }
+            }
+        }
+        std.debug.print("we made it!\n", .{});
     }
 
     fn loadChunkDatas(self: *WorldEditor) !void {
