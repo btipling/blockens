@@ -5,6 +5,7 @@ const glfw = @import("zglfw");
 const config = @import("../config.zig");
 const shape = @import("../shape/shape.zig");
 const state = @import("../state.zig");
+const position = @import("../position.zig");
 const data = @import("../data/data.zig");
 const menus = @import("menus.zig");
 
@@ -22,7 +23,8 @@ pub const WorldEditor = struct {
     scriptOptions: std.ArrayList(data.chunkScriptOption),
     chunkTableData: std.AutoHashMap(state.worldPosition, chunkConfig),
     loadedWorldId: u32 = 0,
-    chunkY: u32 = 0,
+    chunkY: i32 = 0,
+    currentChunk: position.Position = position.Position{ .x = 0, .y = 0, .z = 0 },
     bm: menus.BuilderMenu,
 
     pub fn init(
@@ -225,7 +227,12 @@ pub const WorldEditor = struct {
             }
             try self.listChunkScripts();
             if (menus.scriptOptionsListBox(self.scriptOptions, .{ .w = 700 })) |scriptOptionId| {
-                std.debug.print("selected {d}\n", .{scriptOptionId});
+                std.debug.print("selected {d} for chunk at ({d},{d},{d})\n", .{
+                    scriptOptionId,
+                    self.currentChunk.x,
+                    self.currentChunk.y,
+                    self.currentChunk.z,
+                });
             }
             zgui.endPopup();
         }
@@ -237,24 +244,25 @@ pub const WorldEditor = struct {
             .outer_size = .{ 1500, 1500 },
             .column = config.worldChunkDims + 1,
         })) {
-            zgui.tableSetupColumn("x,z", .{});
+            zgui.tableSetupColumn("z, x", .{});
             for (0..config.worldChunkDims) |i| {
-                const z: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
+                const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
                 var buffer: [10]u8 = undefined;
-                const colHeader: [:0]const u8 = try std.fmt.bufPrintZ(&buffer, "{d}", .{z});
+                const colHeader: [:0]const u8 = try std.fmt.bufPrintZ(&buffer, "{d}", .{x});
                 zgui.tableSetupColumn(colHeader, .{});
             }
             zgui.tableHeadersRow();
             try self.drawChunkConfigPopup();
             for (0..config.worldChunkDims) |i| {
-                const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
+                const z: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
                 zgui.tableNextRow(.{
                     .min_row_height = colWidth,
                 });
                 if (zgui.tableNextColumn()) {
-                    zgui.text("{d}", .{x});
+                    zgui.text("{d}", .{z});
                 }
                 for (0..config.worldChunkDims) |ii| {
+                    const x: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
                     if (zgui.tableNextColumn()) {
                         const cFlags = zgui.tableGetColumnFlags(.{});
                         if (cFlags.is_hovered) {
@@ -267,6 +275,11 @@ pub const WorldEditor = struct {
                             .w = colWidth,
                             .h = colWidth,
                         })) {
+                            self.currentChunk = position.Position{
+                                .x = @as(gl.Float, @floatFromInt(x)),
+                                .y = @as(gl.Float, @floatFromInt(self.chunkY)),
+                                .z = @as(gl.Float, @floatFromInt(z)),
+                            };
                             zgui.openPopup("ScriptsPicker", .{});
                         }
                         var dl = zgui.getWindowDrawList();
