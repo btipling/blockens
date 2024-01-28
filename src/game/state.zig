@@ -20,7 +20,7 @@ pub const worldPosition = struct {
     x: u32,
     y: u32,
     z: u32,
-    fn initFromPosition(p: position.Position) worldPosition {
+    pub fn initFromPosition(p: position.Position) worldPosition {
         const x = @as(u32, @bitCast(p.x));
         const y = @as(u32, @bitCast(p.y));
         const z = @as(u32, @bitCast(p.z));
@@ -30,7 +30,7 @@ pub const worldPosition = struct {
             .z = z,
         };
     }
-    fn positionFromWorldPosition(self: worldPosition) position.Position {
+    pub fn positionFromWorldPosition(self: worldPosition) position.Position {
         const x = @as(f32, @bitCast(self.x));
         const y = @as(f32, @bitCast(self.y));
         const z = @as(f32, @bitCast(self.z));

@@ -233,6 +233,9 @@ pub const WorldEditor = struct {
                     self.currentChunk.y,
                     self.currentChunk.z,
                 });
+                const wp = state.worldPosition.initFromPosition(self.currentChunk);
+                const ch_cfg: chunkConfig = .{ .scriptId = scriptOptionId };
+                try self.chunkTableData.put(wp, ch_cfg);
             }
             zgui.endPopup();
         }
