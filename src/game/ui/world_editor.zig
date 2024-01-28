@@ -211,17 +211,19 @@ pub const WorldEditor = struct {
         })) {
             zgui.tableSetupColumn("x,z", .{});
             for (0..config.worldChunkDims) |i| {
+                const z: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
                 var buffer: [10]u8 = undefined;
-                const colHeader: [:0]const u8 = try std.fmt.bufPrintZ(&buffer, "{d}", .{i});
+                const colHeader: [:0]const u8 = try std.fmt.bufPrintZ(&buffer, "{d}", .{z});
                 zgui.tableSetupColumn(colHeader, .{});
             }
             zgui.tableHeadersRow();
             for (0..config.worldChunkDims) |i| {
+                const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
                 zgui.tableNextRow(.{
                     .min_row_height = colWidth,
                 });
                 if (zgui.tableNextColumn()) {
-                    zgui.text("{d}", .{i});
+                    zgui.text("{d}", .{x});
                 }
                 for (0..config.worldChunkDims) |ii| {
                     if (zgui.tableNextColumn()) {
