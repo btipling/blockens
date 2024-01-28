@@ -15,8 +15,8 @@ VALUES
         :x,
         :y,
         :z,
-        :voxels,
         :script_id,
+        :voxels,
         CURRENT_TIMESTAMP,
         CURRENT_TIMESTAMP
     );

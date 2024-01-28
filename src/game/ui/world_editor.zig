@@ -362,11 +362,6 @@ pub const WorldEditor = struct {
             inner: for (0..config.worldChunkDims) |ii| {
                 const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
                 const y = self.chunkY;
-                std.debug.print("loading chunk data for ({d}, {d}, {d})\n", .{
-                    x,
-                    y,
-                    z,
-                });
                 const p = position.Position{
                     .x = @as(f32, @floatFromInt(x)),
                     .y = @as(f32, @floatFromInt(y)),
@@ -405,11 +400,6 @@ pub const WorldEditor = struct {
             for (0..config.worldChunkDims) |ii| {
                 const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
                 const y = self.chunkY;
-                std.debug.print("loading chunk data for ({d}, {d}, {d})\n", .{
-                    x,
-                    y,
-                    z,
-                });
                 var chunkData = data.chunkData{};
                 self.appState.db.loadChunkData(self.loadedWorldId, x, y, z, &chunkData) catch |err| {
                     if (err == data.DataErr.NotFound) {
