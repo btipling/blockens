@@ -6,7 +6,7 @@ const config = @import("../config.zig");
 const shape = @import("../shape/shape.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
-const builder_menu = @import("builder_menu.zig");
+const menus = @import("menus.zig");
 
 const maxWorldSizeName = 20;
 
@@ -15,13 +15,14 @@ pub const WorldEditor = struct {
     createNameBuf: [maxWorldSizeName]u8,
     codeFont: zgui.Font,
     worldOptions: std.ArrayList(data.worldOption),
+    scriptOptions: std.ArrayList(data.chunkScriptOption),
     loadedWorldId: u32 = 0,
-    bm: builder_menu.BuilderMenu,
+    bm: menus.BuilderMenu,
 
     pub fn init(
         appState: *state.State,
         codeFont: zgui.Font,
-        bm: builder_menu.BuilderMenu,
+        bm: menus.BuilderMenu,
         alloc: std.mem.Allocator,
     ) !WorldEditor {
         const createNameBuf = [_]u8{0} ** maxWorldSizeName;
@@ -30,6 +31,7 @@ pub const WorldEditor = struct {
             .createNameBuf = createNameBuf,
             .codeFont = codeFont,
             .worldOptions = std.ArrayList(data.worldOption).init(alloc),
+            .scriptOptions = std.ArrayList(data.chunkScriptOption).init(alloc),
             .bm = bm,
         };
         try WorldEditor.listWorlds(&tv);
@@ -39,6 +41,11 @@ pub const WorldEditor = struct {
 
     pub fn deinit(self: *WorldEditor) void {
         self.worldOptions.deinit();
+        self.scriptOptions.deinit();
+    }
+
+    fn listChunkScripts(self: *WorldEditor) !void {
+        try self.appState.db.listChunkScripts(&self.scriptOptions);
     }
 
     pub fn draw(self: *WorldEditor, window: *glfw.Window) !void {
@@ -203,7 +210,6 @@ pub const WorldEditor = struct {
     }
 
     fn drawTopDownChunkConfig(self: *WorldEditor) !void {
-        _ = self;
         const colWidth: f32 = 1500 / config.worldChunkDims;
         if (zgui.beginTable("chunks", .{
             .outer_size = .{ 1500, 1500 },
@@ -221,6 +227,10 @@ pub const WorldEditor = struct {
                 zgui.text("Select a script for this chunk", .{});
                 if (zgui.smallButton("x")) {
                     zgui.closeCurrentPopup();
+                }
+                try self.listChunkScripts();
+                if (menus.scriptOptionsListBox(self.scriptOptions, .{ .w = 700 })) |scriptOptionId| {
+                    std.debug.print("selected {d}\n", .{scriptOptionId});
                 }
                 zgui.endPopup();
             }

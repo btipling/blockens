@@ -6,6 +6,7 @@ const config = @import("../config.zig");
 const shape = @import("../shape/shape.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
+const script = @import("../script/script.zig");
 
 pub const BuilderMenu = struct {
     appState: *state.State,
@@ -54,3 +55,45 @@ pub const BuilderMenu = struct {
         }
     }
 };
+
+const ScriptOptionsParams = struct {
+    w: f32 = 500.0,
+    h: f32 = 900.0,
+};
+
+pub fn scriptOptionsListBox(scriptOptions: std.ArrayList(data.chunkScriptOption), params: ScriptOptionsParams) ?i32 {
+    var rv: ?i32 = null;
+    if (zgui.beginListBox("##chunk_script_options", .{
+        .w = params.w,
+        .h = params.h,
+    })) {
+        zgui.pushStyleColor4f(.{ .idx = .header_hovered, .c = .{ 1.0, 1.0, 1.0, 0.25 } });
+        for (scriptOptions.items) |scriptOption| {
+            var buffer: [script.maxLuaScriptNameSize + 10]u8 = undefined;
+            const selectableName = std.fmt.bufPrint(&buffer, "  {d}: {s}", .{ scriptOption.id, scriptOption.name }) catch {
+                std.debug.print("unable to write selectable name.\n", .{});
+                continue;
+            };
+            var name: [script.maxLuaScriptNameSize:0]u8 = undefined;
+            for (name, 0..) |_, i| {
+                if (selectableName.len <= i) {
+                    name[i] = 0;
+                    break;
+                }
+                name[i] = selectableName[i];
+            }
+            var dl = zgui.getWindowDrawList();
+            const pmin = zgui.getCursorScreenPos();
+            const pmax = [2]f32{ pmin[0] + 35.0, pmin[1] + 30.0 };
+            const col = zgui.colorConvertFloat4ToU32(.{ scriptOption.color[0], scriptOption.color[1], scriptOption.color[2], 1.0 });
+            dl.addRectFilled(.{ .pmin = pmin, .pmax = pmax, .col = col });
+
+            if (zgui.selectable(&name, .{ .h = 60 })) {
+                rv = scriptOption.id;
+            }
+        }
+        zgui.popStyleColor(.{ .count = 1 });
+        zgui.endListBox();
+    }
+    return rv;
+}

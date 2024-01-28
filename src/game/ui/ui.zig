@@ -6,7 +6,7 @@ const texture_gen = @import("texture_gen.zig");
 const world_editor = @import("world_editor.zig");
 const block_editor = @import("block_editor.zig");
 const chunk_generator = @import("chunk_generator.zig");
-const builder_menu = @import("builder_menu.zig");
+const menus = @import("menus.zig");
 const game = @import("game.zig");
 const state = @import("../state.zig");
 const script = @import("../script/script.zig");
@@ -30,7 +30,7 @@ pub const UI = struct {
         zgui.io.setDefaultFont(gameFont);
         font_size = 40.0;
         const codeFont = zgui.io.addFontFromMemory(robotoMonoFont, std.math.floor(font_size * 1.1));
-        const bm = try builder_menu.BuilderMenu.init(appState);
+        const bm = try menus.BuilderMenu.init(appState);
         return UI{
             .window = window,
             .script = sc,

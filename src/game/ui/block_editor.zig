@@ -7,7 +7,7 @@ const shape = @import("../shape/shape.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
-const builder_menu = @import("builder_menu.zig");
+const menus = @import("menus.zig");
 
 pub const BlockEditor = struct {
     loadedBlockId: i32,
@@ -19,13 +19,13 @@ pub const BlockEditor = struct {
     codeFont: zgui.Font,
     blockOptions: std.ArrayList(data.blockOption),
     scriptOptions: std.ArrayList(data.scriptOption),
-    bm: builder_menu.BuilderMenu,
+    bm: menus.BuilderMenu,
 
     pub fn init(
         appState: *state.State,
         codeFont: zgui.Font,
         sc: script.Script,
-        bm: builder_menu.BuilderMenu,
+        bm: menus.BuilderMenu,
         alloc: std.mem.Allocator,
     ) !BlockEditor {
         const createNameBuf = [_]u8{0} ** data.maxBlockSizeName;

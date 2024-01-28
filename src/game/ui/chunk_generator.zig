@@ -9,7 +9,7 @@ const state = @import("../state.zig");
 const chunk = @import("../chunk.zig");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
-const builder_menu = @import("builder_menu.zig");
+const menus = @import("menus.zig");
 
 const maxWorldSizeName = 20;
 
@@ -26,13 +26,13 @@ pub const ChunkGenerator = struct {
     scriptOptions: std.ArrayList(data.chunkScriptOption),
     loadedScriptId: i32 = 0,
     scriptColor: [3]f32,
-    bm: builder_menu.BuilderMenu,
+    bm: menus.BuilderMenu,
 
     pub fn init(
         appState: *state.State,
         codeFont: zgui.Font,
         sc: script.Script,
-        bm: builder_menu.BuilderMenu,
+        bm: menus.BuilderMenu,
         alloc: std.mem.Allocator,
     ) !ChunkGenerator {
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
@@ -178,35 +178,9 @@ pub const ChunkGenerator = struct {
                 try self.listChunkScripts();
             }
             zgui.popStyleVar(.{ .count = 1 });
-            _ = zgui.beginListBox("##listbox", .{
-                .w = 500,
-                .h = 900,
-            });
-
-            zgui.pushStyleColor4f(.{ .idx = .header_hovered, .c = .{ 1.0, 1.0, 1.0, 0.25 } });
-            for (self.scriptOptions.items) |scriptOption| {
-                var buffer: [script.maxLuaScriptNameSize + 10]u8 = undefined;
-                const selectableName = try std.fmt.bufPrint(&buffer, "  {d}: {s}", .{ scriptOption.id, scriptOption.name });
-                var name: [script.maxLuaScriptNameSize:0]u8 = undefined;
-                for (name, 0..) |_, i| {
-                    if (selectableName.len <= i) {
-                        name[i] = 0;
-                        break;
-                    }
-                    name[i] = selectableName[i];
-                }
-                var dl = zgui.getWindowDrawList();
-                const pmin = zgui.getCursorScreenPos();
-                const pmax = [2]f32{ pmin[0] + 35.0, pmin[1] + 30.0 };
-                const col = zgui.colorConvertFloat4ToU32(.{ scriptOption.color[0], scriptOption.color[1], scriptOption.color[2], 1.0 });
-                dl.addRectFilled(.{ .pmin = pmin, .pmax = pmax, .col = col });
-
-                if (zgui.selectable(&name, .{ .h = 60 })) {
-                    try self.loadChunkScriptFunc(scriptOption.id);
-                }
+            if (menus.scriptOptionsListBox(self.scriptOptions, .{})) |scriptOptionId| {
+                try self.loadChunkScriptFunc(scriptOptionId);
             }
-            zgui.popStyleColor(.{ .count = 1 });
-            zgui.endListBox();
         }
         zgui.endChild();
     }

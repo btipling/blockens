@@ -6,7 +6,7 @@ const config = @import("../config.zig");
 const state = @import("../state.zig");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
-const builder_menu = @import("builder_menu.zig");
+const menus = @import("menus.zig");
 
 pub const TextureGen = struct {
     script: script.Script,
@@ -16,13 +16,13 @@ pub const TextureGen = struct {
     codeFont: zgui.Font,
     scriptOptions: std.ArrayList(data.scriptOption),
     loadedScriptId: i32 = 0,
-    bm: builder_menu.BuilderMenu,
+    bm: menus.BuilderMenu,
 
     pub fn init(
         appState: *state.State,
         codeFont: zgui.Font,
         sc: script.Script,
-        bm: builder_menu.BuilderMenu,
+        bm: menus.BuilderMenu,
         alloc: std.mem.Allocator,
     ) !TextureGen {
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
