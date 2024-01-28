@@ -135,7 +135,8 @@ pub const Game = struct {
 
         // uncomment to start in a specific view:
         // try appState.setGameView();
-        try appState.setChunkGeneratorView();
+        // try appState.setChunkGeneratorView();
+        try appState.setWorldEditorView();
 
         var focusedAt: gl.Float = 0.0;
         main_loop: while (!window.shouldClose()) {

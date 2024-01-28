@@ -13,7 +13,6 @@ const maxWorldSizeName = 20;
 pub const WorldEditor = struct {
     appState: *state.State,
     createNameBuf: [maxWorldSizeName]u8,
-    updateNameBuf: [maxWorldSizeName]u8,
     codeFont: zgui.Font,
     worldOptions: std.ArrayList(data.worldOption),
     loadedWorldId: u32 = 0,
@@ -26,11 +25,9 @@ pub const WorldEditor = struct {
         alloc: std.mem.Allocator,
     ) !WorldEditor {
         const createNameBuf = [_]u8{0} ** maxWorldSizeName;
-        const updateNameBuf = [_]u8{0} ** maxWorldSizeName;
         var tv = WorldEditor{
             .appState = appState,
             .createNameBuf = createNameBuf,
-            .updateNameBuf = updateNameBuf,
             .codeFont = codeFont,
             .worldOptions = std.ArrayList(data.worldOption).init(alloc),
             .bm = bm,
@@ -44,12 +41,12 @@ pub const WorldEditor = struct {
     }
 
     pub fn draw(self: *WorldEditor, window: *glfw.Window) !void {
-        const xPos: f32 = 700.0;
+        const xPos: f32 = 50.0;
         const yPos: f32 = 50.0;
         zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
         zgui.setNextWindowSize(.{
-            .w = 2850,
-            .h = 2000,
+            .w = 3750,
+            .h = 2200,
         });
         zgui.setNextItemWidth(-1);
         if (zgui.begin("World Editor", .{
@@ -96,12 +93,12 @@ pub const WorldEditor = struct {
             }
             nameBuf[i] = c;
         }
-        self.updateNameBuf = nameBuf;
+        self.createNameBuf = nameBuf;
         self.loadedWorldId = @as(u32, @intCast(worldId));
     }
 
     fn updateWorld(self: *WorldEditor) !void {
-        const n = std.mem.indexOf(u8, &self.updateNameBuf, &([_]u8{0}));
+        const n = std.mem.indexOf(u8, &self.createNameBuf, &([_]u8{0}));
         if (n) |i| {
             if (i < 3) {
                 std.log.err("World name is too short", .{});
@@ -109,7 +106,7 @@ pub const WorldEditor = struct {
             }
         }
         const id = @as(i32, @intCast(self.loadedWorldId));
-        try self.appState.db.updateWorld(id, &self.updateNameBuf);
+        try self.appState.db.updateWorld(id, &self.createNameBuf);
         try self.listWorlds();
         try self.loadWorld(id);
     }
@@ -125,70 +122,14 @@ pub const WorldEditor = struct {
         if (zgui.beginChild(
             "Saved Worlds",
             .{
-                .w = 850,
-                .h = 1800,
+                .w = 510,
+                .h = 2100,
                 .border = true,
             },
         )) {
-            try self.drawWorldList();
-            try self.drawCreateForm();
-        }
-        zgui.endChild();
-    }
-
-    fn drawWorldConfig(self: *WorldEditor) !void {
-        if (zgui.beginChild(
-            "Configure World",
-            .{
-                .w = 1800,
-                .h = 1800,
-                .border = true,
-            },
-        )) {
-            zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
-            if (zgui.button("Update world", .{
-                .w = 500,
-                .h = 100,
-            })) {
-                try self.updateWorld();
-            }
-            zgui.popStyleVar(.{ .count = 1 });
-            zgui.pushFont(self.codeFont);
-            zgui.pushItemWidth(400);
-            _ = zgui.inputTextWithHint("Name", .{
-                .buf = self.updateNameBuf[0..],
-                .hint = "world name",
-            });
-            if (zgui.button("Delete world", .{
-                .w = 450,
-                .h = 100,
-            })) {
-                try self.deleteWorld();
-            }
-            zgui.popItemWidth();
-            zgui.popFont();
-        }
-        zgui.endChild();
-    }
-
-    fn drawWorldList(self: *WorldEditor) !void {
-        if (zgui.beginChild(
-            "Worlds",
-            .{
-                .w = 850,
-                .h = 1450,
-                .border = false,
-            },
-        )) {
-            if (zgui.button("Refresh list", .{
-                .w = 450,
-                .h = 100,
-            })) {
-                try self.listWorlds();
-            }
             _ = zgui.beginListBox("##listbox", .{
-                .w = 800,
-                .h = 1400,
+                .w = 500,
+                .h = 1290,
             });
             for (self.worldOptions.items) |worldOption| {
                 var buffer: [maxWorldSizeName + 10]u8 = undefined;
@@ -206,50 +147,56 @@ pub const WorldEditor = struct {
                 }
             }
             zgui.endListBox();
-            if (self.loadedWorldId != 0) {
-                if (zgui.button("Update world", .{
-                    .w = 450,
-                    .h = 100,
-                })) {
-                    try self.updateWorld();
-                }
-                if (zgui.button("Delete world", .{
-                    .w = 450,
-                    .h = 100,
-                })) {
-                    try self.deleteWorld();
-                }
-            }
-        }
-        zgui.endChild();
-    }
-
-    fn drawCreateForm(self: *WorldEditor) !void {
-        if (zgui.beginChild(
-            "Create World",
-            .{
-                .w = 850,
-                .h = 1800,
-                .border = false,
-            },
-        )) {
             zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
+            if (zgui.button("Refresh list", .{
+                .w = 500,
+                .h = 100,
+            })) {
+                try self.listWorlds();
+            }
             if (zgui.button("Create world", .{
                 .w = 500,
                 .h = 100,
             })) {
                 try self.saveWorld();
             }
-            zgui.popStyleVar(.{ .count = 1 });
             zgui.pushFont(self.codeFont);
-            zgui.pushItemWidth(400);
-            _ = zgui.inputTextWithHint("Name", .{
+            zgui.pushItemWidth(500);
+            _ = zgui.inputTextWithHint("##Name", .{
                 .buf = self.createNameBuf[0..],
                 .hint = "world name",
             });
             zgui.popItemWidth();
             zgui.popFont();
+            if (self.loadedWorldId != 0) {
+                if (zgui.button("Update world", .{
+                    .w = 500,
+                    .h = 100,
+                })) {
+                    try self.updateWorld();
+                }
+                if (zgui.button("Delete world", .{
+                    .w = 500,
+                    .h = 100,
+                })) {
+                    try self.deleteWorld();
+                }
+            }
+            zgui.popStyleVar(.{ .count = 1 });
         }
+        zgui.endChild();
+    }
+
+    fn drawWorldConfig(self: *WorldEditor) !void {
+        _ = self;
+        if (zgui.beginChild(
+            "Configure World",
+            .{
+                .w = 3250,
+                .h = 2100,
+                .border = true,
+            },
+        )) {}
         zgui.endChild();
     }
 };
