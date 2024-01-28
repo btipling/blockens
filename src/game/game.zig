@@ -100,8 +100,8 @@ pub const Game = struct {
         zgui.init(self.allocator);
         defer zgui.deinit();
 
-        const gslf_version: [*c]const u8 = "#version 130";
-        zgui.backend.initWithGlSlVersion(window, gslf_version);
+        const glsl_version: [*c]const u8 = "#version 130";
+        zgui.backend.initWithGlSlVersion(window, glsl_version);
         defer zgui.backend.deinit();
         defer window.destroy();
 
