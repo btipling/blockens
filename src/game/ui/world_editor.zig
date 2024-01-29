@@ -498,30 +498,32 @@ pub const WorldEditor = struct {
 
     fn loadChunkDatas(self: *WorldEditor) !void {
         self.chunkTableData.clearAndFree();
-        for (0..config.worldChunkDims) |i| {
-            const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
-            for (0..config.worldChunkDims) |ii| {
-                const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
-                const y = self.chunkY;
-                var chunkData = data.chunkData{};
-                self.appState.db.loadChunkData(self.loadedWorldId, x, y, z, &chunkData) catch |err| {
-                    if (err == data.DataErr.NotFound) {
-                        continue;
-                    }
-                    return err;
-                };
-                const p = position.Position{
-                    .x = @as(gl.Float, @floatFromInt(x)),
-                    .y = @as(gl.Float, @floatFromInt(y)),
-                    .z = @as(gl.Float, @floatFromInt(z)),
-                };
-                const wp = state.worldPosition.initFromPosition(p);
-                const cfg = chunkConfig{
-                    .id = chunkData.id,
-                    .scriptId = chunkData.scriptId,
-                    .chunkData = chunkData.voxels,
-                };
-                try self.chunkTableData.put(wp, cfg);
+        for (0..2) |_i| {
+            const y: i32 = @as(i32, @intCast(_i));
+            for (0..config.worldChunkDims) |i| {
+                const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
+                for (0..config.worldChunkDims) |ii| {
+                    const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
+                    var chunkData = data.chunkData{};
+                    self.appState.db.loadChunkData(self.loadedWorldId, x, y, z, &chunkData) catch |err| {
+                        if (err == data.DataErr.NotFound) {
+                            continue;
+                        }
+                        return err;
+                    };
+                    const p = position.Position{
+                        .x = @as(gl.Float, @floatFromInt(x)),
+                        .y = @as(gl.Float, @floatFromInt(y)),
+                        .z = @as(gl.Float, @floatFromInt(z)),
+                    };
+                    const wp = state.worldPosition.initFromPosition(p);
+                    const cfg = chunkConfig{
+                        .id = chunkData.id,
+                        .scriptId = chunkData.scriptId,
+                        .chunkData = chunkData.voxels,
+                    };
+                    try self.chunkTableData.put(wp, cfg);
+                }
             }
         }
     }
