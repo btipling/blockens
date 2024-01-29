@@ -572,7 +572,7 @@ pub const Data = struct {
             }
         }
 
-        return error.Unreachable;
+        return DataErr.NotFound;
     }
 
     pub fn deleteChunkScript(self: *Data, id: i32) !void {
