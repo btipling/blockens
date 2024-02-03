@@ -11,8 +11,7 @@ const controls = @import("controls.zig");
 const cube = @import("./shape/cube.zig");
 const plane = @import("./shape/plane.zig");
 const cursor = @import("./shape/cursor.zig");
-const world = @import("./view/world.zig");
-const texture_gen = @import("./view/texture_gen.zig");
+const screen = @import("./screen/screen.zig");
 const state = @import("state/state.zig");
 const chunk = @import("chunk.zig");
 
@@ -125,11 +124,14 @@ pub const Game = struct {
         defer uiCursor.deinit();
 
         // init views
-        var gameScreen = try world.World.initWithHUD(worldPlane, uiCursor, &appState.worldScreen);
-        var demoScreen = try world.World.init(&appState.demoScreen);
+        var gameScreen = try screen.world.World.initWithHUD(worldPlane, uiCursor, &appState.worldScreen);
+        var demoScreen = try screen.world.World.init(&appState.demoScreen);
 
-        var textureGen = try texture_gen.TextureGenerator.init(&appState, self.allocator);
+        var textureGen = try screen.texture_gen.TextureGenerator.init(&appState, self.allocator);
         defer textureGen.deinit();
+
+        var characterScreen = try screen.character.Character.init(&appState.character);
+        defer characterScreen.deinit();
 
         var c = try controls.Controls.init(window, &appState);
         ctrls = &c;
@@ -188,7 +190,7 @@ pub const Game = struct {
                     try drawChunkGeneratorScreen(&demoScreen, &gameUI);
                 },
                 .characterDesigner => {
-                    try drawCharacterDesignerScreen(&demoScreen, &gameUI);
+                    try drawCharacterDesignerScreen(&characterScreen, &gameUI);
                 },
                 .paused => {
                     window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
@@ -200,12 +202,12 @@ pub const Game = struct {
     }
 };
 
-fn drawTextureGeneratorScreen(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
+fn drawTextureGeneratorScreen(textureGen: *screen.texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
     try textureGen.draw();
     try gameUI.drawTextureGen();
 }
 
-fn drawGameScreen(gameScreen: *world.World, gameUI: *ui.UI) !void {
+fn drawGameScreen(gameScreen: *screen.world.World, gameUI: *ui.UI) !void {
     try gameScreen.draw();
     try gameUI.drawGame();
 }
@@ -214,15 +216,16 @@ fn drawWorldEditorScreen(gameUI: *ui.UI) !void {
     try gameUI.drawWorldEditor();
 }
 
-fn drawBlockEditorScreen(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
+fn drawBlockEditorScreen(textureGen: *screen.texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
     try textureGen.draw();
     try gameUI.drawBlockEditor();
 }
 
-fn drawChunkGeneratorScreen(demoScreen: *world.World, gameUI: *ui.UI) !void {
+fn drawChunkGeneratorScreen(demoScreen: *screen.world.World, gameUI: *ui.UI) !void {
     try demoScreen.draw();
     try gameUI.drawChunkGenerator();
 }
-fn drawCharacterDesignerScreen(_: *world.World, gameUI: *ui.UI) !void {
+fn drawCharacterDesignerScreen(characterScreen: *screen.character.Character, gameUI: *ui.UI) !void {
+    try characterScreen.draw();
     try gameUI.drawCharacterDesigner();
 }

@@ -8,6 +8,7 @@ const data = @import("../data/data.zig");
 pub const position = @import("position.zig");
 pub const app = @import("app.zig");
 pub const screen = @import("screen.zig");
+pub const character = @import("character.zig");
 
 pub const StateErrors = error{
     NoBlocks,
@@ -16,6 +17,7 @@ pub const StateErrors = error{
 
 pub const State = struct {
     app: app.App,
+    character: character.Character,
     worldScreen: screen.Screen,
     demoScreen: screen.Screen,
     db: data.Data,
@@ -38,6 +40,7 @@ pub const State = struct {
         demoTransform = zm.mul(demoTransform, zm.translationV(@Vector(4, gl.Float){ -0.7995, 0.401, -1.0005, 0.0 }));
         var s = State{
             .app = try app.App.init(),
+            .character = try character.Character.init(alloc),
             .worldScreen = try screen.Screen.init(
                 alloc,
                 v,
