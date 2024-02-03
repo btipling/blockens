@@ -1,6 +1,10 @@
 # blockens
  A voxel game project.
 
+![image](https://github.com/btipling/blockens/assets/249641/dd6cb670-548b-44fc-b7c0-b681e9a8376c)
+
+![image](https://github.com/btipling/blockens/assets/249641/74770b22-e036-451f-b768-14040bd08976)
+
 ![image](https://github.com/btipling/blockens/assets/249641/4c710c3e-051a-4e39-8e6f-503817c56045)
 
 ![image](https://github.com/btipling/blockens/assets/249641/9819303a-7cb0-43d5-8f6f-8dba0f9484ce)
