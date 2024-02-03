@@ -35,11 +35,11 @@ pub const CharacterDesigner = struct {
     }
 
     pub fn draw(self: *CharacterDesigner, window: *glfw.Window) !void {
-        const xPos: f32 = 1200.0;
+        const xPos: f32 = 2200.0;
         const yPos: f32 = 50.0;
         zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
         zgui.setNextWindowSize(.{
-            .w = 2600,
+            .w = 1600,
             .h = 2000,
         });
         zgui.setNextItemWidth(-1);
