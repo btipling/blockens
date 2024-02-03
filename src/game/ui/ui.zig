@@ -6,6 +6,7 @@ const texture_gen = @import("texture_gen.zig");
 const world_editor = @import("world_editor.zig");
 const block_editor = @import("block_editor.zig");
 const chunk_generator = @import("chunk_generator.zig");
+const character_designer = @import("character_designer.zig");
 const menus = @import("menus.zig");
 const game = @import("game.zig");
 const state = @import("../state.zig");
@@ -22,6 +23,7 @@ pub const UI = struct {
     WorldEditor: world_editor.WorldEditor,
     BlockEditor: block_editor.BlockEditor,
     ChunkGenerator: chunk_generator.ChunkGenerator,
+    CharacterDesigner: character_designer.CharacterDesigner,
 
     pub fn init(appState: *state.State, window: *glfw.Window, alloc: std.mem.Allocator) !UI {
         const sc = try script.Script.init(alloc);
@@ -63,6 +65,11 @@ pub const UI = struct {
                 bm,
                 alloc,
             ),
+            .CharacterDesigner = try character_designer.CharacterDesigner.init(
+                appState,
+                codeFont,
+                bm,
+            ),
         };
     }
 
@@ -71,6 +78,7 @@ pub const UI = struct {
         self.BlockEditor.deinit();
         self.WorldEditor.deinit();
         self.ChunkGenerator.deinit();
+        self.CharacterDesigner.deinit();
         self.script.deinit();
     }
 
@@ -112,6 +120,11 @@ pub const UI = struct {
     pub fn drawChunkGenerator(self: *UI) !void {
         self.beginDraw();
         try self.ChunkGenerator.draw(self.window);
+        self.endDraw();
+    }
+    pub fn drawCharacterDesigner(self: *UI) !void {
+        self.beginDraw();
+        try self.CharacterDesigner.draw(self.window);
         self.endDraw();
     }
 };

@@ -139,7 +139,8 @@ pub const Game = struct {
         // uncomment to start in a specific view:
         // try appState.setGameView();
         // try appState.setChunkGeneratorView();
-        try appState.setWorldEditorView();
+        // try appState.setWorldEditorView();
+        try appState.setCharacterDesignerView();
 
         var focusedAt: gl.Float = 0.0;
         main_loop: while (!window.shouldClose()) {
@@ -187,6 +188,9 @@ pub const Game = struct {
                 .chunkGenerator => {
                     try drawChunkGeneratorView(&demoWorld, &gameUI);
                 },
+                .characterDesigner => {
+                    try drawCharacterDesignerView(&demoWorld, &gameUI);
+                },
                 .paused => {
                     window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
                 },
@@ -219,4 +223,7 @@ fn drawBlockEditorView(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI
 fn drawChunkGeneratorView(demoWorld: *world.World, gameUI: *ui.UI) !void {
     try demoWorld.draw();
     try gameUI.drawChunkGenerator();
+}
+fn drawCharacterDesignerView(_: *world.World, gameUI: *ui.UI) !void {
+    try gameUI.drawCharacterDesigner();
 }

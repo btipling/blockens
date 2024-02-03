@@ -90,6 +90,7 @@ pub const Controls = struct {
             .worldEditor => try self.handleWorldEditorKey(),
             .blockEditor => try self.handleBlockEditorKey(),
             .chunkGenerator => try self.handleChunkGeneratorKey(),
+            .characterDesigner => try self.handleCharacterDesignerKey(),
             .paused => {},
         }
 
@@ -191,6 +192,10 @@ pub const Controls = struct {
                 self.appState.demoView.toggleWireframe();
             }
         }
+        try self.uiControls();
+    }
+
+    fn handleCharacterDesignerKey(self: *Controls) !void {
         try self.uiControls();
     }
 };

@@ -45,6 +45,9 @@ pub const BuilderMenu = struct {
             if (zgui.menuItem("chunks", .{})) {
                 try self.appState.setChunkGeneratorView();
             }
+            if (zgui.menuItem("characters", .{})) {
+                try self.appState.setCharacterDesignerView();
+            }
             const ww = zgui.getWindowWidth();
             zgui.sameLine(.{ .offset_from_start_x = ww - 150.0 });
             if (zgui.menuItem("exit", .{})) {

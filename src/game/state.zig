@@ -124,6 +124,10 @@ pub const State = struct {
         try self.clearViewState(View.blockEditor);
     }
 
+    pub fn setCharacterDesignerView(self: *State) !void {
+        try self.clearViewState(View.characterDesigner);
+    }
+
     pub fn setChunkGeneratorView(self: *State) !void {
         try self.demoView.focusView();
         try self.clearViewState(View.chunkGenerator);
@@ -151,6 +155,7 @@ pub const View = enum {
     worldEditor,
     blockEditor,
     chunkGenerator,
+    characterDesigner,
     paused,
 };
 
