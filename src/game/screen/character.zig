@@ -13,7 +13,8 @@ pub const Character = struct {
         alloc: std.mem.Allocator,
         character: *state.character.Character,
     ) !Character {
-        const mob = try mobMesh.MobMesh.init(character.shapeview, 0, alloc);
+        var mob = try mobMesh.MobMesh.init(character.shapeview, 0, alloc);
+        try mob.generate();
         return Character{
             .character = character,
             .mob = mob,

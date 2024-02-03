@@ -85,7 +85,7 @@ pub const MobMesh = struct {
         const vertexShaderSource = @embedFile("../shaders/mob.vs");
         const fragmentShaderSource = @embedFile("../shaders/mob.fs");
 
-        var mob = try mobShape.MobShape.init(
+        const mob = try mobShape.MobShape.init(
             vm,
             mobId,
             vertexShaderSource,
@@ -93,7 +93,6 @@ pub const MobMesh = struct {
             alloc,
         );
         const shape = zmesh.Shape.init(indicesAL, positionsAL, null, null);
-        try mob.addMobData(shape);
         return .{
             .mobId = mobId,
             .mob = mob,
@@ -104,6 +103,13 @@ pub const MobMesh = struct {
     pub fn deinit(self: MobMesh) void {
         self.shape.deinit();
         self.mob.deinit();
+    }
+
+    pub fn generate(self: *MobMesh) !void {
+        const _s = self.shape.clone();
+        defer _s.deinit();
+        try self.mob.addMobData(_s);
+        return;
     }
 
     pub fn draw(self: *MobMesh) !void {
