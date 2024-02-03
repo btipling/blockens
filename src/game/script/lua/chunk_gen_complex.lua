@@ -13,6 +13,7 @@ function generate_chunk()
         local y = math.floor(_i / 64) % 64
         local z = math.floor(_i / (64 * 64)) % 64
         blocks[i] = air
+        -- Check if the current block is within the hole boundaries
         if y <= 63 and y > 55 and x < 20 and z < 20 then
             blocks[i] = water
             goto continue
@@ -22,14 +23,14 @@ function generate_chunk()
         elseif y > 50 then
             blocks[i] = dirt
             if y < 55 then
-                if math.random(100) == 1 then
+                if math.random(4) == 1 then
                     blocks[i] = stone
                 end
             end
         elseif y > 20 then
             blocks[i] = stone
             if y < 25 then
-                if math.random(100) == 1 then
+                if math.random(4) == 1 then
                     blocks[i] = lava
                 end
             end
@@ -41,4 +42,6 @@ function generate_chunk()
     return blocks
 end
 
+-- Calling the function to generate the chunk
 chunk = generate_chunk()
+-- chunk now contains a 64x64x64 chunk with a hole in the center
