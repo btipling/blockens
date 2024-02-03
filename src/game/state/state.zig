@@ -74,6 +74,7 @@ pub const State = struct {
         try self.app.clearScreenState();
         try self.worldScreen.clearScreenState();
         try self.demoScreen.clearScreenState();
+        try self.character.clearCharacterViewState();
     }
 
     pub fn deinit(self: *State) void {
@@ -100,6 +101,7 @@ pub const State = struct {
     }
 
     pub fn setCharacterDesignerScreen(self: *State) !void {
+        try self.character.focusView();
         try self.clearScreenState(screen.Screens.characterDesigner);
     }
 

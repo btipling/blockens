@@ -7,18 +7,15 @@ const state = @import("../state/state.zig");
 
 pub const Character = struct {
     character: *state.character.Character,
-    vm: shapeview.View,
     mob: mobMesh.MobMesh,
 
     pub fn init(
         alloc: std.mem.Allocator,
         character: *state.character.Character,
     ) !Character {
-        const vm = try shapeview.View.init(zm.identity());
-        const mob = try mobMesh.MobMesh.init(vm, 0, alloc);
+        const mob = try mobMesh.MobMesh.init(character.shapeview, 0, alloc);
         return Character{
             .character = character,
-            .vm = vm,
             .mob = mob,
         };
     }
