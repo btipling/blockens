@@ -37,5 +37,10 @@ void main()
    //    FragColor = texture(ourTexture, TexCoord) * vec4(1.5, 1.5, 1.5, 1.0);
    //    return;
    // }
-   FragColor = texture(ourTexture, TexCoord) * vec4(eColor, 1.0); 
+
+   vec4 textColor = texture(ourTexture, TexCoord) * vec4(eColor, 1.0); 
+   if (textColor.a < 0.5) {
+      discard;
+   }
+   FragColor = textColor;
 } 

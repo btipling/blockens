@@ -532,7 +532,5 @@ pub const InstancedShape = struct {
             std.debug.print("{s} draw elements error: {d}\n", .{ self.name, e });
             return ShapeErr.DrawingError;
         }
-        // renable depth test
-        gl.enable(gl.DEPTH_TEST);
     }
 };
