@@ -7,22 +7,17 @@ const state = @import("../state/state.zig");
 
 pub const Character = struct {
     character: *state.character.Character,
-    mob: mobMesh.MobMesh,
 
     pub fn init(
-        alloc: std.mem.Allocator,
         character: *state.character.Character,
     ) !Character {
-        var mob = try mobMesh.MobMesh.init(character.shapeview, 0, alloc);
-        try mob.generate();
         return Character{
             .character = character,
-            .mob = mob,
         };
     }
 
-    pub fn deinit(character: Character) void {
-        character.mob.deinit();
+    pub fn deinit(self: Character) void {
+        _ = self;
     }
 
     pub fn draw(self: *Character) !void {
@@ -30,7 +25,9 @@ pub const Character = struct {
             gl.polygonMode(gl.FRONT_AND_BACK, gl.LINE);
         }
 
-        try self.mob.draw();
+        if (self.character.mob) |_| {
+            try self.character.mob.?.draw();
+        }
 
         if (self.character.wireframe) {
             gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);

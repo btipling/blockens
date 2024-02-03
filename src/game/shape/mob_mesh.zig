@@ -107,7 +107,6 @@ pub const MobMesh = struct {
 
     pub fn generate(self: *MobMesh) !void {
         const _s = self.shape.clone();
-        defer _s.deinit();
         try self.mob.addMobData(_s);
         return;
     }

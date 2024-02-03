@@ -146,6 +146,7 @@ pub const MobShape = struct {
     program: gl.Uint,
     mobData: std.ArrayList(MobData),
     alloc: std.mem.Allocator,
+    shape: ?zmesh.Shape,
 
     pub fn init(
         vm: view.View,
@@ -163,6 +164,7 @@ pub const MobShape = struct {
             .program = program,
             .mobData = std.ArrayList(MobData).init(alloc),
             .alloc = alloc,
+            .shape = null,
         };
     }
 
@@ -172,6 +174,9 @@ pub const MobShape = struct {
             vs.deinit();
         }
         self.mobData.deinit();
+        if (self.shape) |s| {
+            s.deinit();
+        }
         return;
     }
 
@@ -179,6 +184,7 @@ pub const MobShape = struct {
         self: *MobShape,
         shape: zmesh.Shape,
     ) !void {
+        self.shape = shape;
         gl.useProgram(self.program);
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
