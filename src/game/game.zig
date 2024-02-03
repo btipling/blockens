@@ -130,7 +130,7 @@ pub const Game = struct {
         var textureGen = try screen.texture_gen.TextureGenerator.init(&appState, self.allocator);
         defer textureGen.deinit();
 
-        var characterScreen = try screen.character.Character.init(&appState.character);
+        var characterScreen = try screen.character.Character.init(self.allocator, &appState.character);
         defer characterScreen.deinit();
 
         var c = try controls.Controls.init(window, &appState);
