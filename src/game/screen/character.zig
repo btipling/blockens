@@ -32,6 +32,8 @@ pub const Character = struct {
             gl.polygonMode(gl.FRONT_AND_BACK, gl.LINE);
         }
 
+        try self.mob.draw();
+
         if (self.character.wireframe) {
             gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
         }
