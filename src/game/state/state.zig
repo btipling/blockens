@@ -80,6 +80,7 @@ pub const State = struct {
     pub fn deinit(self: *State) void {
         self.worldScreen.deinit();
         self.demoScreen.deinit();
+        self.character.deinit();
         self.db.deinit();
     }
 

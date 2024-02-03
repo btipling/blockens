@@ -52,7 +52,35 @@ pub const CharacterDesigner = struct {
             },
         })) {
             try self.bm.draw(window);
+            try self.drawControls(window);
         }
         zgui.end();
+    }
+
+    fn drawControls(self: *CharacterDesigner, window: *glfw.Window) !void {
+        _ = window;
+        if (zgui.beginChild(
+            "Saved Worlds",
+            .{
+                .w = 510,
+                .h = 2100,
+                .border = true,
+            },
+        )) {
+            zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
+            if (zgui.button("Generate character", .{
+                .w = 500,
+                .h = 100,
+            })) {
+                try self.generateCharacter();
+            }
+            zgui.popStyleVar(.{ .count = 1 });
+        }
+        zgui.endChild();
+    }
+
+    fn generateCharacter(self: *CharacterDesigner) !void {
+        std.debug.print("generating character\n", .{});
+        try self.appState.character.generate();
     }
 };

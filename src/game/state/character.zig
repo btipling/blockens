@@ -24,6 +24,10 @@ pub const Character = struct {
         _ = self;
     }
 
+    pub fn generate(self: *Character) !void {
+        _ = self;
+    }
+
     pub fn clearCharacterViewState(self: *Character) !void {
         self.shapeview.unbind();
     }
