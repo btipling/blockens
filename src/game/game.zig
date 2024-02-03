@@ -11,10 +11,9 @@ const controls = @import("controls.zig");
 const cube = @import("./shape/cube.zig");
 const plane = @import("./shape/plane.zig");
 const cursor = @import("./shape/cursor.zig");
-const position = @import("position.zig");
 const world = @import("./view/world.zig");
 const texture_gen = @import("./view/texture_gen.zig");
-const state = @import("state.zig");
+const state = @import("state/state.zig");
 const chunk = @import("chunk.zig");
 
 var ctrls: *controls.Controls = undefined;
@@ -119,15 +118,15 @@ pub const Game = struct {
         defer gameUI.deinit();
 
         // init view imports
-        const planePosition = position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
+        const planePosition = state.position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
         var worldPlane = try plane.Plane.init("worldplane", planePosition, self.allocator);
         defer worldPlane.deinit();
         var uiCursor = try cursor.Cursor.init("cursor", self.allocator);
         defer uiCursor.deinit();
 
         // init views
-        var gameWorld = try world.World.initWithHUD(worldPlane, uiCursor, &appState.worldView);
-        var demoWorld = try world.World.init(&appState.demoView);
+        var gameScreen = try world.World.initWithHUD(worldPlane, uiCursor, &appState.worldScreen);
+        var demoScreen = try world.World.init(&appState.demoScreen);
 
         var textureGen = try texture_gen.TextureGenerator.init(&appState, self.allocator);
         defer textureGen.deinit();
@@ -137,22 +136,22 @@ pub const Game = struct {
         const skyColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 };
 
         // uncomment to start in a specific view:
-        // try appState.setGameView();
-        // try appState.setChunkGeneratorView();
-        // try appState.setWorldEditorView();
-        try appState.setCharacterDesignerView();
+        // try appState.setGameScreen();
+        // try appState.setChunkGeneratorScreen();
+        // try appState.setWorldEditorScreen();
+        try appState.setCharacterDesignerScreen();
 
         var focusedAt: gl.Float = 0.0;
         main_loop: while (!window.shouldClose()) {
             glfw.pollEvents();
 
             const currentFrame: gl.Float = @as(gl.Float, @floatCast(glfw.getTime()));
-            appState.worldView.deltaTime = currentFrame - appState.worldView.lastFrame;
-            appState.worldView.lastFrame = currentFrame;
+            appState.worldScreen.deltaTime = currentFrame - appState.worldScreen.lastFrame;
+            appState.worldScreen.lastFrame = currentFrame;
             const focused = window.getAttribute(glfw.Window.Attribute.focused);
-            if (!focused and appState.app.view != .paused) {
+            if (!focused and appState.app.currentScreen != .paused) {
                 try appState.pauseGame();
-            } else if (appState.app.view == .paused) {
+            } else if (appState.app.currentScreen == .paused) {
                 if (focused and focusedAt == 0.0) {
                     focusedAt = currentFrame;
                     std.debug.print("focusedAt: {d}\n", .{focusedAt});
@@ -172,24 +171,24 @@ pub const Game = struct {
             gl.clearBufferfv(gl.COLOR, 0, &skyColor);
             // gl.polygonMode(gl.FRONT_AND_BACK, gl.LINE);
 
-            switch (appState.app.view) {
+            switch (appState.app.currentScreen) {
                 .game => {
-                    try drawGameView(&gameWorld, &gameUI);
+                    try drawGameScreen(&gameScreen, &gameUI);
                 },
                 .textureGenerator => {
-                    try drawTextureGeneratorView(&textureGen, &gameUI);
+                    try drawTextureGeneratorScreen(&textureGen, &gameUI);
                 },
                 .worldEditor => {
-                    try drawWorldEditorView(&gameUI);
+                    try drawWorldEditorScreen(&gameUI);
                 },
                 .blockEditor => {
-                    try drawBlockEditorView(&textureGen, &gameUI);
+                    try drawBlockEditorScreen(&textureGen, &gameUI);
                 },
                 .chunkGenerator => {
-                    try drawChunkGeneratorView(&demoWorld, &gameUI);
+                    try drawChunkGeneratorScreen(&demoScreen, &gameUI);
                 },
                 .characterDesigner => {
-                    try drawCharacterDesignerView(&demoWorld, &gameUI);
+                    try drawCharacterDesignerScreen(&demoScreen, &gameUI);
                 },
                 .paused => {
                     window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
@@ -201,29 +200,29 @@ pub const Game = struct {
     }
 };
 
-fn drawTextureGeneratorView(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
+fn drawTextureGeneratorScreen(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
     try textureGen.draw();
     try gameUI.drawTextureGen();
 }
 
-fn drawGameView(gameWorld: *world.World, gameUI: *ui.UI) !void {
-    try gameWorld.draw();
+fn drawGameScreen(gameScreen: *world.World, gameUI: *ui.UI) !void {
+    try gameScreen.draw();
     try gameUI.drawGame();
 }
 
-fn drawWorldEditorView(gameUI: *ui.UI) !void {
+fn drawWorldEditorScreen(gameUI: *ui.UI) !void {
     try gameUI.drawWorldEditor();
 }
 
-fn drawBlockEditorView(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
+fn drawBlockEditorScreen(textureGen: *texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
     try textureGen.draw();
     try gameUI.drawBlockEditor();
 }
 
-fn drawChunkGeneratorView(demoWorld: *world.World, gameUI: *ui.UI) !void {
-    try demoWorld.draw();
+fn drawChunkGeneratorScreen(demoScreen: *world.World, gameUI: *ui.UI) !void {
+    try demoScreen.draw();
     try gameUI.drawChunkGenerator();
 }
-fn drawCharacterDesignerView(_: *world.World, gameUI: *ui.UI) !void {
+fn drawCharacterDesignerScreen(_: *world.World, gameUI: *ui.UI) !void {
     try gameUI.drawCharacterDesigner();
 }

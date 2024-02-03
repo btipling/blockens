@@ -4,8 +4,7 @@ const gl = @import("zopengl");
 const glfw = @import("zglfw");
 const config = @import("../config.zig");
 const shape = @import("../shape/shape.zig");
-const state = @import("../state.zig");
-const position = @import("../position.zig");
+const state = @import("../state/state.zig");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
 const menus = @import("menus.zig");
@@ -32,10 +31,10 @@ pub const WorldEditor = struct {
     codeFont: zgui.Font,
     worldOptions: std.ArrayList(data.worldOption),
     scriptOptions: std.ArrayList(data.chunkScriptOption),
-    chunkTableData: std.AutoHashMap(state.worldPosition, chunkConfig),
+    chunkTableData: std.AutoHashMap(state.position.worldPosition, chunkConfig),
     loadedWorldId: i32 = 0,
     chunkY: i32 = 0,
-    currentChunk: position.Position = position.Position{ .x = 0, .y = 0, .z = 0 },
+    currentChunk: state.position.Position = state.position.Position{ .x = 0, .y = 0, .z = 0 },
     bm: menus.BuilderMenu,
     alloc: std.mem.Allocator,
 
@@ -54,7 +53,7 @@ pub const WorldEditor = struct {
             .codeFont = codeFont,
             .worldOptions = std.ArrayList(data.worldOption).init(alloc),
             .scriptOptions = std.ArrayList(data.chunkScriptOption).init(alloc),
-            .chunkTableData = std.AutoHashMap(state.worldPosition, chunkConfig).init(alloc),
+            .chunkTableData = std.AutoHashMap(state.position.worldPosition, chunkConfig).init(alloc),
             .bm = bm,
             .alloc = alloc,
         };
@@ -289,7 +288,7 @@ pub const WorldEditor = struct {
                     self.currentChunk.y,
                     self.currentChunk.z,
                 });
-                const wp = state.worldPosition.initFromPosition(self.currentChunk);
+                const wp = state.position.worldPosition.initFromPosition(self.currentChunk);
 
                 var id: i32 = 0;
                 if (self.chunkTableData.get(wp)) |ch_cfg| {
@@ -310,8 +309,8 @@ pub const WorldEditor = struct {
         name: [:0]u8,
     };
 
-    fn drawChunkConfigColumn(self: *WorldEditor, p: position.Position, w: f32, h: f32) !void {
-        const wp = state.worldPosition.initFromPosition(p);
+    fn drawChunkConfigColumn(self: *WorldEditor, p: state.position.Position, w: f32, h: f32) !void {
+        const wp = state.position.worldPosition.initFromPosition(p);
         var info: ?chunkConfigInfo = null;
         if (self.chunkTableData.get(wp)) |ch_cfg| {
             for (self.scriptOptions.items) |so| {
@@ -399,7 +398,7 @@ pub const WorldEditor = struct {
                 }
                 for (0..config.worldChunkDims) |ii| {
                     const x: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
-                    const p = position.Position{
+                    const p = state.position.Position{
                         .x = @as(gl.Float, @floatFromInt(x)),
                         .y = @as(gl.Float, @floatFromInt(self.chunkY)),
                         .z = @as(gl.Float, @floatFromInt(z)),
@@ -412,19 +411,19 @@ pub const WorldEditor = struct {
     }
 
     fn loadChunksInWorld(self: *WorldEditor) !void {
-        try self.appState.worldView.clearChunks();
+        try self.appState.worldScreen.clearChunks();
         var instancedKeys = self.chunkTableData.keyIterator();
         while (instancedKeys.next()) |_k| {
-            if (@TypeOf(_k) == *state.worldPosition) {
+            if (@TypeOf(_k) == *state.position.worldPosition) {
                 const wp = _k.*;
                 const ch_cfg = self.chunkTableData.get(wp).?;
                 const p = wp.positionFromWorldPosition();
-                try self.appState.worldView.addChunk(ch_cfg.chunkData, p);
+                try self.appState.worldScreen.addChunk(ch_cfg.chunkData, p);
             } else {
                 @panic("unexpected key type in load chunks in world func");
             }
         }
-        try self.appState.worldView.writeChunks();
+        try self.appState.worldScreen.writeChunks();
     }
 
     fn evalChunksFunc(self: *WorldEditor) !void {
@@ -433,7 +432,7 @@ pub const WorldEditor = struct {
 
         var instancedKeys = self.chunkTableData.keyIterator();
         while (instancedKeys.next()) |_k| {
-            if (@TypeOf(_k) == *state.worldPosition) {
+            if (@TypeOf(_k) == *state.position.worldPosition) {
                 const wp = _k.*;
                 var ch_cfg = self.chunkTableData.get(wp).?;
                 var ch_script: [script.maxLuaScriptSize]u8 = undefined;
@@ -452,7 +451,7 @@ pub const WorldEditor = struct {
                 ch_cfg.chunkData = cData;
                 try self.chunkTableData.put(wp, ch_cfg);
                 const p = wp.positionFromWorldPosition();
-                try self.appState.worldView.addChunk(cData, p);
+                try self.appState.worldScreen.addChunk(cData, p);
             } else {
                 @panic("unexpected key type in eval chunks func");
             }
@@ -465,12 +464,12 @@ pub const WorldEditor = struct {
             inner: for (0..config.worldChunkDims) |ii| {
                 const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
                 const y = self.chunkY;
-                const p = position.Position{
+                const p = state.position.Position{
                     .x = @as(f32, @floatFromInt(x)),
                     .y = @as(f32, @floatFromInt(y)),
                     .z = @as(f32, @floatFromInt(z)),
                 };
-                const wp = state.worldPosition.initFromPosition(p);
+                const wp = state.position.worldPosition.initFromPosition(p);
                 if (self.chunkTableData.get(wp)) |ch_cfg| {
                     if (ch_cfg.id != 0) {
                         // update
@@ -511,12 +510,12 @@ pub const WorldEditor = struct {
                         }
                         return err;
                     };
-                    const p = position.Position{
+                    const p = state.position.Position{
                         .x = @as(gl.Float, @floatFromInt(x)),
                         .y = @as(gl.Float, @floatFromInt(y)),
                         .z = @as(gl.Float, @floatFromInt(z)),
                     };
-                    const wp = state.worldPosition.initFromPosition(p);
+                    const wp = state.position.worldPosition.initFromPosition(p);
                     const cfg = chunkConfig{
                         .id = chunkData.id,
                         .scriptId = chunkData.scriptId,

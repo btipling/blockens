@@ -3,9 +3,8 @@ const gl = @import("zopengl");
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const voxelShape = @import("voxel_shape.zig");
-const position = @import("../position.zig");
 const view = @import("./view.zig");
-const state = @import("../state.zig");
+const state = @import("../state/state.zig");
 const data = @import("../data/data.zig");
 
 const positions: [36][3]gl.Float = .{
@@ -227,7 +226,7 @@ pub const VoxelMesh = struct {
         self.currentVoxel = v;
     }
 
-    pub fn expandVoxel(self: *VoxelMesh, scale: position.Position) void {
+    pub fn expandVoxel(self: *VoxelMesh, scale: state.position.Position) void {
         if (self.currentVoxel) |_v| {
             var v = _v;
             v.scale(scale.x, scale.y, scale.z);

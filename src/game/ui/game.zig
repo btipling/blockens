@@ -1,6 +1,6 @@
 const zgui = @import("zgui");
 const glfw = @import("zglfw");
-const state = @import("../state.zig");
+const state = @import("../state/state.zig");
 
 pub const Game = struct {
     appState: *state.State,
@@ -31,16 +31,16 @@ pub const Game = struct {
         })) {
             zgui.text("Hello blockens!", .{});
             zgui.text("F1 for settings", .{});
-            const x = @as(i32, @intFromFloat(self.appState.worldView.cameraPos[0]));
-            const y = @as(i32, @intFromFloat(self.appState.worldView.cameraPos[1]));
-            const z = @as(i32, @intFromFloat(self.appState.worldView.cameraPos[2]));
+            const x = @as(i32, @intFromFloat(self.appState.demoScreen.cameraPos[0]));
+            const y = @as(i32, @intFromFloat(self.appState.demoScreen.cameraPos[1]));
+            const z = @as(i32, @intFromFloat(self.appState.demoScreen.cameraPos[2]));
             zgui.text("x: {d}, y: {d}, z: {d}.", .{ x, y, z });
-            const cfX = self.appState.worldView.cameraFront[0];
-            const cfY = self.appState.worldView.cameraFront[1];
-            const cfZ = self.appState.worldView.cameraFront[2];
+            const cfX = self.appState.demoScreen.cameraFront[0];
+            const cfY = self.appState.demoScreen.cameraFront[1];
+            const cfZ = self.appState.demoScreen.cameraFront[2];
             zgui.text("cfX: {e:.2}, cfY: {e:.2}, cfZ: {e:.2}.", .{ cfX, cfY, cfZ });
-            const yaw = self.appState.worldView.yaw;
-            const pitch = self.appState.worldView.pitch;
+            const yaw = self.appState.demoScreen.yaw;
+            const pitch = self.appState.demoScreen.pitch;
             zgui.text("yaw: {e:.2}, pitch: {e:.2}.", .{ yaw, pitch });
         }
         zgui.end();

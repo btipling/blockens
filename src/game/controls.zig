@@ -3,7 +3,7 @@ const zglfw = @import("zglfw");
 const gl = @import("zopengl");
 const zgui = @import("zgui");
 const zm = @import("zmath");
-const state = @import("state.zig");
+const state = @import("./state/state.zig");
 
 pub const Controls = struct {
     window: *zglfw.Window,
@@ -19,7 +19,7 @@ pub const Controls = struct {
     }
 
     pub fn cursorPosCallback(self: *Controls, xpos: f64, ypos: f64) void {
-        var viewState = self.appState.worldView;
+        var viewState = self.appState.worldScreen;
         const x = @as(gl.Float, @floatCast(xpos));
         const y = @as(gl.Float, @floatCast(ypos));
         if (viewState.firstMouse) {
@@ -52,12 +52,12 @@ pub const Controls = struct {
         const front: @Vector(4, gl.Float) = @Vector(4, gl.Float){ frontX, frontY, frontZ, 1.0 };
 
         const imguiWantsMouse = zgui.io.getWantCaptureMouse();
-        if (imguiWantsMouse or self.appState.app.view != .game) {
+        if (imguiWantsMouse or self.appState.app.currentScreen != .game) {
             // This keeps the camera from jerking around after having used the mouse in non-game view
-            self.appState.worldView.updateCameraState(x, y);
+            self.appState.worldScreen.updateCameraState(x, y);
             return;
         }
-        if (self.appState.worldView.updateCameraFront(viewState.pitch, viewState.yaw, x, y, zm.normalize4(front))) {
+        if (self.appState.worldScreen.updateCameraFront(viewState.pitch, viewState.yaw, x, y, zm.normalize4(front))) {
             return;
         } else |err| {
             std.debug.print("Failed to update camera front: {}\n", .{err});
@@ -76,15 +76,15 @@ pub const Controls = struct {
 
         if (self.window.getKey(.F1) == .press) {
             self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.normal);
-            try self.appState.setTextureGeneratorView();
+            try self.appState.setTextureGeneratorScreen();
         }
 
         if (self.window.getKey(.F2) == .press) {
             self.window.setInputMode(zglfw.InputMode.cursor, zglfw.Cursor.Mode.disabled);
-            try self.appState.setGameView();
+            try self.appState.setGameScreen();
         }
 
-        switch (self.appState.app.view) {
+        switch (self.appState.app.currentScreen) {
             .game => try self.handleGameKey(),
             .textureGenerator => try self.handleTextureGeneratorKey(),
             .worldEditor => try self.handleWorldEditorKey(),
@@ -99,7 +99,7 @@ pub const Controls = struct {
 
     fn handleGameKey(self: *Controls) !void {
         // wasd movement
-        const viewState = self.appState.worldView;
+        const viewState = self.appState.worldScreen;
         var speed = 2.5 * viewState.deltaTime;
         if (self.window.getKey(.left_control) != .press) {
             speed *= 20.0;
@@ -107,36 +107,36 @@ pub const Controls = struct {
         const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
         if (self.window.getKey(.w) == .press) {
             const np = viewState.cameraPos + viewState.cameraFront * cameraSpeed;
-            try self.appState.worldView.updateCameraPosition(np);
+            try self.appState.worldScreen.updateCameraPosition(np);
         }
         if (self.window.getKey(.s) == .press) {
             const np = viewState.cameraPos - viewState.cameraFront * cameraSpeed;
-            try self.appState.worldView.updateCameraPosition(np);
+            try self.appState.worldScreen.updateCameraPosition(np);
         }
         if (self.window.getKey(.a) == .press) {
             const np = viewState.cameraPos - zm.normalize3(zm.cross3(viewState.cameraFront, viewState.cameraUp)) * cameraSpeed;
-            try self.appState.worldView.updateCameraPosition(np);
+            try self.appState.worldScreen.updateCameraPosition(np);
         }
         if (self.window.getKey(.d) == .press) {
             const np = viewState.cameraPos + zm.normalize3(zm.cross3(viewState.cameraFront, viewState.cameraUp)) * cameraSpeed;
-            try self.appState.worldView.updateCameraPosition(np);
+            try self.appState.worldScreen.updateCameraPosition(np);
         }
 
         if (self.window.getKey(.space) == .press) {
             const upDirection: @Vector(4, gl.Float) = @splat(1.0);
             const np = viewState.cameraPos + viewState.cameraUp * cameraSpeed * upDirection;
-            try self.appState.worldView.updateCameraPosition(np);
+            try self.appState.worldScreen.updateCameraPosition(np);
         }
         if (self.window.getKey(.left_shift) == .press) {
             const downDirection: @Vector(4, gl.Float) = @splat(-1.0);
             const np = viewState.cameraPos + viewState.cameraUp * cameraSpeed * downDirection;
-            try self.appState.worldView.updateCameraPosition(np);
+            try self.appState.worldScreen.updateCameraPosition(np);
         }
         if (self.window.getKey(.F3) == .press) {
             const now = std.time.milliTimestamp();
             if (now - self.controlsLastUpdated >= 250) {
                 self.controlsLastUpdated = now;
-                self.appState.worldView.toggleWireframe();
+                self.appState.worldScreen.toggleWireframe();
             }
         }
     }
@@ -146,14 +146,14 @@ pub const Controls = struct {
             const now = std.time.milliTimestamp();
             if (now - self.controlsLastUpdated >= 250) {
                 self.controlsLastUpdated = now;
-                self.appState.demoView.toggleUIMetrics();
+                self.appState.demoScreen.toggleUIMetrics();
             }
         }
         if (self.window.getKey(.F12) == .press) {
             const now = std.time.milliTimestamp();
             if (now - self.controlsLastUpdated >= 250) {
                 self.controlsLastUpdated = now;
-                self.appState.demoView.toggleUILog();
+                self.appState.demoScreen.toggleUILog();
             }
         }
     }
@@ -172,24 +172,24 @@ pub const Controls = struct {
 
     fn handleChunkGeneratorKey(self: *Controls) !void {
         if (self.window.getKey(.right) == .press) {
-            try self.appState.demoView.rotateWorld();
+            try self.appState.demoScreen.rotateWorld();
         }
         if (self.window.getKey(.left) == .press) {
-            try self.appState.demoView.rotateWorldInReverse();
+            try self.appState.demoScreen.rotateWorldInReverse();
         }
         if (self.window.getKey(.up) == .press) {
             const now = std.time.milliTimestamp();
             if (now - self.controlsLastUpdated >= 250) {
                 self.controlsLastUpdated = now;
                 try self.appState.app.toggleChunkGeneratorUI();
-                try self.appState.demoView.toggleScreenTransform();
+                try self.appState.demoScreen.toggleScreenTransform();
             }
         }
         if (self.window.getKey(.F3) == .press) {
             const now = std.time.milliTimestamp();
             if (now - self.controlsLastUpdated >= 250) {
                 self.controlsLastUpdated = now;
-                self.appState.demoView.toggleWireframe();
+                self.appState.demoScreen.toggleWireframe();
             }
         }
         try self.uiControls();

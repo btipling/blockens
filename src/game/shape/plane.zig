@@ -3,15 +3,15 @@ const gl = @import("zopengl");
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const shape = @import("shape.zig");
-const position = @import("../position.zig");
+const state = @import("../state/state.zig");
 
 // Plane - this is a ground world plane for now
 pub const Plane = struct {
     name: []const u8,
-    position: position.Position,
+    position: state.position.Position,
     shape: shape.Shape,
 
-    pub fn init(name: []const u8, planePosition: position.Position, alloc: std.mem.Allocator) !Plane {
+    pub fn init(name: []const u8, planePosition: state.position.Position, alloc: std.mem.Allocator) !Plane {
         var plane = zmesh.Shape.initPlane(1, 1);
         defer plane.deinit();
         plane.rotate(std.math.pi * 1.5, 1.0, 0.0, 0.0);
@@ -41,7 +41,7 @@ pub const Plane = struct {
 
     pub fn initTextureRGBAColors(
         name: []const u8,
-        planePosition: position.Position,
+        planePosition: state.position.Position,
         alloc: std.mem.Allocator,
         textureRGBAColors: []const gl.Uint,
     ) !Plane {

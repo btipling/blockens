@@ -4,7 +4,7 @@ const gl = @import("zopengl");
 const glfw = @import("zglfw");
 const config = @import("../config.zig");
 const shape = @import("../shape/shape.zig");
-const state = @import("../state.zig");
+const state = @import("../state/state.zig");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
 
@@ -19,11 +19,11 @@ pub const BuilderMenu = struct {
 
     pub fn draw(self: *BuilderMenu, window: *glfw.Window) !void {
         window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.normal);
-        if (self.appState.demoView.showUILog) {
+        if (self.appState.demoScreen.showUILog) {
             var show = true;
             zgui.showDemoWindow(&show);
         }
-        if (self.appState.demoView.showUIMetrics) {
+        if (self.appState.demoScreen.showUIMetrics) {
             var show = true;
             zgui.showMetricsWindow(&show);
         }
@@ -31,22 +31,22 @@ pub const BuilderMenu = struct {
             zgui.pushStyleVar2f(.{ .idx = .item_spacing, .v = [2]f32{ 20.0, 20.0 } });
             if (zgui.menuItem("game", .{})) {
                 window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
-                try self.appState.setGameView();
+                try self.appState.setGameScreen();
             }
             if (zgui.menuItem("textures", .{})) {
-                try self.appState.setTextureGeneratorView();
+                try self.appState.setTextureGeneratorScreen();
             }
             if (zgui.menuItem("blocks", .{})) {
-                try self.appState.setBlockEditorView();
+                try self.appState.setBlockEditorScreen();
             }
             if (zgui.menuItem("worlds", .{})) {
-                try self.appState.setWorldEditorView();
+                try self.appState.setWorldEditorScreen();
             }
             if (zgui.menuItem("chunks", .{})) {
-                try self.appState.setChunkGeneratorView();
+                try self.appState.setChunkGeneratorScreen();
             }
             if (zgui.menuItem("characters", .{})) {
-                try self.appState.setCharacterDesignerView();
+                try self.appState.setCharacterDesignerScreen();
             }
             const ww = zgui.getWindowWidth();
             zgui.sameLine(.{ .offset_from_start_x = ww - 150.0 });

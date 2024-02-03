@@ -2,154 +2,15 @@ const std = @import("std");
 const gl = @import("zopengl");
 const zm = @import("zmath");
 const position = @import("position.zig");
-const chunk = @import("chunk.zig");
-const config = @import("config.zig");
-const cube = @import("./shape/cube.zig");
-const view = @import("./shape/view.zig");
-const voxelShape = @import("./shape/voxel_shape.zig");
-const voxelMesh = @import("./shape/voxel_mesh.zig");
-const instancedShape = @import("./shape/instanced_shape.zig");
-const data = @import("./data/data.zig");
+const state = @import("state.zig");
+const cube = @import("../shape/cube.zig");
+const shapeview = @import("../shape/view.zig");
+const data = @import("../data/data.zig");
+const chunk = @import("../chunk.zig");
+const instancedShape = @import("../shape/instanced_shape.zig");
+const voxelMesh = @import("../shape/voxel_mesh.zig");
 
-pub const StateErrors = error{
-    NoBlocks,
-    InvalidBlockID,
-};
-
-pub const worldPosition = struct {
-    x: u32,
-    y: u32,
-    z: u32,
-    pub fn initFromPosition(p: position.Position) worldPosition {
-        const x = @as(u32, @bitCast(p.x));
-        const y = @as(u32, @bitCast(p.y));
-        const z = @as(u32, @bitCast(p.z));
-        return worldPosition{
-            .x = x,
-            .y = y,
-            .z = z,
-        };
-    }
-    pub fn positionFromWorldPosition(self: worldPosition) position.Position {
-        const x = @as(f32, @bitCast(self.x));
-        const y = @as(f32, @bitCast(self.y));
-        const z = @as(f32, @bitCast(self.z));
-        return position.Position{
-            .x = x,
-            .y = y,
-            .z = z,
-        };
-    }
-};
-
-pub const State = struct {
-    app: App,
-    worldView: ViewState,
-    demoView: ViewState,
-    db: data.Data,
-    exit: bool = false,
-
-    pub fn init(alloc: std.mem.Allocator, sqliteAlloc: std.mem.Allocator) !State {
-        var db = try data.Data.init(sqliteAlloc);
-        db.ensureSchema() catch |err| {
-            std.log.err("Failed to ensure schema: {}\n", .{err});
-            return err;
-        };
-        db.ensureDefaultWorld() catch |err| {
-            std.log.err("Failed to ensure default world: {}\n", .{err});
-            return err;
-        };
-        const v = try view.View.init(zm.identity());
-        var demoTransform = zm.identity();
-        demoTransform = zm.mul(demoTransform, zm.scalingV(@Vector(4, gl.Float){ 0.005, 0.005, 0.005, 0.0 }));
-        demoTransform = zm.mul(demoTransform, zm.rotationX(0.05 * std.math.pi * 2.0));
-        demoTransform = zm.mul(demoTransform, zm.translationV(@Vector(4, gl.Float){ -0.7995, 0.401, -1.0005, 0.0 }));
-        var s = State{
-            .app = try App.init(),
-            .worldView = try ViewState.init(
-                alloc,
-                v,
-                @Vector(4, gl.Float){ -68.0, 78.0, -70.0, 1.0 },
-                @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 },
-                41.6,
-                -19.4,
-                zm.translationV(@Vector(4, gl.Float){ -32.0, 0.0, -32.0, 0.0 }),
-                zm.identity(),
-            ),
-            .demoView = try ViewState.init(
-                alloc,
-                v,
-                @Vector(4, gl.Float){ -68.0, 78.0, -70.0, 1.0 },
-                @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 },
-                41.6,
-                -19.4,
-                zm.translationV(@Vector(4, gl.Float){ -32.0, 0.0, -32.0, 0.0 }),
-                demoTransform,
-            ),
-            .db = db,
-        };
-        try s.worldView.initBlocks(&s);
-        try s.demoView.initBlocks(&s);
-        return s;
-    }
-
-    fn clearViewState(self: *State, newView: View) !void {
-        self.app.previousView = newView;
-        self.app.view = newView;
-        try self.app.clearViewState();
-        try self.worldView.clearViewState();
-        try self.demoView.clearViewState();
-    }
-
-    pub fn deinit(self: *State) void {
-        self.worldView.deinit();
-        self.demoView.deinit();
-        self.db.deinit();
-    }
-
-    pub fn setGameView(self: *State) !void {
-        try self.worldView.focusView();
-        try self.clearViewState(View.game);
-    }
-
-    pub fn setTextureGeneratorView(self: *State) !void {
-        try self.clearViewState(View.textureGenerator);
-    }
-
-    pub fn setWorldEditorView(self: *State) !void {
-        try self.clearViewState(View.worldEditor);
-    }
-
-    pub fn setBlockEditorView(self: *State) !void {
-        try self.clearViewState(View.blockEditor);
-    }
-
-    pub fn setCharacterDesignerView(self: *State) !void {
-        try self.clearViewState(View.characterDesigner);
-    }
-
-    pub fn setChunkGeneratorView(self: *State) !void {
-        try self.demoView.focusView();
-        try self.clearViewState(View.chunkGenerator);
-    }
-
-    pub fn pauseGame(self: *State) !void {
-        self.app.view = View.paused;
-    }
-
-    pub fn resumeGame(self: *State) !void {
-        if (self.app.previousView == .game) {
-            try self.worldView.focusView();
-        }
-        self.app.view = self.app.previousView;
-    }
-
-    pub fn exitGame(self: *State) !void {
-        self.exit = true;
-    }
-};
-
-pub const View = enum {
+pub const Screens = enum {
     game,
     textureGenerator,
     worldEditor,
@@ -159,45 +20,16 @@ pub const View = enum {
     paused,
 };
 
-const defaultView = View.game;
+pub const defaultScreen = Screens.game;
 
-pub const App = struct {
-    view: View = defaultView,
-    previousView: View = defaultView,
-    demoCubeVersion: u32 = 0,
-    demoTextureColors: ?[data.RGBAColorTextureSize]gl.Uint,
-    showChunkGeneratorUI: bool = true,
-
-    pub fn init() !App {
-        return App{
-            .demoCubeVersion = 0,
-            .demoTextureColors = null,
-        };
-    }
-
-    pub fn toggleChunkGeneratorUI(self: *App) !void {
-        self.showChunkGeneratorUI = !self.showChunkGeneratorUI;
-    }
-
-    fn clearViewState(self: *App) !void {
-        self.demoCubeVersion += 1;
-        self.demoTextureColors = null;
-    }
-
-    pub fn setTextureColor(self: *App, demoTextureColors: [data.RGBAColorTextureSize]gl.Uint) void {
-        self.demoTextureColors = demoTextureColors;
-        self.demoCubeVersion += 1;
-    }
-};
-
-pub const ViewState = struct {
+pub const Screen = struct {
     alloc: std.mem.Allocator,
-    view: view.View,
+    shapeview: shapeview.View,
     blockOptions: std.ArrayList(data.blockOption),
     cubesMap: std.AutoHashMap(i32, instancedShape.InstancedShape),
     voxelMeshes: std.AutoHashMap(i32, voxelMesh.VoxelMesh),
     perBlockTransforms: std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShapeTransform)),
-    chunks: std.AutoHashMap(worldPosition, [chunk.chunkSize]i32),
+    chunks: std.AutoHashMap(position.worldPosition, [chunk.chunkSize]i32),
     cameraPos: @Vector(4, gl.Float),
     cameraFront: @Vector(4, gl.Float),
     cameraUp: @Vector(4, gl.Float),
@@ -218,22 +50,22 @@ pub const ViewState = struct {
     showUILog: bool = false,
     pub fn init(
         alloc: std.mem.Allocator,
-        v: view.View,
+        v: shapeview.View,
         initialCameraPos: @Vector(4, gl.Float),
         initialCameraFront: @Vector(4, gl.Float),
         initialYaw: gl.Float,
         initialPitch: gl.Float,
         worldTransform: zm.Mat,
         screenTransform: zm.Mat,
-    ) !ViewState {
-        var g = ViewState{
+    ) !Screen {
+        var g = Screen{
             .alloc = alloc,
-            .view = v,
+            .shapeview = v,
             .blockOptions = std.ArrayList(data.blockOption).init(alloc),
             .cubesMap = std.AutoHashMap(i32, instancedShape.InstancedShape).init(alloc),
             .voxelMeshes = std.AutoHashMap(i32, voxelMesh.VoxelMesh).init(alloc),
             .perBlockTransforms = std.AutoHashMap(i32, std.ArrayList(instancedShape.InstancedShapeTransform)).init(alloc),
-            .chunks = std.AutoHashMap(worldPosition, [chunk.chunkSize]i32).init(alloc),
+            .chunks = std.AutoHashMap(position.worldPosition, [chunk.chunkSize]i32).init(alloc),
             .cameraPos = initialCameraPos,
             .cameraFront = initialCameraFront,
             .cameraUp = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 },
@@ -249,11 +81,11 @@ pub const ViewState = struct {
             .pitch = initialPitch,
             .disableScreenTransform = false,
         };
-        try ViewState.updateLookAt(&g);
+        try Screen.updateLookAt(&g);
         return g;
     }
 
-    pub fn deinit(self: *ViewState) void {
+    pub fn deinit(self: *Screen) void {
         self.clearChunks() catch |err| {
             std.debug.print("Failed to clear chunks: {}\n", .{err});
         };
@@ -272,26 +104,26 @@ pub const ViewState = struct {
         self.chunks.deinit();
     }
 
-    fn clearViewState(self: *ViewState) !void {
-        self.view.unbind();
+    pub fn clearScreenState(self: *Screen) !void {
+        self.shapeview.unbind();
     }
 
-    pub fn toggleScreenTransform(self: *ViewState) !void {
+    pub fn toggleScreenTransform(self: *Screen) !void {
         self.disableScreenTransform = !self.disableScreenTransform;
         try self.updateLookAt();
     }
 
-    fn focusView(self: *ViewState) !void {
-        self.view.bind();
+    pub fn focusScreen(self: *Screen) !void {
+        self.shapeview.bind();
         try self.updateLookAt();
     }
 
-    pub fn initBlocks(self: *ViewState, appState: *State) !void {
+    pub fn initBlocks(self: *Screen, appState: *state.State) !void {
         try appState.db.listBlocks(&self.blockOptions);
         for (self.blockOptions.items) |blockOption| {
             var vm = try voxelMesh.VoxelMesh.init(
                 appState,
-                self.view,
+                self.shapeview,
                 blockOption.id,
                 self.alloc,
             );
@@ -301,41 +133,41 @@ pub const ViewState = struct {
         try self.addBlocks(appState);
     }
 
-    pub fn addBlocks(self: *ViewState, appState: *State) !void {
+    pub fn addBlocks(self: *Screen, appState: *state.State) !void {
         for (self.blockOptions.items) |blockOption| {
-            var s = try cube.Cube.initBlockCube(&self.view, appState, blockOption.id, self.alloc);
+            var s = try cube.Cube.initBlockCube(&self.shapeview, appState, blockOption.id, self.alloc);
             _ = &s;
             try self.cubesMap.put(blockOption.id, s);
         }
     }
 
-    pub fn rotateWorld(self: *ViewState) !void {
+    pub fn rotateWorld(self: *Screen) !void {
         const r = zm.rotationY(0.0125 * std.math.pi * 2.0);
         self.worldTransform = zm.mul(self.worldTransform, r);
         try self.updateLookAt();
         try self.pickObject();
     }
 
-    pub fn rotateWorldInReverse(self: *ViewState) !void {
+    pub fn rotateWorldInReverse(self: *Screen) !void {
         const r = zm.rotationY(-0.0125 * std.math.pi * 2.0);
         self.worldTransform = zm.mul(self.worldTransform, r);
         try self.updateLookAt();
         try self.pickObject();
     }
 
-    pub fn updateCameraPosition(self: *ViewState, updatedCameraPosition: @Vector(4, gl.Float)) !void {
+    pub fn updateCameraPosition(self: *Screen, updatedCameraPosition: @Vector(4, gl.Float)) !void {
         self.cameraPos = updatedCameraPosition;
         try self.updateLookAt();
         try self.pickObject();
     }
 
-    pub fn updateCameraState(self: *ViewState, lastX: gl.Float, lastY: gl.Float) void {
+    pub fn updateCameraState(self: *Screen, lastX: gl.Float, lastY: gl.Float) void {
         self.lastX = lastX;
         self.lastY = lastY;
         self.firstMouse = false;
     }
 
-    pub fn updateCameraFront(self: *ViewState, pitch: gl.Float, yaw: gl.Float, lastX: gl.Float, lastY: gl.Float, updatedCameraFront: @Vector(4, gl.Float)) !void {
+    pub fn updateCameraFront(self: *Screen, pitch: gl.Float, yaw: gl.Float, lastX: gl.Float, lastY: gl.Float, updatedCameraFront: @Vector(4, gl.Float)) !void {
         self.updateCameraState(lastX, lastY);
         self.pitch = pitch;
         self.yaw = yaw;
@@ -344,7 +176,7 @@ pub const ViewState = struct {
         try self.pickObject();
     }
 
-    fn updateLookAt(self: *ViewState) !void {
+    fn updateLookAt(self: *Screen) !void {
         self.lookAt = zm.lookAtRh(
             self.cameraPos,
             self.cameraPos + self.cameraFront,
@@ -352,13 +184,13 @@ pub const ViewState = struct {
         );
         const m = zm.mul(self.worldTransform, self.lookAt);
         if (self.disableScreenTransform) {
-            try self.view.update(m);
+            try self.shapeview.update(m);
             return;
         }
-        try self.view.update(zm.mul(m, self.screenTransform));
+        try self.shapeview.update(zm.mul(m, self.screenTransform));
     }
 
-    pub fn write(self: *ViewState, blockId: i32, blockTransforms: *std.ArrayList(instancedShape.InstancedShapeTransform)) !void {
+    pub fn write(self: *Screen, blockId: i32, blockTransforms: *std.ArrayList(instancedShape.InstancedShapeTransform)) !void {
         const transforms = blockTransforms.items;
         if (self.cubesMap.get(blockId)) |is| {
             var _is = is;
@@ -369,14 +201,14 @@ pub const ViewState = struct {
         }
     }
 
-    fn initChunk(self: *ViewState, wpData: worldPosition) !void {
+    fn initChunk(self: *Screen, wpData: position.worldPosition) !void {
         const chunkPosition = wpData.positionFromWorldPosition();
         std.debug.print("initChunk: {d}, {d}, {d}\n", .{ chunkPosition.x, chunkPosition.y, chunkPosition.z });
         var chu = try chunk.Chunk.init(self.alloc);
         var c = &chu;
         defer c.deinit();
         chu.data = self.chunks.get(wpData).?;
-        self.view.bind();
+        self.shapeview.bind();
         try c.findMeshes();
 
         var keys = c.meshes.keyIterator();
@@ -433,15 +265,15 @@ pub const ViewState = struct {
                 @panic("Invalid instanced key type");
             }
         }
-        self.view.unbind();
+        self.shapeview.unbind();
     }
 
-    pub fn writeChunks(self: *ViewState) !void {
-        self.view.bind();
+    pub fn writeChunks(self: *Screen) !void {
+        self.shapeview.bind();
 
         var chunkKeys = self.chunks.keyIterator();
         while (chunkKeys.next()) |k| {
-            if (@TypeOf(k) == *worldPosition) {
+            if (@TypeOf(k) == *position.worldPosition) {
                 try self.initChunk(k.*);
             } else {
                 @panic("Invalid key type");
@@ -457,34 +289,34 @@ pub const ViewState = struct {
                 }
             }
         }
-        self.view.unbind();
+        self.shapeview.unbind();
     }
 
-    pub fn toggleWireframe(self: *ViewState) void {
+    pub fn toggleWireframe(self: *Screen) void {
         self.wireframe = !self.wireframe;
     }
 
-    pub fn toggleUIMetrics(self: *ViewState) void {
+    pub fn toggleUIMetrics(self: *Screen) void {
         self.showUIMetrics = !self.showUIMetrics;
     }
 
-    pub fn toggleUILog(self: *ViewState) void {
+    pub fn toggleUILog(self: *Screen) void {
         self.showUILog = !self.showUILog;
     }
 
-    pub fn addChunk(self: *ViewState, cData: [chunk.chunkSize]i32, p: position.Position) !void {
-        const wp = worldPosition.initFromPosition(p);
+    pub fn addChunk(self: *Screen, cData: [chunk.chunkSize]i32, p: position.Position) !void {
+        const wp = position.worldPosition.initFromPosition(p);
         try self.chunks.put(wp, cData);
     }
 
-    pub fn initChunks(self: *ViewState, appState: *State) !void {
-        self.view.bind();
+    pub fn initChunks(self: *Screen, appState: *state.State) !void {
+        self.shapeview.bind();
         try self.addBlocks(appState);
-        self.view.unbind();
+        self.shapeview.unbind();
     }
 
-    pub fn clearChunks(self: *ViewState) !void {
-        self.view.bind();
+    pub fn clearChunks(self: *Screen) !void {
+        self.shapeview.bind();
         var values = self.voxelMeshes.valueIterator();
         while (values.next()) |v| {
             v.clear();
@@ -499,10 +331,10 @@ pub const ViewState = struct {
             v.deinit();
         }
         self.perBlockTransforms.clearAndFree();
-        self.view.unbind();
+        self.shapeview.unbind();
     }
 
-    fn pickObject(self: *ViewState) !void {
+    fn pickObject(self: *Screen) !void {
         _ = self;
         // var currentPos = self.cameraPos;
         // const maxRayLength = 100;

@@ -4,9 +4,8 @@ const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const shape = @import("shape.zig");
 const instancedShape = @import("instanced_shape.zig");
-const position = @import("../position.zig");
 const view = @import("./view.zig");
-const state = @import("../state.zig");
+const state = @import("../state/state.zig");
 const data = @import("../data/data.zig");
 
 fn initParShapeCubeFromPlanes() zmesh.Shape {

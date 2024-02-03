@@ -3,9 +3,8 @@ const zgui = @import("zgui");
 const gl = @import("zopengl");
 const glfw = @import("zglfw");
 const config = @import("../config.zig");
-const position = @import("../position.zig");
 const shape = @import("../shape/shape.zig");
-const state = @import("../state.zig");
+const state = @import("../state/state.zig");
 const chunk = @import("../chunk.zig");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
@@ -206,18 +205,18 @@ pub const ChunkGenerator = struct {
     }
 
     fn toggleWireframe(self: *ChunkGenerator) void {
-        self.appState.demoView.toggleWireframe();
-        self.appState.worldView.toggleWireframe();
+        self.appState.demoScreen.toggleWireframe();
+        self.appState.worldScreen.toggleWireframe();
     }
 
     fn evalChunkFunc(self: *ChunkGenerator) !void {
-        try self.appState.demoView.clearChunks();
+        try self.appState.demoScreen.clearChunks();
         const cData = self.script.evalChunkFunc(self.buf) catch |err| {
             std.debug.print("Error evaluating chunk function: {}\n", .{err});
             return;
         };
-        try self.appState.demoView.addChunk(cData, position.Position{ .x = 0, .y = 0, .z = 0 });
-        try self.appState.demoView.writeChunks();
+        try self.appState.demoScreen.addChunk(cData, state.position.Position{ .x = 0, .y = 0, .z = 0 });
+        try self.appState.demoScreen.writeChunks();
     }
 
     fn floatFromChunkBuf(buf: []u8) f32 {
@@ -230,14 +229,14 @@ pub const ChunkGenerator = struct {
     }
 
     fn evalWorldChunkFunc(self: *ChunkGenerator) !void {
-        try self.appState.worldView.clearChunks();
+        try self.appState.worldScreen.clearChunks();
         const cData = try self.script.evalChunkFunc(self.buf);
         const x = floatFromChunkBuf(&self.chunkXBuf);
         const y = floatFromChunkBuf(&self.chunkYBuf);
         const z = floatFromChunkBuf(&self.chunkZBuf);
         std.debug.print("Writing chunk to world at position: {}, {}, {}\n", .{ x, y, z });
-        try self.appState.worldView.addChunk(cData, position.Position{ .x = x, .y = y, .z = z });
-        try self.appState.worldView.writeChunks();
+        try self.appState.worldScreen.addChunk(cData, state.position.Position{ .x = x, .y = y, .z = z });
+        try self.appState.worldScreen.writeChunks();
     }
 
     fn listChunkScripts(self: *ChunkGenerator) !void {

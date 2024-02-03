@@ -9,7 +9,7 @@ const chunk_generator = @import("chunk_generator.zig");
 const character_designer = @import("character_designer.zig");
 const menus = @import("menus.zig");
 const game = @import("game.zig");
-const state = @import("../state.zig");
+const state = @import("../state/state.zig");
 const script = @import("../script/script.zig");
 
 const pressStart2PFont = @embedFile("../assets/fonts/PressStart2P/PressStart2P-Regular.ttf");

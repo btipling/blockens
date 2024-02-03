@@ -1,5 +1,5 @@
 const std = @import("std");
-const position = @import("position.zig");
+const state = @import("./state/state.zig");
 const gl = @import("zopengl");
 
 pub const chunkDim = 64;
@@ -7,14 +7,14 @@ pub const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
 const drawSize = chunkDim * chunkDim;
 const minVoxelsInMesh = 10;
 
-pub fn getPositionAtIndex(i: usize) position.Position {
+pub fn getPositionAtIndex(i: usize) state.position.Position {
     const x = @as(gl.Float, @floatFromInt(@mod(i, chunkDim)));
     const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim)));
     const z = @as(gl.Float, @floatFromInt(i / (chunkDim * chunkDim)));
-    return position.Position{ .x = x, .y = y, .z = z };
+    return state.position.Position{ .x = x, .y = y, .z = z };
 }
 
-pub fn getIndexFromPosition(p: position.Position) usize {
+pub fn getIndexFromPosition(p: state.position.Position) usize {
     const x = @as(i32, @intFromFloat(p.x));
     const y = @as(i32, @intFromFloat(p.y));
     const z = @as(i32, @intFromFloat(p.z));
@@ -26,14 +26,14 @@ pub fn getIndexFromPosition(p: position.Position) usize {
 
 pub const Chunk = struct {
     data: [chunkSize]i32,
-    meshes: std.AutoHashMap(usize, position.Position),
+    meshes: std.AutoHashMap(usize, state.position.Position),
     meshed: std.AutoHashMap(usize, void),
     instanced: std.AutoHashMap(usize, void),
     alloc: std.mem.Allocator,
     pub fn init(alloc: std.mem.Allocator) !Chunk {
         return Chunk{
             .data = [_]i32{0} ** chunkSize,
-            .meshes = std.AutoHashMap(usize, position.Position).init(alloc),
+            .meshes = std.AutoHashMap(usize, state.position.Position).init(alloc),
             .meshed = std.AutoHashMap(usize, void).init(alloc),
             .instanced = std.AutoHashMap(usize, void).init(alloc),
             .alloc = alloc,
@@ -64,7 +64,7 @@ pub const Chunker = struct {
     chunk: *Chunk,
     numVoxelsInMesh: usize,
     currentVoxel: usize,
-    currentScale: position.Position,
+    currentScale: state.position.Position,
     toBeMeshed: [minVoxelsInMesh]usize,
     cachingMeshed: bool,
 
@@ -73,7 +73,7 @@ pub const Chunker = struct {
             .chunk = chunk,
             .numVoxelsInMesh = 0,
             .currentVoxel = 0,
-            .currentScale = position.Position{ .x = 1.0, .y = 1.0, .z = 1.0 },
+            .currentScale = state.position.Position{ .x = 1.0, .y = 1.0, .z = 1.0 },
             .toBeMeshed = [_]usize{0} ** minVoxelsInMesh,
             .cachingMeshed = true,
         };
@@ -113,11 +113,11 @@ pub const Chunker = struct {
     }
 
     fn initScale(self: *Chunker) void {
-        self.currentScale = position.Position{ .x = 1.0, .y = 1.0, .z = 1.0 };
+        self.currentScale = state.position.Position{ .x = 1.0, .y = 1.0, .z = 1.0 };
     }
 
     pub fn run(self: *Chunker) !void {
-        var op = position.Position{ .x = 0.0, .y = 0.0, .z = 0.0 };
+        var op = state.position.Position{ .x = 0.0, .y = 0.0, .z = 0.0 };
         var p = op;
         p.x += 1.0;
         var i: usize = 0;
@@ -206,7 +206,7 @@ pub const Chunker = struct {
                     const _end = @as(usize, @intFromFloat(endX)) + 1;
                     for (_beg.._end) |xToAdd| {
                         const _xToAdd = @as(gl.Float, @floatFromInt(xToAdd));
-                        const np = position.Position{ .x = _xToAdd, .y = p.y, .z = p.z };
+                        const np = state.position.Position{ .x = _xToAdd, .y = p.y, .z = p.z };
                         const iii = getIndexFromPosition(np);
                         try self.updateMeshed(iii);
                     }
@@ -246,7 +246,7 @@ pub const Chunker = struct {
                         const _endY = @as(usize, @intFromFloat(endY)) + 1;
                         for (_begY.._endY) |yToAdd| {
                             const _yToAdd = @as(gl.Float, @floatFromInt(yToAdd));
-                            const iii = getIndexFromPosition(position.Position{ .x = _xToAdd, .y = _yToAdd, .z = p.z });
+                            const iii = getIndexFromPosition(state.position.Position{ .x = _xToAdd, .y = _yToAdd, .z = p.z });
                             try self.updateMeshed(iii);
                         }
                     }
