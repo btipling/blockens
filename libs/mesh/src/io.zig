@@ -19,6 +19,19 @@ pub fn parseAndLoadFile(pathname: [:0]const u8) zcgltf.Error!*zcgltf.Data {
     return data;
 }
 
+pub fn parseAndLoadMemory(fileData: []const u8) zcgltf.Error!*zcgltf.Data {
+    const options = zcgltf.Options{
+        .memory = .{
+            .alloc_func = mem.zmeshAllocUser,
+            .free_func = mem.zmeshFreeUser,
+        },
+    };
+
+    const data = try zcgltf.parse(options, fileData);
+
+    return data;
+}
+
 pub fn freeData(data: *zcgltf.Data) void {
     zcgltf.free(data);
 }

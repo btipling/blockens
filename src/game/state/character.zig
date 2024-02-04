@@ -13,7 +13,10 @@ pub const Character = struct {
         alloc: std.mem.Allocator,
     ) !Character {
         var m = zm.identity();
-        m = zm.mul(m, zm.scaling(0.25, 0.25, 0.25));
+        m = zm.mul(m, zm.rotationX(0.05 * std.math.pi * 2.0));
+        m = zm.mul(m, zm.rotationZ(-0.05 * std.math.pi * 2.0));
+        m = zm.mul(m, zm.rotationY(-0.2 * std.math.pi * 2.0));
+        m = zm.mul(m, zm.scaling(0.05, 0.05, 0.05));
         m = zm.mul(m, zm.translation(-0.25, 0.0, -1.0));
         const vm = try shapeview.View.init(m);
         return Character{

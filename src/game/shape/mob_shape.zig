@@ -16,6 +16,26 @@ pub const MobShapeVertex = struct {
     position: [3]gl.Float,
 };
 
+pub const MobShapeData = struct {
+    indices: std.ArrayList(u32),
+    positions: std.ArrayList([3]gl.Float),
+    normals: std.ArrayList([3]gl.Float),
+
+    pub fn init(alloc: std.mem.Allocator) MobShapeData {
+        return .{
+            .indices = std.ArrayList(u32).init(alloc),
+            .positions = std.ArrayList([3]gl.Float).init(alloc),
+            .normals = std.ArrayList([3]gl.Float).init(alloc),
+        };
+    }
+
+    pub fn deinit(self: MobShapeData) void {
+        self.indices.deinit();
+        self.positions.deinit();
+        self.normals.deinit();
+    }
+};
+
 pub const MobData = struct {
     mobId: i32,
     vao: gl.Uint,
@@ -24,19 +44,19 @@ pub const MobData = struct {
     numIndices: gl.Int,
     pub fn init(
         mobId: i32,
-        shape: zmesh.Shape,
+        mobShapeData: *MobShapeData,
         alloc: std.mem.Allocator,
     ) !MobData {
         const vao = try initVAO(mobId);
         const vbo = try initVBO(mobId);
-        const ebo = try initEBO(mobId, shape.indices);
-        try initData(mobId, shape, alloc);
+        const ebo = try initEBO(mobId, mobShapeData.indices.items);
+        try initData(mobId, mobShapeData, alloc);
         return MobData{
             .mobId = mobId,
             .vao = vao,
             .vbo = vbo,
             .ebo = ebo,
-            .numIndices = @intCast(shape.indices.len),
+            .numIndices = @intCast(mobShapeData.indices.items.len),
         };
     }
 
@@ -96,13 +116,13 @@ pub const MobData = struct {
         return EBO;
     }
 
-    fn initData(mobId: i32, shaderData: zmesh.Shape, alloc: std.mem.Allocator) !void {
-        var vertices = try std.ArrayList(MobShapeVertex).initCapacity(alloc, shaderData.positions.len);
+    fn initData(mobId: i32, mobShapeData: *MobShapeData, alloc: std.mem.Allocator) !void {
+        var vertices = try std.ArrayList(MobShapeVertex).initCapacity(alloc, mobShapeData.positions.items.len);
         defer vertices.deinit();
 
-        for (0..shaderData.positions.len) |i| {
+        for (0..mobShapeData.positions.items.len) |i| {
             const vtx = MobShapeVertex{
-                .position = shaderData.positions[i],
+                .position = mobShapeData.positions.items[i],
             };
             vertices.appendAssumeCapacity(vtx);
         }
@@ -146,7 +166,7 @@ pub const MobShape = struct {
     program: gl.Uint,
     mobData: std.ArrayList(MobData),
     alloc: std.mem.Allocator,
-    shape: ?zmesh.Shape,
+    mobShapeData: ?*MobShapeData,
 
     pub fn init(
         vm: view.View,
@@ -164,7 +184,7 @@ pub const MobShape = struct {
             .program = program,
             .mobData = std.ArrayList(MobData).init(alloc),
             .alloc = alloc,
-            .shape = null,
+            .mobShapeData = null,
         };
     }
 
@@ -174,24 +194,21 @@ pub const MobShape = struct {
             vs.deinit();
         }
         self.mobData.deinit();
-        if (self.shape) |s| {
-            s.deinit();
-        }
         return;
     }
 
     pub fn addMobData(
         self: *MobShape,
-        shape: zmesh.Shape,
+        mobShapeData: *MobShapeData,
     ) !void {
-        self.shape = shape;
+        self.mobShapeData = mobShapeData;
         gl.useProgram(self.program);
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{d} mob draw error: {d}\n", .{ self.mobId, e });
             return MobShapeErr.RenderError;
         }
-        var vd = try MobData.init(self.mobId, shape, self.alloc);
+        var vd = try MobData.init(self.mobId, mobShapeData, self.alloc);
         _ = &vd;
         try self.mobData.append(vd);
         return;
