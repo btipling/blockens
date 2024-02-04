@@ -69,7 +69,7 @@ pub const Character = struct {
     pub fn generate(self: *Character) !void {
         self.clearMob();
         var mob = try mobMesh.MobMesh.init(self.shapeview, 0, self.alloc);
-        try mob.generate();
+        try mob.build();
         self.mob = mob;
     }
 
