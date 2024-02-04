@@ -106,12 +106,34 @@ pub const MobMesh = struct {
     }
 
     pub fn build(self: *MobMesh) !void {
+        try self.texturesInfo();
         try self.mapMeshesByName();
         const defaultScene = self.fileData.scene orelse {
             std.debug.print("no default scene\n", .{});
             return MobMeshErr.NoScenes;
         };
         try self.buildScene(defaultScene);
+    }
+
+    pub fn texturesInfo(self: *MobMesh) !void {
+        std.debug.print("building textures: {d}\n", .{self.fileData.textures_count});
+        const textures = self.fileData.textures orelse {
+            std.debug.print("no textures\n", .{});
+            return;
+        };
+        for (0..self.fileData.textures_count) |i| {
+            const texture: gltf.Texture = textures[i];
+            try self.textureInfo(texture);
+        }
+    }
+
+    pub fn textureInfo(self: *MobMesh, texture: gltf.Texture) !void {
+        _ = self;
+        const textureName = texture.name orelse {
+            std.debug.print("no name for texture\n", .{});
+            return;
+        };
+        std.debug.print("building texture: {s}\n", .{textureName});
     }
 
     pub fn buildScene(self: *MobMesh, scene: *gltf.Scene) !void {
@@ -177,18 +199,38 @@ pub const MobMesh = struct {
             std.debug.print("{s}'s mesh {s} not found\n", .{ nodeName, meshName });
             return;
         };
-        var mobShapeData = mobShape.MobShapeData.init(self.alloc);
+        const bgColor = materialBaseColorFromMesh(mesh);
+        std.debug.print("bg color: ({e}, {e}, {e}, {e})\n", .{ bgColor[0], bgColor[1], bgColor[2], bgColor[3] });
+        var mobShapeData = mobShape.MobShapeData.init(self.alloc, bgColor);
         try zmesh.io.appendMeshPrimitive(
-            self.fileData, // *zmesh.io.cgltf.Data
-            meshId, // mesh index
+            self.fileData,
+            meshId,
             0, // gltf primitive index (submesh index)
             &mobShapeData.indices,
             &mobShapeData.positions,
-            &mobShapeData.normals, // normals (optional)
-            null, // texcoords (optional)
-            null, // tangents (optional)
+            &mobShapeData.normals,
+            &mobShapeData.textcoords,
+            &mobShapeData.tangents,
         );
         try self.mob.addMeshData(meshId, mobShapeData);
+    }
+
+    pub fn materialBaseColorFromMesh(mesh: *gltf.Mesh) [4]gl.Float {
+        const primitives = mesh.primitives;
+        for (0..mesh.primitives_count) |i| {
+            const primitive = primitives[i];
+            const material: *gltf.Material = primitive.material orelse {
+                std.debug.print("no material\n", .{});
+                continue;
+            };
+            if (material.has_pbr_metallic_roughness == 0) {
+                std.debug.print("no pbr_metallic_roughness\n", .{});
+                continue;
+            }
+            const pbr: gltf.PbrMetallicRoughness = material.pbr_metallic_roughness;
+            return pbr.base_color_factor;
+        }
+        return [_]gl.Float{0.0} ** 4;
     }
 
     pub fn draw(self: *MobMesh) !void {
