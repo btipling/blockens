@@ -201,7 +201,11 @@ pub const MobMesh = struct {
         };
         const bgColor = materialBaseColorFromMesh(mesh);
         std.debug.print("bg color: ({e}, {e}, {e}, {e})\n", .{ bgColor[0], bgColor[1], bgColor[2], bgColor[3] });
-        var mobShapeData = mobShape.MobShapeData.init(self.alloc, bgColor);
+        var mobShapeData = mobShape.MobShapeData.init(
+            self.alloc,
+            bgColor,
+            zm.matToArr(zm.identity()),
+        );
         try zmesh.io.appendMeshPrimitive(
             self.fileData,
             meshId,

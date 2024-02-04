@@ -17,6 +17,7 @@ pub const MobShapeVertex = struct {
     normals: [3]gl.Float,
     textcoords: [2]gl.Float,
     baseColor: [4]gl.Float,
+    localTransform: [16]gl.Float,
 };
 
 pub const MobShapeData = struct {
@@ -26,10 +27,12 @@ pub const MobShapeData = struct {
     textcoords: std.ArrayList([2]gl.Float),
     tangents: std.ArrayList([4]gl.Float),
     baseColor: [4]gl.Float,
+    localTransform: [16]gl.Float,
 
     pub fn init(
         alloc: std.mem.Allocator,
         baseColor: [4]gl.Float,
+        localTransform: [16]gl.Float,
     ) MobShapeData {
         return .{
             .indices = std.ArrayList(u32).init(alloc),
@@ -38,6 +41,7 @@ pub const MobShapeData = struct {
             .textcoords = std.ArrayList([2]gl.Float).init(alloc),
             .tangents = std.ArrayList([4]gl.Float).init(alloc),
             .baseColor = baseColor,
+            .localTransform = localTransform,
         };
     }
 
@@ -146,6 +150,7 @@ pub const MobMeshData = struct {
                 .normals = mobShapeData.normals.items[i],
                 .textcoords = mobShapeData.textcoords.items[i],
                 .baseColor = mobShapeData.baseColor,
+                .localTransform = mobShapeData.localTransform,
             };
             vertices.appendAssumeCapacity(vtx);
         }
@@ -156,7 +161,8 @@ pub const MobMeshData = struct {
         const normalSize: gl.Int = 3;
         const textcoordSize: gl.Int = 2;
         const baseColorSize: gl.Int = 4;
-        const stride: gl.Int = (posSize + normalSize + textcoordSize + baseColorSize) * @sizeOf(gl.Float);
+        const localTransformSize: gl.Int = 4;
+        const stride: gl.Int = (posSize + normalSize + textcoordSize + baseColorSize + (localTransformSize * 4)) * @sizeOf(gl.Float);
         std.debug.print("stride: {d}\n", .{stride});
         var offset: gl.Uint = 0;
         var curArr: gl.Uint = 0;
@@ -173,8 +179,12 @@ pub const MobMeshData = struct {
         curArr += 1;
         offset += textcoordSize * @sizeOf(gl.Float);
         std.debug.print("offset: {d}\n", .{offset});
-        gl.vertexAttribPointer(curArr, baseColorSize, gl.FLOAT, gl.FALSE, stride, @as(*anyopaque, @ptrFromInt(offset)));
-        gl.enableVertexAttribArray(curArr);
+        for (0..4) |_| {
+            gl.vertexAttribPointer(curArr, baseColorSize, gl.FLOAT, gl.FALSE, stride, @as(*anyopaque, @ptrFromInt(offset)));
+            gl.enableVertexAttribArray(curArr);
+            curArr += 1;
+            offset += baseColorSize * @sizeOf(gl.Float);
+        }
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{d} mob init data error: {d}\n", .{ meshId, e });
