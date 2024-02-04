@@ -196,6 +196,25 @@ pub const Controls = struct {
     }
 
     fn handleCharacterDesignerKey(self: *Controls) !void {
+        const amount: gl.Float = 0.002;
+        if (self.window.getKey(.a) == .press) {
+            try self.appState.character.rotateZ(amount);
+        }
+        if (self.window.getKey(.s) == .press) {
+            try self.appState.character.rotateZ(amount * -1);
+        }
+        if (self.window.getKey(.up) == .press) {
+            try self.appState.character.rotateX(amount);
+        }
+        if (self.window.getKey(.down) == .press) {
+            try self.appState.character.rotateX(amount * -1);
+        }
+        if (self.window.getKey(.left) == .press) {
+            try self.appState.character.rotateY(amount);
+        }
+        if (self.window.getKey(.right) == .press) {
+            try self.appState.character.rotateY(amount * -1);
+        }
         try self.uiControls();
     }
 };
