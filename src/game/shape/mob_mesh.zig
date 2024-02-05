@@ -64,32 +64,6 @@ pub const MobMesh = struct {
         mm.deinit();
     }
 
-    // if (fileData.meshes) |m| {
-    //     std.debug.print("num_nodes: {d}\n", .{fileData.nodes_count});
-
-    //     for (0..fileData.meshes_count) |i| {
-    //
-    //         const mesh: zmesh.io.zcgltf.Mesh = m[i];
-    //         std.debug.print("mesh at {d} {s}\n", .{ i, mesh.name orelse "nothing" });
-
-    //         try zmesh.io.appendMeshPrimitive(
-    //             fileData, // *zmesh.io.cgltf.Data
-    //             @as(u32, @intCast(i)), // mesh index
-    //             0, // gltf primitive index (submesh index)
-    //             &mobShapeData.indices,
-    //             &mobShapeData.positions,
-    //             &mobShapeData.normals, // normals (optional)
-    //             null, // texcoords (optional)
-    //             null, // tangents (optional)
-    //         );
-    //         try datas.append(mobShapeData);
-
-    //
-    //         try mobShape.MobShape.addMobData(&part, &mobShapeData);
-    //         try parts.append(part);
-    //     }
-    // }
-
     pub fn mapMeshesByName(self: *MobMesh) !void {
         const fileData = self.fileData;
         if (fileData.meshes) |m| {
