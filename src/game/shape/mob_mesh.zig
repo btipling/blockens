@@ -156,21 +156,21 @@ pub const MobMesh = struct {
         };
         for (0..scene.nodes_count) |i| {
             const node: *gltf.Node = nodes[i];
-            try self.buildNode(node);
+            try self.buildNode(node, zm.identity());
         }
     }
-
-    pub fn buildNode(self: *MobMesh, node: *gltf.Node) !void {
+    pub fn buildNode(self: *MobMesh, node: *gltf.Node, parentTransform: zm.Mat) !void {
         const nodeName = node.name orelse {
             std.debug.print("no name for node\n", .{});
             return;
         };
+        const localTransform = zm.mul(parentTransform, transformFromNode(node, nodeName));
         std.debug.print("building node: {s}\n", .{nodeName});
         const mesh = node.mesh orelse {
             std.debug.print("{s} no mesh\n", .{nodeName});
             return;
         };
-        try self.buildMesh(nodeName, mesh);
+        try self.buildMesh(nodeName, localTransform, mesh);
 
         var nodes: [*]*gltf.Node = undefined;
         const T = @TypeOf(node.children);
@@ -186,11 +186,12 @@ pub const MobMesh = struct {
         };
         for (0..node.children_count) |i| {
             const child: *gltf.Node = nodes[i];
-            try self.buildNode(child);
+            try self.buildNode(child, localTransform);
         }
     }
 
-    pub fn buildMesh(self: *MobMesh, nodeName: [*:0]const u8, mesh: *gltf.Mesh) !void {
+    pub fn buildMesh(self: *MobMesh, nodeName: [*:0]const u8, localTransform: zm.Mat, mesh: *gltf.Mesh) !void {
+        _ = localTransform;
         const meshName = mesh.name orelse {
             std.debug.print("{s} mesh has no name\n", .{nodeName});
             return;
@@ -204,7 +205,7 @@ pub const MobMesh = struct {
         var mobShapeData = mobShape.MobShapeData.init(
             self.alloc,
             bgColor,
-            zm.matToArr(zm.identity()),
+            zm.matToArr(zm.transpose(zm.translation(0.1, 0, 0))),
         );
         try zmesh.io.appendMeshPrimitive(
             self.fileData,
@@ -217,6 +218,62 @@ pub const MobMesh = struct {
             &mobShapeData.tangents,
         );
         try self.mob.addMeshData(meshId, mobShapeData);
+    }
+
+    fn printMatrix(m: zm.Mat) void {
+        std.debug.print("\n\n\n\nmob_mesh:\n", .{});
+        const r = zm.matToArr(m);
+        for (0..r.len) |i| {
+            const v = r[i];
+            std.debug.print("{d} ", .{v});
+            if (@mod(i + 1, 4) == 0) {
+                std.debug.print("\n", .{});
+            } else {
+                std.debug.print(" ", .{});
+            }
+        }
+        std.debug.print("\n", .{});
+        for (0..r.len) |i| {
+            const v = r[i];
+            std.debug.print("{d} ", .{v});
+        }
+        std.debug.print("\n\n", .{});
+        const t = zm.transpose(m);
+        const r2 = zm.matToArr(t);
+        for (0..r2.len) |i| {
+            const v = r2[i];
+            std.debug.print("{d} ", .{v});
+            if (@mod(i + 1, 4) == 0) {
+                std.debug.print("\n", .{});
+            } else {
+                std.debug.print(" ", .{});
+            }
+        }
+        std.debug.print("\n", .{});
+        for (0..r2.len) |i| {
+            const v = r2[i];
+            std.debug.print("{d} ", .{v});
+        }
+        std.debug.print("\n\n\n", .{});
+    }
+
+    pub fn transformFromNode(node: *gltf.Node, nodeName: [*:0]const u8) zm.Mat {
+        var nodeTransform = zm.identity();
+        if (node.has_matrix == 1) {
+            std.debug.print("{s} node has matrix\n", .{nodeName});
+            nodeTransform = zm.mul(nodeTransform, zm.matFromArr(node.matrix));
+        }
+        if (node.has_translation == 1) {
+            const t = node.translation;
+            const tm = zm.translation(t[0], t[1], t[2]);
+            nodeTransform = zm.mul(nodeTransform, tm);
+        }
+        if (node.has_scale == 1) {
+            const s = node.scale;
+            const sm = zm.scaling(s[0], s[1], s[2]);
+            nodeTransform = zm.mul(nodeTransform, sm);
+        }
+        return nodeTransform;
     }
 
     pub fn materialBaseColorFromMesh(mesh: *gltf.Mesh) [4]gl.Float {

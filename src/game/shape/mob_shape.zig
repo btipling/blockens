@@ -17,7 +17,10 @@ pub const MobShapeVertex = struct {
     normals: [3]gl.Float,
     textcoords: [2]gl.Float,
     baseColor: [4]gl.Float,
-    localTransform: [16]gl.Float,
+    localTransform1: [4]gl.Float,
+    localTransform2: [4]gl.Float,
+    localTransform3: [4]gl.Float,
+    localTransform4: [4]gl.Float,
 };
 
 pub const MobShapeData = struct {
@@ -140,6 +143,22 @@ pub const MobMeshData = struct {
         return EBO;
     }
 
+    fn getLocalTransFormC1FromMat(localTransform: [16]gl.Float) [4]gl.Float {
+        return [_]gl.Float{ localTransform[0], localTransform[1], localTransform[2], localTransform[3] };
+    }
+
+    fn getLocalTransFormC2FromMat(localTransform: [16]gl.Float) [4]gl.Float {
+        return [_]gl.Float{ localTransform[4], localTransform[5], localTransform[6], localTransform[7] };
+    }
+
+    fn getLocalTransFormC3FromMat(localTransform: [16]gl.Float) [4]gl.Float {
+        return [_]gl.Float{ localTransform[8], localTransform[9], localTransform[10], localTransform[11] };
+    }
+
+    fn getLocalTransFormC4FromMat(localTransform: [16]gl.Float) [4]gl.Float {
+        return [_]gl.Float{ localTransform[12], localTransform[13], localTransform[14], localTransform[15] };
+    }
+
     fn initData(meshId: u32, mobShapeData: *const MobShapeData, alloc: std.mem.Allocator) !void {
         var vertices = try std.ArrayList(MobShapeVertex).initCapacity(alloc, mobShapeData.positions.items.len);
         defer vertices.deinit();
@@ -150,7 +169,10 @@ pub const MobMeshData = struct {
                 .normals = mobShapeData.normals.items[i],
                 .textcoords = mobShapeData.textcoords.items[i],
                 .baseColor = mobShapeData.baseColor,
-                .localTransform = mobShapeData.localTransform,
+                .localTransform1 = getLocalTransFormC1FromMat(mobShapeData.localTransform),
+                .localTransform2 = getLocalTransFormC2FromMat(mobShapeData.localTransform),
+                .localTransform3 = getLocalTransFormC3FromMat(mobShapeData.localTransform),
+                .localTransform4 = getLocalTransFormC4FromMat(mobShapeData.localTransform),
             };
             vertices.appendAssumeCapacity(vtx);
         }
@@ -162,8 +184,16 @@ pub const MobMeshData = struct {
         const textcoordSize: gl.Int = 2;
         const baseColorSize: gl.Int = 4;
         const localTransformSize: gl.Int = 4;
-        const stride: gl.Int = (posSize + normalSize + textcoordSize + baseColorSize + (localTransformSize * 4)) * @sizeOf(gl.Float);
-        std.debug.print("stride: {d}\n", .{stride});
+        var stride: gl.Int = 0;
+        stride += posSize;
+        stride += normalSize;
+        stride += textcoordSize;
+        stride += baseColorSize;
+        stride += localTransformSize;
+        stride += localTransformSize;
+        stride += localTransformSize;
+        stride += localTransformSize;
+        stride *= @sizeOf(gl.Float);
         var offset: gl.Uint = 0;
         var curArr: gl.Uint = 0;
         gl.vertexAttribPointer(curArr, posSize, gl.FLOAT, gl.FALSE, stride, null);
@@ -178,12 +208,15 @@ pub const MobMeshData = struct {
         gl.enableVertexAttribArray(curArr);
         curArr += 1;
         offset += textcoordSize * @sizeOf(gl.Float);
-        std.debug.print("offset: {d}\n", .{offset});
+        gl.vertexAttribPointer(curArr, baseColorSize, gl.FLOAT, gl.FALSE, stride, @as(*anyopaque, @ptrFromInt(offset)));
+        gl.enableVertexAttribArray(curArr);
+        curArr += 1;
+        offset += baseColorSize * @sizeOf(gl.Float);
         for (0..4) |_| {
-            gl.vertexAttribPointer(curArr, baseColorSize, gl.FLOAT, gl.FALSE, stride, @as(*anyopaque, @ptrFromInt(offset)));
+            gl.vertexAttribPointer(curArr, localTransformSize, gl.FLOAT, gl.FALSE, stride, @as(*anyopaque, @ptrFromInt(offset)));
             gl.enableVertexAttribArray(curArr);
             curArr += 1;
-            offset += baseColorSize * @sizeOf(gl.Float);
+            offset += localTransformSize * @sizeOf(gl.Float);
         }
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
