@@ -193,43 +193,6 @@ pub const MobMesh = struct {
         try self.mob.addMeshData(meshId, mobShapeData);
     }
 
-    fn printMatrix(m: zm.Mat) void {
-        std.debug.print("\n\n\n\nmob_mesh:\n", .{});
-        const r = zm.matToArr(m);
-        for (0..r.len) |i| {
-            const v = r[i];
-            std.debug.print("{d} ", .{v});
-            if (@mod(i + 1, 4) == 0) {
-                std.debug.print("\n", .{});
-            } else {
-                std.debug.print(" ", .{});
-            }
-        }
-        std.debug.print("\n", .{});
-        for (0..r.len) |i| {
-            const v = r[i];
-            std.debug.print("{d} ", .{v});
-        }
-        std.debug.print("\n\n", .{});
-        const t = zm.transpose(m);
-        const r2 = zm.matToArr(t);
-        for (0..r2.len) |i| {
-            const v = r2[i];
-            std.debug.print("{d} ", .{v});
-            if (@mod(i + 1, 4) == 0) {
-                std.debug.print("\n", .{});
-            } else {
-                std.debug.print(" ", .{});
-            }
-        }
-        std.debug.print("\n", .{});
-        for (0..r2.len) |i| {
-            const v = r2[i];
-            std.debug.print("{d} ", .{v});
-        }
-        std.debug.print("\n\n\n", .{});
-    }
-
     pub fn transformFromNode(node: *gltf.Node, nodeName: [*:0]const u8) zm.Mat {
         var nodeTransform = zm.identity();
         if (node.has_matrix == 1) {
