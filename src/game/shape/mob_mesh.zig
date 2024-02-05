@@ -191,7 +191,6 @@ pub const MobMesh = struct {
     }
 
     pub fn buildMesh(self: *MobMesh, nodeName: [*:0]const u8, localTransform: zm.Mat, mesh: *gltf.Mesh) !void {
-        _ = localTransform;
         const meshName = mesh.name orelse {
             std.debug.print("{s} mesh has no name\n", .{nodeName});
             return;
@@ -205,7 +204,7 @@ pub const MobMesh = struct {
         var mobShapeData = mobShape.MobShapeData.init(
             self.alloc,
             bgColor,
-            zm.matToArr(zm.transpose(zm.translation(0.1, 0, 0))),
+            zm.matToArr(localTransform),
         );
         try zmesh.io.appendMeshPrimitive(
             self.fileData,

@@ -193,31 +193,43 @@ pub const MobMeshData = struct {
         stride += localTransformSize;
         stride += localTransformSize;
         stride += localTransformSize;
-        stride *= @sizeOf(gl.Float);
         var offset: gl.Uint = 0;
         var curArr: gl.Uint = 0;
-        gl.vertexAttribPointer(curArr, posSize, gl.FLOAT, gl.FALSE, stride, null);
+        gl.vertexAttribPointer(curArr, posSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), null);
         gl.enableVertexAttribArray(curArr);
         curArr += 1;
-        offset += posSize * @sizeOf(gl.Float);
-        gl.vertexAttribPointer(curArr, normalSize, gl.FLOAT, gl.FALSE, stride, @as(*anyopaque, @ptrFromInt(offset)));
+        offset += posSize;
+        gl.vertexAttribPointer(curArr, normalSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
         gl.enableVertexAttribArray(curArr);
         curArr += 1;
-        offset += normalSize * @sizeOf(gl.Float);
-        gl.vertexAttribPointer(curArr, textcoordSize, gl.FLOAT, gl.FALSE, stride, @as(*anyopaque, @ptrFromInt(offset)));
+        offset += normalSize;
+        gl.vertexAttribPointer(curArr, textcoordSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
         gl.enableVertexAttribArray(curArr);
         curArr += 1;
-        offset += textcoordSize * @sizeOf(gl.Float);
-        gl.vertexAttribPointer(curArr, baseColorSize, gl.FLOAT, gl.FALSE, stride, @as(*anyopaque, @ptrFromInt(offset)));
+        offset += textcoordSize;
+        gl.vertexAttribPointer(curArr, baseColorSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
         gl.enableVertexAttribArray(curArr);
         curArr += 1;
-        offset += baseColorSize * @sizeOf(gl.Float);
-        for (0..4) |_| {
-            gl.vertexAttribPointer(curArr, localTransformSize, gl.FLOAT, gl.FALSE, stride, @as(*anyopaque, @ptrFromInt(offset)));
-            gl.enableVertexAttribArray(curArr);
-            curArr += 1;
-            offset += localTransformSize * @sizeOf(gl.Float);
-        }
+        offset += baseColorSize;
+
+        gl.vertexAttribPointer(curArr, localTransformSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
+        gl.enableVertexAttribArray(curArr);
+        curArr += 1;
+        offset += localTransformSize;
+
+        gl.vertexAttribPointer(curArr, localTransformSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
+        gl.enableVertexAttribArray(curArr);
+        curArr += 1;
+        offset += localTransformSize;
+
+        gl.vertexAttribPointer(curArr, localTransformSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
+        gl.enableVertexAttribArray(curArr);
+        curArr += 1;
+        offset += localTransformSize;
+
+        gl.vertexAttribPointer(curArr, localTransformSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
+        gl.enableVertexAttribArray(curArr);
+
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{d} mob init data error: {d}\n", .{ meshId, e });
