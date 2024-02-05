@@ -262,15 +262,25 @@ pub const MobMesh = struct {
             std.debug.print("{s} node has matrix\n", .{nodeName});
             nodeTransform = zm.mul(nodeTransform, zm.matFromArr(node.matrix));
         }
-        if (node.has_translation == 1) {
-            const t = node.translation;
-            const tm = zm.translation(t[0], t[1], t[2]);
-            nodeTransform = zm.mul(nodeTransform, tm);
-        }
         if (node.has_scale == 1) {
+            std.debug.print("{s} node has scale\n", .{nodeName});
             const s = node.scale;
             const sm = zm.scaling(s[0], s[1], s[2]);
             nodeTransform = zm.mul(nodeTransform, sm);
+        }
+        if (node.has_rotation == 1) {
+            std.debug.print("{s} node has rotation\n", .{nodeName});
+            const r = node.rotation;
+            const quat: zm.Quat = .{ r[0], r[1], r[2], r[3] };
+            std.debug.print("rotation: {e} {e} {e}\n", .{ r[0], r[1], r[2] });
+            nodeTransform = zm.mul(nodeTransform, zm.quatToMat(quat));
+        }
+        if (node.has_translation == 1) {
+            std.debug.print("{s} node has translation\n", .{nodeName});
+            const t = node.translation;
+            const tm = zm.translation(t[0], t[1], t[2]);
+            std.debug.print("translation: {e} {e} {e}\n", .{ t[0], t[1], t[2] });
+            nodeTransform = zm.mul(nodeTransform, tm);
         }
         return nodeTransform;
     }
