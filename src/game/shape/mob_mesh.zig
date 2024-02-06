@@ -174,6 +174,7 @@ pub const MobMesh = struct {
             return;
         };
         const bgColor = materialBaseColorFromMesh(mesh);
+        materialTextureFromMesh(mesh);
         std.debug.print("bg color: ({e}, {e}, {e}, {e})\n", .{ bgColor[0], bgColor[1], bgColor[2], bgColor[3] });
         var mobShapeData = mobShape.MobShapeData.init(
             self.alloc,
@@ -209,7 +210,6 @@ pub const MobMesh = struct {
             std.debug.print("{s} node has rotation\n", .{nodeName});
             const r = node.rotation;
             const quat: zm.Quat = .{ r[0], r[1], r[2], r[3] };
-            std.debug.print("rotation: {e} {e} {e}\n", .{ r[0], r[1], r[2] });
             nodeTransform = zm.mul(nodeTransform, zm.quatToMat(quat));
         }
         if (node.has_translation == 1) {
@@ -235,9 +235,68 @@ pub const MobMesh = struct {
                 continue;
             }
             const pbr: gltf.PbrMetallicRoughness = material.pbr_metallic_roughness;
+            if (pbr.base_color_texture.texture) |_| {
+                std.debug.print("has texture\n", .{});
+            } else {
+                std.debug.print("no texture\n", .{});
+            }
             return pbr.base_color_factor;
         }
         return [_]gl.Float{0.0} ** 4;
+    }
+
+    pub fn materialTextureFromMesh(mesh: *gltf.Mesh) void {
+        const primitives = mesh.primitives;
+        for (0..mesh.primitives_count) |i| {
+            const primitive = primitives[i];
+            const material: *gltf.Material = primitive.material orelse {
+                std.debug.print("no material\n", .{});
+                continue;
+            };
+            if (material.normal_texture.texture) |texture| {
+                std.debug.print("\n\n has texture \n\n", .{});
+                const T = @TypeOf(texture.name);
+                const textureName = switch (T) {
+                    [*:0]u8 => texture.name orelse {
+                        std.debug.print("normal_texture texture has no name2", .{});
+                        continue;
+                    },
+                    else => {
+                        std.debug.print("normal texture has no name", .{});
+                        continue;
+                    },
+                };
+                std.debug.print("normal texture {s}\n", .{textureName});
+            }
+            if (material.occlusion_texture.texture) |texture| {
+                const T = @TypeOf(texture.name);
+                const textureName = switch (T) {
+                    [*:0]u8 => texture.name orelse {
+                        std.debug.print("occlusion_texture texture has no name2", .{});
+                        continue;
+                    },
+                    else => {
+                        std.debug.print("occlusion_texture texture has no name", .{});
+                        continue;
+                    },
+                };
+                std.debug.print("occlusion_texture texture {s}\n", .{textureName});
+            }
+            if (material.emissive_texture.texture) |texture| {
+                const T = @TypeOf(texture.name);
+                const textureName = switch (T) {
+                    [*:0]u8 => texture.name orelse {
+                        std.debug.print("emissive_texture texture has no name2", .{});
+                        continue;
+                    },
+                    else => {
+                        std.debug.print("emissive_texture texture has no name", .{});
+                        continue;
+                    },
+                };
+                std.debug.print("emissive_texture texture {s}\n", .{textureName});
+            }
+        }
     }
 
     pub fn draw(self: *MobMesh) !void {
