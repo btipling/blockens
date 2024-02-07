@@ -10,6 +10,7 @@ const gltf = zmesh.io.zcgltf;
 
 pub const MobMeshErr = error{
     NoScenes,
+    NoTexture,
     BuildErr,
 };
 
@@ -145,11 +146,13 @@ pub const MobMesh = struct {
             return;
         };
         const bgColor = materialBaseColorFromMesh(mesh);
-        materialTextureFromMesh(mesh);
+        const td: ?[]u8 = self.materialTextureFromMesh(mesh) catch null;
+        defer if (td) |_td| self.alloc.free(_td);
         var mobShapeData = mobShape.MobShapeData.init(
             self.alloc,
             bgColor,
             zm.matToArr(localTransform),
+            td,
         );
         try zmesh.io.appendMeshPrimitive(
             self.fileData,
@@ -203,7 +206,7 @@ pub const MobMesh = struct {
         return [_]gl.Float{ 1.0, 0.0, 1.0, 1.0 };
     }
 
-    pub fn materialTextureFromMesh(mesh: *gltf.Mesh) void {
+    pub fn materialTextureFromMesh(self: *MobMesh, mesh: *gltf.Mesh) ![]u8 {
         const primitives = mesh.primitives;
         for (0..mesh.primitives_count) |i| {
             const primitive = primitives[i];
@@ -211,8 +214,20 @@ pub const MobMesh = struct {
                 continue;
             };
             const pbr: gltf.PbrMetallicRoughness = material.pbr_metallic_roughness;
-            if (pbr.base_color_texture.texture) |_| {
+            if (pbr.base_color_texture.texture) |texture| {
                 std.debug.print("has texture\n", .{});
+                const image = texture.image orelse continue;
+                const mime_type = image.mime_type orelse "no_mime_type";
+                std.debug.print("image mime type: {s}\n", .{mime_type});
+                const T = @TypeOf(image.buffer_view);
+                const buffer = switch (T) {
+                    ?*gltf.BufferView => image.buffer_view orelse continue,
+                    else => continue,
+                };
+                const bvd = gltf.BufferView.data(buffer.*) orelse continue;
+                const bd = try self.alloc.alloc(u8, buffer.size);
+                @memcpy(bd[0..buffer.size], bvd);
+                return bd;
             } else {
                 std.debug.print("no texture\n", .{});
             }
@@ -226,6 +241,7 @@ pub const MobMesh = struct {
                 std.debug.print("has emissive_texture\n", .{});
             }
         }
+        return MobMeshErr.NoTexture;
     }
 
     pub fn draw(self: *MobMesh) !void {

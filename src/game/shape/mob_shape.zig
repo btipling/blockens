@@ -31,11 +31,13 @@ pub const MobShapeData = struct {
     tangents: std.ArrayList([4]gl.Float),
     baseColor: [4]gl.Float,
     localTransform: [16]gl.Float,
+    textureData: ?[]u8,
 
     pub fn init(
         alloc: std.mem.Allocator,
         baseColor: [4]gl.Float,
         localTransform: [16]gl.Float,
+        textureData: ?[]u8,
     ) MobShapeData {
         return .{
             .indices = std.ArrayList(u32).init(alloc),
@@ -45,6 +47,7 @@ pub const MobShapeData = struct {
             .tangents = std.ArrayList([4]gl.Float).init(alloc),
             .baseColor = baseColor,
             .localTransform = localTransform,
+            .textureData = textureData,
         };
     }
 
@@ -62,6 +65,7 @@ pub const MobMeshData = struct {
     vao: gl.Uint,
     vbo: gl.Uint,
     ebo: gl.Uint,
+    texture: gl.Uint,
     numIndices: gl.Int,
     mobShapeData: MobShapeData,
     pub fn init(
@@ -69,17 +73,22 @@ pub const MobMeshData = struct {
         mobShapeData: MobShapeData,
         alloc: std.mem.Allocator,
     ) !MobMeshData {
-        std.debug.print("num textcoords: {d} ", .{mobShapeData.textcoords.items.len});
-        std.debug.print("num tangents: {d}\n", .{mobShapeData.tangents.items.len});
         const vao = try initVAO(meshId);
         const vbo = try initVBO(meshId);
         const ebo = try initEBO(meshId, mobShapeData.indices.items);
+        var texture: gl.Uint = 0;
+        if (mobShapeData.textureData) |td| {
+            texture = try initTexture(meshId, td);
+        } else {
+            texture = try initClearTexture(meshId);
+        }
         try initData(meshId, &mobShapeData, alloc);
         return MobMeshData{
             .meshId = meshId,
             .vao = vao,
             .vbo = vbo,
             .ebo = ebo,
+            .texture = texture,
             .numIndices = @intCast(mobShapeData.indices.items.len),
             .mobShapeData = mobShapeData,
         };
@@ -157,6 +166,82 @@ pub const MobMeshData = struct {
 
     fn getLocalTransFormC4FromMat(localTransform: [16]gl.Float) [4]gl.Float {
         return [_]gl.Float{ localTransform[12], localTransform[13], localTransform[14], localTransform[15] };
+    }
+
+    pub fn initClearTexture(_: u32) !gl.Uint {
+        var texture: gl.Uint = undefined;
+        var e: gl.Uint = 0;
+        gl.genTextures(1, &texture);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        if (e != gl.NO_ERROR) {
+            std.debug.print("mobshape clear gen or bind clear texture error: {d}\n", .{e});
+            return MobShapeErr.RenderError;
+        }
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("mobshape clear text parameter i error: {d}\n", .{e});
+            return MobShapeErr.RenderError;
+        }
+
+        const imageData: [4]u8 = .{ 0, 0, 0, 0 };
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, &imageData);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("mobshape clear text image 2d error: {d}\n", .{e});
+            return MobShapeErr.RenderError;
+        }
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("mobshape clear generate mimap error: {d}\n", .{e});
+            return MobShapeErr.RenderError;
+        }
+        return texture;
+    }
+
+    pub fn initTexture(_: u32, img: []u8) !gl.Uint {
+        var texture: gl.Uint = undefined;
+        var e: gl.Uint = 0;
+        gl.genTextures(1, &texture);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        if (e != gl.NO_ERROR) {
+            std.debug.print("mob shape texture gen or bind texture error: {d}\n", .{e});
+            return MobShapeErr.RenderError;
+        }
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("mob shape texture text parameter i error: {d}\n", .{e});
+            return MobShapeErr.RenderError;
+        }
+
+        var image = try zstbi.Image.loadFromMemory(img, 4);
+        defer image.deinit();
+
+        const width: gl.Int = @as(gl.Int, @intCast(image.width));
+        const height: gl.Int = @as(gl.Int, @intCast(image.height));
+        const imageData: *const anyopaque = image.data.ptr;
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("mob shape texture gext image 2d error: {d}\n", .{e});
+            return MobShapeErr.RenderError;
+        }
+        gl.generateMipmap(gl.TEXTURE_2D);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("mob shape texture generate mimap error: {d}\n", .{e});
+            return MobShapeErr.RenderError;
+        }
+        return texture;
     }
 
     fn initData(meshId: u32, mobShapeData: *const MobShapeData, alloc: std.mem.Allocator) !void {
@@ -240,9 +325,17 @@ pub const MobMeshData = struct {
 
     pub fn draw(self: MobMeshData) !void {
         gl.bindVertexArray(self.vao);
-        const e = gl.getError();
+        var e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{d} mob draw bind vertex array error: {d}\n", .{ self.meshId, e });
+            return MobShapeErr.RenderError;
+        }
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, self.texture);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{d} mob draw bind texture error: {d}\n", .{ self.meshId, e });
             return MobShapeErr.RenderError;
         }
 
@@ -395,6 +488,12 @@ pub const MobShape = struct {
             return MobShapeErr.RenderError;
         }
 
+        gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("{d} mob uniform1i error: {d}\n", .{ mobId, e });
+            return MobShapeErr.RenderError;
+        }
         var projection: [16]gl.Float = [_]gl.Float{undefined} ** 16;
 
         const h = @as(gl.Float, @floatFromInt(config.windows_height));
