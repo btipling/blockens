@@ -81,30 +81,79 @@ pub const MobMesh = struct {
     }
 
     pub fn build(self: *MobMesh) !void {
-        try self.texturesInfo();
         try self.mapMeshesByName();
         const defaultScene = self.fileData.scene orelse {
             std.debug.print("no default scene\n", .{});
             return MobMeshErr.NoScenes;
         };
         try self.buildScene(defaultScene);
+        try self.buildAnimations(self.fileData.animations, self.fileData.animations_count);
     }
 
-    pub fn texturesInfo(self: *MobMesh) !void {
-        std.debug.print("building textures: {d}\n", .{self.fileData.textures_count});
-        const textures = self.fileData.textures orelse {
-            std.debug.print("no textures\n", .{});
+    pub fn buildAnimations(_: *MobMesh, animations: ?[*]gltf.Animation, animationCount: usize) !void {
+        if (animationCount == 0) {
             return;
-        };
-        for (0..self.fileData.textures_count) |i| {
-            const texture: gltf.Texture = textures[i];
-            try self.textureInfo(texture);
+        }
+        if (animations == null) {
+            return;
+        }
+        var ptr = animations.?;
+        for (0..animationCount) |_| {
+            const animation = ptr[0];
+            const animationName = animation.name orelse "no animation name";
+            std.debug.print("\n\nFound animation {s} with {d} animation channels and {d} samplers \n", .{
+                animationName,
+                animation.channels_count,
+                animation.samplers_count,
+            });
+            for (0..animation.channels_count) |i| {
+                const channel: gltf.AnimationChannel = animation.channels[i];
+                switch (channel.target_path) {
+                    .translation => std.debug.print("found translation animation for {s}\n", .{animationName}),
+                    .rotation => std.debug.print("found rotation animation for {s}\n", .{animationName}),
+                    .scale => std.debug.print("found scale animation for {s}\n", .{animationName}),
+                    .weights => std.debug.print("found weights animation for {s}\n", .{animationName}),
+                    else => std.debug.print("found invalid animation for {s}\n", .{animationName}),
+                }
+                const node = channel.target_node orelse {
+                    std.debug.print("no node for {s}\n", .{animationName});
+                    continue;
+                };
+                const nodeName = node.name orelse "no node name";
+                std.debug.print("animation {s} is for node {s}\n", .{ animationName, nodeName });
+                const sampler = channel.sampler;
+                switch (sampler.interpolation) {
+                    .linear => std.debug.print("found linear interpolation for {s}\n", .{animationName}),
+                    .step => std.debug.print("found step interpolation for {s}\n", .{animationName}),
+                    .cubic_spline => std.debug.print("found cubic spline interpolation for {s}\n", .{animationName}),
+                }
+                const input = sampler.input;
+                printAccessor(input);
+                const output = sampler.output;
+                printAccessor(output);
+            }
+            ptr += 1;
+            std.debug.print("\n\n", .{});
         }
     }
 
-    pub fn textureInfo(_: *MobMesh, texture: gltf.Texture) !void {
-        const textureName = texture.name orelse "no_texture_name";
-        std.debug.print("building texture: {s}\n", .{textureName});
+    pub fn printAccessor(acessor: *gltf.Accessor) void {
+        const accessorName = acessor.name orelse "no accessor name";
+        std.debug.print("accessor {s} has {d} elements, and {d} byte offset with stride of {d}\n", .{
+            accessorName,
+            acessor.count,
+            acessor.offset,
+            acessor.stride,
+        });
+        switch (acessor.component_type) {
+            .r_8 => std.debug.print("accessor {s} has r_8 component type\n", .{accessorName}),
+            .r_8u => std.debug.print("accessor {s} has r_8u component type\n", .{accessorName}),
+            .r_16 => std.debug.print("accessor {s} has r_16 component type\n", .{accessorName}),
+            .r_16u => std.debug.print("accessor {s} has r_16u component type\n", .{accessorName}),
+            .r_32u => std.debug.print("accessor {s} has r_32u component type\n", .{accessorName}),
+            .r_32f => std.debug.print("accessor {s} has r_32f component type\n", .{accessorName}),
+            else => std.debug.print("accessor {s} has invalid component type\n", .{accessorName}),
+        }
     }
 
     pub fn buildScene(self: *MobMesh, scene: *gltf.Scene) !void {
