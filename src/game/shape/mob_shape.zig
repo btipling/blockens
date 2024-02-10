@@ -510,7 +510,7 @@ pub const MobShape = struct {
             return MobShapeErr.RenderError;
         }
         const blockIndex: gl.Uint = gl.getUniformBlockIndex(program, vm.name.ptr);
-        const bindingPoint: gl.Uint = 0;
+        const bindingPoint: gl.Uint = 1;
         gl.uniformBlockBinding(program, blockIndex, bindingPoint);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
