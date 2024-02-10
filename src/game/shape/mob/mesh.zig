@@ -4,6 +4,7 @@ const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const shape = @import("shape.zig");
 const view = @import("./view.zig");
+const sampler = @import("./sampler.zig");
 const state = @import("../../state/state.zig");
 const data = @import("../../data/data.zig");
 const gltf = zmesh.io.zcgltf;
@@ -90,7 +91,7 @@ pub const Mesh = struct {
         try self.buildAnimations(self.fileData.animations, self.fileData.animations_count);
     }
 
-    pub fn buildAnimations(_: *Mesh, animations: ?[*]gltf.Animation, animationCount: usize) !void {
+    pub fn buildAnimations(self: *Mesh, animations: ?[*]gltf.Animation, animationCount: usize) !void {
         if (animationCount == 0) {
             return;
         }
@@ -112,90 +113,19 @@ pub const Mesh = struct {
                     std.debug.print("no node for {s}\n", .{animationName});
                     continue;
                 };
-                const nodeName = node.name orelse "no node name";
-                const sampler = channel.sampler;
-                const input = sampler.input;
-                buildAnimationFromTime(input);
-                switch (channel.target_path) {
-                    .translation => {
-                        std.debug.print("found translation animation for node {s} in {s}\n", .{ nodeName, animationName });
-                        buildAnimationFromTranslationAccessor(sampler.output);
-                    },
-                    .rotation => {
-                        std.debug.print("found rotation animation for node {s} in {s}\n", .{ nodeName, animationName });
-                        buildAnimationFromRotationAccessor(sampler.output);
-                    },
-                    .scale => {
-                        std.debug.print("found (unsupported) scale animation node {s} in for {s}\n", .{ nodeName, animationName });
-                    },
-                    .weights => {
-                        std.debug.print("found (unsupported) weights animation node {s} in for {s}\n", .{ nodeName, animationName });
-                    },
-                    else => std.debug.print("found invalid animation for node {s} in {s}\n", .{ nodeName, animationName }),
-                }
-                switch (sampler.interpolation) {
-                    .linear => std.debug.print("found linear interpolation for {s}\n", .{animationName}),
-                    .step => std.debug.print("found step interpolation for {s}\n", .{animationName}),
-                    .cubic_spline => std.debug.print("found cubic spline interpolation for {s}\n", .{animationName}),
-                }
+                const aSampler = sampler.Sampler.init(
+                    self.alloc,
+                    node,
+                    animationName,
+                    channel.target_path,
+                    channel.sampler,
+                );
+                defer aSampler.deinit();
+                var as = @constCast(&aSampler);
+                try as.build();
             }
             ptr += 1;
             std.debug.print("\n\n", .{});
-        }
-    }
-
-    pub fn buildAnimationFromTime(acessor: *gltf.Accessor) void {
-        std.debug.print("input time has {d} elements, and {d} byte offset with stride of, {d} ", .{
-            acessor.count,
-            acessor.offset,
-            acessor.stride,
-        });
-        switch (acessor.component_type) {
-            .r_32f => std.debug.print("it has r_32f component type ", .{}),
-            else => std.debug.print("it has invalid component type for input time ", .{}),
-        }
-
-        switch (acessor.type) {
-            .scalar => std.debug.print("and scalar type\n", .{}),
-            else => std.debug.print("invalid time input", .{}),
-        }
-    }
-
-    pub fn buildAnimationFromRotationAccessor(acessor: *gltf.Accessor) void {
-        const accessorName = acessor.name orelse "no accessor name";
-        std.debug.print("rotation {s} has {d} elements, and {d} byte offset with stride of {d}, ", .{
-            accessorName,
-            acessor.count,
-            acessor.offset,
-            acessor.stride,
-        });
-        switch (acessor.component_type) {
-            .r_32f => std.debug.print("has r_32f component type ", .{}),
-            else => std.debug.print("has invalid component type ", .{}),
-        }
-
-        switch (acessor.type) {
-            .vec4 => std.debug.print("and vec4 type\n", .{}),
-            else => std.debug.print("and an invalid accessor type\n", .{}),
-        }
-    }
-
-    pub fn buildAnimationFromTranslationAccessor(acessor: *gltf.Accessor) void {
-        const accessorName = acessor.name orelse "no accessor name";
-        std.debug.print("translation {s} has {d} elements, and {d} byte offset with stride of {d}, ", .{
-            accessorName,
-            acessor.count,
-            acessor.offset,
-            acessor.stride,
-        });
-        switch (acessor.component_type) {
-            .r_32f => std.debug.print("has r_32f component type ", .{}),
-            else => std.debug.print("has invalid component type ", .{}),
-        }
-
-        switch (acessor.type) {
-            .vec3 => std.debug.print("and vec3 type\n", .{}),
-            else => std.debug.print("and an invalid accessor type\n", .{}),
         }
     }
 
