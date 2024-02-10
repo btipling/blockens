@@ -9,7 +9,7 @@ out vec2 TexCoord;
 flat out vec4 Color;
 
 uniform mat4 projection;
-uniform mat4 toModelSpace;
+uniform mat4 meshMatrices[2];
 
 layout(std140) uniform ViewMatrixBlock {
     mat4 viewMatrix;
@@ -17,7 +17,9 @@ layout(std140) uniform ViewMatrixBlock {
 
 void main()
 {
-    gl_Position = projection * viewMatrix * toModelSpace * vec4(position.xyz, 1.0);
+    mat4 toModelSpace = meshMatrices[0];
+    mat4 animationTransform = meshMatrices[1];
+    gl_Position = projection * viewMatrix * animationTransform * toModelSpace * vec4(position.xyz, 1.0);
     Normal = normal;
     TexCoord = texCoords;
     Color = color;

@@ -28,6 +28,8 @@ pub const ShapeData = struct {
     tangents: std.ArrayList([4]gl.Float),
     baseColor: [4]gl.Float,
     localTransform: [16]gl.Float,
+    animationTransform: [16]gl.Float,
+    animate: bool = true,
     textureData: ?[]u8,
 
     pub fn init(
@@ -36,6 +38,7 @@ pub const ShapeData = struct {
         localTransform: [16]gl.Float,
         textureData: ?[]u8,
     ) ShapeData {
+        const m = zm.translation(0, -20, 0);
         return .{
             .indices = std.ArrayList(u32).init(alloc),
             .positions = std.ArrayList([3]gl.Float).init(alloc),
@@ -45,6 +48,7 @@ pub const ShapeData = struct {
             .baseColor = baseColor,
             .localTransform = localTransform,
             .textureData = textureData,
+            .animationTransform = zm.matToArr(m),
         };
     }
 
@@ -242,8 +246,11 @@ pub const MeshData = struct {
             return ShapeErr.RenderError;
         }
 
-        const location = gl.getUniformLocation(program, "toModelSpace");
-        gl.uniformMatrix4fv(location, 1, gl.FALSE, &self.mobShapeData.localTransform);
+        const location = gl.getUniformLocation(program, "meshMatrices");
+        var toModelSpace: [32]gl.Float = [_]gl.Float{0} ** 32;
+        @memcpy(toModelSpace[0..16], &self.mobShapeData.localTransform);
+        @memcpy(toModelSpace[16..32], &self.mobShapeData.animationTransform);
+        gl.uniformMatrix4fv(location, 2, gl.FALSE, &toModelSpace);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("error: {d}\n", .{e});
