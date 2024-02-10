@@ -18,10 +18,6 @@ pub const ShapeVertex = struct {
     normals: [3]gl.Float,
     textcoords: [2]gl.Float,
     baseColor: [4]gl.Float,
-    localTransform1: [4]gl.Float,
-    localTransform2: [4]gl.Float,
-    localTransform3: [4]gl.Float,
-    localTransform4: [4]gl.Float,
 };
 
 pub const ShapeData = struct {
@@ -102,22 +98,6 @@ pub const MeshData = struct {
         var mmd = &self.mobShapeData;
         mmd.deinit();
         return;
-    }
-
-    fn getLocalTransFormC1FromMat(localTransform: [16]gl.Float) [4]gl.Float {
-        return [_]gl.Float{ localTransform[0], localTransform[1], localTransform[2], localTransform[3] };
-    }
-
-    fn getLocalTransFormC2FromMat(localTransform: [16]gl.Float) [4]gl.Float {
-        return [_]gl.Float{ localTransform[4], localTransform[5], localTransform[6], localTransform[7] };
-    }
-
-    fn getLocalTransFormC3FromMat(localTransform: [16]gl.Float) [4]gl.Float {
-        return [_]gl.Float{ localTransform[8], localTransform[9], localTransform[10], localTransform[11] };
-    }
-
-    fn getLocalTransFormC4FromMat(localTransform: [16]gl.Float) [4]gl.Float {
-        return [_]gl.Float{ localTransform[12], localTransform[13], localTransform[14], localTransform[15] };
     }
 
     pub fn initClearTexture(_: u32) !gl.Uint {
@@ -206,10 +186,6 @@ pub const MeshData = struct {
                 .normals = mobShapeData.normals.items[i],
                 .textcoords = mobShapeData.textcoords.items[i],
                 .baseColor = mobShapeData.baseColor,
-                .localTransform1 = getLocalTransFormC1FromMat(mobShapeData.localTransform),
-                .localTransform2 = getLocalTransFormC2FromMat(mobShapeData.localTransform),
-                .localTransform3 = getLocalTransFormC3FromMat(mobShapeData.localTransform),
-                .localTransform4 = getLocalTransFormC4FromMat(mobShapeData.localTransform),
             };
             vertices.appendAssumeCapacity(vtx);
         }
@@ -220,16 +196,11 @@ pub const MeshData = struct {
         const normalSize: gl.Int = 3;
         const textcoordSize: gl.Int = 2;
         const baseColorSize: gl.Int = 4;
-        const localTransformSize: gl.Int = 4;
         var stride: gl.Int = 0;
         stride += posSize;
         stride += normalSize;
         stride += textcoordSize;
         stride += baseColorSize;
-        stride += localTransformSize;
-        stride += localTransformSize;
-        stride += localTransformSize;
-        stride += localTransformSize;
         var offset: gl.Uint = 0;
         var curArr: gl.Uint = 0;
         gl.vertexAttribPointer(curArr, posSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), null);
@@ -246,26 +217,6 @@ pub const MeshData = struct {
         offset += textcoordSize;
         gl.vertexAttribPointer(curArr, baseColorSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
         gl.enableVertexAttribArray(curArr);
-        curArr += 1;
-        offset += baseColorSize;
-
-        gl.vertexAttribPointer(curArr, localTransformSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
-        gl.enableVertexAttribArray(curArr);
-        curArr += 1;
-        offset += localTransformSize;
-
-        gl.vertexAttribPointer(curArr, localTransformSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
-        gl.enableVertexAttribArray(curArr);
-        curArr += 1;
-        offset += localTransformSize;
-
-        gl.vertexAttribPointer(curArr, localTransformSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
-        gl.enableVertexAttribArray(curArr);
-        curArr += 1;
-        offset += localTransformSize;
-
-        gl.vertexAttribPointer(curArr, localTransformSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
-        gl.enableVertexAttribArray(curArr);
 
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
@@ -275,7 +226,7 @@ pub const MeshData = struct {
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
     }
 
-    pub fn draw(self: MeshData) !void {
+    pub fn draw(self: MeshData, program: gl.Uint) !void {
         gl.bindVertexArray(self.vao);
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
@@ -288,6 +239,14 @@ pub const MeshData = struct {
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("{d} mob draw bind texture error: {d}\n", .{ self.meshId, e });
+            return ShapeErr.RenderError;
+        }
+
+        const location = gl.getUniformLocation(program, "toModelSpace");
+        gl.uniformMatrix4fv(location, 1, gl.FALSE, &self.mobShapeData.localTransform);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("error: {d}\n", .{e});
             return ShapeErr.RenderError;
         }
 
@@ -440,12 +399,6 @@ pub const Shape = struct {
             return ShapeErr.RenderError;
         }
 
-        gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} mob uniform1i error: {d}\n", .{ mobId, e });
-            return ShapeErr.RenderError;
-        }
         var projection: [16]gl.Float = [_]gl.Float{undefined} ** 16;
 
         const h = @as(gl.Float, @floatFromInt(config.windows_height));
@@ -461,6 +414,7 @@ pub const Shape = struct {
             std.debug.print("error: {d}\n", .{e});
             return ShapeErr.RenderError;
         }
+
         const blockIndex: gl.Uint = gl.getUniformBlockIndex(program, vm.name.ptr);
         const bindingPoint: gl.Uint = 1;
         gl.uniformBlockBinding(program, blockIndex, bindingPoint);
@@ -486,7 +440,7 @@ pub const Shape = struct {
                 const meshId = _k.*;
                 var mesh = self.mobMeshData.get(meshId).?;
                 var m = &mesh;
-                try m.draw();
+                try m.draw(self.program);
             } else {
                 @panic("invalid mesh key");
             }
