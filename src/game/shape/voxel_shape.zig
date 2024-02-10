@@ -6,6 +6,7 @@ const zmesh = @import("zmesh");
 const config = @import("../config.zig");
 const view = @import("./view.zig");
 const data = @import("../data/data.zig");
+const gfx = @import("gfx/gfx.zig");
 
 pub const VoxelShapeErr = error{
     NotInitialized,
@@ -37,9 +38,9 @@ pub const VoxelData = struct {
         worldTransform: [16]gl.Float,
         alloc: std.mem.Allocator,
     ) !VoxelData {
-        const vao = try initVAO(blockId);
-        const vbo = try initVBO(blockId);
-        const ebo = try initEBO(blockId, shape.indices);
+        const vao = try gfx.Gfx.initVAO();
+        const vbo = try gfx.Gfx.initVBO();
+        const ebo = try gfx.Gfx.initEBO(shape.indices);
         const worldspaceVBO = try initData(blockId, shape, worldTransform, alloc);
         return VoxelData{
             .blockId = blockId,
@@ -57,55 +58,6 @@ pub const VoxelData = struct {
         gl.deleteBuffers(1, &self.ebo);
         gl.deleteBuffers(1, &self.worldspaceVBO);
         return;
-    }
-    pub fn initVAO(blockId: i32) !gl.Uint {
-        var VAO: gl.Uint = undefined;
-        gl.genVertexArrays(1, &VAO);
-        gl.bindVertexArray(VAO);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("voxel init vao error blockId: {d} - {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
-        return VAO;
-    }
-
-    pub fn initVBO(blockId: i32) !gl.Uint {
-        var VBO: gl.Uint = undefined;
-        gl.genBuffers(1, &VBO);
-        gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("voxel init vbo error blockId: {d} - {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
-        return VBO;
-    }
-
-    pub fn initEBO(blockId: i32, indices: []const gl.Uint) !gl.Uint {
-        var EBO: gl.Uint = undefined;
-        gl.genBuffers(1, &EBO);
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("voxel init ebo error blockId: {d} - {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("voxel bind ebo buff error blockId: {d} - {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
-
-        const size = @as(isize, @intCast(indices.len * @sizeOf(gl.Uint)));
-        const indicesptr: *const anyopaque = indices.ptr;
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, size, indicesptr, gl.STATIC_DRAW);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("voxel buffer data error blockId: {d} - {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
-        return EBO;
     }
 
     fn initData(blockId: i32, shaderData: zmesh.Shape, worldspaceTF: [16]gl.Float, alloc: std.mem.Allocator) !gl.Uint {

@@ -5,6 +5,7 @@ const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const config = @import("../../config.zig");
 const view = @import("./view.zig");
+const gfx = @import("../gfx/gfx.zig");
 const data = @import("../../data/data.zig");
 
 pub const ShapeErr = error{
@@ -73,9 +74,9 @@ pub const MeshData = struct {
         mobShapeData: ShapeData,
         alloc: std.mem.Allocator,
     ) !MeshData {
-        const vao = try initVAO(meshId);
-        const vbo = try initVBO(meshId);
-        const ebo = try initEBO(meshId, mobShapeData.indices.items);
+        const vao = try gfx.Gfx.initVAO();
+        const vbo = try gfx.Gfx.initVBO();
+        const ebo = try gfx.Gfx.initEBO(mobShapeData.indices.items);
         var texture: gl.Uint = 0;
         if (mobShapeData.textureData) |td| {
             texture = try initTexture(meshId, td);
@@ -101,55 +102,6 @@ pub const MeshData = struct {
         var mmd = &self.mobShapeData;
         mmd.deinit();
         return;
-    }
-    pub fn initVAO(meshId: u32) !gl.Uint {
-        var VAO: gl.Uint = undefined;
-        gl.genVertexArrays(1, &VAO);
-        gl.bindVertexArray(VAO);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mob init vao error meshId: {d} - {d}\n", .{ meshId, e });
-            return ShapeErr.RenderError;
-        }
-        return VAO;
-    }
-
-    pub fn initVBO(meshId: u32) !gl.Uint {
-        var VBO: gl.Uint = undefined;
-        gl.genBuffers(1, &VBO);
-        gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mob init vbo error meshId: {d} - {d}\n", .{ meshId, e });
-            return ShapeErr.RenderError;
-        }
-        return VBO;
-    }
-
-    pub fn initEBO(meshId: u32, indices: []const gl.Uint) !gl.Uint {
-        var EBO: gl.Uint = undefined;
-        gl.genBuffers(1, &EBO);
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mob init ebo error meshId: {d} - {d}\n", .{ meshId, e });
-            return ShapeErr.RenderError;
-        }
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mob bind ebo buff error meshId: {d} - {d}\n", .{ meshId, e });
-            return ShapeErr.RenderError;
-        }
-
-        const size = @as(isize, @intCast(indices.len * @sizeOf(gl.Uint)));
-        const indicesptr: *const anyopaque = indices.ptr;
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, size, indicesptr, gl.STATIC_DRAW);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mob buffer data error meshId: {d} - {d}\n", .{ meshId, e });
-            return ShapeErr.RenderError;
-        }
-        return EBO;
     }
 
     fn getLocalTransFormC1FromMat(localTransform: [16]gl.Float) [4]gl.Float {

@@ -3,6 +3,7 @@ const gl = @import("zopengl");
 const zstbi = @import("zstbi");
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
+const gfx = @import("gfx/gfx.zig");
 const config = @import("../config.zig");
 const data = @import("../data/data.zig");
 
@@ -57,11 +58,11 @@ pub const Shape = struct {
         shapeConfig: ShapeConfig,
         alloc: std.mem.Allocator,
     ) !Shape {
-        const vao = try initVAO(name);
+        const vao = try gfx.Gfx.initVAO();
         const vertexShader = try initVertexShader(vertexShaderSource, name);
         const fragmentShader = try initFragmentShader(fragmentShaderSource, name);
-        try initVBO(name);
-        try initEBO(name, shape.indices);
+        _ = try gfx.Gfx.initVBO();
+        _ = try gfx.Gfx.initEBO(shape.indices);
         const program = try initProgram(name, &[_]gl.Uint{ vertexShader, fragmentShader });
         var texture: gl.Uint = undefined;
         var cfg = shapeConfig;
@@ -99,56 +100,6 @@ pub const Shape = struct {
     pub fn deinit(self: *const Shape) void {
         gl.deleteVertexArrays(1, &self.vao);
         gl.deleteProgram(self.program);
-        return;
-    }
-
-    pub fn initVAO(msg: []const u8) !gl.Uint {
-        var VAO: gl.Uint = undefined;
-        gl.genVertexArrays(1, &VAO);
-        gl.bindVertexArray(VAO);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("init vao error: {s} {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
-        return VAO;
-    }
-
-    pub fn initVBO(msg: []const u8) !void {
-        var VBO: gl.Uint = undefined;
-        gl.genBuffers(1, &VBO);
-        gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("init vbo error: {s} {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
-        return;
-    }
-
-    pub fn initEBO(msg: []const u8, indices: []const gl.Uint) !void {
-        var EBO: gl.Uint = undefined;
-        gl.genBuffers(1, &EBO);
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("init ebo error: {s} {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("bind ebo buff error: {s} {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
-
-        const size = @as(isize, @intCast(indices.len * @sizeOf(gl.Uint)));
-        const indicesptr: *const anyopaque = indices.ptr;
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, size, indicesptr, gl.STATIC_DRAW);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} buffer data error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
         return;
     }
 
