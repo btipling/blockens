@@ -102,11 +102,6 @@ pub const Mesh = struct {
         for (0..animationCount) |_| {
             const animation = ptr[0];
             const animationName = animation.name orelse "no animation name";
-            std.debug.print("\n\nFound animation {s} with {d} animation channels and {d} samplers \n", .{
-                animationName,
-                animation.channels_count,
-                animation.samplers_count,
-            });
             for (0..animation.channels_count) |i| {
                 const channel: gltf.AnimationChannel = animation.channels[i];
                 const node = channel.target_node orelse {
