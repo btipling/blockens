@@ -2,14 +2,14 @@ const std = @import("std");
 const gl = @import("zopengl");
 const zm = @import("zmath");
 const state = @import("state.zig");
-const shapeview = @import("../shape/view.zig");
-const mobMesh = @import("../shape/mob_mesh.zig");
+const shapeview = @import("../shape/mob/view.zig");
+const mobMesh = @import("../shape/mob/mesh.zig");
 
 pub const Character = struct {
     alloc: std.mem.Allocator,
     shapeview: shapeview.View,
     wireframe: bool = false,
-    mob: ?mobMesh.MobMesh,
+    mob: ?mobMesh.Mesh,
     xRot: gl.Float,
     yRot: gl.Float,
     zRot: gl.Float,
@@ -68,7 +68,7 @@ pub const Character = struct {
 
     pub fn generate(self: *Character) !void {
         self.clearMob();
-        var mob = try mobMesh.MobMesh.init(self.shapeview, 0, self.alloc);
+        var mob = try mobMesh.Mesh.init(self.shapeview, 0, self.alloc);
         try mob.build();
         self.mob = mob;
     }

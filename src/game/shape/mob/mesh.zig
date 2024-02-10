@@ -2,42 +2,42 @@ const std = @import("std");
 const gl = @import("zopengl");
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
-const mobShape = @import("mob_shape.zig");
+const shape = @import("shape.zig");
 const view = @import("./view.zig");
-const state = @import("../state/state.zig");
-const data = @import("../data/data.zig");
+const state = @import("../../state/state.zig");
+const data = @import("../../data/data.zig");
 const gltf = zmesh.io.zcgltf;
 
-pub const MobMeshErr = error{
+pub const MeshErr = error{
     NoScenes,
     NoTexture,
     BuildErr,
 };
 
-pub const MobMesh = struct {
+pub const Mesh = struct {
     mobId: i32,
-    mob: mobShape.MobShape,
+    mob: shape.Shape,
     meshMap: std.AutoHashMap(gltf.MutCString, u32),
     fileData: *gltf.Data, // managed by zmesh.io
-    datas: std.ArrayList(mobShape.MobShapeData),
+    datas: std.ArrayList(shape.ShapeData),
     alloc: std.mem.Allocator,
 
     pub fn init(
         vm: view.View,
         mobId: i32,
         alloc: std.mem.Allocator,
-    ) !MobMesh {
-        const vertexShaderSource = @embedFile("../shaders/mob.vs");
-        const fragmentShaderSource = @embedFile("../shaders/mob.fs");
-        const mob = try mobShape.MobShape.init(
+    ) !Mesh {
+        const vertexShaderSource = @embedFile("../../shaders/mob.vs");
+        const fragmentShaderSource = @embedFile("../../shaders/mob.fs");
+        const mob = try shape.Shape.init(
             vm,
             mobId,
             vertexShaderSource,
             fragmentShaderSource,
             alloc,
         );
-        const fileData = try zmesh.io.parseAndLoadFile("./src/game/shape/cgltf/char.glb");
-        const datas = std.ArrayList(mobShape.MobShapeData).init(alloc);
+        const fileData = try zmesh.io.parseAndLoadFile("./src/game/shape/mob/cgltf/char.glb");
+        const datas = std.ArrayList(shape.ShapeData).init(alloc);
 
         return .{
             .mobId = mobId,
@@ -49,7 +49,7 @@ pub const MobMesh = struct {
         };
     }
 
-    pub fn deinit(self: MobMesh) void {
+    pub fn deinit(self: Mesh) void {
         for (self.datas.items) |d| {
             d.deinit();
         }
@@ -65,7 +65,7 @@ pub const MobMesh = struct {
         mm.deinit();
     }
 
-    pub fn mapMeshesByName(self: *MobMesh) !void {
+    pub fn mapMeshesByName(self: *Mesh) !void {
         const fileData = self.fileData;
         if (fileData.meshes) |m| {
             for (0..fileData.meshes_count) |i| {
@@ -80,17 +80,17 @@ pub const MobMesh = struct {
         }
     }
 
-    pub fn build(self: *MobMesh) !void {
+    pub fn build(self: *Mesh) !void {
         try self.mapMeshesByName();
         const defaultScene = self.fileData.scene orelse {
             std.debug.print("no default scene\n", .{});
-            return MobMeshErr.NoScenes;
+            return MeshErr.NoScenes;
         };
         try self.buildScene(defaultScene);
         try self.buildAnimations(self.fileData.animations, self.fileData.animations_count);
     }
 
-    pub fn buildAnimations(_: *MobMesh, animations: ?[*]gltf.Animation, animationCount: usize) !void {
+    pub fn buildAnimations(_: *Mesh, animations: ?[*]gltf.Animation, animationCount: usize) !void {
         if (animationCount == 0) {
             return;
         }
@@ -108,67 +108,110 @@ pub const MobMesh = struct {
             });
             for (0..animation.channels_count) |i| {
                 const channel: gltf.AnimationChannel = animation.channels[i];
-                switch (channel.target_path) {
-                    .translation => std.debug.print("found translation animation for {s}\n", .{animationName}),
-                    .rotation => std.debug.print("found rotation animation for {s}\n", .{animationName}),
-                    .scale => std.debug.print("found scale animation for {s}\n", .{animationName}),
-                    .weights => std.debug.print("found weights animation for {s}\n", .{animationName}),
-                    else => std.debug.print("found invalid animation for {s}\n", .{animationName}),
-                }
                 const node = channel.target_node orelse {
                     std.debug.print("no node for {s}\n", .{animationName});
                     continue;
                 };
                 const nodeName = node.name orelse "no node name";
-                std.debug.print("animation {s} is for node {s}\n", .{ animationName, nodeName });
                 const sampler = channel.sampler;
+                const input = sampler.input;
+                buildAnimationFromTime(input);
+                switch (channel.target_path) {
+                    .translation => {
+                        std.debug.print("found translation animation for node {s} in {s}\n", .{ nodeName, animationName });
+                        buildAnimationFromTranslationAccessor(sampler.output);
+                    },
+                    .rotation => {
+                        std.debug.print("found rotation animation for node {s} in {s}\n", .{ nodeName, animationName });
+                        buildAnimationFromRotationAccessor(sampler.output);
+                    },
+                    .scale => {
+                        std.debug.print("found (unsupported) scale animation node {s} in for {s}\n", .{ nodeName, animationName });
+                    },
+                    .weights => {
+                        std.debug.print("found (unsupported) weights animation node {s} in for {s}\n", .{ nodeName, animationName });
+                    },
+                    else => std.debug.print("found invalid animation for node {s} in {s}\n", .{ nodeName, animationName }),
+                }
                 switch (sampler.interpolation) {
                     .linear => std.debug.print("found linear interpolation for {s}\n", .{animationName}),
                     .step => std.debug.print("found step interpolation for {s}\n", .{animationName}),
                     .cubic_spline => std.debug.print("found cubic spline interpolation for {s}\n", .{animationName}),
                 }
-                const input = sampler.input;
-                printAccessor(input);
-                const output = sampler.output;
-                printAccessor(output);
             }
             ptr += 1;
             std.debug.print("\n\n", .{});
         }
     }
 
-    pub fn printAccessor(acessor: *gltf.Accessor) void {
+    pub fn buildAnimationFromTime(acessor: *gltf.Accessor) void {
+        std.debug.print("input time has {d} elements, and {d} byte offset with stride of, {d} ", .{
+            acessor.count,
+            acessor.offset,
+            acessor.stride,
+        });
+        switch (acessor.component_type) {
+            .r_32f => std.debug.print("it has r_32f component type ", .{}),
+            else => std.debug.print("it has invalid component type for input time ", .{}),
+        }
+
+        switch (acessor.type) {
+            .scalar => std.debug.print("and scalar type\n", .{}),
+            else => std.debug.print("invalid time input", .{}),
+        }
+    }
+
+    pub fn buildAnimationFromRotationAccessor(acessor: *gltf.Accessor) void {
         const accessorName = acessor.name orelse "no accessor name";
-        std.debug.print("accessor {s} has {d} elements, and {d} byte offset with stride of {d}\n", .{
+        std.debug.print("rotation {s} has {d} elements, and {d} byte offset with stride of {d}, ", .{
             accessorName,
             acessor.count,
             acessor.offset,
             acessor.stride,
         });
         switch (acessor.component_type) {
-            .r_8 => std.debug.print("accessor {s} has r_8 component type\n", .{accessorName}),
-            .r_8u => std.debug.print("accessor {s} has r_8u component type\n", .{accessorName}),
-            .r_16 => std.debug.print("accessor {s} has r_16 component type\n", .{accessorName}),
-            .r_16u => std.debug.print("accessor {s} has r_16u component type\n", .{accessorName}),
-            .r_32u => std.debug.print("accessor {s} has r_32u component type\n", .{accessorName}),
-            .r_32f => std.debug.print("accessor {s} has r_32f component type\n", .{accessorName}),
-            else => std.debug.print("accessor {s} has invalid component type\n", .{accessorName}),
+            .r_32f => std.debug.print("has r_32f component type ", .{}),
+            else => std.debug.print("has invalid component type ", .{}),
+        }
+
+        switch (acessor.type) {
+            .vec4 => std.debug.print("and vec4 type\n", .{}),
+            else => std.debug.print("and an invalid accessor type\n", .{}),
         }
     }
 
-    pub fn buildScene(self: *MobMesh, scene: *gltf.Scene) !void {
+    pub fn buildAnimationFromTranslationAccessor(acessor: *gltf.Accessor) void {
+        const accessorName = acessor.name orelse "no accessor name";
+        std.debug.print("translation {s} has {d} elements, and {d} byte offset with stride of {d}, ", .{
+            accessorName,
+            acessor.count,
+            acessor.offset,
+            acessor.stride,
+        });
+        switch (acessor.component_type) {
+            .r_32f => std.debug.print("has r_32f component type ", .{}),
+            else => std.debug.print("has invalid component type ", .{}),
+        }
+
+        switch (acessor.type) {
+            .vec3 => std.debug.print("and vec3 type\n", .{}),
+            else => std.debug.print("and an invalid accessor type\n", .{}),
+        }
+    }
+
+    pub fn buildScene(self: *Mesh, scene: *gltf.Scene) !void {
         var nodes: [*]*gltf.Node = undefined;
         const T = @TypeOf(scene.nodes);
         nodes = switch (T) {
-            ?[*]*gltf.Node => scene.nodes orelse return MobMeshErr.BuildErr,
-            else => return MobMeshErr.BuildErr,
+            ?[*]*gltf.Node => scene.nodes orelse return MeshErr.BuildErr,
+            else => return MeshErr.BuildErr,
         };
         for (0..scene.nodes_count) |i| {
             const node: *gltf.Node = nodes[i];
             try self.buildNode(node, zm.identity());
         }
     }
-    pub fn buildNode(self: *MobMesh, node: *gltf.Node, parentTransform: zm.Mat) !void {
+    pub fn buildNode(self: *Mesh, node: *gltf.Node, parentTransform: zm.Mat) !void {
         const nodeName = node.name orelse return;
         const localTransform = zm.mul(parentTransform, transformFromNode(node, nodeName));
         const mesh = node.mesh orelse return;
@@ -186,7 +229,7 @@ pub const MobMesh = struct {
         }
     }
 
-    pub fn buildMesh(self: *MobMesh, nodeName: [*:0]const u8, localTransform: zm.Mat, mesh: *gltf.Mesh) !void {
+    pub fn buildMesh(self: *Mesh, nodeName: [*:0]const u8, localTransform: zm.Mat, mesh: *gltf.Mesh) !void {
         const meshName = mesh.name orelse {
             return;
         };
@@ -197,7 +240,7 @@ pub const MobMesh = struct {
         const bgColor = materialBaseColorFromMesh(mesh);
         const td: ?[]u8 = self.materialTextureFromMesh(mesh) catch null;
         defer if (td) |_td| self.alloc.free(_td);
-        var mobShapeData = mobShape.MobShapeData.init(
+        var shapeData = shape.ShapeData.init(
             self.alloc,
             bgColor,
             zm.matToArr(localTransform),
@@ -207,13 +250,13 @@ pub const MobMesh = struct {
             self.fileData,
             meshId,
             0, // gltf primitive index (submesh index)
-            &mobShapeData.indices,
-            &mobShapeData.positions,
-            &mobShapeData.normals,
-            &mobShapeData.textcoords,
-            &mobShapeData.tangents,
+            &shapeData.indices,
+            &shapeData.positions,
+            &shapeData.normals,
+            &shapeData.textcoords,
+            &shapeData.tangents,
         );
-        try self.mob.addMeshData(meshId, mobShapeData);
+        try self.mob.addMeshData(meshId, shapeData);
     }
 
     pub fn transformFromNode(node: *gltf.Node, _: [*:0]const u8) zm.Mat {
@@ -255,7 +298,7 @@ pub const MobMesh = struct {
         return [_]gl.Float{ 1.0, 0.0, 1.0, 1.0 };
     }
 
-    pub fn materialTextureFromMesh(self: *MobMesh, mesh: *gltf.Mesh) ![]u8 {
+    pub fn materialTextureFromMesh(self: *Mesh, mesh: *gltf.Mesh) ![]u8 {
         const primitives = mesh.primitives;
         for (0..mesh.primitives_count) |i| {
             const primitive = primitives[i];
@@ -290,10 +333,10 @@ pub const MobMesh = struct {
                 std.debug.print("has emissive_texture\n", .{});
             }
         }
-        return MobMeshErr.NoTexture;
+        return MeshErr.NoTexture;
     }
 
-    pub fn draw(self: *MobMesh) !void {
+    pub fn draw(self: *Mesh) !void {
         try self.mob.draw();
     }
 };

@@ -1,7 +1,7 @@
 const std = @import("std");
 const gl = @import("zopengl");
 const zm = @import("zmath");
-const mobMesh = @import("../shape/mob_mesh.zig");
+const mobMesh = @import("../shape/mob/mesh.zig");
 const shapeview = @import("../shape/view.zig");
 const state = @import("../state/state.zig");
 
