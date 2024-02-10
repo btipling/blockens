@@ -91,7 +91,7 @@ pub const Mesh = struct {
         try self.buildAnimations(self.fileData.animations, self.fileData.animations_count);
     }
 
-    pub fn buildAnimations(self: *Mesh, animations: ?[*]gltf.Animation, animationCount: usize) !void {
+    pub fn buildAnimations(_: *Mesh, animations: ?[*]gltf.Animation, animationCount: usize) !void {
         if (animationCount == 0) {
             return;
         }
@@ -109,7 +109,6 @@ pub const Mesh = struct {
                     continue;
                 };
                 const aSampler = sampler.Sampler.init(
-                    self.alloc,
                     node,
                     animationName,
                     channel.target_path,
@@ -120,7 +119,6 @@ pub const Mesh = struct {
                 try as.build();
             }
             ptr += 1;
-            std.debug.print("\n\n", .{});
         }
     }
 
@@ -232,10 +230,7 @@ pub const Mesh = struct {
             };
             const pbr: gltf.PbrMetallicRoughness = material.pbr_metallic_roughness;
             if (pbr.base_color_texture.texture) |texture| {
-                std.debug.print("has texture\n", .{});
                 const image = texture.image orelse continue;
-                const mime_type = image.mime_type orelse "no_mime_type";
-                std.debug.print("image mime type: {s}\n", .{mime_type});
                 const T = @TypeOf(image.buffer_view);
                 const buffer = switch (T) {
                     ?*gltf.BufferView => image.buffer_view orelse continue,
@@ -245,17 +240,6 @@ pub const Mesh = struct {
                 const bd = try self.alloc.alloc(u8, buffer.size);
                 @memcpy(bd[0..buffer.size], bvd);
                 return bd;
-            } else {
-                std.debug.print("no texture\n", .{});
-            }
-            if (material.normal_texture.texture) |_| {
-                std.debug.print("has normal_texture\n", .{});
-            }
-            if (material.occlusion_texture.texture) |_| {
-                std.debug.print("has occlusion_texture\n", .{});
-            }
-            if (material.emissive_texture.texture) |_| {
-                std.debug.print("has emissive_texture\n", .{});
             }
         }
         return MeshErr.NoTexture;

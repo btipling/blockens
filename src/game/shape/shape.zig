@@ -80,7 +80,7 @@ pub const Shape = struct {
                     cfg.textureType = textureDataType.None;
                 }
             },
-            else => std.debug.print("no texture for {s}\n", .{name}),
+            else => {},
         }
         try initData(name, shape, shapeConfig, rgbaColor, alloc);
         try setUniforms(name, program, shapeConfig);

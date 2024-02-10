@@ -11,7 +11,6 @@ pub const SamplerErr = error{
 };
 
 pub const Sampler = struct {
-    alloc: std.mem.Allocator,
     node: *gltf.Node,
     name: [*:0]const u8,
     targetPath: gltf.AnimationPathType,
@@ -22,14 +21,12 @@ pub const Sampler = struct {
     frames: ?[]const gl.Float = null,
 
     pub fn init(
-        alloc: std.mem.Allocator,
         node: *gltf.Node,
         name: [*:0]const u8,
         targetPath: gltf.AnimationPathType,
         sampler: *gltf.AnimationSampler,
     ) Sampler {
         return Sampler{
-            .alloc = alloc,
             .node = node,
             .name = name,
             .targetPath = targetPath,
