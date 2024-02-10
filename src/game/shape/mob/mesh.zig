@@ -19,6 +19,7 @@ pub const Mesh = struct {
     mobId: i32,
     mob: shape.Shape,
     meshMap: std.AutoHashMap(gltf.MutCString, u32),
+    animationMap: std.AutoHashMap(u32, std.AutoHashMap(u32, shape.ShapeAnimation)),
     fileData: *gltf.Data, // managed by zmesh.io
     datas: std.ArrayList(shape.ShapeData),
     alloc: std.mem.Allocator,
@@ -44,6 +45,7 @@ pub const Mesh = struct {
             .mobId = mobId,
             .mob = mob,
             .meshMap = std.AutoHashMap(gltf.MutCString, u32).init(alloc),
+            .animationMap = std.AutoHashMap(u32, std.AutoHashMap(u32, shape.ShapeAnimation)).init(alloc),
             .fileData = fileData,
             .datas = datas,
             .alloc = alloc,
@@ -56,14 +58,25 @@ pub const Mesh = struct {
         }
         self.datas.deinit();
         var mob = self.mob;
-        _ = &mob;
         mob.deinit();
-        var fd = self.fileData;
-        _ = &fd;
+        const fd = self.fileData;
         zmesh.io.freeData(fd);
         var mm = self.meshMap;
-        _ = &mm;
         mm.deinit();
+        var keys = self.animationMap.keyIterator();
+        while (keys.next()) |k| {
+            if (@TypeOf(k) == *u32) {
+                const _k = k.*;
+                if (self.animationMap.get(_k)) |m| {
+                    var _m = m;
+                    _m.deinit();
+                }
+            } else {
+                @panic("invalid key for animationMap");
+            }
+        }
+        var am = self.animationMap;
+        am.deinit();
     }
 
     pub fn mapMeshesByName(self: *Mesh) !void {
@@ -87,11 +100,11 @@ pub const Mesh = struct {
             std.debug.print("no default scene\n", .{});
             return MeshErr.NoScenes;
         };
-        try self.buildScene(defaultScene);
         try self.buildAnimations(self.fileData.animations, self.fileData.animations_count);
+        try self.buildScene(defaultScene);
     }
 
-    pub fn buildAnimations(_: *Mesh, animations: ?[*]gltf.Animation, animationCount: usize) !void {
+    pub fn buildAnimations(self: *Mesh, animations: ?[*]gltf.Animation, animationCount: usize) !void {
         if (animationCount == 0) {
             return;
         }
@@ -105,9 +118,18 @@ pub const Mesh = struct {
             for (0..animation.channels_count) |i| {
                 const channel: gltf.AnimationChannel = animation.channels[i];
                 const node = channel.target_node orelse {
-                    std.debug.print("no node for {s}\n", .{animationName});
                     continue;
                 };
+                if (node.mesh == null) {
+                    continue;
+                }
+                if (node.mesh.?.name == null) {
+                    continue;
+                }
+                const meshId = self.meshMap.get(node.mesh.?.name.?) orelse {
+                    continue;
+                };
+                var map = self.animationMap.get(meshId) orelse std.AutoHashMap(u32, shape.ShapeAnimation).init(self.alloc);
                 const aSampler = sampler.Sampler.init(
                     node,
                     animationName,
@@ -117,6 +139,20 @@ pub const Mesh = struct {
                 defer aSampler.deinit();
                 var as = @constCast(&aSampler);
                 try as.build();
+                if (as.frames) |frames| {
+                    for (frames, 0..) |f, frame| {
+                        const ts: u32 = @as(u32, @intFromFloat(@floor(f * 1000)));
+                        var sa = map.get(ts) orelse shape.ShapeAnimation{};
+                        if (as.rotations) |rotations| {
+                            sa.rotation = rotations[frame];
+                        }
+                        if (as.translations) |translations| {
+                            sa.translation = translations[frame];
+                        }
+                        try map.put(ts, sa);
+                    }
+                }
+                try self.animationMap.put(meshId, map);
             }
             ptr += 1;
         }
@@ -134,6 +170,7 @@ pub const Mesh = struct {
             try self.buildNode(node, zm.identity());
         }
     }
+
     pub fn buildNode(self: *Mesh, node: *gltf.Node, parentTransform: zm.Mat) !void {
         const nodeName = node.name orelse return;
         const localTransform = zm.mul(parentTransform, transformFromNode(node, nodeName));

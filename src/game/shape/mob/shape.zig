@@ -20,6 +20,11 @@ pub const ShapeVertex = struct {
     baseColor: [4]gl.Float,
 };
 
+pub const ShapeAnimation = struct {
+    rotation: ?[4]gl.Float = null,
+    translation: ?[3]gl.Float = null,
+};
+
 pub const ShapeData = struct {
     indices: std.ArrayList(u32),
     positions: std.ArrayList([3]gl.Float),
