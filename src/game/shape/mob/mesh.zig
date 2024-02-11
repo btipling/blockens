@@ -141,7 +141,7 @@ pub const Mesh = struct {
                 try as.build();
                 if (as.frames) |frames| {
                     for (frames, 0..) |f, frame| {
-                        const ts: u32 = @as(u32, @intFromFloat(@floor(f * 1000)));
+                        const ts: u32 = @as(u32, @intFromFloat(@floor(f * 100) * 10));
                         var sa = map.get(ts) orelse shape.ShapeAnimation{};
                         if (as.rotations) |rotations| {
                             sa.rotation = rotations[frame];
@@ -205,6 +205,7 @@ pub const Mesh = struct {
             bgColor,
             zm.matToArr(localTransform),
             td,
+            self.animationMap.get(meshId),
         );
         try zmesh.io.appendMeshPrimitive(
             self.fileData,
