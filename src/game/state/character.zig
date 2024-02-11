@@ -16,7 +16,7 @@ pub const Character = struct {
     pub fn init(
         alloc: std.mem.Allocator,
     ) !Character {
-        const xRot: gl.Float = 0.25;
+        const xRot: gl.Float = 0.5;
         const yRot: gl.Float = 1;
         const zRot: gl.Float = 1;
         const vm = try shapeview.View.init(zm.identity());
@@ -38,7 +38,7 @@ pub const Character = struct {
         m = zm.mul(m, zm.rotationX(self.xRot * std.math.pi * 2.0));
         m = zm.mul(m, zm.rotationY(self.yRot * std.math.pi * 2.0));
         m = zm.mul(m, zm.rotationZ(self.zRot * std.math.pi * 2.0));
-        try self.shapeview.update(zm.mul(m, zm.translation(-0.25, 0.25, -1.0)));
+        try self.shapeview.update(zm.mul(m, zm.translation(-0.2, -0.25, -1.0)));
     }
 
     pub fn deinit(self: Character) void {
