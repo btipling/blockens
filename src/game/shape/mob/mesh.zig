@@ -109,6 +109,11 @@ pub const Mesh = struct {
         };
         try self.buildAnimations(self.fileData.animations, self.fileData.animations_count);
         try self.buildScene(defaultScene);
+        if (self.fileData.cameras_count > 0) {
+            std.debug.print("data has camera {d}\n", .{self.fileData.cameras_count});
+        } else {
+            std.debug.print("data has no camera.\n", .{});
+        }
     }
 
     pub fn buildAnimations(self: *Mesh, animations: ?[*]gltf.Animation, animationCount: usize) !void {
@@ -196,6 +201,12 @@ pub const Mesh = struct {
         for (0..node.children_count) |i| {
             const child: *gltf.Node = nodes[i];
             try self.buildNode(child, localTransform);
+        }
+        if (node.camera) |c| {
+            const cName = c.name orelse "no name camera";
+            std.debug.print("{s} has camera {s}\n", .{ nodeName, cName });
+        } else {
+            std.debug.print("{s} has no camera.\n", .{nodeName});
         }
     }
 
