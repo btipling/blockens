@@ -41,6 +41,14 @@ pub const Character = struct {
         try self.shapeview.update(zm.mul(m, zm.translation(-0.2, -0.25, -1.0)));
     }
 
+    pub fn worldView(self: *Character) !void {
+        var m = zm.identity();
+        m = zm.mul(m, zm.scaling(0.025, 0.025, 0.025));
+        m = zm.mul(m, zm.rotationX(0.5 * std.math.pi * 2.0));
+        m = zm.mul(m, zm.rotationY(0.5 * std.math.pi * 2.0));
+        try self.shapeview.update(zm.mul(m, zm.translation(0, -0.5, -1.0)));
+    }
+
     pub fn deinit(self: Character) void {
         self.clearMob();
     }
@@ -88,6 +96,7 @@ pub const Character = struct {
     }
 
     pub fn focusView(self: *Character) !void {
+        try self.updateView();
         self.shapeview.bind();
     }
 };

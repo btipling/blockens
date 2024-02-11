@@ -85,6 +85,7 @@ pub const State = struct {
     }
 
     pub fn setGameScreen(self: *State) !void {
+        try self.character.worldView();
         try self.worldScreen.focusScreen();
         try self.clearScreenState(screen.Screens.game);
     }
