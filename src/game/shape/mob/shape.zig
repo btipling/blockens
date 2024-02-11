@@ -306,10 +306,9 @@ pub const MeshData = struct {
             rm = zm.identity();
             tm = zm.identity();
             const now = @as(u64, @intCast(std.time.milliTimestamp()));
-            const clearFrame: u54 = 10;
-            const frameSet = @mod((now / clearFrame) * clearFrame, 5000);
-            const maxFrame: u32 = 1600;
-            const currentFrame: u32 = @mod(@as(u32, @intCast(frameSet)), maxFrame);
+            const clearFrame: u64 = 10;
+            const frameSet = @mod((now / clearFrame) * clearFrame, 2000);
+            const currentFrame: u32 = @as(u32, @intCast(frameSet));
             if (ad.get(currentFrame)) |sa| {
                 if (self.mobShapeData.animate) {
                     var changed = false;
