@@ -39,7 +39,7 @@ pub const ShapeTransform = struct {
             m = p.translationM();
         }
         if (self.translation) |t| {
-            return zm.mul(m, zm.translation(t[0], t[1], t[2]));
+            return zm.mul(zm.translation(t[0], t[1], t[2]), m);
         }
         return m;
     }
@@ -50,7 +50,7 @@ pub const ShapeTransform = struct {
             m = p.rotationM();
         }
         if (self.rotation) |r| {
-            return zm.mul(m, zm.matFromQuat(r));
+            return zm.mul(zm.matFromQuat(r), m);
         }
         return m;
     }
@@ -61,7 +61,7 @@ pub const ShapeTransform = struct {
             m = p.scaleM();
         }
         if (self.scale) |s| {
-            return zm.mul(m, zm.scaling(s[0], s[1], s[2]));
+            return zm.mul(zm.scaling(s[0], s[1], s[2]), m);
         }
         return m;
     }
@@ -75,7 +75,8 @@ pub const ShapeData = struct {
     tangents: std.ArrayList([4]gl.Float),
     baseColor: [4]gl.Float,
     localTransform: *ShapeTransform,
-    animationTransform: [16]gl.Float,
+    animationTranslation: zm.Mat,
+    animationRotation: zm.Mat,
     animate: bool = true,
     textureData: ?[]u8,
     animationData: ?std.AutoHashMap(u32, ShapeAnimation),
@@ -87,6 +88,14 @@ pub const ShapeData = struct {
         textureData: ?[]u8,
         animationData: ?std.AutoHashMap(u32, ShapeAnimation),
     ) ShapeData {
+        var animationTranslation = zm.identity();
+        if (localTransform.translation) |t| {
+            animationTranslation = zm.translation(t[0], t[1], t[2]);
+        }
+        var animationRotation = zm.identity();
+        if (localTransform.rotation) |r| {
+            animationRotation = zm.matFromQuat(r);
+        }
         return .{
             .indices = std.ArrayList(u32).init(alloc),
             .positions = std.ArrayList([3]gl.Float).init(alloc),
@@ -95,7 +104,8 @@ pub const ShapeData = struct {
             .tangents = std.ArrayList([4]gl.Float).init(alloc),
             .baseColor = baseColor,
             .localTransform = localTransform,
-            .animationTransform = zm.matToArr(zm.identity()),
+            .animationTranslation = animationTranslation,
+            .animationRotation = animationRotation,
             .textureData = textureData,
             .animationData = animationData,
         };
@@ -107,6 +117,66 @@ pub const ShapeData = struct {
         self.normals.deinit();
         self.textcoords.deinit();
         self.tangents.deinit();
+    }
+
+    fn currentFrame(_: ShapeData) u32 {
+        const now = @as(u64, @intCast(std.time.milliTimestamp()));
+        const clearFrame: u64 = 10;
+        const frameSet = @mod((now / clearFrame) * clearFrame, 2000);
+        return @as(u32, @intCast(frameSet));
+    }
+
+    fn translationM(self: *ShapeData) zm.Mat {
+        var m = zm.identity();
+        if (self.localTransform.parent) |p| {
+            m = p.translationM();
+        }
+        if (self.animationData) |ad| {
+            if (ad.get(self.currentFrame())) |sa| {
+                if (self.animate) {
+                    if (sa.translation) |t| {
+                        self.animationTranslation = zm.translation(t[0], t[1], t[2]);
+                    }
+                }
+            }
+            return zm.mul(self.animationTranslation, m);
+        }
+        if (self.localTransform.translation) |t| {
+            return zm.mul(zm.translation(t[0], t[1], t[2]), m);
+        }
+        return m;
+    }
+
+    fn rotationM(self: *ShapeData) zm.Mat {
+        var m = zm.identity();
+        if (self.localTransform.parent) |p| {
+            m = p.rotationM();
+        }
+        if (self.animationData) |ad| {
+            if (ad.get(self.currentFrame())) |sa| {
+                if (self.animate) {
+                    if (sa.rotation) |r| {
+                        self.animationRotation = zm.matFromQuat(r);
+                    }
+                }
+            }
+            return zm.mul(self.animationRotation, m);
+        }
+        if (self.localTransform.rotation) |r| {
+            return zm.mul(zm.matFromQuat(r), m);
+        }
+        return m;
+    }
+
+    fn scaleM(self: *ShapeData) zm.Mat {
+        var m = zm.identity();
+        if (self.localTransform.parent) |p| {
+            m = p.scaleM();
+        }
+        if (self.localTransform.scale) |s| {
+            return zm.mul(zm.scaling(s[0], s[1], s[2]), m);
+        }
+        return m;
     }
 };
 
@@ -299,41 +369,17 @@ pub const MeshData = struct {
         }
 
         const location = gl.getUniformLocation(program, "meshMatrices");
-        const sm = self.mobShapeData.localTransform.scaleM();
-        var tm = self.mobShapeData.localTransform.translationM();
-        var rm = self.mobShapeData.localTransform.rotationM();
-        if (self.mobShapeData.animationData) |ad| {
-            rm = zm.identity();
-            tm = zm.identity();
-            const now = @as(u64, @intCast(std.time.milliTimestamp()));
-            const clearFrame: u64 = 10;
-            const frameSet = @mod((now / clearFrame) * clearFrame, 2000);
-            const currentFrame: u32 = @as(u32, @intCast(frameSet));
-            if (ad.get(currentFrame)) |sa| {
-                if (self.mobShapeData.animate) {
-                    var changed = false;
-                    var m = zm.identity();
-                    if (sa.rotation) |r| {
-                        m = zm.mul(m, zm.matFromQuat(r));
-                        changed = true;
-                    }
-                    if (sa.translation) |t| {
-                        m = zm.mul(m, zm.translation(t[0], t[1], t[2]));
-                        changed = true;
-                    }
-                    if (changed) {
-                        self.mobShapeData.animationTransform = zm.matToArr(m);
-                    }
-                }
-            }
-        }
+        const sm = self.mobShapeData.scaleM();
+        const rm = self.mobShapeData.rotationM();
+        const tm = self.mobShapeData.translationM();
         var m = sm;
         m = zm.mul(m, rm);
         m = zm.mul(m, tm);
         const mr = zm.matToArr(m);
+        const im = zm.matToArr(zm.identity());
         var toModelSpace: [32]gl.Float = [_]gl.Float{0} ** 32;
         @memcpy(toModelSpace[0..16], &mr);
-        @memcpy(toModelSpace[16..32], &self.mobShapeData.animationTransform);
+        @memcpy(toModelSpace[16..32], &im);
         gl.uniformMatrix4fv(location, 2, gl.FALSE, &toModelSpace);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
