@@ -127,10 +127,6 @@ pub const ShapeData = struct {
     }
 
     fn translationM(self: *ShapeData) zm.Mat {
-        var m = zm.identity();
-        if (self.localTransform.parent) |p| {
-            m = p.translationM();
-        }
         if (self.animationData) |ad| {
             if (ad.get(self.currentFrame())) |sa| {
                 if (self.animate) {
@@ -139,19 +135,15 @@ pub const ShapeData = struct {
                     }
                 }
             }
-            return zm.mul(self.animationTranslation, m);
+            return self.animationTranslation;
         }
         if (self.localTransform.translation) |t| {
-            return zm.mul(zm.translation(t[0], t[1], t[2]), m);
+            return zm.translation(t[0], t[1], t[2]);
         }
-        return m;
+        return zm.identity();
     }
 
     fn rotationM(self: *ShapeData) zm.Mat {
-        var m = zm.identity();
-        if (self.localTransform.parent) |p| {
-            m = p.rotationM();
-        }
         if (self.animationData) |ad| {
             if (ad.get(self.currentFrame())) |sa| {
                 if (self.animate) {
@@ -160,23 +152,31 @@ pub const ShapeData = struct {
                     }
                 }
             }
-            return zm.mul(self.animationRotation, m);
+            return self.animationRotation;
         }
         if (self.localTransform.rotation) |r| {
-            return zm.mul(zm.matFromQuat(r), m);
+            return zm.matFromQuat(r);
         }
-        return m;
+        return zm.identity();
     }
 
     fn scaleM(self: *ShapeData) zm.Mat {
+        if (self.localTransform.scale) |s| {
+            return zm.scaling(s[0], s[1], s[2]);
+        }
+        return zm.identity();
+    }
+
+    fn transform(self: *ShapeData) zm.Mat {
         var m = zm.identity();
         if (self.localTransform.parent) |p| {
-            m = p.scaleM();
+            m = zm.mul(m, p.scaleM());
+            m = zm.mul(m, p.rotationM());
+            m = zm.mul(m, p.translationM());
         }
-        if (self.localTransform.scale) |s| {
-            return zm.mul(zm.scaling(s[0], s[1], s[2]), m);
-        }
-        return m;
+        m = zm.mul(m, self.scaleM());
+        m = zm.mul(m, self.rotationM());
+        return zm.mul(m, self.translationM());
     }
 };
 
@@ -369,13 +369,7 @@ pub const MeshData = struct {
         }
 
         const location = gl.getUniformLocation(program, "meshMatrices");
-        const sm = self.mobShapeData.scaleM();
-        const rm = self.mobShapeData.rotationM();
-        const tm = self.mobShapeData.translationM();
-        var m = sm;
-        m = zm.mul(m, rm);
-        m = zm.mul(m, tm);
-        const mr = zm.matToArr(m);
+        const mr = zm.matToArr(self.mobShapeData.transform());
         const im = zm.matToArr(zm.identity());
         var toModelSpace: [32]gl.Float = [_]gl.Float{0} ** 32;
         @memcpy(toModelSpace[0..16], &mr);
