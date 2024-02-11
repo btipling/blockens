@@ -24,6 +24,7 @@ pub const Mesh = struct {
     fileData: *gltf.Data, // managed by zmesh.io
     datas: std.ArrayList(shape.ShapeData),
     alloc: std.mem.Allocator,
+    animate: bool = false,
 
     pub fn init(
         vm: view.View,
@@ -291,6 +292,6 @@ pub const Mesh = struct {
     }
 
     pub fn draw(self: *Mesh) !void {
-        try self.mob.draw();
+        try self.mob.draw(self.animate);
     }
 };

@@ -61,7 +61,6 @@ pub const ShapeData = struct {
     localTransform: *ShapeTransform,
     animationTranslation: zm.Mat,
     animationRotation: zm.Mat,
-    animate: bool = true,
     textureData: ?[]u8,
     animationData: ?std.AutoHashMap(u32, ShapeAnimation),
 
@@ -110,16 +109,16 @@ pub const ShapeData = struct {
         return @as(u32, @intCast(frameSet));
     }
 
-    fn translationM(self: *ShapeData) zm.Mat {
-        if (self.animationData) |ad| {
-            if (ad.get(self.currentFrame())) |sa| {
-                if (self.animate) {
+    fn translationM(self: *ShapeData, animate: bool) zm.Mat {
+        if (animate) {
+            if (self.animationData) |ad| {
+                if (ad.get(self.currentFrame())) |sa| {
                     if (sa.translation) |t| {
                         self.animationTranslation = zm.translation(t[0], t[1], t[2]);
                     }
                 }
+                return self.animationTranslation;
             }
-            return self.animationTranslation;
         }
         if (self.localTransform.translation) |t| {
             return zm.translation(t[0], t[1], t[2]);
@@ -127,16 +126,16 @@ pub const ShapeData = struct {
         return zm.identity();
     }
 
-    fn rotationM(self: *ShapeData) zm.Mat {
-        if (self.animationData) |ad| {
-            if (ad.get(self.currentFrame())) |sa| {
-                if (self.animate) {
+    fn rotationM(self: *ShapeData, animate: bool) zm.Mat {
+        if (animate) {
+            if (self.animationData) |ad| {
+                if (ad.get(self.currentFrame())) |sa| {
                     if (sa.rotation) |r| {
                         self.animationRotation = zm.matFromQuat(r);
                     }
                 }
+                return self.animationRotation;
             }
-            return self.animationRotation;
         }
         if (self.localTransform.rotation) |r| {
             return zm.matFromQuat(r);
@@ -144,18 +143,18 @@ pub const ShapeData = struct {
         return zm.identity();
     }
 
-    fn scaleM(self: *ShapeData) zm.Mat {
+    fn scaleM(self: *ShapeData, _: bool) zm.Mat {
         if (self.localTransform.scale) |s| {
             return zm.scaling(s[0], s[1], s[2]);
         }
         return zm.identity();
     }
 
-    fn transform(self: *ShapeData) zm.Mat {
+    fn transform(self: *ShapeData, animate: bool) zm.Mat {
         var m = zm.identity();
-        m = zm.mul(m, self.scaleM());
-        m = zm.mul(m, self.rotationM());
-        m = zm.mul(m, self.translationM());
+        m = zm.mul(m, self.scaleM(animate));
+        m = zm.mul(m, self.rotationM(animate));
+        m = zm.mul(m, self.translationM(animate));
         if (self.localTransform.parent) |p| {
             m = zm.mul(m, p.transformation());
         }
@@ -335,7 +334,7 @@ pub const MeshData = struct {
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
     }
 
-    pub fn draw(self: *MeshData, program: gl.Uint) !void {
+    pub fn draw(self: *MeshData, program: gl.Uint, animate: bool) !void {
         gl.bindVertexArray(self.vao);
         var e = gl.getError();
         if (e != gl.NO_ERROR) {
@@ -352,7 +351,7 @@ pub const MeshData = struct {
         }
 
         const location = gl.getUniformLocation(program, "toModelSpace");
-        const toModelSpace = zm.matToArr(self.mobShapeData.transform());
+        const toModelSpace = zm.matToArr(self.mobShapeData.transform(animate));
         gl.uniformMatrix4fv(location, 1, gl.FALSE, &toModelSpace);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
@@ -535,7 +534,7 @@ pub const Shape = struct {
         gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, vm.ubo);
     }
 
-    pub fn draw(self: Shape) !void {
+    pub fn draw(self: Shape, animate: bool) !void {
         gl.useProgram(self.program);
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
@@ -548,7 +547,7 @@ pub const Shape = struct {
             if (@TypeOf(_k) == *u32) {
                 const meshId = _k.*;
                 var mesh = self.mobMeshData.get(meshId).?;
-                try mesh.draw(self.program);
+                try mesh.draw(self.program, animate);
             } else {
                 @panic("invalid mesh key");
             }

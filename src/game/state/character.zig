@@ -9,7 +9,7 @@ pub const Character = struct {
     alloc: std.mem.Allocator,
     shapeview: shapeview.View,
     wireframe: bool = false,
-    mob: ?mobMesh.Mesh,
+    mob: ?*mobMesh.Mesh,
     xRot: gl.Float,
     yRot: gl.Float,
     zRot: gl.Float,
@@ -46,8 +46,9 @@ pub const Character = struct {
     }
 
     pub fn clearMob(self: Character) void {
-        if (self.mob) |_| {
-            self.mob.?.deinit();
+        if (self.mob) |m| {
+            m.deinit();
+            self.alloc.destroy(m);
         }
     }
 
@@ -70,7 +71,16 @@ pub const Character = struct {
         self.clearMob();
         var mob = try mobMesh.Mesh.init(self.shapeview, 0, self.alloc);
         try mob.build();
-        self.mob = mob;
+        const m = try self.alloc.create(mobMesh.Mesh);
+        m.* = mob;
+        self.mob = m;
+    }
+
+    pub fn toggleWalking(self: *Character) !void {
+        if (self.mob) |m| {
+            @constCast(m).animate = !m.animate;
+            self.mob = m;
+        }
     }
 
     pub fn clearCharacterViewState(self: *Character) !void {

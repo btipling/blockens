@@ -74,13 +74,22 @@ pub const CharacterDesigner = struct {
             })) {
                 try self.generateCharacter();
             }
+            if (zgui.button("Toggle walking", .{
+                .w = 500,
+                .h = 100,
+            })) {
+                try self.toggleWalking();
+            }
             zgui.popStyleVar(.{ .count = 1 });
         }
         zgui.endChild();
     }
 
     fn generateCharacter(self: *CharacterDesigner) !void {
-        std.debug.print("generating character\n", .{});
         try self.appState.character.generate();
+    }
+
+    fn toggleWalking(self: *CharacterDesigner) !void {
+        try self.appState.character.toggleWalking();
     }
 };
