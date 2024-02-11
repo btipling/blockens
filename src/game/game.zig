@@ -124,7 +124,12 @@ pub const Game = struct {
         defer uiCursor.deinit();
 
         // init views
-        var gameScreen = try screen.world.World.initWithHUD(worldPlane, uiCursor, &appState.worldScreen);
+        var gameScreen = try screen.world.World.initWithHUD(
+            worldPlane,
+            uiCursor,
+            &appState.worldScreen,
+            &appState.character,
+        );
         var demoScreen = try screen.world.World.init(&appState.demoScreen);
 
         var textureGen = try screen.texture_gen.TextureGenerator.init(&appState, self.allocator);

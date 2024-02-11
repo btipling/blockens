@@ -15,6 +15,13 @@ pub const MeshErr = error{
     BuildErr,
 };
 
+pub const MeshCamera = struct {
+    aspectRatio: f32 = 1,
+    yfov: f32 = 1,
+    znear: f32 = 1,
+    zfar: f32 = 500,
+};
+
 pub const Mesh = struct {
     mobId: i32,
     mob: shape.Shape,
@@ -110,9 +117,29 @@ pub const Mesh = struct {
         try self.buildAnimations(self.fileData.animations, self.fileData.animations_count);
         try self.buildScene(defaultScene);
         if (self.fileData.cameras_count > 0) {
-            std.debug.print("data has camera {d}\n", .{self.fileData.cameras_count});
-        } else {
-            std.debug.print("data has no camera.\n", .{});
+            if (self.fileData.cameras) |c| {
+                try self.addCamera(c[0]);
+            }
+        }
+    }
+
+    fn addCamera(_: *Mesh, camera: gltf.Camera) !void {
+        const cameraName = camera.name orelse "::camera has no name::";
+        std.debug.print("adding camera {s}", .{cameraName});
+        switch (camera.type) {
+            .perspective => {},
+            else => return, // unsupported
+        }
+        const cData = camera.data.perspective;
+        var mc = MeshCamera{
+            .yfov = cData.yfov,
+            .znear = cData.znear,
+        };
+        if (cData.has_aspect_ratio != 0) {
+            mc.aspectRatio = cData.aspect_ratio;
+        }
+        if (cData.has_zfar != 0) {
+            mc.zfar = cData.zfar;
         }
     }
 
@@ -201,12 +228,6 @@ pub const Mesh = struct {
         for (0..node.children_count) |i| {
             const child: *gltf.Node = nodes[i];
             try self.buildNode(child, localTransform);
-        }
-        if (node.camera) |c| {
-            const cName = c.name orelse "no name camera";
-            std.debug.print("{s} has camera {s}\n", .{ nodeName, cName });
-        } else {
-            std.debug.print("{s} has no camera.\n", .{nodeName});
         }
     }
 

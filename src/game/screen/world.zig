@@ -12,6 +12,7 @@ pub const World = struct {
     worldPlane: ?plane.Plane = null,
     cursor: ?cursor.Cursor = null,
     worldScreen: *state.screen.Screen,
+    character: ?*state.character.Character = null,
     numVoxelMeshesDrawn: usize = 0,
 
     pub fn init(worldScreen: *state.screen.Screen) !World {
@@ -20,10 +21,16 @@ pub const World = struct {
         };
     }
 
-    pub fn initWithHUD(worldPlane: plane.Plane, c: cursor.Cursor, worldScreen: *state.screen.Screen) !World {
+    pub fn initWithHUD(
+        worldPlane: plane.Plane,
+        c: cursor.Cursor,
+        worldScreen: *state.screen.Screen,
+        character: *state.character.Character,
+    ) !World {
         return World{
             .worldPlane = worldPlane,
             .worldScreen = worldScreen,
+            .character = character,
             .cursor = c,
         };
     }
@@ -78,6 +85,13 @@ pub const World = struct {
             var _c = c;
             try _c.draw(self.worldScreen.lookAt);
         }
+
+        if (self.character) |c| {
+            if (c.mob) |_| {
+                try self.character.?.mob.?.draw();
+            }
+        }
+
         if (self.worldScreen.wireframe) {
             gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
         }
