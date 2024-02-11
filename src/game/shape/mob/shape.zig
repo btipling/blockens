@@ -33,35 +33,19 @@ pub const ShapeTransform = struct {
     translation: ?[3]gl.Float = null,
     scale: ?[3]gl.Float = null,
 
-    fn translationM(self: ShapeTransform) zm.Mat {
+    fn transformation(self: ShapeTransform) zm.Mat {
         var m = zm.identity();
-        if (self.parent) |p| {
-            m = p.translationM();
-        }
-        if (self.translation) |t| {
-            return zm.mul(m, zm.translation(t[0], t[1], t[2]));
-        }
-        return m;
-    }
-
-    fn rotationM(self: ShapeTransform) zm.Mat {
-        var m = zm.identity();
-        if (self.parent) |p| {
-            m = p.rotationM();
+        if (self.scale) |s| {
+            m = zm.mul(m, zm.scaling(s[0], s[1], s[2]));
         }
         if (self.rotation) |r| {
-            return zm.mul(m, zm.matFromQuat(r));
+            m = zm.mul(m, zm.matFromQuat(r));
         }
-        return m;
-    }
-
-    fn scaleM(self: ShapeTransform) zm.Mat {
-        var m = zm.identity();
+        if (self.translation) |t| {
+            m = zm.mul(m, zm.translation(t[0], t[1], t[2]));
+        }
         if (self.parent) |p| {
-            m = p.scaleM();
-        }
-        if (self.scale) |s| {
-            return zm.mul(m, zm.scaling(s[0], s[1], s[2]));
+            m = zm.mul(m, p.transformation());
         }
         return m;
     }
@@ -173,9 +157,7 @@ pub const ShapeData = struct {
         m = zm.mul(m, self.rotationM());
         m = zm.mul(m, self.translationM());
         if (self.localTransform.parent) |p| {
-            m = zm.mul(m, p.scaleM());
-            m = zm.mul(m, p.rotationM());
-            m = zm.mul(m, p.translationM());
+            m = zm.mul(m, p.transformation());
         }
         return m;
     }
