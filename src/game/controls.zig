@@ -105,19 +105,24 @@ pub const Controls = struct {
             speed *= 20.0;
         }
         const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
+        self.appState.character.disableWalking();
         if (self.window.getKey(.w) == .press) {
+            self.appState.character.enableWalking();
             const np = viewState.cameraPos + viewState.cameraFront * cameraSpeed;
             try self.appState.worldScreen.updateCameraPosition(np);
         }
         if (self.window.getKey(.s) == .press) {
+            self.appState.character.enableWalking();
             const np = viewState.cameraPos - viewState.cameraFront * cameraSpeed;
             try self.appState.worldScreen.updateCameraPosition(np);
         }
         if (self.window.getKey(.a) == .press) {
+            self.appState.character.enableWalking();
             const np = viewState.cameraPos - zm.normalize3(zm.cross3(viewState.cameraFront, viewState.cameraUp)) * cameraSpeed;
             try self.appState.worldScreen.updateCameraPosition(np);
         }
         if (self.window.getKey(.d) == .press) {
+            self.appState.character.enableWalking();
             const np = viewState.cameraPos + zm.normalize3(zm.cross3(viewState.cameraFront, viewState.cameraUp)) * cameraSpeed;
             try self.appState.worldScreen.updateCameraPosition(np);
         }

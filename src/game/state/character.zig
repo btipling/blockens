@@ -91,6 +91,20 @@ pub const Character = struct {
         }
     }
 
+    pub fn disableWalking(self: *Character) void {
+        if (self.mob) |m| {
+            @constCast(m).animate = false;
+            self.mob = m;
+        }
+    }
+
+    pub fn enableWalking(self: *Character) void {
+        if (self.mob) |m| {
+            @constCast(m).animate = true;
+            self.mob = m;
+        }
+    }
+
     pub fn clearCharacterViewState(self: *Character) !void {
         self.shapeview.unbind();
     }
