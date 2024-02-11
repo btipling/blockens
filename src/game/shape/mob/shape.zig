@@ -351,13 +351,9 @@ pub const MeshData = struct {
             return ShapeErr.RenderError;
         }
 
-        const location = gl.getUniformLocation(program, "meshMatrices");
-        const mr = zm.matToArr(self.mobShapeData.transform());
-        const im = zm.matToArr(zm.identity());
-        var toModelSpace: [32]gl.Float = [_]gl.Float{0} ** 32;
-        @memcpy(toModelSpace[0..16], &mr);
-        @memcpy(toModelSpace[16..32], &im);
-        gl.uniformMatrix4fv(location, 2, gl.FALSE, &toModelSpace);
+        const location = gl.getUniformLocation(program, "toModelSpace");
+        const toModelSpace = zm.matToArr(self.mobShapeData.transform());
+        gl.uniformMatrix4fv(location, 1, gl.FALSE, &toModelSpace);
         e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("error: {d}\n", .{e});
