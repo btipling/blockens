@@ -142,7 +142,9 @@ pub const Mesh = struct {
                 if (as.frames) |frames| {
                     for (frames, 0..) |f, frame| {
                         const ts: u32 = @as(u32, @intFromFloat(@floor(f * 100) * 10));
-                        var sa = map.get(ts) orelse shape.ShapeAnimation{};
+                        var sa = map.get(ts) orelse shape.ShapeAnimation{ .animationTransform = zm.matToArr(
+                            zm.translation(0, -20, 0),
+                        ) };
                         if (as.rotations) |rotations| {
                             sa.rotation = rotations[frame];
                         }
@@ -200,13 +202,15 @@ pub const Mesh = struct {
         const bgColor = materialBaseColorFromMesh(mesh);
         const td: ?[]u8 = self.materialTextureFromMesh(mesh) catch null;
         defer if (td) |_td| self.alloc.free(_td);
-        var shapeData = shape.ShapeData.init(
+        var shapeData = try self.alloc.create(shape.ShapeData);
+        const sd = shape.ShapeData.init(
             self.alloc,
             bgColor,
             zm.matToArr(localTransform),
             td,
             self.animationMap.get(meshId),
         );
+        shapeData.* = sd;
         try zmesh.io.appendMeshPrimitive(
             self.fileData,
             meshId,

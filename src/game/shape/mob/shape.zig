@@ -23,6 +23,7 @@ pub const ShapeVertex = struct {
 pub const ShapeAnimation = struct {
     rotation: ?[4]gl.Float = null,
     translation: ?[3]gl.Float = null,
+    animationTransform: [16]gl.Float,
 };
 
 pub const ShapeData = struct {
@@ -75,10 +76,11 @@ pub const MeshData = struct {
     ebo: gl.Uint,
     texture: gl.Uint,
     numIndices: gl.Int,
-    mobShapeData: ShapeData,
+    mobShapeData: *ShapeData,
+    alloc: std.mem.Allocator,
     pub fn init(
         meshId: u32,
-        mobShapeData: ShapeData,
+        mobShapeData: *ShapeData,
         alloc: std.mem.Allocator,
     ) !MeshData {
         const vao = try gfx.Gfx.initVAO();
@@ -90,7 +92,7 @@ pub const MeshData = struct {
         } else {
             texture = try initClearTexture(meshId);
         }
-        try initData(meshId, &mobShapeData, alloc);
+        try initData(meshId, mobShapeData, alloc);
         return MeshData{
             .meshId = meshId,
             .vao = vao,
@@ -99,6 +101,7 @@ pub const MeshData = struct {
             .texture = texture,
             .numIndices = @intCast(mobShapeData.indices.items.len),
             .mobShapeData = mobShapeData,
+            .alloc = alloc,
         };
     }
 
@@ -106,8 +109,9 @@ pub const MeshData = struct {
         gl.deleteVertexArrays(1, &self.vao);
         gl.deleteBuffers(1, &self.vbo);
         gl.deleteBuffers(1, &self.ebo);
-        var mmd = &self.mobShapeData;
+        var mmd = self.mobShapeData;
         mmd.deinit();
+        self.alloc.destroy(self.mobShapeData);
         return;
     }
 
@@ -187,7 +191,7 @@ pub const MeshData = struct {
         return texture;
     }
 
-    fn initData(meshId: u32, mobShapeData: *const ShapeData, alloc: std.mem.Allocator) !void {
+    fn initData(meshId: u32, mobShapeData: *ShapeData, alloc: std.mem.Allocator) !void {
         var vertices = try std.ArrayList(ShapeVertex).initCapacity(alloc, mobShapeData.positions.items.len);
         defer vertices.deinit();
 
@@ -261,18 +265,28 @@ pub const MeshData = struct {
             const maxFrame: u32 = 1600;
             const currentFrame: u32 = @mod(@as(u32, @intCast(frameSet)), maxFrame);
             if (ad.get(currentFrame)) |sa| {
-                var m = zm.identity();
-                std.debug.print("\nanimating at {d} with: \n", .{currentFrame});
-                if (sa.rotation) |r| {
-                    std.debug.print("\trotation ({d}, {d}, {d}, {d})\n", .{ r[0], r[1], r[2], r[3] });
-                    m = zm.mul(m, zm.matFromQuat(r));
+                if (self.mobShapeData.animate and self.meshId == 1) {
+                    var changed = false;
+                    var m = zm.matFromArr(self.mobShapeData.animationTransform);
+                    if (sa.rotation) |_| {
+                        // std.debug.print("\trotation ({d}, {d}, {d}, {d})\n", .{ r[0], r[1], r[2], r[3] });
+                        // m = zm.mul(m, zm.matFromQuat(r));
+                        // m = zm.mul(m, zm.rotationY(90 * std.math.pi * 2.0));
+                        // changed = true;
+                    }
+                    if (sa.translation) |_| {
+                        // std.debug.print("\ttranslation ({d}, {d}, {d})\n", .{ t[0], t[1], t[2] });
+                        // m = zm.mul(m, zm.translation(t[0], t[1], t[2]));
+                        m = zm.mul(m, zm.translation(0, -20, 0));
+                        changed = true;
+                    }
+                    std.debug.print("\n\n", .{});
+                    if (changed) {
+                        std.debug.print("\nanimating {d} at {d} with: \n", .{ self.meshId, currentFrame });
+                        self.mobShapeData.animationTransform = zm.matToArr(m);
+                        self.mobShapeData.animate = false;
+                    }
                 }
-                if (sa.translation) |t| {
-                    std.debug.print("\ttranslation ({d}, {d}, {d})\n", .{ t[0], t[1], t[2] });
-                    m = zm.mul(m, zm.translation(t[0], t[1], t[2]));
-                }
-                std.debug.print("\n\n", .{});
-                //self.mobShapeData.animationTransform = zm.matToArr(m);
             }
         }
         var toModelSpace: [32]gl.Float = [_]gl.Float{0} ** 32;
@@ -325,8 +339,7 @@ pub const Shape = struct {
             if (@TypeOf(_k) == *u32) {
                 const meshId = _k.*;
                 var mesh = self.mobMeshData.get(meshId).?;
-                var m = &mesh;
-                m.deinit();
+                mesh.deinit();
             } else {
                 @panic("invalid mesh key");
             }
@@ -339,7 +352,7 @@ pub const Shape = struct {
     pub fn addMeshData(
         self: *Shape,
         meshId: u32,
-        mobShapeData: ShapeData,
+        mobShapeData: *ShapeData,
     ) !void {
         gl.useProgram(self.program);
         const e = gl.getError();
@@ -474,8 +487,7 @@ pub const Shape = struct {
             if (@TypeOf(_k) == *u32) {
                 const meshId = _k.*;
                 var mesh = self.mobMeshData.get(meshId).?;
-                var m = &mesh;
-                try m.draw(self.program);
+                try mesh.draw(self.program);
             } else {
                 @panic("invalid mesh key");
             }
