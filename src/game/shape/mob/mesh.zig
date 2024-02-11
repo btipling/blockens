@@ -20,6 +20,7 @@ pub const Mesh = struct {
     mob: shape.Shape,
     meshMap: std.AutoHashMap(gltf.MutCString, u32),
     animationMap: std.AutoHashMap(u32, std.AutoHashMap(u32, shape.ShapeAnimation)),
+    localTransforms: std.ArrayList(*shape.ShapeTransform),
     fileData: *gltf.Data, // managed by zmesh.io
     datas: std.ArrayList(shape.ShapeData),
     alloc: std.mem.Allocator,
@@ -46,6 +47,7 @@ pub const Mesh = struct {
             .mob = mob,
             .meshMap = std.AutoHashMap(gltf.MutCString, u32).init(alloc),
             .animationMap = std.AutoHashMap(u32, std.AutoHashMap(u32, shape.ShapeAnimation)).init(alloc),
+            .localTransforms = std.ArrayList(*shape.ShapeTransform).init(alloc),
             .fileData = fileData,
             .datas = datas,
             .alloc = alloc,
@@ -77,6 +79,10 @@ pub const Mesh = struct {
         }
         var am = self.animationMap;
         am.deinit();
+        for (self.localTransforms.items) |l| {
+            self.alloc.destroy(l);
+        }
+        self.localTransforms.deinit();
     }
 
     pub fn mapMeshesByName(self: *Mesh) !void {
@@ -143,7 +149,7 @@ pub const Mesh = struct {
                     for (frames, 0..) |f, frame| {
                         const ts: u32 = @as(u32, @intFromFloat(@floor(f * 100) * 10));
                         var sa = map.get(ts) orelse shape.ShapeAnimation{ .animationTransform = zm.matToArr(
-                            zm.translation(0, -20, 0),
+                            zm.identity(),
                         ) };
                         if (as.rotations) |rotations| {
                             sa.rotation = rotations[frame];
@@ -169,13 +175,14 @@ pub const Mesh = struct {
         };
         for (0..scene.nodes_count) |i| {
             const node: *gltf.Node = nodes[i];
-            try self.buildNode(node, zm.identity());
+            try self.buildNode(node, null);
         }
     }
 
-    pub fn buildNode(self: *Mesh, node: *gltf.Node, parentTransform: zm.Mat) !void {
+    pub fn buildNode(self: *Mesh, node: *gltf.Node, parentTransform: ?*shape.ShapeTransform) !void {
         const nodeName = node.name orelse return;
-        const localTransform = zm.mul(parentTransform, transformFromNode(node, nodeName));
+        var localTransform = try self.transformFromNode(node, nodeName);
+        localTransform.parent = parentTransform;
         const mesh = node.mesh orelse return;
         try self.buildMesh(nodeName, localTransform, mesh);
 
@@ -191,7 +198,7 @@ pub const Mesh = struct {
         }
     }
 
-    pub fn buildMesh(self: *Mesh, nodeName: [*:0]const u8, localTransform: zm.Mat, mesh: *gltf.Mesh) !void {
+    pub fn buildMesh(self: *Mesh, nodeName: [*:0]const u8, localTransform: *shape.ShapeTransform, mesh: *gltf.Mesh) !void {
         const meshName = mesh.name orelse {
             return;
         };
@@ -206,7 +213,7 @@ pub const Mesh = struct {
         const sd = shape.ShapeData.init(
             self.alloc,
             bgColor,
-            zm.matToArr(localTransform),
+            localTransform,
             td,
             self.animationMap.get(meshId),
         );
@@ -224,27 +231,23 @@ pub const Mesh = struct {
         try self.mob.addMeshData(meshId, shapeData);
     }
 
-    pub fn transformFromNode(node: *gltf.Node, _: [*:0]const u8) zm.Mat {
-        var nodeTransform = zm.identity();
+    pub fn transformFromNode(self: *Mesh, node: *gltf.Node, _: [*:0]const u8) !*shape.ShapeTransform {
+        var s = try self.alloc.create(shape.ShapeTransform);
+        try self.localTransforms.append(s);
+        s.* = shape.ShapeTransform{};
         if (node.has_matrix == 1) {
-            nodeTransform = zm.mul(nodeTransform, zm.matFromArr(node.matrix));
+            s.transform = node.matrix;
         }
         if (node.has_scale == 1) {
-            const s = node.scale;
-            const sm = zm.scaling(s[0], s[1], s[2]);
-            nodeTransform = zm.mul(nodeTransform, sm);
+            s.scale = node.scale;
         }
         if (node.has_rotation == 1) {
-            const r = node.rotation;
-            const quat: zm.Quat = .{ r[0], r[1], r[2], r[3] };
-            nodeTransform = zm.mul(nodeTransform, zm.quatToMat(quat));
+            s.rotation = node.rotation;
         }
         if (node.has_translation == 1) {
-            const t = node.translation;
-            const tm = zm.translation(t[0], t[1], t[2]);
-            nodeTransform = zm.mul(nodeTransform, tm);
+            s.translation = node.translation;
         }
-        return nodeTransform;
+        return s;
     }
 
     pub fn materialBaseColorFromMesh(mesh: *gltf.Mesh) [4]gl.Float {
