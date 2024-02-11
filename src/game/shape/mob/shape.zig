@@ -171,8 +171,11 @@ pub const ShapeData = struct {
         var m = zm.identity();
         if (self.localTransform.parent) |p| {
             m = zm.mul(m, p.scaleM());
+            m = zm.mul(m, self.scaleM());
             m = zm.mul(m, p.rotationM());
+            m = zm.mul(m, self.rotationM());
             m = zm.mul(m, p.translationM());
+            return zm.mul(m, self.translationM());
         }
         m = zm.mul(m, self.scaleM());
         m = zm.mul(m, self.rotationM());
