@@ -1,15 +1,16 @@
 const zgui = @import("zgui");
 const glfw = @import("zglfw");
 const state = @import("../state/state.zig");
+const components = @import("../ecs/components.zig");
 
 pub const Game = struct {
     appState: *state.State,
 
-    pub fn draw(self: Game, window: *glfw.Window) !void {
-        try self.drawInfo(window);
+    pub fn draw(self: Game, window: *glfw.Window, time: ?*components.Time) !void {
+        try self.drawInfo(window, time);
     }
 
-    fn drawInfo(self: Game, window: *glfw.Window) !void {
+    fn drawInfo(self: Game, window: *glfw.Window, time: ?*components.Time) !void {
         window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
         const xPos: f32 = 50.0;
         const yPos: f32 = 50.0;
@@ -29,7 +30,18 @@ pub const Game = struct {
                 .no_collapse = true,
             },
         })) {
-            zgui.text("Hello blockens!", .{});
+            var hours: i64 = 0;
+            var minutes: i64 = 0;
+            var seconds: i64 = 0;
+            if (time) |t| {
+                const duration = t.currentTime - t.startTime;
+                const durSeconds = @divFloor(duration, 1000);
+                const durMinutes = @divFloor(durSeconds, 60);
+                hours = @divFloor(durMinutes, 60);
+                minutes = @mod(durMinutes, 60);
+                seconds = @mod(durSeconds, 60);
+            }
+            zgui.text("Hello blockens! {d}:{d}:{d}", .{ hours, minutes, seconds });
             zgui.text("F1 for settings", .{});
             const x = @as(i32, @intFromFloat(self.appState.demoScreen.cameraPos[0]));
             const y = @as(i32, @intFromFloat(self.appState.demoScreen.cameraPos[1]));

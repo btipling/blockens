@@ -11,6 +11,7 @@ const menus = @import("menus.zig");
 const game = @import("game.zig");
 const state = @import("../state/state.zig");
 const script = @import("../script/script.zig");
+const components = @import("../ecs/components.zig");
 
 const pressStart2PFont = @embedFile("../assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
 const robotoMonoFont = @embedFile("../assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
@@ -93,9 +94,9 @@ pub const UI = struct {
         zgui.backend.draw();
     }
 
-    pub fn drawGame(self: *UI) !void {
+    pub fn drawGame(self: *UI, time: ?*components.Time) !void {
         self.beginDraw();
-        try self.Game.draw(self.window);
+        try self.Game.draw(self.window, time);
         self.endDraw();
     }
 

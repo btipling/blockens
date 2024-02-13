@@ -15,6 +15,8 @@ const cursor = @import("./shape/cursor.zig");
 const screen = @import("./screen/screen.zig");
 const state = @import("state/state.zig");
 const chunk = @import("chunk.zig");
+const components = @import("ecs/components.zig");
+const tick = @import("ecs/systems/tick.zig");
 
 var ctrls: *controls.Controls = undefined;
 
@@ -83,6 +85,14 @@ pub const Game = struct {
 
         const world = ecs.init();
         defer _ = ecs.fini(world);
+
+        ecs.COMPONENT(world, components.Time);
+
+        const tickSystem = tick.system();
+        ecs.SYSTEM(world, "TickSystem", ecs.OnUpdate, @constCast(&tickSystem));
+
+        const clock = ecs.new_entity(world, "Clock");
+        _ = ecs.set(world, clock, components.Time, .{ .startTime = 0, .currentTime = 0 });
 
         std.debug.print("\nHello blockens!\n", .{});
         glfw.init() catch {
@@ -183,9 +193,11 @@ pub const Game = struct {
             gl.clearBufferfv(gl.COLOR, 0, &skyColor);
             // gl.polygonMode(gl.FRONT_AND_BACK, gl.LINE);
 
+            _ = ecs.progress(world, 0);
             switch (appState.app.currentScreen) {
                 .game => {
-                    try drawGameScreen(&gameScreen, &gameUI);
+                    const time = ecs.get(world, clock, components.Time);
+                    try drawGameScreen(&gameScreen, &gameUI, @constCast(time));
                 },
                 .textureGenerator => {
                     try drawTextureGeneratorScreen(&textureGen, &gameUI);
@@ -217,9 +229,9 @@ fn drawTextureGeneratorScreen(textureGen: *screen.texture_gen.TextureGenerator, 
     try gameUI.drawTextureGen();
 }
 
-fn drawGameScreen(gameScreen: *screen.world.World, gameUI: *ui.UI) !void {
+fn drawGameScreen(gameScreen: *screen.world.World, gameUI: *ui.UI, time: ?*components.Time) !void {
     try gameScreen.draw();
-    try gameUI.drawGame();
+    try gameUI.drawGame(time);
 }
 
 fn drawWorldEditorScreen(gameUI: *ui.UI) !void {
