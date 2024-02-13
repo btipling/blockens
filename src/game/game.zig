@@ -5,6 +5,7 @@ const gl = @import("zopengl");
 const zstbi = @import("zstbi");
 const zmesh = @import("zmesh");
 const zm = @import("zmath");
+const ecs = @import("zflecs");
 const cfg = @import("config.zig");
 const ui = @import("ui/ui.zig");
 const controls = @import("controls.zig");
@@ -79,6 +80,10 @@ pub const Game = struct {
     pub fn run(self: *Game) !void {
         // TODO: move alot of this into init and create a separate render loop in a thread
         // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
+
+        const world = ecs.init();
+        defer _ = ecs.fini(world);
+
         std.debug.print("\nHello blockens!\n", .{});
         glfw.init() catch {
             std.log.err("Failed to initialize GLFW library.", .{});
