@@ -46,9 +46,9 @@ pub const Game = struct {
             const s: u32 = @intCast(seconds);
             zgui.text("Hello blockens! {d:0>2}:{d:0>2}:{d:0>2}", .{ h, m, s });
             zgui.text("F1 for settings", .{});
-            const x = @as(i32, @intFromFloat(self.appState.demoScreen.cameraPos[0]));
-            const y = @as(i32, @intFromFloat(self.appState.demoScreen.cameraPos[1]));
-            const z = @as(i32, @intFromFloat(self.appState.demoScreen.cameraPos[2]));
+            const x: i32 = @intFromFloat(self.appState.demoScreen.cameraPos[0]);
+            const y: i32 = @intFromFloat(self.appState.demoScreen.cameraPos[1]);
+            const z: i32 = @intFromFloat(self.appState.demoScreen.cameraPos[2]);
             zgui.text("x: {d}, y: {d}, z: {d}.", .{ x, y, z });
             const cfX = self.appState.demoScreen.cameraFront[0];
             const cfY = self.appState.demoScreen.cameraFront[1];
