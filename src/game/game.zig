@@ -13,7 +13,8 @@ const cube = @import("./shape/cube.zig");
 const plane = @import("./shape/plane.zig");
 const cursor = @import("./shape/cursor.zig");
 const screen = @import("./screen/screen.zig");
-const state = @import("state/state.zig");
+const oldState = @import("state/state.zig");
+const gameState = @import("state/game.zig");
 const chunk = @import("chunk.zig");
 const components = @import("ecs/components.zig");
 const tick = @import("ecs/systems/tick.zig");
@@ -24,6 +25,8 @@ fn cursorPosCallback(window: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) vo
     _ = window;
     ctrls.cursorPosCallback(xpos, ypos);
 }
+
+pub var state: *gameState.Game = undefined;
 
 fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     glfw.windowHintTyped(.context_version_major, gl_major);
@@ -68,6 +71,7 @@ pub const Game = struct {
     sqliteAlloc: std.mem.Allocator,
 
     pub fn init(allocator: std.mem.Allocator, sqliteAlloc: std.mem.Allocator) !Game {
+        state = try allocator.create(gameState.Game);
         return .{
             .allocator = allocator,
             .sqliteAlloc = sqliteAlloc,
@@ -75,7 +79,8 @@ pub const Game = struct {
     }
 
     pub fn deinit(self: *Game) void {
-        _ = self;
+        _ = ecs.fini(state.world);
+        self.allocator.destroy(state);
         std.debug.print("\nGoodbye blockens!\n", .{});
     }
 
@@ -83,16 +88,15 @@ pub const Game = struct {
         // TODO: move alot of this into init and create a separate render loop in a thread
         // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
 
-        const world = ecs.init();
-        defer _ = ecs.fini(world);
+        state.world = ecs.init();
 
-        ecs.COMPONENT(world, components.Time);
+        ecs.COMPONENT(state.world, components.Time);
 
         const tickSystem = tick.system();
-        ecs.SYSTEM(world, "TickSystem", ecs.OnUpdate, @constCast(&tickSystem));
+        ecs.SYSTEM(state.world, "TickSystem", ecs.OnUpdate, @constCast(&tickSystem));
 
-        const clock = ecs.new_entity(world, "Clock");
-        _ = ecs.set(world, clock, components.Time, .{ .startTime = 0, .currentTime = 0 });
+        const clock = ecs.new_entity(state.world, "Clock");
+        _ = ecs.set(state.world, clock, components.Time, .{ .startTime = 0, .currentTime = 0 });
 
         std.debug.print("\nHello blockens!\n", .{});
         glfw.init() catch {
@@ -125,14 +129,14 @@ pub const Game = struct {
         defer zstbi.deinit();
         zstbi.setFlipVerticallyOnLoad(false);
 
-        var appState = try state.State.init(self.allocator, self.sqliteAlloc);
+        var appState = try oldState.State.init(self.allocator, self.sqliteAlloc);
         defer appState.deinit();
 
         var gameUI = try ui.UI.init(&appState, window, self.allocator);
         defer gameUI.deinit();
 
         // init view imports
-        const planePosition = state.position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
+        const planePosition = oldState.position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
         var worldPlane = try plane.Plane.init("worldplane", planePosition, self.allocator);
         defer worldPlane.deinit();
         var uiCursor = try cursor.Cursor.init("cursor", self.allocator);
@@ -193,10 +197,10 @@ pub const Game = struct {
             gl.clearBufferfv(gl.COLOR, 0, &skyColor);
             // gl.polygonMode(gl.FRONT_AND_BACK, gl.LINE);
 
-            _ = ecs.progress(world, 0);
+            _ = ecs.progress(state.world, 0);
             switch (appState.app.currentScreen) {
                 .game => {
-                    const time = ecs.get(world, clock, components.Time);
+                    const time = ecs.get(state.world, clock, components.Time);
                     try drawGameScreen(&gameScreen, &gameUI, @constCast(time));
                 },
                 .textureGenerator => {
