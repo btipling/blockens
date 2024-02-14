@@ -17,7 +17,6 @@ const oldState = @import("state/state.zig");
 const gameState = @import("state/game.zig");
 const chunk = @import("chunk.zig");
 const components = @import("ecs/components.zig");
-const tick = @import("ecs/systems/tick.zig");
 
 var ctrls: *controls.Controls = undefined;
 
@@ -72,6 +71,7 @@ pub const Game = struct {
 
     pub fn init(allocator: std.mem.Allocator, sqliteAlloc: std.mem.Allocator) !Game {
         state = try allocator.create(gameState.Game);
+        state.* = .{};
         return .{
             .allocator = allocator,
             .sqliteAlloc = sqliteAlloc,
@@ -91,12 +91,32 @@ pub const Game = struct {
         state.world = ecs.init();
 
         ecs.COMPONENT(state.world, components.Time);
+        ecs.COMPONENT(state.world, components.BaseRenderer);
+        ecs.COMPONENT(state.world, components.Sky);
 
-        const tickSystem = tick.system();
+        const tickSystem = @import("ecs/systems/tick.zig").system();
         ecs.SYSTEM(state.world, "TickSystem", ecs.OnUpdate, @constCast(&tickSystem));
 
-        const clock = ecs.new_entity(state.world, "Clock");
-        _ = ecs.set(state.world, clock, components.Time, .{ .startTime = 0, .currentTime = 0 });
+        const gfxSetupSystem = @import("ecs/systems/gfx/setup.zig").system();
+        ecs.SYSTEM(state.world, "GfxSetupSystem", ecs.PreUpdate, @constCast(&gfxSetupSystem));
+
+        const skySystem = @import("ecs/systems/sky.zig").system();
+        ecs.SYSTEM(state.world, "SkySystem", ecs.OnUpdate, @constCast(&skySystem));
+
+        state.entities.clock = ecs.new_entity(state.world, "Clock");
+        _ = ecs.set(state.world, state.entities.clock, components.Time, .{ .startTime = 0, .currentTime = 0 });
+
+        state.entities.gfx = ecs.new_entity(state.world, "Gfx");
+        _ = ecs.set(state.world, state.entities.gfx, components.BaseRenderer, .{
+            .clear = gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
+            .bgColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 },
+        });
+
+        state.entities.sky = ecs.new_entity(state.world, "Sky");
+
+        _ = ecs.set(state.world, state.entities.sky, components.Sky, .{
+            .sun = .rising,
+        });
 
         std.debug.print("\nHello blockens!\n", .{});
         glfw.init() catch {
@@ -159,7 +179,6 @@ pub const Game = struct {
 
         var c = try controls.Controls.init(window, &appState);
         ctrls = &c;
-        const skyColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 };
 
         // uncomment to start in a specific view:
         // try appState.setGameScreen();
@@ -193,14 +212,11 @@ pub const Game = struct {
             if (appState.exit) {
                 break :main_loop;
             }
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            gl.clearBufferfv(gl.COLOR, 0, &skyColor);
-            // gl.polygonMode(gl.FRONT_AND_BACK, gl.LINE);
 
             _ = ecs.progress(state.world, 0);
             switch (appState.app.currentScreen) {
                 .game => {
-                    const time = ecs.get(state.world, clock, components.Time);
+                    const time = ecs.get(state.world, state.entities.clock, components.Time);
                     try drawGameScreen(&gameScreen, &gameUI, @constCast(time));
                 },
                 .textureGenerator => {
@@ -222,7 +238,6 @@ pub const Game = struct {
                     window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
                 },
             }
-            // gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
             window.swapBuffers();
         }
     }
