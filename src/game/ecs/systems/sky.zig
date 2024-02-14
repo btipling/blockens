@@ -32,12 +32,14 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
                     if (shouldSwitch) {
                         s[i].sun = .setting;
                         s[i].lastSet = t.currentTime;
+                        continue;
                     }
                 },
                 .setting => {
                     if (shouldSwitch) {
                         s[i].sun = .rising;
                         s[i].lastSet = t.currentTime;
+                        continue;
                     }
                     darkness = 0.5 - darkness;
                     b = 1.0 - b;
