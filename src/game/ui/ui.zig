@@ -11,7 +11,7 @@ const menus = @import("menus.zig");
 const game = @import("game.zig");
 const state = @import("../state/state.zig");
 const script = @import("../script/script.zig");
-const components = @import("../ecs/components/components.zig");
+const components = @import("../blecs/components/components.zig");
 
 const pressStart2PFont = @embedFile("../assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
 const robotoMonoFont = @embedFile("../assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");

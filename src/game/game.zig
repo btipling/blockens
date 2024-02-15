@@ -5,7 +5,6 @@ const gl = @import("zopengl");
 const zstbi = @import("zstbi");
 const zmesh = @import("zmesh");
 const zm = @import("zmath");
-const ecs = @import("zflecs");
 const cfg = @import("config.zig");
 const ui = @import("ui/ui.zig");
 const controls = @import("controls.zig");
@@ -17,7 +16,7 @@ const oldState = @import("state/state.zig");
 const gameState = @import("state/game.zig");
 const chunk = @import("chunk.zig");
 const math = @import("./math/math.zig");
-const components = @import("ecs/components/components.zig");
+const blecs = @import("blecs/blecs.zig");
 
 var ctrls: *controls.Controls = undefined;
 
@@ -77,41 +76,43 @@ pub const Game = struct {
         // TODO: move alot of this into init and create a separate render loop in a thread
         // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
 
-        state.world = ecs.init();
+        state.world = blecs.ecs.init();
 
         // COMPONENTS
-        ecs.COMPONENT(state.world, components.Time);
-        ecs.COMPONENT(state.world, components.BaseRenderer);
-        ecs.COMPONENT(state.world, components.Sky);
-        ecs.COMPONENT(state.world, components.shape.Plane);
+        blecs.ecs.COMPONENT(state.world, blecs.components.Time);
+        blecs.ecs.COMPONENT(state.world, blecs.components.BaseRenderer);
+        blecs.ecs.COMPONENT(state.world, blecs.components.Sky);
+        blecs.ecs.COMPONENT(state.world, blecs.components.shape.Plane);
+
+        // TAGS
 
         // SYSTEMS
-        const tickSystem = @import("ecs/systems/tick.zig").system();
-        ecs.SYSTEM(state.world, "TickSystem", ecs.OnUpdate, @constCast(&tickSystem));
+        const tickSystem = blecs.systems.tick.system();
+        blecs.ecs.SYSTEM(state.world, "TickSystem", blecs.ecs.OnUpdate, @constCast(&tickSystem));
 
-        const gfxSetupSystem = @import("ecs/systems/gfx/setup.zig").system();
-        ecs.SYSTEM(state.world, "GfxSetupSystem", ecs.PreUpdate, @constCast(&gfxSetupSystem));
+        const gfxSetupSystem = blecs.systems.gfx.setup.system();
+        blecs.ecs.SYSTEM(state.world, "GfxSetupSystem", blecs.ecs.PreUpdate, @constCast(&gfxSetupSystem));
 
-        const skySystem = @import("ecs/systems/sky.zig").system();
-        ecs.SYSTEM(state.world, "SkySystem", ecs.OnUpdate, @constCast(&skySystem));
+        const skySystem = blecs.systems.sky.system();
+        blecs.ecs.SYSTEM(state.world, "SkySystem", blecs.ecs.OnUpdate, @constCast(&skySystem));
 
         // ENTITIES
-        state.entities.clock = ecs.new_entity(state.world, "Clock");
-        _ = ecs.set(state.world, state.entities.clock, components.Time, .{ .startTime = 0, .currentTime = 0 });
+        state.entities.clock = blecs.ecs.new_entity(state.world, "Clock");
+        _ = blecs.ecs.set(state.world, state.entities.clock, blecs.components.Time, .{ .startTime = 0, .currentTime = 0 });
 
-        state.entities.gfx = ecs.new_entity(state.world, "Gfx");
-        _ = ecs.set(state.world, state.entities.gfx, components.BaseRenderer, .{
+        state.entities.gfx = blecs.ecs.new_entity(state.world, "Gfx");
+        _ = blecs.ecs.set(state.world, state.entities.gfx, blecs.components.BaseRenderer, .{
             .clear = gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
             .bgColor = math.vecs.Vflx4.initBytes(135, 206, 235, 1.0),
         });
 
-        state.entities.sky = ecs.new_entity(state.world, "Sky");
-        _ = ecs.set(state.world, state.entities.sky, components.Sky, .{
+        state.entities.sky = blecs.ecs.new_entity(state.world, "Sky");
+        _ = blecs.ecs.set(state.world, state.entities.sky, blecs.components.Sky, .{
             .sun = .rising,
         });
 
-        state.entities.floor = ecs.new_entity(state.world, "Floor");
-        _ = ecs.set(state.world, state.entities.floor, components.shape.Plane, .{
+        state.entities.floor = blecs.ecs.new_entity(state.world, "Floor");
+        _ = blecs.ecs.set(state.world, state.entities.floor, blecs.components.shape.Plane, .{
             .color = math.vecs.Vflx4.initBytes(135, 206, 235, 1.0),
             .translate = null,
             .scale = null,
@@ -125,7 +126,7 @@ pub const Game = struct {
     }
 
     pub fn deinit(self: *Game) void {
-        _ = ecs.fini(state.world);
+        _ = blecs.ecs.fini(state.world);
         self.allocator.destroy(state);
         std.debug.print("\nGoodbye blockens!\n", .{});
     }
@@ -228,7 +229,7 @@ pub const Game = struct {
                 break :main_loop;
             }
 
-            _ = ecs.progress(state.world, 0);
+            _ = blecs.ecs.progress(state.world, 0);
             // switch (appState.app.currentScreen) {
             //     .game => {
             //         const time = ecs.get(state.world, state.entities.clock, components.Time);
@@ -263,7 +264,7 @@ fn drawTextureGeneratorScreen(textureGen: *screen.texture_gen.TextureGenerator, 
     try gameUI.drawTextureGen();
 }
 
-fn drawGameScreen(gameScreen: *screen.world.World, gameUI: *ui.UI, time: ?*components.Time) !void {
+fn drawGameScreen(gameScreen: *screen.world.World, gameUI: *ui.UI, time: ?*blecs.components.Time) !void {
     try gameScreen.draw();
     try gameUI.drawGame(time);
 }
