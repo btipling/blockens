@@ -4,5 +4,5 @@ const math = @import("../../math/math.zig");
 
 pub const Plane = struct {
     color: math.vecs.Vflx4 = undefined,
-    translate: [3]gl.Float,
+    translate: math.vecs.Vflx3 = undefined,
 };
