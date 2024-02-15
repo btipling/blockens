@@ -1,7 +1,7 @@
 const zgui = @import("zgui");
 const glfw = @import("zglfw");
 const state = @import("../state/state.zig");
-const components = @import("../ecs/components.zig");
+const components = @import("../ecs/components/components.zig");
 
 pub const Game = struct {
     appState: *state.State,

@@ -1,7 +1,7 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const gl = @import("zopengl");
-const components = @import("../../components.zig");
+const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
 
 pub fn system() ecs.system_desc_t {
@@ -17,7 +17,7 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
             const br: []components.BaseRenderer = ecs.field(it, components.BaseRenderer, 1) orelse return;
             gl.clear(br[i].clear);
 
-            gl.clearBufferfv(gl.COLOR, 0, &br[i].bgColor);
+            gl.clearBufferfv(gl.COLOR, 0, &br[i].bgColor.arr);
         }
     }
 }

@@ -1,7 +1,7 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const gl = @import("zopengl");
-const components = @import("../components.zig");
+const components = @import("../components/components.zig");
 const game = @import("../../game.zig");
 
 pub fn system() ecs.system_desc_t {
@@ -18,36 +18,33 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
             const s: []components.Sky = ecs.field(it, components.Sky, 1) orelse return;
             const t: *components.Time = ecs.get_mut(world, game.state.entities.clock, components.Time) orelse return;
             const br: *components.BaseRenderer = ecs.get_mut(world, game.state.entities.gfx, components.BaseRenderer) orelse return;
-            const dm: i64 = 20_000;
-            const dv: i64 = @mod(t.currentTime, dm);
-            var darkness: gl.Float = ((@as(gl.Float, @floatFromInt(dv))) / dm) / 2;
-            var b: gl.Float = darkness * 2.0;
+            var brightness = br.bgColor.getBrightness();
             if (s[i].lastSet == 0) {
                 s[i].lastSet = t.currentTime;
             }
-            const enoughTimeElapsed = (t.currentTime - s[i].lastSet) > 10_000;
-            const shouldSwitch = enoughTimeElapsed and b > 0.999;
+            const enoughTimeElapsed = s[i].lastSet == 0 or (t.currentTime - s[i].lastSet) > 100;
+            if (!enoughTimeElapsed) {
+                continue;
+            }
+            s[i].lastSet = t.currentTime;
             switch (s[i].sun) {
                 .rising => {
-                    if (shouldSwitch) {
+                    if (brightness >= 0.8) {
                         s[i].sun = .setting;
-                        s[i].lastSet = t.currentTime;
                         continue;
                     }
+                    brightness += 0.001;
                 },
                 .setting => {
-                    if (shouldSwitch) {
+                    if (brightness <= 0.1) {
                         s[i].sun = .rising;
-                        s[i].lastSet = t.currentTime;
                         continue;
                     }
-                    darkness = 0.5 - darkness;
-                    b = 1.0 - b;
+                    brightness -= 0.001;
                 },
             }
-            const r = darkness;
-            const g = darkness;
-            br.bgColor = [4]gl.Float{ r, g, b, 1.0 };
+
+            br.bgColor.setBrightness(@min(@max(brightness, 0.1), 0.8));
         }
     }
 }

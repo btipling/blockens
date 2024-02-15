@@ -16,7 +16,8 @@ const screen = @import("./screen/screen.zig");
 const oldState = @import("state/state.zig");
 const gameState = @import("state/game.zig");
 const chunk = @import("chunk.zig");
-const components = @import("ecs/components.zig");
+const math = @import("./math/math.zig");
+const components = @import("ecs/components/components.zig");
 
 var ctrls: *controls.Controls = undefined;
 
@@ -109,7 +110,7 @@ pub const Game = struct {
         state.entities.gfx = ecs.new_entity(state.world, "Gfx");
         _ = ecs.set(state.world, state.entities.gfx, components.BaseRenderer, .{
             .clear = gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
-            .bgColor = [4]gl.Float{ 0.5294117647, 0.80784313725, 0.92156862745, 1.0 },
+            .bgColor = math.vecs.Vflx4.init(0.5294117647, 0.80784313725, 0.92156862745, 1.0),
         });
 
         state.entities.sky = ecs.new_entity(state.world, "Sky");

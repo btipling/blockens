@@ -1,6 +1,6 @@
 const std = @import("std");
 const ecs = @import("zflecs");
-const components = @import("../components.zig");
+const components = @import("../components/components.zig");
 
 pub fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
