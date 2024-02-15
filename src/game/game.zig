@@ -85,16 +85,17 @@ pub const Game = struct {
         blecs.ecs.COMPONENT(state.world, blecs.components.shape.Plane);
 
         // TAGS
+        blecs.ecs.TAG(state.world, blecs.tags.Hud);
 
         // SYSTEMS
         const tickSystem = blecs.systems.tick.system();
         blecs.ecs.SYSTEM(state.world, "TickSystem", blecs.ecs.OnUpdate, @constCast(&tickSystem));
-
         const gfxSetupSystem = blecs.systems.gfx.setup.system();
         blecs.ecs.SYSTEM(state.world, "GfxSetupSystem", blecs.ecs.PreUpdate, @constCast(&gfxSetupSystem));
-
         const skySystem = blecs.systems.sky.system();
         blecs.ecs.SYSTEM(state.world, "SkySystem", blecs.ecs.OnUpdate, @constCast(&skySystem));
+        const hudSetupSystem = blecs.systems.hud.setup.system();
+        blecs.ecs.SYSTEM(state.world, "HudSetupSystem", blecs.ecs.OnUpdate, @constCast(&hudSetupSystem));
 
         // ENTITIES
         state.entities.clock = blecs.ecs.new_entity(state.world, "Clock");
@@ -118,6 +119,7 @@ pub const Game = struct {
             .scale = null,
             .rotation = null,
         });
+        _ = blecs.ecs.add(state.world, state.entities.floor, blecs.tags.Hud);
 
         return .{
             .allocator = allocator,
