@@ -83,6 +83,7 @@ pub const Game = struct {
         ecs.COMPONENT(state.world, components.Time);
         ecs.COMPONENT(state.world, components.BaseRenderer);
         ecs.COMPONENT(state.world, components.Sky);
+        ecs.COMPONENT(state.world, components.shape.Plane);
 
         // SYSTEMS
         const tickSystem = @import("ecs/systems/tick.zig").system();
@@ -101,12 +102,20 @@ pub const Game = struct {
         state.entities.gfx = ecs.new_entity(state.world, "Gfx");
         _ = ecs.set(state.world, state.entities.gfx, components.BaseRenderer, .{
             .clear = gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
-            .bgColor = math.vecs.Vflx4.init(0.5294117647, 0.80784313725, 0.92156862745, 1.0),
+            .bgColor = math.vecs.Vflx4.initBytes(135, 206, 235, 1.0),
         });
 
         state.entities.sky = ecs.new_entity(state.world, "Sky");
         _ = ecs.set(state.world, state.entities.sky, components.Sky, .{
             .sun = .rising,
+        });
+
+        state.entities.floor = ecs.new_entity(state.world, "Floor");
+        _ = ecs.set(state.world, state.entities.floor, components.shape.Plane, .{
+            .color = math.vecs.Vflx4.initBytes(135, 206, 235, 1.0),
+            .translate = null,
+            .scale = null,
+            .rotation = null,
         });
 
         return .{
