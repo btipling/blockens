@@ -170,7 +170,9 @@ pub const Game = struct {
             &appState.worldScreen,
             &appState.character,
         );
+        _ = &gameScreen;
         var demoScreen = try screen.world.World.init(&appState.demoScreen);
+        _ = &demoScreen;
 
         var textureGen = try screen.texture_gen.TextureGenerator.init(&appState, self.allocator);
         defer textureGen.deinit();
@@ -215,30 +217,30 @@ pub const Game = struct {
             }
 
             _ = ecs.progress(state.world, 0);
-            switch (appState.app.currentScreen) {
-                .game => {
-                    const time = ecs.get(state.world, state.entities.clock, components.Time);
-                    try drawGameScreen(&gameScreen, &gameUI, @constCast(time));
-                },
-                .textureGenerator => {
-                    try drawTextureGeneratorScreen(&textureGen, &gameUI);
-                },
-                .worldEditor => {
-                    try drawWorldEditorScreen(&gameUI);
-                },
-                .blockEditor => {
-                    try drawBlockEditorScreen(&textureGen, &gameUI);
-                },
-                .chunkGenerator => {
-                    try drawChunkGeneratorScreen(&demoScreen, &gameUI);
-                },
-                .characterDesigner => {
-                    try drawCharacterDesignerScreen(&characterScreen, &gameUI);
-                },
-                .paused => {
-                    window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
-                },
-            }
+            // switch (appState.app.currentScreen) {
+            //     .game => {
+            //         const time = ecs.get(state.world, state.entities.clock, components.Time);
+            //         try drawGameScreen(&gameScreen, &gameUI, @constCast(time));
+            //     },
+            //     .textureGenerator => {
+            //         try drawTextureGeneratorScreen(&textureGen, &gameUI);
+            //     },
+            //     .worldEditor => {
+            //         try drawWorldEditorScreen(&gameUI);
+            //     },
+            //     .blockEditor => {
+            //         try drawBlockEditorScreen(&textureGen, &gameUI);
+            //     },
+            //     .chunkGenerator => {
+            //         try drawChunkGeneratorScreen(&demoScreen, &gameUI);
+            //     },
+            //     .characterDesigner => {
+            //         try drawCharacterDesignerScreen(&characterScreen, &gameUI);
+            //     },
+            //     .paused => {
+            //         window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
+            //     },
+            // }
             window.swapBuffers();
         }
     }
