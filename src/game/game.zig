@@ -73,6 +73,42 @@ pub const Game = struct {
     pub fn init(allocator: std.mem.Allocator, sqliteAlloc: std.mem.Allocator) !Game {
         state = try allocator.create(gameState.Game);
         state.* = .{};
+
+        // TODO: move alot of this into init and create a separate render loop in a thread
+        // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
+
+        state.world = ecs.init();
+
+        // COMPONENTS
+        ecs.COMPONENT(state.world, components.Time);
+        ecs.COMPONENT(state.world, components.BaseRenderer);
+        ecs.COMPONENT(state.world, components.Sky);
+
+        // SYSTEMS
+        const tickSystem = @import("ecs/systems/tick.zig").system();
+        ecs.SYSTEM(state.world, "TickSystem", ecs.OnUpdate, @constCast(&tickSystem));
+
+        const gfxSetupSystem = @import("ecs/systems/gfx/setup.zig").system();
+        ecs.SYSTEM(state.world, "GfxSetupSystem", ecs.PreUpdate, @constCast(&gfxSetupSystem));
+
+        const skySystem = @import("ecs/systems/sky.zig").system();
+        ecs.SYSTEM(state.world, "SkySystem", ecs.OnUpdate, @constCast(&skySystem));
+
+        // ENTITIES
+        state.entities.clock = ecs.new_entity(state.world, "Clock");
+        _ = ecs.set(state.world, state.entities.clock, components.Time, .{ .startTime = 0, .currentTime = 0 });
+
+        state.entities.gfx = ecs.new_entity(state.world, "Gfx");
+        _ = ecs.set(state.world, state.entities.gfx, components.BaseRenderer, .{
+            .clear = gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
+            .bgColor = math.vecs.Vflx4.init(0.5294117647, 0.80784313725, 0.92156862745, 1.0),
+        });
+
+        state.entities.sky = ecs.new_entity(state.world, "Sky");
+        _ = ecs.set(state.world, state.entities.sky, components.Sky, .{
+            .sun = .rising,
+        });
+
         return .{
             .allocator = allocator,
             .sqliteAlloc = sqliteAlloc,
@@ -86,39 +122,6 @@ pub const Game = struct {
     }
 
     pub fn run(self: *Game) !void {
-        // TODO: move alot of this into init and create a separate render loop in a thread
-        // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
-
-        state.world = ecs.init();
-
-        ecs.COMPONENT(state.world, components.Time);
-        ecs.COMPONENT(state.world, components.BaseRenderer);
-        ecs.COMPONENT(state.world, components.Sky);
-
-        const tickSystem = @import("ecs/systems/tick.zig").system();
-        ecs.SYSTEM(state.world, "TickSystem", ecs.OnUpdate, @constCast(&tickSystem));
-
-        const gfxSetupSystem = @import("ecs/systems/gfx/setup.zig").system();
-        ecs.SYSTEM(state.world, "GfxSetupSystem", ecs.PreUpdate, @constCast(&gfxSetupSystem));
-
-        const skySystem = @import("ecs/systems/sky.zig").system();
-        ecs.SYSTEM(state.world, "SkySystem", ecs.OnUpdate, @constCast(&skySystem));
-
-        state.entities.clock = ecs.new_entity(state.world, "Clock");
-        _ = ecs.set(state.world, state.entities.clock, components.Time, .{ .startTime = 0, .currentTime = 0 });
-
-        state.entities.gfx = ecs.new_entity(state.world, "Gfx");
-        _ = ecs.set(state.world, state.entities.gfx, components.BaseRenderer, .{
-            .clear = gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
-            .bgColor = math.vecs.Vflx4.init(0.5294117647, 0.80784313725, 0.92156862745, 1.0),
-        });
-
-        state.entities.sky = ecs.new_entity(state.world, "Sky");
-
-        _ = ecs.set(state.world, state.entities.sky, components.Sky, .{
-            .sun = .rising,
-        });
-
         std.debug.print("\nHello blockens!\n", .{});
         glfw.init() catch {
             std.log.err("Failed to initialize GLFW library.", .{});

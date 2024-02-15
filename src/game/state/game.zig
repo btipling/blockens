@@ -6,6 +6,7 @@ pub const Entities = struct {
     clock: usize = 0,
     gfx: usize = 0,
     sky: usize = 0,
+    floor: usize = 0,
 };
 
 pub const Game = struct {
