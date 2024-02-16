@@ -17,6 +17,8 @@ const gameState = @import("state/game.zig");
 const chunk = @import("chunk.zig");
 const math = @import("./math/math.zig");
 const blecs = @import("blecs/blecs.zig");
+const zmpl = @import("zmpl");
+const manifest = @import("./shaders/templates/zmpl.manifest.zig");
 
 var ctrls: *controls.Controls = undefined;
 
@@ -164,6 +166,13 @@ pub const Game = struct {
         zstbi.init(self.allocator);
         defer zstbi.deinit();
         zstbi.setFlipVerticallyOnLoad(false);
+
+        var data = zmpl.Data.init(self.allocator);
+        defer data.deinit();
+
+        const output = try manifest.templates.shader_test.render(&data);
+        defer self.allocator.free(output);
+        std.debug.print("rendered template: `{s}`", .{output});
 
         var appState = try oldState.State.init(self.allocator, self.sqliteAlloc);
         defer appState.deinit();

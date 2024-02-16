@@ -34,3 +34,13 @@ MIT License
 Copyright (c) 2023 nDimensional Studios
 
 Used for sqlite
+
+## zmpl
+
+https://github.com/jetzig-framework/zmpl
+
+MIT License
+
+Copyright 2024 Robert Farrell
+
+Used for shader templates

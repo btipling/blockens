@@ -15,7 +15,9 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
             const planes: []components.shape.Plane = ecs.field(it, components.shape.Plane, 2) orelse return;
-            std.debug.print("num planes: {d}\n", .{planes.len});
+            if (planes.len > 1) {
+                std.debug.print("num planes: {d}\n", .{planes.len});
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ const mesh = @import("libs/mesh/build.zig");
 const flecs = @import("libs/flecs/build.zig");
 const lua = @import("libs/lua/build.zig");
 const sqlite = @import("libs/sqlite/build.zig");
+const zmpl = @import("libs/zmpl/build.zig");
 
 pub const path = getPath();
 
@@ -15,7 +16,7 @@ inline fn getPath() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -69,6 +70,20 @@ pub fn build(b: *std.Build) void {
         .{},
     );
     exe.root_module.addImport("sqlite", sqlite_module);
+
+    const shader_template_path = try std.fs.path.join(
+        b.allocator,
+        &[_][]const u8{ "src", "game", "shaders", "templates" },
+    );
+    const zmpl_module = try zmpl.buildLibrary(
+        b,
+        target,
+        optimize,
+        .{ .options = .{
+            .template_path = shader_template_path,
+        } },
+    );
+    exe.root_module.addImport("zmpl", zmpl_module);
 
     const run_step = b.step("run", "Run blockens");
     run_step.dependOn(&run_cmd.step);
