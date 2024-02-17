@@ -80,7 +80,7 @@ fn initGL(gl_major: u8, gl_minor: u8, window: *glfw.Window) !void {
         std.debug.print("Window size is {d}x{d}\n", .{ w, h });
     }
     gl.enable(gl.BLEND); // enable transparency
-    gl.enable(gl.DEPTH_TEST); // enable depth testing
+    gl.enable(gl.DEPTH_TEST);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     // culling
     gl.enable(gl.CULL_FACE);

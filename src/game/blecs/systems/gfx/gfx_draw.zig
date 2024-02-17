@@ -18,10 +18,10 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse return;
             const er = ers[i];
+            if (er.enableDepthTest) gl.enable(gl.DEPTH_TEST);
             gl.useProgram(er.program);
             gl.bindVertexArray(er.vao);
             gl.drawElements(gl.TRIANGLES, er.numIndices, gl.UNSIGNED_INT, null);
-            gl.enable(gl.DEPTH_TEST);
         }
     }
 }

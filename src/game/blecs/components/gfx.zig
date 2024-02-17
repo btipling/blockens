@@ -21,6 +21,7 @@ pub const ElementsRenderer = struct {
     vbo: gl.Uint = 0,
     ebo: gl.Uint = 0,
     numIndices: gl.Int = 0,
+    enableDepthTest: bool = true,
 };
 
 // Tags
