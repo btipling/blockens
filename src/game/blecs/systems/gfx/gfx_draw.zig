@@ -1,6 +1,7 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const zmesh = @import("zmesh");
+const gl = @import("zopengl");
 const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 
@@ -17,7 +18,24 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse return;
             const er = ers[i];
-            std.debug.print("CanDraw: vao: {d}\n", .{er.vao});
+            gl.useProgram(er.program);
+            var e = gl.getError();
+            if (e != gl.NO_ERROR) {
+                std.debug.print("error: {d}\n", .{e});
+                continue;
+            }
+            gl.bindVertexArray(er.vao);
+            e = gl.getError();
+            if (e != gl.NO_ERROR) {
+                std.debug.print("error: {d}\n", .{e});
+                continue;
+            }
+            gl.drawElements(gl.TRIANGLES, er.numIndices, gl.UNSIGNED_INT, null);
+            e = gl.getError();
+            if (e != gl.NO_ERROR) {
+                std.debug.print("error: {d}\n", .{e});
+                continue;
+            }
         }
     }
 }

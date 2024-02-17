@@ -20,7 +20,7 @@ pub const ElementsRenderer = struct {
     vao: gl.Uint = 0,
     vbo: gl.Uint = 0,
     ebo: gl.Uint = 0,
-    numIndices: gl.Uint = 0,
+    numIndices: gl.Int = 0,
 };
 
 // Tags
