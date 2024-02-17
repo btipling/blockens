@@ -33,6 +33,7 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
             const vs = gfx.Gfx.initVertexShader(er.vertexShader) catch unreachable;
             const fs = gfx.Gfx.initFragmentShader(er.fragmentShader) catch unreachable;
             const program = gfx.Gfx.initProgram(&[_]gl.Uint{ vs, fs }) catch unreachable;
+            gfx.Gfx.addVertexAttribute(gl.Float, er.positions.ptr, @intCast(er.positions.len)) catch unreachable;
 
             ecs.remove(it.world, entity, components.gfx.ElementsRendererConfig);
             _ = ecs.set(world, entity, components.gfx.ElementsRenderer, .{

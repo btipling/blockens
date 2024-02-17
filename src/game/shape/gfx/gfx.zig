@@ -119,4 +119,17 @@ pub const Gfx = struct {
         }
         return shaderProgram;
     }
+
+    pub fn addVertexAttribute(comptime T: type, dataptr: ?*const anyopaque, len: gl.Int) !void {
+        const size = len * @sizeOf(T);
+        const stride = len * @sizeOf(T);
+        gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
+        gl.vertexAttribPointer(0, len, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), null);
+        gl.enableVertexAttribArray(0);
+        const e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("addVertexAttribute init data error: {d}\n", .{e});
+            return GfxErr.RenderError;
+        }
+    }
 };
