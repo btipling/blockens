@@ -36,6 +36,7 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
                 std.debug.print("error: {d}\n", .{e});
                 continue;
             }
+            gl.enable(gl.DEPTH_TEST);
         }
     }
 }

@@ -34,7 +34,8 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
             const vs = gfx.Gfx.initVertexShader(er.vertexShader) catch unreachable;
             const fs = gfx.Gfx.initFragmentShader(er.fragmentShader) catch unreachable;
             const program = gfx.Gfx.initProgram(&[_]gl.Uint{ vs, fs }) catch unreachable;
-            gfx.Gfx.addVertexAttribute(gl.Float, er.positions.ptr, @intCast(er.positions.len)) catch unreachable;
+            gl.useProgram(program);
+            gfx.Gfx.addVertexAttribute([3]gl.Float, er.positions.ptr, @intCast(er.positions.len)) catch unreachable;
 
             var m = zm.translation(0, 0, -1);
             const scale = 0.5;
