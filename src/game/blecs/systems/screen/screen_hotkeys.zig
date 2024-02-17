@@ -19,9 +19,20 @@ fn system() ecs.system_desc_t {
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
-        for (0..it.count()) |_| {
+        for (0..it.count()) |i| {
+            const entity = it.entities()[i];
+            if (input.keys.pressedKey(.F1)) {
+                std.debug.print("F1 pressed!\n", .{});
+                components.screen.clearScreens(entity);
+                ecs.add(game.state.world, entity, components.screen.Settings);
+            }
             if (input.keys.pressedKey(.F2)) {
                 std.debug.print("F2 pressed!\n", .{});
+                components.screen.clearScreens(entity);
+                ecs.add(game.state.world, entity, components.screen.Game);
+            }
+            if (input.keys.pressedKey(.F12)) {
+                game.state.quit = true;
             }
         }
     }

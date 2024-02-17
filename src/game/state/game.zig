@@ -22,4 +22,5 @@ pub const Game = struct {
     world: *ecs.world_t = undefined,
     entities: Entities = .{},
     input: Input = .{},
+    quit: bool = false,
 };

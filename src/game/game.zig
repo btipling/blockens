@@ -209,6 +209,9 @@ pub const Game = struct {
             if (try ctrls.handleKey()) {
                 try appState.exitGame();
             }
+            if (state.quit) {
+                break :main_loop;
+            }
             if (appState.exit) {
                 break :main_loop;
             }
