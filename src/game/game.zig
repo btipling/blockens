@@ -90,6 +90,7 @@ pub const Game = struct {
         // TAGS
         blecs.ecs.TAG(state.world, blecs.tags.Hud);
         blecs.ecs.TAG(state.world, blecs.components.gfx.NeedsMesh);
+        blecs.ecs.TAG(state.world, blecs.components.gfx.CanDraw);
         blecs.ecs.TAG(state.world, blecs.components.shape.NeedsSetup);
 
         // SYSTEMS
@@ -101,6 +102,8 @@ pub const Game = struct {
         blecs.ecs.SYSTEM(state.world, "GfxSetupSystem", blecs.ecs.PreUpdate, @constCast(&gfxSetupSystem));
         const gfxMeshSystem = blecs.systems.gfx.mesh.system();
         blecs.ecs.SYSTEM(state.world, "GfxMeshSystem", blecs.ecs.OnUpdate, @constCast(&gfxMeshSystem));
+        const gfxDrawSystem = blecs.systems.gfx.draw.system();
+        blecs.ecs.SYSTEM(state.world, "GfxDrawSystem", blecs.ecs.OnStore, @constCast(&gfxDrawSystem));
 
         const skySystem = blecs.systems.sky.system();
         blecs.ecs.SYSTEM(state.world, "SkySystem", blecs.ecs.OnUpdate, @constCast(&skySystem));
