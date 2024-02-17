@@ -6,6 +6,9 @@ const components = @import("../components/components.zig");
 const tags = @import("../tags.zig");
 
 pub fn init() void {
+    game.state.entities.screen = ecs.new_entity(game.state.world, "Screen");
+    _ = ecs.add(game.state.world, game.state.entities.screen, components.screen.Game);
+
     game.state.entities.clock = ecs.new_entity(game.state.world, "Clock");
     _ = ecs.set(game.state.world, game.state.entities.clock, components.Time, .{ .startTime = 0, .currentTime = 0 });
 

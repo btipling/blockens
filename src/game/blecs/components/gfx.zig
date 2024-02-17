@@ -30,8 +30,8 @@ pub const ElementsRenderer = struct {
 pub const CanDraw = struct {};
 
 pub fn init() void {
-    ecs.TAG(game.state.world, CanDraw);
     ecs.COMPONENT(game.state.world, BaseRenderer);
     ecs.COMPONENT(game.state.world, ElementsRendererConfig);
     ecs.COMPONENT(game.state.world, ElementsRenderer);
+    ecs.TAG(game.state.world, CanDraw);
 }
