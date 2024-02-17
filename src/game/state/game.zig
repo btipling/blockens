@@ -7,6 +7,7 @@ pub const Entities = struct {
     gfx: usize = 0,
     sky: usize = 0,
     floor: usize = 0,
+    crosshair: usize = 0,
 };
 
 pub const Game = struct {

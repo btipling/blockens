@@ -20,13 +20,13 @@ pub fn init() void {
         .sun = .rising,
     });
 
-    game.state.entities.floor = ecs.new_entity(game.state.world, "Floor");
-    _ = ecs.set(game.state.world, game.state.entities.floor, components.shape.Plane, .{
+    game.state.entities.crosshair = ecs.new_entity(game.state.world, "Crosshair");
+    _ = ecs.set(game.state.world, game.state.entities.crosshair, components.shape.Plane, .{
         .color = math.vecs.Vflx4.initBytes(135, 206, 235, 1.0),
         .translate = null,
         .scale = null,
         .rotation = null,
     });
-    _ = ecs.add(game.state.world, game.state.entities.floor, tags.Hud);
-    _ = ecs.add(game.state.world, game.state.entities.floor, components.shape.NeedsSetup);
+    _ = ecs.add(game.state.world, game.state.entities.crosshair, tags.Hud);
+    _ = ecs.add(game.state.world, game.state.entities.crosshair, components.shape.NeedsSetup);
 }
