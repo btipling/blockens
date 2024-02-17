@@ -1,6 +1,8 @@
 const std = @import("std");
 const gl = @import("zopengl");
 
+pub const shadergen = @import("shadergen.zig");
+
 pub const GfxErr = error{
     RenderError,
 };

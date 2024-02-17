@@ -1,5 +1,6 @@
 const std = @import("std");
 const ecs = @import("zflecs");
+const zmesh = @import("zmesh");
 const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 
