@@ -20,8 +20,7 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             const planes: []components.shape.Plane = ecs.field(it, components.shape.Plane, 2) orelse return;
             _ = planes[i];
-            _ = ecs.set(world, entity, components.gfx.ElementsRenderer, .{});
-            _ = ecs.add(world, entity, components.gfx.NeedsMesh);
+            _ = ecs.set(world, entity, components.gfx.ElementsRendererConfig, .{});
             ecs.remove(world, entity, components.shape.NeedsSetup);
         }
     }

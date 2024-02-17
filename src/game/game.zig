@@ -82,14 +82,16 @@ pub const Game = struct {
 
         // COMPONENTS
         blecs.ecs.COMPONENT(state.world, blecs.components.Time);
+        // gfx
         blecs.ecs.COMPONENT(state.world, blecs.components.gfx.BaseRenderer);
+        blecs.ecs.COMPONENT(state.world, blecs.components.gfx.ElementsRendererConfig);
         blecs.ecs.COMPONENT(state.world, blecs.components.gfx.ElementsRenderer);
+
         blecs.ecs.COMPONENT(state.world, blecs.components.Sky);
         blecs.ecs.COMPONENT(state.world, blecs.components.shape.Plane);
 
         // TAGS
         blecs.ecs.TAG(state.world, blecs.tags.Hud);
-        blecs.ecs.TAG(state.world, blecs.components.gfx.NeedsMesh);
         blecs.ecs.TAG(state.world, blecs.components.gfx.CanDraw);
         blecs.ecs.TAG(state.world, blecs.components.shape.NeedsSetup);
 
