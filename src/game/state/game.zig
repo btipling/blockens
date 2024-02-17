@@ -1,4 +1,5 @@
 const std = @import("std");
+const glfw = @import("zglfw");
 const ecs = @import("zflecs");
 const gl = @import("zopengl");
 
@@ -12,6 +13,7 @@ pub const Entities = struct {
 
 pub const Game = struct {
     allocator: std.mem.Allocator = undefined,
+    window: *glfw.Window = undefined,
     world: *ecs.world_t = undefined,
     entities: Entities = .{},
 };

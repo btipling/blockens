@@ -49,7 +49,7 @@ const GL_DEBUG_OUTPUT = 0x92E0;
 
 pub var state: *gameState.Game = undefined;
 
-fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
+fn initWindow(gl_major: u8, gl_minor: u8) !void {
     glfw.windowHintTyped(.context_version_major, gl_major);
     glfw.windowHintTyped(.context_version_minor, gl_minor);
     glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
@@ -60,21 +60,20 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     glfw.windowHintTyped(.focused, true);
     glfw.windowHintTyped(.maximized, true);
     glfw.windowHintTyped(.decorated, false);
-    const window = glfw.Window.create(cfg.windows_width, cfg.windows_height, cfg.game_name, null) catch |err| {
+    state.window = glfw.Window.create(cfg.windows_width, cfg.windows_height, cfg.game_name, null) catch |err| {
         std.log.err("Failed to create game window.", .{});
         return err;
     };
-    window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
-    glfw.makeContextCurrent(window);
+    state.window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
+    glfw.makeContextCurrent(state.window);
     glfw.swapInterval(1);
-    return window;
 }
 
-fn initGL(gl_major: u8, gl_minor: u8, window: *glfw.Window) !void {
+fn initGL(gl_major: u8, gl_minor: u8) !void {
     try gl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
 
     {
-        const dimensions: [2]i32 = window.getSize();
+        const dimensions: [2]i32 = state.window.getSize();
         const w = dimensions[0];
         const h = dimensions[1];
         std.debug.print("Window size is {d}x{d}\n", .{ w, h });
@@ -112,6 +111,7 @@ pub const Game = struct {
 
     pub fn deinit(self: *Game) void {
         _ = blecs.ecs.fini(state.world);
+        state.window.destroy();
         self.allocator.destroy(state);
         std.debug.print("\nGoodbye blockens!\n", .{});
     }
@@ -127,18 +127,17 @@ pub const Game = struct {
         const gl_major = 4;
         const gl_minor = 6;
 
-        const window = try initWindow(gl_major, gl_minor);
-        defer window.destroy();
+        try initWindow(gl_major, gl_minor);
 
-        try initGL(gl_major, gl_minor, window);
+        try initGL(gl_major, gl_minor);
 
-        _ = window.setCursorPosCallback(cursorPosCallback);
+        _ = state.window.setCursorPosCallback(cursorPosCallback);
 
         zgui.init(self.allocator);
         defer zgui.deinit();
 
         const glsl_version: [*c]const u8 = "#version 130";
-        zgui.backend.initWithGlSlVersion(window, glsl_version);
+        zgui.backend.initWithGlSlVersion(state.window, glsl_version);
         defer zgui.backend.deinit();
 
         zmesh.init(self.allocator);
@@ -151,7 +150,7 @@ pub const Game = struct {
         var appState = try oldState.State.init(self.allocator, self.sqliteAlloc);
         defer appState.deinit();
 
-        var gameUI = try ui.UI.init(&appState, window, self.allocator);
+        var gameUI = try ui.UI.init(&appState, state.window, self.allocator);
         defer gameUI.deinit();
 
         // init view imports
@@ -178,7 +177,7 @@ pub const Game = struct {
         var characterScreen = try screen.character.Character.init(&appState.character);
         defer characterScreen.deinit();
 
-        var c = try controls.Controls.init(window, &appState);
+        var c = try controls.Controls.init(state.window, &appState);
         ctrls = &c;
 
         // uncomment to start in a specific view:
@@ -188,13 +187,13 @@ pub const Game = struct {
         try appState.setCharacterDesignerScreen();
 
         var focusedAt: gl.Float = 0.0;
-        main_loop: while (!window.shouldClose()) {
+        main_loop: while (!state.window.shouldClose()) {
             glfw.pollEvents();
 
             const currentFrame: gl.Float = @as(gl.Float, @floatCast(glfw.getTime()));
             appState.worldScreen.deltaTime = currentFrame - appState.worldScreen.lastFrame;
             appState.worldScreen.lastFrame = currentFrame;
-            const focused = window.getAttribute(glfw.Window.Attribute.focused);
+            const focused = state.window.getAttribute(glfw.Window.Attribute.focused);
             if (!focused and appState.app.currentScreen != .paused) {
                 try appState.pauseGame();
             } else if (appState.app.currentScreen == .paused) {
@@ -239,7 +238,7 @@ pub const Game = struct {
             //         window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
             //     },
             // }
-            window.swapBuffers();
+            state.window.swapBuffers();
         }
     }
 };
