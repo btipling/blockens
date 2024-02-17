@@ -6,10 +6,10 @@ const game = @import("../game.zig");
 const key_press_sensitivity_ms: i64 = 250;
 
 pub fn pressedKey(key: glfw.Key) bool {
-    return pressedKeys(&[_]glfw.Key{key});
+    return pressedKeys(@ptrCast(&[_]glfw.Key{key}));
 }
 
-pub fn pressedKeys(keys: []glfw.Key) bool {
+pub fn pressedKeys(keys: []const glfw.Key) bool {
     if (zgui.io.getWantCaptureKeyboard()) {
         return false;
     }

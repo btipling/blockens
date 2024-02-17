@@ -3,6 +3,7 @@ const ecs = @import("zflecs");
 const gl = @import("zopengl");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
+const input = @import("../../../input/input.zig");
 
 pub fn init() void {
     const s = system();
@@ -18,8 +19,10 @@ fn system() ecs.system_desc_t {
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
-        for (0..it.count()) |i| {
-            std.debug.print("{d}\n", .{i});
+        for (0..it.count()) |_| {
+            if (input.keys.pressedKey(.F2)) {
+                std.debug.print("F2 pressed!\n", .{});
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ const tags = @import("../tags.zig");
 
 pub fn init() void {
     game.state.entities.screen = ecs.new_entity(game.state.world, "Screen");
+    _ = ecs.add(game.state.world, game.state.entities.screen, components.screen.Screen);
     _ = ecs.add(game.state.world, game.state.entities.screen, components.screen.Game);
 
     game.state.entities.clock = ecs.new_entity(game.state.world, "Clock");
