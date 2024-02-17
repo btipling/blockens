@@ -1,5 +1,6 @@
 const std = @import("std");
 const gl = @import("zopengl");
+const zm = @import("zmath");
 
 pub const shadergen = @import("shadergen.zig");
 
@@ -129,6 +130,26 @@ pub const Gfx = struct {
         const e = gl.getError();
         if (e != gl.NO_ERROR) {
             std.debug.print("addVertexAttribute init data error: {d}\n", .{e});
+            return GfxErr.RenderError;
+        }
+    }
+
+    pub fn setUniformMat(name: []const u8, program: gl.Uint, m: zm.Mat) !void {
+        gl.useProgram(program);
+        var e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("setUniformMat {s} error: {d}\n", .{ name, e });
+            return GfxErr.RenderError;
+        }
+
+        var ma: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+        zm.storeMat(&ma, m);
+
+        const location = gl.getUniformLocation(program, @ptrCast(name));
+        gl.uniformMatrix4fv(location, 1, gl.FALSE, &ma);
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("setUniformMat {s} error: {d}\n", .{ name, e });
             return GfxErr.RenderError;
         }
     }

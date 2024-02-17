@@ -1,6 +1,7 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const zmesh = @import("zmesh");
+const zm = @import("zmath");
 const gl = @import("zopengl");
 const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
@@ -34,6 +35,11 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
             const fs = gfx.Gfx.initFragmentShader(er.fragmentShader) catch unreachable;
             const program = gfx.Gfx.initProgram(&[_]gl.Uint{ vs, fs }) catch unreachable;
             gfx.Gfx.addVertexAttribute(gl.Float, er.positions.ptr, @intCast(er.positions.len)) catch unreachable;
+
+            var m = zm.translation(0, 0, -1);
+            const scale = 0.5;
+            m = zm.mul(m, zm.scaling(scale, scale, scale));
+            gfx.Gfx.setUniformMat("transform", program, m) catch unreachable;
 
             ecs.remove(it.world, entity, components.gfx.ElementsRendererConfig);
             _ = ecs.set(world, entity, components.gfx.ElementsRenderer, .{
