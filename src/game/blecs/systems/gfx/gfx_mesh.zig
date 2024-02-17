@@ -23,6 +23,7 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
             defer game.state.allocator.free(er.vertexShader);
             defer game.state.allocator.free(er.fragmentShader);
             defer game.state.allocator.free(er.positions);
+            defer game.state.allocator.free(er.indices);
 
             ecs.remove(it.world, entity, components.gfx.ElementsRendererConfig);
             _ = ecs.set(world, entity, components.gfx.ElementsRenderer, .{});

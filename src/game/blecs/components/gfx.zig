@@ -12,6 +12,7 @@ pub const ElementsRendererConfig = struct {
     vertexShader: [:0]const u8 = undefined,
     fragmentShader: [:0]const u8 = undefined,
     positions: [][3]gl.Float = undefined,
+    indices: []u32 = undefined,
 };
 
 pub const ElementsRenderer = struct {
@@ -20,6 +21,7 @@ pub const ElementsRenderer = struct {
     vbo: gl.Uint = 0,
     vertexShader: gl.Uint = 0,
     fragmentShader: gl.Uint = 0,
+    numIndices: gl.Uint = 0,
 };
 
 // Tags

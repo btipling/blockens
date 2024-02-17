@@ -29,10 +29,13 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
             const fragmentShader: [:0]const u8 = gfx.shadergen.ShaderGen.genFragmentShader(game.state.allocator) catch unreachable;
             const positions: [][3]f32 = game.state.allocator.alloc([3]f32, plane.positions.len) catch unreachable;
             @memcpy(positions, plane.positions);
+            const indices: []u32 = game.state.allocator.alloc(u32, plane.indices.len) catch unreachable;
+            @memcpy(indices, plane.indices);
             _ = ecs.set(world, entity, components.gfx.ElementsRendererConfig, .{
                 .vertexShader = vertexShader,
                 .fragmentShader = fragmentShader,
                 .positions = positions,
+                .indices = indices,
             });
             ecs.remove(world, entity, components.shape.NeedsSetup);
         }
