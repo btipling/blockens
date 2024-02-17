@@ -6,7 +6,7 @@ const game = @import("../../../game.zig");
 
 pub fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
-    desc.query.filter.terms[0] = .{ .id = ecs.id(components.BaseRenderer) };
+    desc.query.filter.terms[0] = .{ .id = ecs.id(components.gfx.BaseRenderer) };
     desc.run = run;
     return desc;
 }
@@ -14,7 +14,7 @@ pub fn system() ecs.system_desc_t {
 pub fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
-            const br: []components.BaseRenderer = ecs.field(it, components.BaseRenderer, 1) orelse return;
+            const br: []components.gfx.BaseRenderer = ecs.field(it, components.gfx.BaseRenderer, 1) orelse return;
             gl.clear(br[i].clear);
 
             gl.clearBufferfv(gl.COLOR, 0, &br[i].bgColor.arr);

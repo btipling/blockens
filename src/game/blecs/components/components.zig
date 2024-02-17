@@ -16,8 +16,3 @@ pub const Sky = struct {
         setting,
     };
 };
-
-pub const BaseRenderer = struct {
-    clear: gl.Bitfield = 0,
-    bgColor: math.vecs.Vflx4 = undefined,
-};

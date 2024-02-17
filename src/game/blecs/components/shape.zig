@@ -8,3 +8,6 @@ pub const Plane = struct {
     scale: ?math.vecs.Vflx3 = null,
     rotation: ?math.vecs.Vflx4 = null,
 };
+
+// Tags
+pub const NeedsSetup = struct {};

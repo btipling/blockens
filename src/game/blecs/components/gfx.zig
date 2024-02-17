@@ -3,6 +3,11 @@ const gl = @import("zopengl");
 const zm = @import("zmath");
 const math = @import("../../math/math.zig");
 
+pub const BaseRenderer = struct {
+    clear: gl.Bitfield = 0,
+    bgColor: math.vecs.Vflx4 = undefined,
+};
+
 pub const ElementsRenderer = struct {
     program: gl.Uint = 0,
     vao: gl.Uint = 0,
@@ -11,3 +16,7 @@ pub const ElementsRenderer = struct {
     fragmentShader: gl.Uint = 0,
     positions: ?std.ArrayList([3]gl.Float) = null,
 };
+
+// Tags
+pub const NeedsMesh = struct {};
+pub const CanDraw = struct {};

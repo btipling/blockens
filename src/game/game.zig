@@ -71,7 +71,9 @@ pub const Game = struct {
 
     pub fn init(allocator: std.mem.Allocator, sqliteAlloc: std.mem.Allocator) !Game {
         state = try allocator.create(gameState.Game);
-        state.* = .{};
+        state.* = .{
+            .allocator = allocator,
+        };
 
         // TODO: move alot of this into init and create a separate render loop in a thread
         // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
@@ -80,18 +82,26 @@ pub const Game = struct {
 
         // COMPONENTS
         blecs.ecs.COMPONENT(state.world, blecs.components.Time);
-        blecs.ecs.COMPONENT(state.world, blecs.components.BaseRenderer);
+        blecs.ecs.COMPONENT(state.world, blecs.components.gfx.BaseRenderer);
+        blecs.ecs.COMPONENT(state.world, blecs.components.gfx.ElementsRenderer);
         blecs.ecs.COMPONENT(state.world, blecs.components.Sky);
         blecs.ecs.COMPONENT(state.world, blecs.components.shape.Plane);
 
         // TAGS
         blecs.ecs.TAG(state.world, blecs.tags.Hud);
+        blecs.ecs.TAG(state.world, blecs.components.gfx.NeedsMesh);
+        blecs.ecs.TAG(state.world, blecs.components.shape.NeedsSetup);
 
         // SYSTEMS
         const tickSystem = blecs.systems.tick.system();
         blecs.ecs.SYSTEM(state.world, "TickSystem", blecs.ecs.OnUpdate, @constCast(&tickSystem));
+
+        // gfx
         const gfxSetupSystem = blecs.systems.gfx.setup.system();
         blecs.ecs.SYSTEM(state.world, "GfxSetupSystem", blecs.ecs.PreUpdate, @constCast(&gfxSetupSystem));
+        const gfxMeshSystem = blecs.systems.gfx.mesh.system();
+        blecs.ecs.SYSTEM(state.world, "GfxMeshSystem", blecs.ecs.OnUpdate, @constCast(&gfxMeshSystem));
+
         const skySystem = blecs.systems.sky.system();
         blecs.ecs.SYSTEM(state.world, "SkySystem", blecs.ecs.OnUpdate, @constCast(&skySystem));
         const hudSetupSystem = blecs.systems.hud.setup.system();
@@ -102,7 +112,7 @@ pub const Game = struct {
         _ = blecs.ecs.set(state.world, state.entities.clock, blecs.components.Time, .{ .startTime = 0, .currentTime = 0 });
 
         state.entities.gfx = blecs.ecs.new_entity(state.world, "Gfx");
-        _ = blecs.ecs.set(state.world, state.entities.gfx, blecs.components.BaseRenderer, .{
+        _ = blecs.ecs.set(state.world, state.entities.gfx, blecs.components.gfx.BaseRenderer, .{
             .clear = gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
             .bgColor = math.vecs.Vflx4.initBytes(135, 206, 235, 1.0),
         });
@@ -120,6 +130,7 @@ pub const Game = struct {
             .rotation = null,
         });
         _ = blecs.ecs.add(state.world, state.entities.floor, blecs.tags.Hud);
+        _ = blecs.ecs.add(state.world, state.entities.floor, blecs.components.shape.NeedsSetup);
 
         return .{
             .allocator = allocator,

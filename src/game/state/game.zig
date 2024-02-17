@@ -10,6 +10,7 @@ pub const Entities = struct {
 };
 
 pub const Game = struct {
+    allocator: std.mem.Allocator = undefined,
     world: *ecs.world_t = undefined,
     entities: Entities = .{},
 };
