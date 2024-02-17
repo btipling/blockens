@@ -103,39 +103,7 @@ pub const Game = struct {
         // TODO: move alot of this into init and create a separate render loop in a thread
         // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
 
-        state.world = blecs.ecs.init();
-
-        // COMPONENTS
-        blecs.ecs.COMPONENT(state.world, blecs.components.Time);
-        // gfx
-        blecs.ecs.COMPONENT(state.world, blecs.components.gfx.BaseRenderer);
-        blecs.ecs.COMPONENT(state.world, blecs.components.gfx.ElementsRendererConfig);
-        blecs.ecs.COMPONENT(state.world, blecs.components.gfx.ElementsRenderer);
-
-        blecs.ecs.COMPONENT(state.world, blecs.components.Sky);
-        blecs.ecs.COMPONENT(state.world, blecs.components.shape.Plane);
-
-        // TAGS
-        blecs.ecs.TAG(state.world, blecs.tags.Hud);
-        blecs.ecs.TAG(state.world, blecs.components.gfx.CanDraw);
-        blecs.ecs.TAG(state.world, blecs.components.shape.NeedsSetup);
-
-        // SYSTEMS
-        const tickSystem = blecs.systems.tick.system();
-        blecs.ecs.SYSTEM(state.world, "TickSystem", blecs.ecs.OnUpdate, @constCast(&tickSystem));
-
-        // gfx
-        const gfxSetupSystem = blecs.systems.gfx.setup.system();
-        blecs.ecs.SYSTEM(state.world, "GfxSetupSystem", blecs.ecs.PreUpdate, @constCast(&gfxSetupSystem));
-        const gfxMeshSystem = blecs.systems.gfx.mesh.system();
-        blecs.ecs.SYSTEM(state.world, "GfxMeshSystem", blecs.ecs.OnUpdate, @constCast(&gfxMeshSystem));
-        const gfxDrawSystem = blecs.systems.gfx.draw.system();
-        blecs.ecs.SYSTEM(state.world, "GfxDrawSystem", blecs.ecs.OnStore, @constCast(&gfxDrawSystem));
-
-        const skySystem = blecs.systems.sky.system();
-        blecs.ecs.SYSTEM(state.world, "SkySystem", blecs.ecs.OnUpdate, @constCast(&skySystem));
-        const hudSetupSystem = blecs.systems.hud.setup.system();
-        blecs.ecs.SYSTEM(state.world, "HudSetupSystem", blecs.ecs.OnUpdate, @constCast(&hudSetupSystem));
+        blecs.init();
 
         // ENTITIES
         state.entities.clock = blecs.ecs.new_entity(state.world, "Clock");

@@ -1,5 +1,7 @@
+const ecs = @import("zflecs");
 const gl = @import("zopengl");
 const math = @import("../../math/math.zig");
+const game = @import("../../game.zig");
 pub const shape = @import("shape.zig");
 pub const gfx = @import("gfx.zig");
 
@@ -16,3 +18,10 @@ pub const Sky = struct {
         setting,
     };
 };
+
+pub fn init() void {
+    ecs.COMPONENT(game.state.world, Time);
+    ecs.COMPONENT(game.state.world, Sky);
+    shape.init();
+    gfx.init();
+}

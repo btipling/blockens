@@ -1,7 +1,9 @@
 const std = @import("std");
+const ecs = @import("zflecs");
 const gl = @import("zopengl");
 const zm = @import("zmath");
 const math = @import("../../math/math.zig");
+const game = @import("../../game.zig");
 
 pub const BaseRenderer = struct {
     clear: gl.Bitfield = 0,
@@ -26,3 +28,10 @@ pub const ElementsRenderer = struct {
 
 // Tags
 pub const CanDraw = struct {};
+
+pub fn init() void {
+    ecs.TAG(game.state.world, CanDraw);
+    ecs.COMPONENT(game.state.world, BaseRenderer);
+    ecs.COMPONENT(game.state.world, ElementsRendererConfig);
+    ecs.COMPONENT(game.state.world, ElementsRenderer);
+}
