@@ -95,40 +95,14 @@ pub const Game = struct {
     sqliteAlloc: std.mem.Allocator,
 
     pub fn init(allocator: std.mem.Allocator, sqliteAlloc: std.mem.Allocator) !Game {
+        // TODO: Move more of run into init and create a separate render loop in a thread
+        // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
         state = try allocator.create(gameState.Game);
         state.* = .{
             .allocator = allocator,
         };
 
-        // TODO: move alot of this into init and create a separate render loop in a thread
-        // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
-
         blecs.init();
-
-        // ENTITIES
-        state.entities.clock = blecs.ecs.new_entity(state.world, "Clock");
-        _ = blecs.ecs.set(state.world, state.entities.clock, blecs.components.Time, .{ .startTime = 0, .currentTime = 0 });
-
-        state.entities.gfx = blecs.ecs.new_entity(state.world, "Gfx");
-        _ = blecs.ecs.set(state.world, state.entities.gfx, blecs.components.gfx.BaseRenderer, .{
-            .clear = gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
-            .bgColor = math.vecs.Vflx4.initBytes(135, 206, 235, 1.0),
-        });
-
-        state.entities.sky = blecs.ecs.new_entity(state.world, "Sky");
-        _ = blecs.ecs.set(state.world, state.entities.sky, blecs.components.Sky, .{
-            .sun = .rising,
-        });
-
-        state.entities.floor = blecs.ecs.new_entity(state.world, "Floor");
-        _ = blecs.ecs.set(state.world, state.entities.floor, blecs.components.shape.Plane, .{
-            .color = math.vecs.Vflx4.initBytes(135, 206, 235, 1.0),
-            .translate = null,
-            .scale = null,
-            .rotation = null,
-        });
-        _ = blecs.ecs.add(state.world, state.entities.floor, blecs.tags.Hud);
-        _ = blecs.ecs.add(state.world, state.entities.floor, blecs.components.shape.NeedsSetup);
 
         return .{
             .allocator = allocator,
