@@ -2,6 +2,8 @@ const std = @import("std");
 const ecs = @import("zflecs");
 const zmesh = @import("zmesh");
 const tags = @import("../../tags.zig");
+const game = @import("../../../game.zig");
+const gfx = @import("../../../shape/gfx/gfx.zig");
 const components = @import("../../components/components.zig");
 
 pub fn system() ecs.system_desc_t {
@@ -20,7 +22,12 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             const planes: []components.shape.Plane = ecs.field(it, components.shape.Plane, 2) orelse return;
             _ = planes[i];
-            _ = ecs.set(world, entity, components.gfx.ElementsRendererConfig, .{});
+            const vertexShader: [:0]const u8 = gfx.shadergen.ShaderGen.genVertexShader(game.state.allocator) catch unreachable;
+            const fragmentShader: [:0]const u8 = gfx.shadergen.ShaderGen.genFragmentShader(game.state.allocator) catch unreachable;
+            _ = ecs.set(world, entity, components.gfx.ElementsRendererConfig, .{
+                .vertexShader = vertexShader,
+                .fragmentShader = fragmentShader,
+            });
             ecs.remove(world, entity, components.shape.NeedsSetup);
         }
     }

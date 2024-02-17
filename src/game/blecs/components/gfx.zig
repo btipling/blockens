@@ -9,8 +9,8 @@ pub const BaseRenderer = struct {
 };
 
 pub const ElementsRendererConfig = struct {
-    vertexShader: [:0]u8 = undefined,
-    fragmentShader: [:0]u8 = undefined,
+    vertexShader: [:0]const u8 = undefined,
+    fragmentShader: [:0]const u8 = undefined,
     positions: ?std.ArrayList([3]gl.Float) = null,
 };
 
