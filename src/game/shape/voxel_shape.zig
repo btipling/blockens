@@ -60,7 +60,7 @@ pub const VoxelData = struct {
         return;
     }
 
-    fn initData(blockId: i32, shaderData: zmesh.Shape, worldspaceTF: [16]gl.Float, alloc: std.mem.Allocator) !gl.Uint {
+    fn initData(_: i32, shaderData: zmesh.Shape, worldspaceTF: [16]gl.Float, alloc: std.mem.Allocator) !gl.Uint {
         var vertices = try std.ArrayList(VoxelShapeVertex).initCapacity(alloc, shaderData.positions.len);
         defer vertices.deinit();
 
@@ -113,11 +113,6 @@ pub const VoxelData = struct {
         gl.vertexAttribPointer(curArr, normalSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
         gl.enableVertexAttribArray(curArr);
         curArr += 1;
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel init data error: {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
 
         // init worldspace VBO data
@@ -147,17 +142,7 @@ pub const VoxelData = struct {
 
     pub fn draw(self: VoxelData) !void {
         gl.bindVertexArray(self.vao);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel draw bind vertex array error: {d}\n", .{ self.blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
-
         gl.drawElements(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null);
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel draw draw elements error: {d}\n", .{ self.blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
     }
 };
 
@@ -206,11 +191,6 @@ pub const VoxelShape = struct {
         worldTransform: [16]gl.Float,
     ) !void {
         gl.useProgram(self.program);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel draw error: {d}\n", .{ self.blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
         var vd = try VoxelData.init(self.blockId, shape, worldTransform, self.alloc);
         _ = &vd;
         try self.voxelData.append(vd);
@@ -260,11 +240,6 @@ pub const VoxelShape = struct {
         for (shaders) |shader| {
             gl.attachShader(shaderProgram, shader);
         }
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("init voxel program {d} error: {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
 
         gl.linkProgram(shaderProgram);
         var success: gl.Int = 0;
@@ -281,67 +256,31 @@ pub const VoxelShape = struct {
         for (shaders) |shader| {
             gl.deleteShader(shader);
         }
-
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel error: {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
         return shaderProgram;
     }
 
-    pub fn initTextureFromColors(blockId: i32, textureData: []const gl.Uint) !gl.Uint {
+    pub fn initTextureFromColors(_: i32, textureData: []const gl.Uint) !gl.Uint {
         var texture: gl.Uint = undefined;
-        var e: gl.Uint = 0;
         gl.genTextures(1, &texture);
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel gen or bind texture error: {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel text parameter i error: {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
 
         const width: gl.Int = 16;
         const height: gl.Int = @divFloor(@as(gl.Int, @intCast(textureData.len)), width);
         const imageData: *const anyopaque = textureData.ptr;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel gext image 2d error: {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
         gl.generateMipmap(gl.TEXTURE_2D);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel generate mimap error: {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
         return texture;
     }
 
-    pub fn setUniforms(blockId: i32, program: gl.Uint, vm: view.View) !void {
+    pub fn setUniforms(_: i32, program: gl.Uint, vm: view.View) !void {
         gl.useProgram(program);
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel set uniforms error: {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
 
         gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel uniform1i error: {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
         var projection: [16]gl.Float = [_]gl.Float{undefined} ** 16;
 
         const h = @as(gl.Float, @floatFromInt(config.windows_height));
@@ -352,37 +291,17 @@ pub const VoxelShape = struct {
 
         const location = gl.getUniformLocation(program, "projection");
         gl.uniformMatrix4fv(location, 1, gl.FALSE, &projection);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("error: {d}\n", .{e});
-            return VoxelShapeErr.RenderError;
-        }
         const blockIndex: gl.Uint = gl.getUniformBlockIndex(program, vm.name.ptr);
         const bindingPoint: gl.Uint = 0;
         gl.uniformBlockBinding(program, blockIndex, bindingPoint);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("voxel error blockId: {d} - {d}\n", .{ blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
         gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, vm.ubo);
     }
 
     pub fn draw(self: VoxelShape) !void {
         gl.useProgram(self.program);
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel draw error: {d}\n", .{ self.blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, self.texture);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} voxel draw bind texture error: {d}\n", .{ self.blockId, e });
-            return VoxelShapeErr.RenderError;
-        }
 
         for (self.voxelData.items) |vs| {
             try vs.draw();

@@ -19,23 +19,8 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
             const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse return;
             const er = ers[i];
             gl.useProgram(er.program);
-            var e = gl.getError();
-            if (e != gl.NO_ERROR) {
-                std.debug.print("error: {d}\n", .{e});
-                continue;
-            }
             gl.bindVertexArray(er.vao);
-            e = gl.getError();
-            if (e != gl.NO_ERROR) {
-                std.debug.print("error: {d}\n", .{e});
-                continue;
-            }
             gl.drawElements(gl.TRIANGLES, er.numIndices, gl.UNSIGNED_INT, null);
-            e = gl.getError();
-            if (e != gl.NO_ERROR) {
-                std.debug.print("error: {d}\n", .{e});
-                continue;
-            }
             gl.enable(gl.DEPTH_TEST);
         }
     }

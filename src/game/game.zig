@@ -25,6 +25,28 @@ fn cursorPosCallback(window: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) vo
     ctrls.cursorPosCallback(xpos, ypos);
 }
 
+fn glErrorCallbackfn(
+    source: gl.Enum,
+    errorType: gl.Enum,
+    id: gl.Uint,
+    severity: gl.Enum,
+    _: gl.Sizei,
+    message: [*c]const gl.Char,
+    _: *const anyopaque,
+) callconv(.C) void {
+    const errorMessage: [:0]const u8 = std.mem.sliceTo(message, 0);
+    std.debug.print("\n:::GL Error:::\n", .{});
+    std.debug.print("\n\t - source: {d}\n", .{source});
+    std.debug.print("\n\t - type: {d}\n", .{errorType});
+    std.debug.print("\n\t - id: {d}\n", .{id});
+    std.debug.print("\n\t - severity: {d}\n", .{severity});
+    std.debug.print("\n\t - message: `{s}`\n", .{errorMessage});
+    @panic("\nExiting due to OpenGL Error\n");
+}
+// from https://registry.khronos.org/OpenGL/api/GL/glext.h
+const GL_DEBUG_OUTPUT_SYNCHRONOUS = 0x8242;
+const GL_DEBUG_OUTPUT = 0x92E0;
+
 pub var state: *gameState.Game = undefined;
 
 fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
@@ -63,6 +85,9 @@ fn initGL(gl_major: u8, gl_minor: u8, window: *glfw.Window) !void {
     // culling
     gl.enable(gl.CULL_FACE);
     gl.cullFace(gl.BACK);
+    gl.debugMessageCallback(glErrorCallbackfn, null);
+    gl.enable(GL_DEBUG_OUTPUT);
+    gl.enable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 }
 
 pub const Game = struct {

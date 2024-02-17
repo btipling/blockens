@@ -27,11 +27,6 @@ pub const View = struct {
         zm.storeMat(&transform, data);
         const size = @as(isize, @intCast(transform.len * @sizeOf(gl.Float)));
         gl.bufferData(gl.UNIFORM_BUFFER, size, &transform, gl.STATIC_DRAW);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("view matrix: bind vbo buff error:  {d}\n", .{e});
-            return ViewError.UpdateError;
-        }
         gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
         return ubo;
     }
@@ -44,11 +39,6 @@ pub const View = struct {
         zm.storeMat(&transform, updated);
         const size = @as(isize, @intCast(transform.len * @sizeOf(gl.Float)));
         gl.bufferSubData(gl.UNIFORM_BUFFER, 0, size, &transform);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("view matrix: bufferSubData vbo buff error:  {d}\n", .{e});
-            return ViewError.UpdateError;
-        }
         gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
     }
 

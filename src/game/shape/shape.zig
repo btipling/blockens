@@ -139,11 +139,6 @@ pub const Shape = struct {
         for (shaders) |shader| {
             gl.attachShader(shaderProgram, shader);
         }
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} error: {d}\n", .{ name, e });
-            return ShapeErr.RenderError;
-        }
 
         gl.linkProgram(shaderProgram);
         var success: gl.Int = 0;
@@ -160,72 +155,36 @@ pub const Shape = struct {
         for (shaders) |shader| {
             gl.deleteShader(shader);
         }
-
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} error: {d}\n", .{ name, e });
-            return ShapeErr.RenderError;
-        }
         return shaderProgram;
     }
 
-    pub fn initTextureFromColors(textureData: []const gl.Uint, msg: []const u8) !gl.Uint {
+    pub fn initTextureFromColors(textureData: []const gl.Uint, _: []const u8) !gl.Uint {
         var texture: gl.Uint = undefined;
-        var e: gl.Uint = 0;
         gl.genTextures(1, &texture);
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} gen or bind texture error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} text parameter i error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
 
         const width: gl.Int = 16;
         const height: gl.Int = @divFloor(@as(gl.Int, @intCast(textureData.len)), width);
         const imageData: *const anyopaque = textureData.ptr;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} gext image 2d error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
         gl.generateMipmap(gl.TEXTURE_2D);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} generate mimap error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
         return texture;
     }
 
-    pub fn initTexture(img: [:0]const u8, msg: []const u8) !gl.Uint {
+    pub fn initTexture(img: [:0]const u8, _: []const u8) !gl.Uint {
         var texture: gl.Uint = undefined;
-        var e: gl.Uint = 0;
         gl.genTextures(1, &texture);
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} gen or bind texture error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} text parameter i error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
 
         var image = try zstbi.Image.loadFromMemory(img, 4);
         defer image.deinit();
@@ -234,17 +193,7 @@ pub const Shape = struct {
         const height: gl.Int = @as(gl.Int, @intCast(image.height));
         const imageData: *const anyopaque = image.data.ptr;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} gext image 2d error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
         gl.generateMipmap(gl.TEXTURE_2D);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} generate mimap error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
         return texture;
     }
 
@@ -294,7 +243,7 @@ pub const Shape = struct {
         return vertices;
     }
 
-    fn initData(name: []const u8, shaderData: zmesh.Shape, shapeConfig: ShapeConfig, rgbaColor: ?[4]gl.Float, alloc: std.mem.Allocator) !void {
+    fn initData(_: []const u8, shaderData: zmesh.Shape, shapeConfig: ShapeConfig, rgbaColor: ?[4]gl.Float, alloc: std.mem.Allocator) !void {
         var vertices = try std.ArrayList(ShapeVertex).initCapacity(alloc, shaderData.positions.len);
         defer vertices.deinit();
 
@@ -351,28 +300,12 @@ pub const Shape = struct {
         gl.enableVertexAttribArray(curArr);
         offset += edgeSize;
         curArr += 1;
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} init data error: {d}\n", .{ name, e });
-            return ShapeErr.RenderError;
-        }
     }
 
-    pub fn setUniforms(name: []const u8, program: gl.Uint, shapeConfig: ShapeConfig) !void {
+    pub fn setUniforms(_: []const u8, program: gl.Uint, shapeConfig: ShapeConfig) !void {
         gl.useProgram(program);
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} error: {d}\n", .{ name, e });
-            return ShapeErr.RenderError;
-        }
-
         if (shapeConfig.textureType != textureDataType.None) {
             gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
-            e = gl.getError();
-            if (e != gl.NO_ERROR) {
-                std.debug.print("{s} uniform1i error: {d}\n", .{ name, e });
-                return ShapeErr.RenderError;
-            }
         }
         var projection: [16]gl.Float = [_]gl.Float{undefined} ** 16;
 
@@ -384,37 +317,17 @@ pub const Shape = struct {
 
         const location = gl.getUniformLocation(program, "projection");
         gl.uniformMatrix4fv(location, 1, gl.FALSE, &projection);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
     }
 
     pub fn draw(self: Shape, tf: ?zm.Mat) !void {
         gl.useProgram(self.program);
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} error: {d}\n", .{ self.name, e });
-            return ShapeErr.RenderError;
-        }
 
         if (self.config.textureType != textureDataType.None) {
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, self.texture);
-            e = gl.getError();
-            if (e != gl.NO_ERROR) {
-                std.debug.print("{s} bind texture error: {d}\n", .{ self.name, e });
-                return ShapeErr.RenderError;
-            }
         }
 
         gl.bindVertexArray(self.vao);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} bind vertex array error: {d}\n", .{ self.name, e });
-            return ShapeErr.RenderError;
-        }
 
         var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
         if (tf) |t| {
@@ -424,18 +337,8 @@ pub const Shape = struct {
         }
         const location = gl.getUniformLocation(self.program, "transform");
         gl.uniformMatrix4fv(location, 1, gl.TRUE, &transform);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
 
         gl.uniform1i(gl.getUniformLocation(self.program, "highlight"), self.highlight);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("error setting highlighted: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
 
         if (!self.config.hasPerspective) {
             //disable depth test for ortho
@@ -443,10 +346,6 @@ pub const Shape = struct {
         }
 
         gl.drawElements(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null);
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} draw elements error: {d}\n", .{ self.name, e });
-            return ShapeErr.RenderError;
-        }
         // renable depth test
         gl.enable(gl.DEPTH_TEST);
     }

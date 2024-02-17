@@ -98,53 +98,28 @@ pub const InstancedShape = struct {
         return;
     }
 
-    pub fn initVAO(msg: []const u8) !gl.Uint {
+    pub fn initVAO(_: []const u8) !gl.Uint {
         var VAO: gl.Uint = undefined;
         gl.genVertexArrays(1, &VAO);
         gl.bindVertexArray(VAO);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("init vao error: {s} {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
         return VAO;
     }
 
-    pub fn initVBO(msg: []const u8) !gl.Uint {
+    pub fn initVBO(_: []const u8) !gl.Uint {
         var VBO: gl.Uint = undefined;
         gl.genBuffers(1, &VBO);
         gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("init vbo error: {s} {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
         return VBO;
     }
 
-    pub fn initEBO(msg: []const u8, indices: []const gl.Uint) !gl.Uint {
+    pub fn initEBO(_: []const u8, indices: []const gl.Uint) !gl.Uint {
         var EBO: gl.Uint = undefined;
         gl.genBuffers(1, &EBO);
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("init ebo error: {s} {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("bind ebo buff error: {s} {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
 
         const size = @as(isize, @intCast(indices.len * @sizeOf(gl.Uint)));
         const indicesptr: *const anyopaque = indices.ptr;
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, size, indicesptr, gl.STATIC_DRAW);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} buffer data error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
         return EBO;
     }
 
@@ -184,11 +159,6 @@ pub const InstancedShape = struct {
         for (shaders) |shader| {
             gl.attachShader(shaderProgram, shader);
         }
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} error: {d}\n", .{ name, e });
-            return ShapeErr.RenderError;
-        }
 
         gl.linkProgram(shaderProgram);
         var success: gl.Int = 0;
@@ -206,71 +176,36 @@ pub const InstancedShape = struct {
             gl.deleteShader(shader);
         }
 
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} error: {d}\n", .{ name, e });
-            return ShapeErr.RenderError;
-        }
         return shaderProgram;
     }
 
-    pub fn initTextureFromColors(textureData: []const gl.Uint, msg: []const u8) !gl.Uint {
+    pub fn initTextureFromColors(textureData: []const gl.Uint, _: []const u8) !gl.Uint {
         var texture: gl.Uint = undefined;
-        var e: gl.Uint = 0;
         gl.genTextures(1, &texture);
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} gen or bind texture error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} text parameter i error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
 
         const width: gl.Int = 16;
         const height: gl.Int = @divFloor(@as(gl.Int, @intCast(textureData.len)), width);
         const imageData: *const anyopaque = textureData.ptr;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} gext image 2d error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
         gl.generateMipmap(gl.TEXTURE_2D);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} generate mimap error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
         return texture;
     }
 
-    pub fn initTexture(img: [:0]const u8, msg: []const u8) !gl.Uint {
+    pub fn initTexture(img: [:0]const u8, _: []const u8) !gl.Uint {
         var texture: gl.Uint = undefined;
-        var e: gl.Uint = 0;
         gl.genTextures(1, &texture);
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} gen or bind texture error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} text parameter i error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
 
         var image = try zstbi.Image.loadFromMemory(img, 4);
         defer image.deinit();
@@ -279,17 +214,7 @@ pub const InstancedShape = struct {
         const height: gl.Int = @as(gl.Int, @intCast(image.height));
         const imageData: *const anyopaque = image.data.ptr;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} gext image 2d error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
         gl.generateMipmap(gl.TEXTURE_2D);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} generate mimap error: {d}\n", .{ msg, e });
-            return ShapeErr.RenderError;
-        }
         return texture;
     }
 
@@ -339,20 +264,10 @@ pub const InstancedShape = struct {
         return vertices;
     }
 
-    pub fn setUniforms(name: []const u8, program: gl.Uint, vm: *view.View) !void {
+    pub fn setUniforms(_: []const u8, program: gl.Uint, vm: *view.View) !void {
         gl.useProgram(program);
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} error: {d}\n", .{ name, e });
-            return ShapeErr.RenderError;
-        }
 
         gl.uniform1i(gl.getUniformLocation(program, "texture1"), 0);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} uniform1i error: {d}\n", .{ name, e });
-            return ShapeErr.RenderError;
-        }
         var projection: [16]gl.Float = [_]gl.Float{undefined} ** 16;
 
         const h = @as(gl.Float, @floatFromInt(config.windows_height));
@@ -363,23 +278,13 @@ pub const InstancedShape = struct {
 
         const location = gl.getUniformLocation(program, "projection");
         gl.uniformMatrix4fv(location, 1, gl.FALSE, &projection);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
         const blockIndex: gl.Uint = gl.getUniformBlockIndex(program, vm.name.ptr);
         const bindingPoint: gl.Uint = 0;
         gl.uniformBlockBinding(program, blockIndex, bindingPoint);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
         gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, vm.ubo);
     }
 
-    fn initData(name: []const u8, shaderData: zmesh.Shape, rgbaColor: ?[4]gl.Float, alloc: std.mem.Allocator) !gl.Uint {
+    fn initData(_: []const u8, shaderData: zmesh.Shape, rgbaColor: ?[4]gl.Float, alloc: std.mem.Allocator) !gl.Uint {
         var vertices = try std.ArrayList(InstancedShapeVertex).initCapacity(alloc, shaderData.positions.len);
         defer vertices.deinit();
 
@@ -432,11 +337,6 @@ pub const InstancedShape = struct {
         curArr += 1;
         gl.vertexAttribPointer(curArr, edgeSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
         gl.enableVertexAttribArray(curArr);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} init data error: {d}\n", .{ name, e });
-            return ShapeErr.RenderError;
-        }
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
 
         // one transform matrix per instance with a default size of 1
@@ -477,11 +377,6 @@ pub const InstancedShape = struct {
         gl.bindVertexArray(self.vao);
         gl.bindBuffer(gl.ARRAY_BUFFER, self.instanceVBO);
         gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("instanced shaped update error: {s} {d}\n", .{ self.name, e });
-            return ShapeErr.UpdateError;
-        }
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
         gl.bindVertexArray(0);
         self.numInstances = @as(gl.Int, @intCast(transforms.len));
@@ -490,47 +385,18 @@ pub const InstancedShape = struct {
 
     pub fn draw(self: InstancedShape) !void {
         gl.useProgram(self.program);
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} error: {d}\n", .{ self.name, e });
-            return ShapeErr.UseProgramError;
-        }
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, self.texture);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} bind texture error: {d}\n", .{ self.name, e });
-            return ShapeErr.BindTextureError;
-        }
 
         gl.bindVertexArray(self.vao);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} bind vertex array error: {d}\n", .{ self.name, e });
-            return ShapeErr.BindInstanceError;
-        }
 
         // bind the instanceVBO
         gl.bindBuffer(gl.ARRAY_BUFFER, self.instanceVBO);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} bind instance vbo error: {d}\n", .{ self.name, e });
-            return ShapeErr.RenderError;
-        }
 
         gl.uniform1i(gl.getUniformLocation(self.program, "highlight"), self.highlight);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("error setting highlighted: {d}\n", .{e});
-            return ShapeErr.HighlightError;
-        }
 
         // std.debug.print("drawing {s} with {d} instances\n", .{ self.name, self.numInstances });
         gl.drawElementsInstanced(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null, self.numInstances);
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{s} draw elements error: {d}\n", .{ self.name, e });
-            return ShapeErr.DrawingError;
-        }
     }
 };

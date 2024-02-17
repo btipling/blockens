@@ -210,58 +210,28 @@ pub const MeshData = struct {
 
     pub fn initClearTexture(_: u32) !gl.Uint {
         var texture: gl.Uint = undefined;
-        var e: gl.Uint = 0;
         gl.genTextures(1, &texture);
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mobshape clear gen or bind clear texture error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mobshape clear text parameter i error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
 
         const imageData: [4]u8 = .{ 0, 0, 0, 0 };
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, &imageData);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mobshape clear text image 2d error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mobshape clear generate mimap error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
         return texture;
     }
 
     pub fn initTexture(_: u32, img: []u8) !gl.Uint {
         var texture: gl.Uint = undefined;
-        var e: gl.Uint = 0;
         gl.genTextures(1, &texture);
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mob shape texture gen or bind texture error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mob shape texture text parameter i error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
 
         var image = try zstbi.Image.loadFromMemory(img, 4);
         defer image.deinit();
@@ -270,21 +240,11 @@ pub const MeshData = struct {
         const height: gl.Int = @as(gl.Int, @intCast(image.height));
         const imageData: *const anyopaque = image.data.ptr;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mob shape texture gext image 2d error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
         gl.generateMipmap(gl.TEXTURE_2D);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mob shape texture generate mimap error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
         return texture;
     }
 
-    fn initData(meshId: u32, mobShapeData: *ShapeData, alloc: std.mem.Allocator) !void {
+    fn initData(_: u32, mobShapeData: *ShapeData, alloc: std.mem.Allocator) !void {
         var vertices = try std.ArrayList(ShapeVertex).initCapacity(alloc, mobShapeData.positions.items.len);
         defer vertices.deinit();
 
@@ -325,45 +285,20 @@ pub const MeshData = struct {
         offset += textcoordSize;
         gl.vertexAttribPointer(curArr, baseColorSize, gl.FLOAT, gl.FALSE, stride * @sizeOf(gl.Float), @as(*anyopaque, @ptrFromInt(offset * @sizeOf(gl.Float))));
         gl.enableVertexAttribArray(curArr);
-
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} mob init data error: {d}\n", .{ meshId, e });
-            return ShapeErr.RenderError;
-        }
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
     }
 
     pub fn draw(self: *MeshData, program: gl.Uint, animate: bool) !void {
         gl.bindVertexArray(self.vao);
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} mob draw bind vertex array error: {d}\n", .{ self.meshId, e });
-            return ShapeErr.RenderError;
-        }
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, self.texture);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} mob draw bind texture error: {d}\n", .{ self.meshId, e });
-            return ShapeErr.RenderError;
-        }
 
         const location = gl.getUniformLocation(program, "toModelSpace");
         const toModelSpace = zm.matToArr(self.mobShapeData.transform(animate));
         gl.uniformMatrix4fv(location, 1, gl.FALSE, &toModelSpace);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
 
         gl.drawElements(gl.TRIANGLES, self.numIndices, gl.UNSIGNED_INT, null);
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} mob draw draw elements error: {d}\n", .{ self.meshId, e });
-            return ShapeErr.RenderError;
-        }
     }
 };
 
@@ -415,11 +350,6 @@ pub const Shape = struct {
         mobShapeData: *ShapeData,
     ) !void {
         gl.useProgram(self.program);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mob id {d} mesh id {d} mob addMeshData error: {d}\n", .{ self.mobId, meshId, e });
-            return ShapeErr.RenderError;
-        }
         var vd = try MeshData.init(meshId, mobShapeData, self.alloc);
         _ = &vd;
         try self.mobMeshData.put(meshId, vd);
@@ -469,11 +399,6 @@ pub const Shape = struct {
         for (shaders) |shader| {
             gl.attachShader(shaderProgram, shader);
         }
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("init mob program {d} error: {d}\n", .{ mobId, e });
-            return ShapeErr.RenderError;
-        }
 
         gl.linkProgram(shaderProgram);
         var success: gl.Int = 0;
@@ -490,22 +415,11 @@ pub const Shape = struct {
         for (shaders) |shader| {
             gl.deleteShader(shader);
         }
-
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} mob error: {d}\n", .{ mobId, e });
-            return ShapeErr.RenderError;
-        }
         return shaderProgram;
     }
 
-    pub fn setUniforms(mobId: i32, program: gl.Uint, vm: view.View) !void {
+    pub fn setUniforms(_: i32, program: gl.Uint, vm: view.View) !void {
         gl.useProgram(program);
-        var e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} mob set uniforms error: {d}\n", .{ mobId, e });
-            return ShapeErr.RenderError;
-        }
 
         var projection: [16]gl.Float = [_]gl.Float{undefined} ** 16;
 
@@ -517,30 +431,15 @@ pub const Shape = struct {
 
         const location = gl.getUniformLocation(program, "projection");
         gl.uniformMatrix4fv(location, 1, gl.FALSE, &projection);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("error: {d}\n", .{e});
-            return ShapeErr.RenderError;
-        }
 
         const blockIndex: gl.Uint = gl.getUniformBlockIndex(program, vm.name.ptr);
         const bindingPoint: gl.Uint = 1;
         gl.uniformBlockBinding(program, blockIndex, bindingPoint);
-        e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("mob error mobId: {d} - {d}\n", .{ mobId, e });
-            return ShapeErr.RenderError;
-        }
         gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, vm.ubo);
     }
 
     pub fn draw(self: Shape, animate: bool) !void {
         gl.useProgram(self.program);
-        const e = gl.getError();
-        if (e != gl.NO_ERROR) {
-            std.debug.print("{d} mob draw error: {d}\n", .{ self.mobId, e });
-            return ShapeErr.RenderError;
-        }
 
         var meshIterator = self.mobMeshData.keyIterator();
         while (meshIterator.next()) |_k| {
