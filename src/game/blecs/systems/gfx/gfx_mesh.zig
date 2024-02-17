@@ -1,9 +1,11 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const zmesh = @import("zmesh");
+const gl = @import("zopengl");
 const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
+const gfx = @import("../../../shape/gfx/gfx.zig");
 
 pub fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
@@ -25,8 +27,21 @@ pub fn run(it: *ecs.iter_t) callconv(.C) void {
             defer game.state.allocator.free(er.positions);
             defer game.state.allocator.free(er.indices);
 
+            const vao = gfx.Gfx.initVAO() catch unreachable;
+            const vbo = gfx.Gfx.initVBO() catch unreachable;
+            const ebo = gfx.Gfx.initEBO(er.indices) catch unreachable;
+            const vs = gfx.Gfx.initVertexShader(er.vertexShader) catch unreachable;
+            const fs = gfx.Gfx.initFragmentShader(er.fragmentShader) catch unreachable;
+            const program = gfx.Gfx.initProgram(&[_]gl.Uint{ vs, fs }) catch unreachable;
+
             ecs.remove(it.world, entity, components.gfx.ElementsRendererConfig);
-            _ = ecs.set(world, entity, components.gfx.ElementsRenderer, .{});
+            _ = ecs.set(world, entity, components.gfx.ElementsRenderer, .{
+                .program = program,
+                .vao = vao,
+                .vbo = vbo,
+                .ebo = ebo,
+                .numIndices = @intCast(er.indices.len),
+            });
             _ = ecs.add(world, entity, components.gfx.CanDraw);
         }
     }

@@ -57,4 +57,66 @@ pub const Gfx = struct {
         }
         return EBO;
     }
+
+    pub fn initVertexShader(vertexShaderSource: [:0]const u8) !gl.Uint {
+        return initShader(vertexShaderSource, gl.VERTEX_SHADER);
+    }
+
+    pub fn initFragmentShader(fragmentShaderSource: [:0]const u8) !gl.Uint {
+        return initShader(fragmentShaderSource, gl.FRAGMENT_SHADER);
+    }
+
+    pub fn initShader(source: [:0]const u8, shaderType: c_uint) !gl.Uint {
+        const shader: gl.Uint = gl.createShader(shaderType);
+        gl.shaderSource(shader, 1, &[_][*c]const u8{source.ptr}, null);
+        gl.compileShader(shader);
+
+        var success: gl.Int = 0;
+        gl.getShaderiv(shader, gl.COMPILE_STATUS, &success);
+        if (success == 0) {
+            var infoLog: [512]u8 = undefined;
+            var logSize: gl.Int = 0;
+            gl.getShaderInfoLog(shader, 512, &logSize, &infoLog);
+            const i: usize = @intCast(logSize);
+            std.debug.print("ERROR::SHADER::COMPILATION_FAILED\n{s}\n", .{infoLog[0..i]});
+            return GfxErr.RenderError;
+        }
+
+        return shader;
+    }
+
+    pub fn initProgram(shaders: []const gl.Uint) !gl.Uint {
+        const shaderProgram: gl.Uint = gl.createProgram();
+        for (shaders) |shader| {
+            gl.attachShader(shaderProgram, shader);
+        }
+        var e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("initProgram error: {d}\n", .{e});
+            return GfxErr.RenderError;
+        }
+
+        gl.linkProgram(shaderProgram);
+        var success: gl.Int = 0;
+        gl.getProgramiv(shaderProgram, gl.LINK_STATUS, &success);
+        if (success == 0) {
+            var infoLog: [512]u8 = undefined;
+            var logSize: gl.Int = 0;
+            gl.getProgramInfoLog(shaderProgram, 512, &logSize, &infoLog);
+            const i: usize = @intCast(logSize);
+            std.debug.print("ERROR::SHADER::PROGRAM::LINKING_FAILED\n{s}\n", .{infoLog[0..i]});
+            return GfxErr.RenderError;
+        }
+
+        for (shaders) |shader| {
+            gl.deleteShader(shader);
+        }
+
+        e = gl.getError();
+        if (e != gl.NO_ERROR) {
+            std.debug.print("initProgram error: {d}\n", .{e});
+            return GfxErr.RenderError;
+        }
+        return shaderProgram;
+    }
 };

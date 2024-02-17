@@ -19,8 +19,7 @@ pub const ElementsRenderer = struct {
     program: gl.Uint = 0,
     vao: gl.Uint = 0,
     vbo: gl.Uint = 0,
-    vertexShader: gl.Uint = 0,
-    fragmentShader: gl.Uint = 0,
+    ebo: gl.Uint = 0,
     numIndices: gl.Uint = 0,
 };
 

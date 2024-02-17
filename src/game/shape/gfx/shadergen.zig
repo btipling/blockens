@@ -9,6 +9,7 @@ pub const ShaderGen = struct {
         try buf.appendSlice(allocator, "#version 330 core\n");
         try buf.appendSlice(allocator, "layout (location = 0) in vec3 position;\n\n");
         try buf.appendSlice(allocator, "void main()\n");
+        try buf.appendSlice(allocator, "{\n");
         try buf.appendSlice(allocator, "    gl_Position = vec4(position, 1.0);\n");
         try buf.appendSlice(allocator, "}\n");
         const ownedSentinelSlice: [:0]const u8 = try buf.toOwnedSliceSentinel(allocator, 0);

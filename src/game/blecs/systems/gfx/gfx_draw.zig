@@ -14,9 +14,10 @@ pub fn system() ecs.system_desc_t {
 
 pub fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
-        for (0..it.count()) |_| {
+        for (0..it.count()) |i| {
             const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse return;
-            std.debug.print("CanDraw: {d}\n", .{ers.len});
+            const er = ers[i];
+            std.debug.print("CanDraw: vao: {d}\n", .{er.vao});
         }
     }
 }
