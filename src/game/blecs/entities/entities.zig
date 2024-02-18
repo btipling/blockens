@@ -35,23 +35,28 @@ pub fn init() void {
 
     game.state.entities.crosshair = ecs.new_entity(game.state.world, "Crosshair");
     const c_hrz = helpers.new_child(game.state.world, game.state.entities.crosshair);
-    _ = ecs.set(game.state.world, c_hrz, components.shape.Plane, .{
-        .color = math.vecs.Vflx4.initBytes(33, 33, 33, 255),
-        .scale = math.vecs.Vflx4.initFloats(0.025, 0.004, 1, 0),
-        .rotation = null,
-        .translation = math.vecs.Vflx4.initFloats(-0.5, -0.5, 0, 0),
-    });
-    _ = ecs.add(game.state.world, c_hrz, tags.Hud);
+    _ = ecs.add(game.state.world, c_hrz, components.shape.Shape);
+    const cr_c = math.vecs.Vflx4.initBytes(33, 33, 33, 255);
+    _ = ecs.set(
+        game.state.world,
+        c_hrz,
+        components.shape.Color,
+        components.shape.Color.fromVec(cr_c),
+    );
+    _ = ecs.set(game.state.world, c_hrz, components.shape.Scale, .{ .x = 0.025, .y = 0.004, .z = 1 });
+    _ = ecs.set(game.state.world, c_hrz, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
     _ = ecs.add(game.state.world, c_hrz, components.shape.NeedsSetup);
     ecs.add_pair(game.state.world, c_hrz, ecs.ChildOf, gameData);
     const c_vrt = helpers.new_child(game.state.world, game.state.entities.crosshair);
-    _ = ecs.set(game.state.world, c_vrt, components.shape.Plane, .{
-        .color = math.vecs.Vflx4.initBytes(33, 33, 33, 255),
-        .scale = math.vecs.Vflx4.initFloats(0.0025, 0.04, 1, 0),
-        .rotation = null,
-        .translation = math.vecs.Vflx4.initFloats(-0.5, -0.5, 0, 0),
-    });
-    _ = ecs.add(game.state.world, c_vrt, tags.Hud);
+    _ = ecs.add(game.state.world, c_vrt, components.shape.Shape);
+    _ = ecs.set(
+        game.state.world,
+        c_vrt,
+        components.shape.Color,
+        components.shape.Color.fromVec(cr_c),
+    );
+    _ = ecs.set(game.state.world, c_vrt, components.shape.Scale, .{ .x = 0.0025, .y = 0.04, .z = 1 });
+    _ = ecs.set(game.state.world, c_vrt, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
     _ = ecs.add(game.state.world, c_vrt, components.shape.NeedsSetup);
     ecs.add_pair(game.state.world, c_vrt, ecs.ChildOf, gameData);
 

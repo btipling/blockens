@@ -5,19 +5,19 @@ const zmesh = @import("zmesh");
 const zm = @import("zmath");
 const tags = @import("../../tags.zig");
 const game = @import("../../../game.zig");
+const math = @import("../../../math/math.zig");
 const gfx = @import("../../../shape/gfx/gfx.zig");
 const components = @import("../../components/components.zig");
 
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "HudSetupSystem", ecs.OnUpdate, @constCast(&s));
+    ecs.SYSTEM(game.state.world, "ShapeSetupSystem", ecs.OnUpdate, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
-    desc.query.filter.terms[0] = .{ .id = ecs.id(tags.Hud) };
-    desc.query.filter.terms[1] = .{ .id = ecs.id(components.shape.Plane) };
-    desc.query.filter.terms[2] = .{ .id = ecs.id(components.shape.NeedsSetup) };
+    desc.query.filter.terms[0] = .{ .id = ecs.id(components.shape.Shape) };
+    desc.query.filter.terms[1] = .{ .id = ecs.id(components.shape.NeedsSetup) };
     desc.run = run;
     return desc;
 }
@@ -27,19 +27,39 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            const pls: []components.shape.Plane = ecs.field(it, components.shape.Plane, 2) orelse return;
+
+            var rotation: ?math.vecs.Vflx4 = null;
+            var scale: ?math.vecs.Vflx4 = null;
+            var translation: ?math.vecs.Vflx4 = null;
+            var color: ?math.vecs.Vflx4 = null;
+            if (ecs.get_id(world, entity, ecs.id(components.shape.Rotation))) |opaque_ptr| {
+                const r: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
+                rotation = r.toVec();
+            }
+            if (ecs.get_id(world, entity, ecs.id(components.shape.Scale))) |opaque_ptr| {
+                const s: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
+                scale = s.toVec();
+            }
+            if (ecs.get_id(world, entity, ecs.id(components.shape.Translation))) |opaque_ptr| {
+                const t: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
+                translation = t.toVec();
+            }
+            if (ecs.get_id(world, entity, ecs.id(components.shape.Color))) |opaque_ptr| {
+                const c: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
+                color = c.toVec();
+            }
 
             var plane = zmesh.Shape.initPlane(1, 1);
             defer plane.deinit();
             const v_cfg = gfx.shadergen.ShaderGen.vertexShaderConfig{
                 .has_uniform_mat = true,
-                .scale = pls[i].scale,
-                .rotation = pls[i].rotation,
-                .translation = pls[i].translation,
+                .scale = scale,
+                .rotation = rotation,
+                .translation = translation,
             };
             const vertexShader: [:0]const u8 = gfx.shadergen.ShaderGen.genVertexShader(game.state.allocator, v_cfg) catch unreachable;
             const f_cfg = gfx.shadergen.ShaderGen.fragmentShaderConfig{
-                .color = pls[i].color,
+                .color = color,
             };
             const fragmentShader: [:0]const u8 = gfx.shadergen.ShaderGen.genFragmentShader(game.state.allocator, f_cfg) catch unreachable;
             const positions: [][3]f32 = game.state.allocator.alloc([3]f32, plane.positions.len) catch unreachable;
