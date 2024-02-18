@@ -36,6 +36,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             var debug = false;
             var has_ubo = false;
             var ubo_binding_point: gl.Uint = 0;
+            var has_uniform_mat = false;
+            var uniform_mat = zm.identity();
             if (ecs.get_id(world, entity, ecs.id(components.shape.Rotation))) |opaque_ptr| {
                 const r: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
                 rotation = r.toVec();
@@ -60,12 +62,17 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 has_ubo = true;
                 ubo_binding_point = u.binding_point;
             }
+            if (ecs.get_id(world, entity, ecs.id(components.screen.WorldLocation))) |opaque_ptr| {
+                const u: *const components.screen.WorldLocation = @ptrCast(@alignCast(opaque_ptr));
+                has_uniform_mat = true;
+                uniform_mat = zm.translationV(u.toVec().value);
+            }
 
             var plane = zmesh.Shape.initPlane(1, 1);
             defer plane.deinit();
             const v_cfg = gfx.shadergen.ShaderGen.vertexShaderConfig{
                 .debug = debug,
-                .has_uniform_mat = debug,
+                .has_uniform_mat = has_uniform_mat,
                 .has_ubo = has_ubo,
                 .scale = scale,
                 .rotation = rotation,
@@ -92,7 +99,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             };
             const erc_id = ecs.new_id(world);
             game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
-            if (debug) erc.transform = zm.identity();
+            if (has_uniform_mat) erc.transform = uniform_mat;
             if (has_ubo) erc.ubo_binding_point = ubo_binding_point;
             _ = ecs.set(world, entity, components.gfx.ElementsRendererConfig, .{ .id = erc_id });
             ecs.remove(world, entity, components.shape.NeedsSetup);
