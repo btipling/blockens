@@ -20,19 +20,24 @@ fn system() ecs.system_desc_t {
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
     const world = it.world;
+    const screen: *components.screen.Screen = ecs.get_mut(
+        game.state.world,
+        game.state.entities.screen,
+        components.screen.Screen,
+    ) orelse unreachable;
+    if (!ecs.is_alive(world, screen.current)) {
+        std.debug.print("current {d} is not alive!\n", .{screen.current});
+        return;
+    }
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
-            const screens: []components.screen.Screen = ecs.field(it, components.screen.Screen, 1) orelse return;
-            var screen: components.screen.Screen = screens[i];
             const entity = it.entities()[i];
             if (input.keys.pressedKey(.F1)) {
-                std.debug.print("F1 pressed!\n", .{});
                 helpers.delete_children(world, entity);
                 screen.current = helpers.new_child(world, entity);
                 ecs.add(game.state.world, screen.current, components.screen.Settings);
             }
             if (input.keys.pressedKey(.F2)) {
-                std.debug.print("F2 pressed!\n", .{});
                 helpers.delete_children(world, entity);
                 screen.current = helpers.new_child(world, entity);
                 ecs.add(game.state.world, screen.current, components.screen.Game);

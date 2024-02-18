@@ -20,8 +20,32 @@ fn system() ecs.system_desc_t {
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
+    const world = it.world;
+    const screen: *const components.screen.Screen = ecs.get(
+        game.state.world,
+        game.state.entities.screen,
+        components.screen.Screen,
+    ) orelse unreachable;
+    if (!ecs.is_alive(world, screen.current)) {
+        std.debug.print("current {d} is not alive!\n", .{screen.current});
+        return;
+    }
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
+            const entity = it.entities()[i];
+            const parent = ecs.get_parent(world, entity);
+            if (parent == screen.gameDataEntity) {
+                // std.debug.print("has game data\n", .{});
+                if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Game))) {
+                    continue;
+                }
+            }
+            if (parent == screen.settingDataEntity) {
+                // std.debug.print("has settings data\n", .{});
+                if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Settings))) {
+                    continue;
+                }
+            }
             const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse return;
             const er = ers[i];
             if (er.enableDepthTest) gl.enable(gl.DEPTH_TEST);
