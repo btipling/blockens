@@ -16,6 +16,8 @@ pub const Entities = struct {
 
 pub const Input = struct {
     last_key: i64 = 0,
+    last_x: f64 = 0,
+    last_y: f64 = 0,
 };
 
 pub const UI = struct {

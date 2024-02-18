@@ -7,7 +7,6 @@ const zmesh = @import("zmesh");
 const zm = @import("zmath");
 const cfg = @import("config.zig");
 const ui = @import("ui/ui.zig");
-const controls = @import("controls.zig");
 const cube = @import("./shape/cube.zig");
 const plane = @import("./shape/plane.zig");
 const cursor = @import("./shape/cursor.zig");
@@ -21,11 +20,10 @@ const blecs = @import("blecs/blecs.zig");
 const pressStart2PFont = @embedFile("assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
 const robotoMonoFont = @embedFile("assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
 
-var ctrls: *controls.Controls = undefined;
-
 fn cursorPosCallback(window: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) void {
     _ = window;
-    ctrls.cursorPosCallback(xpos, ypos);
+    state.input.last_x = xpos;
+    state.input.last_y = ypos;
 }
 
 fn glErrorCallbackfn(
@@ -151,75 +149,13 @@ pub const Game = struct {
         std.debug.print("\nGoodbye blockens!\n", .{});
     }
 
-    pub fn run(self: *Game) !void {
+    pub fn run(_: *Game) !void {
         std.debug.print("\nHello blockens!\n", .{});
 
-        var appState = try oldState.State.init(self.allocator, self.sqliteAlloc);
-        defer appState.deinit();
-
-        var gameUI = try ui.UI.init(&appState, state.window, self.allocator);
-        defer gameUI.deinit();
-
-        // init view imports
-        const planePosition = oldState.position.Position{ .x = 0.0, .y = 0.0, .z = -1.0 };
-        var worldPlane = try plane.Plane.init("worldplane", planePosition, self.allocator);
-        defer worldPlane.deinit();
-        var uiCursor = try cursor.Cursor.init("cursor", self.allocator);
-        defer uiCursor.deinit();
-
-        // init views
-        var gameScreen = try screen.world.World.initWithHUD(
-            worldPlane,
-            uiCursor,
-            &appState.worldScreen,
-            &appState.character,
-        );
-        _ = &gameScreen;
-        var demoScreen = try screen.world.World.init(&appState.demoScreen);
-        _ = &demoScreen;
-
-        var textureGen = try screen.texture_gen.TextureGenerator.init(&appState, self.allocator);
-        defer textureGen.deinit();
-
-        var characterScreen = try screen.character.Character.init(&appState.character);
-        defer characterScreen.deinit();
-
-        var c = try controls.Controls.init(state.window, &appState);
-        ctrls = &c;
-
-        // uncomment to start in a specific view:
-        // try appState.setGameScreen();
-        // try appState.setChunkGeneratorScreen();
-        // try appState.setWorldEditorScreen();
-        try appState.setCharacterDesignerScreen();
-
-        var focusedAt: gl.Float = 0.0;
         main_loop: while (!state.window.shouldClose()) {
             glfw.pollEvents();
 
-            const currentFrame: gl.Float = @as(gl.Float, @floatCast(glfw.getTime()));
-            appState.worldScreen.deltaTime = currentFrame - appState.worldScreen.lastFrame;
-            appState.worldScreen.lastFrame = currentFrame;
-            const focused = state.window.getAttribute(glfw.Window.Attribute.focused);
-            if (!focused and appState.app.currentScreen != .paused) {
-                try appState.pauseGame();
-            } else if (appState.app.currentScreen == .paused) {
-                if (focused and focusedAt == 0.0) {
-                    focusedAt = currentFrame;
-                    std.debug.print("focusedAt: {d}\n", .{focusedAt});
-                } else if (focused and (currentFrame - focusedAt) > 0.07) {
-                    focusedAt = 0.0;
-                    try appState.resumeGame();
-                }
-            }
-
-            if (try ctrls.handleKey()) {
-                try appState.exitGame();
-            }
             if (state.quit) {
-                break :main_loop;
-            }
-            if (appState.exit) {
                 break :main_loop;
             }
 
@@ -228,60 +164,8 @@ pub const Game = struct {
             const h: u32 = @intCast(fb_size[1]);
             zgui.backend.newFrame(w, h);
             _ = blecs.ecs.progress(state.world, 0);
-            // switch (appState.app.currentScreen) {
-            //     .game => {
-            //         const time = ecs.get(state.world, state.entities.clock, components.Time);
-            //         try drawGameScreen(&gameScreen, &gameUI, @constCast(time));
-            //     },
-            //     .textureGenerator => {
-            //         try drawTextureGeneratorScreen(&textureGen, &gameUI);
-            //     },
-            //     .worldEditor => {
-            //         try drawWorldEditorScreen(&gameUI);
-            //     },
-            //     .blockEditor => {
-            //         try drawBlockEditorScreen(&textureGen, &gameUI);
-            //     },
-            //     .chunkGenerator => {
-            //         try drawChunkGeneratorScreen(&demoScreen, &gameUI);
-            //     },
-            //     .characterDesigner => {
-            //         try drawCharacterDesignerScreen(&characterScreen, &gameUI);
-            //     },
-            //     .paused => {
-            //         window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
-            //     },
-            // }
             zgui.backend.draw();
             state.window.swapBuffers();
         }
     }
 };
-
-fn drawTextureGeneratorScreen(textureGen: *screen.texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
-    try textureGen.draw();
-    try gameUI.drawTextureGen();
-}
-
-fn drawGameScreen(gameScreen: *screen.world.World, gameUI: *ui.UI, time: ?*blecs.components.Time) !void {
-    try gameScreen.draw();
-    try gameUI.drawGame(time);
-}
-
-fn drawWorldEditorScreen(gameUI: *ui.UI) !void {
-    try gameUI.drawWorldEditor();
-}
-
-fn drawBlockEditorScreen(textureGen: *screen.texture_gen.TextureGenerator, gameUI: *ui.UI) !void {
-    try textureGen.draw();
-    try gameUI.drawBlockEditor();
-}
-
-fn drawChunkGeneratorScreen(demoScreen: *screen.world.World, gameUI: *ui.UI) !void {
-    try demoScreen.draw();
-    try gameUI.drawChunkGenerator();
-}
-fn drawCharacterDesignerScreen(characterScreen: *screen.character.Character, gameUI: *ui.UI) !void {
-    try characterScreen.draw();
-    try gameUI.drawCharacterDesigner();
-}
