@@ -6,6 +6,7 @@ const gl = @import("zopengl");
 const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
+const game_state = @import("../../../state/game.zig");
 const gfx = @import("../../../shape/gfx/gfx.zig");
 const shadergen = @import("../../../shape/gfx/shadergen.zig");
 
@@ -27,21 +28,31 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             const ers: []components.gfx.ElementsRendererConfig = ecs.field(it, components.gfx.ElementsRendererConfig, 1) orelse return;
-            const er = ers[i];
-
-            defer game.state.allocator.free(er.vertexShader);
-            defer game.state.allocator.free(er.fragmentShader);
-            defer game.state.allocator.free(er.positions);
-            defer game.state.allocator.free(er.indices);
+            const erc = ers[i];
+            const er: *game_state.ElementsRendererConfig = game.state.gfx.renderConfigs.get(erc.id) orelse {
+                std.debug.print("couldn't find render config for {d}\n", .{erc.id});
+                continue;
+            };
+            const vertexShader: [:0]const u8 = er.vertexShader;
+            const fragmentShader: [:0]const u8 = er.fragmentShader;
+            const positions: [][3]gl.Float = er.positions;
+            const indices: []gl.Uint = er.indices;
+            defer game.state.allocator.free(vertexShader);
+            defer game.state.allocator.free(fragmentShader);
+            defer game.state.allocator.free(positions);
+            defer game.state.allocator.free(indices);
+            defer _ = game.state.gfx.renderConfigs.remove(erc.id);
+            defer game.state.allocator.destroy(er);
+            defer ecs.delete(world, erc.id);
 
             const vao = gfx.Gfx.initVAO() catch unreachable;
             const vbo = gfx.Gfx.initVBO() catch unreachable;
-            const ebo = gfx.Gfx.initEBO(er.indices) catch unreachable;
-            const vs = gfx.Gfx.initVertexShader(er.vertexShader) catch unreachable;
-            const fs = gfx.Gfx.initFragmentShader(er.fragmentShader) catch unreachable;
+            const ebo = gfx.Gfx.initEBO(indices) catch unreachable;
+            const vs = gfx.Gfx.initVertexShader(vertexShader) catch unreachable;
+            const fs = gfx.Gfx.initFragmentShader(fragmentShader) catch unreachable;
             const program = gfx.Gfx.initProgram(&[_]gl.Uint{ vs, fs }) catch unreachable;
             gl.useProgram(program);
-            gfx.Gfx.addVertexAttribute([3]gl.Float, er.positions.ptr, @intCast(er.positions.len)) catch unreachable;
+            gfx.Gfx.addVertexAttribute([3]gl.Float, positions.ptr, @intCast(positions.len)) catch unreachable;
 
             if (er.transform) |t| {
                 gfx.Gfx.setUniformMat(shadergen.TransformMatName, program, t) catch unreachable;

@@ -5,6 +5,7 @@ const zmesh = @import("zmesh");
 const zm = @import("zmath");
 const tags = @import("../../tags.zig");
 const game = @import("../../../game.zig");
+const game_state = @import("../../../state/game.zig");
 const math = @import("../../../math/math.zig");
 const gfx = @import("../../../shape/gfx/gfx.zig");
 const components = @import("../../components/components.zig");
@@ -34,6 +35,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             var color: ?math.vecs.Vflx4 = null;
             var debug = false;
             var has_ubo = false;
+            var ubo_binding_point: gl.Uint = 0;
             if (ecs.get_id(world, entity, ecs.id(components.shape.Rotation))) |opaque_ptr| {
                 const r: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
                 rotation = r.toVec();
@@ -53,8 +55,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (ecs.has_id(world, entity, ecs.id(components.Debug))) {
                 debug = true;
             }
-            if (ecs.has_id(world, entity, ecs.id(components.shape.UBO))) {
+            if (ecs.get_id(world, entity, ecs.id(components.shape.UBO))) |opaque_ptr| {
+                const u: *const components.shape.UBO = @ptrCast(@alignCast(opaque_ptr));
                 has_ubo = true;
+                ubo_binding_point = u.binding_point;
             }
 
             var plane = zmesh.Shape.initPlane(1, 1);
@@ -77,15 +81,20 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             @memcpy(positions, plane.positions);
             const indices: []u32 = game.state.allocator.alloc(u32, plane.indices.len) catch unreachable;
             @memcpy(indices, plane.indices);
-            var erc: components.gfx.ElementsRendererConfig = .{
+            var erc = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
+            erc.* = .{
                 .vertexShader = vertexShader,
                 .fragmentShader = fragmentShader,
                 .positions = positions,
                 .indices = indices,
                 .transform = null,
+                .ubo_binding_point = null,
             };
+            const erc_id = ecs.new_id(world);
+            game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
             if (debug) erc.transform = zm.identity();
-            _ = ecs.set(world, entity, components.gfx.ElementsRendererConfig, erc);
+            if (has_ubo) erc.ubo_binding_point = ubo_binding_point;
+            _ = ecs.set(world, entity, components.gfx.ElementsRendererConfig, .{ .id = erc_id });
             ecs.remove(world, entity, components.shape.NeedsSetup);
         }
     }

@@ -10,13 +10,8 @@ pub const BaseRenderer = struct {
     bgColor: math.vecs.Vflx4 = undefined,
 };
 
-// ElementsRendererConfig is a big, complex ecs component, maybe store a reference somewhere via an id instead
 pub const ElementsRendererConfig = struct {
-    vertexShader: [:0]const u8 = undefined,
-    fragmentShader: [:0]const u8 = undefined,
-    positions: [][3]gl.Float = undefined,
-    indices: []u32 = undefined,
-    transform: ?zm.Mat = null,
+    id: ecs.entity_t,
 };
 
 pub const ElementsRenderer = struct {

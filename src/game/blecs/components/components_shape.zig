@@ -77,7 +77,10 @@ pub const Translation = struct {
     }
 };
 
-pub const UBO = struct {};
+pub const UBO = struct {
+    ubo: gl.Uint = 0,
+    binding_point: gl.Uint = 0,
+};
 
 pub const NeedsSetup = struct {};
 
@@ -87,6 +90,6 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, Rotation);
     ecs.COMPONENT(game.state.world, Scale);
     ecs.COMPONENT(game.state.world, Translation);
-    ecs.TAG(game.state.world, UBO);
+    ecs.COMPONENT(game.state.world, UBO);
     ecs.TAG(game.state.world, NeedsSetup);
 }

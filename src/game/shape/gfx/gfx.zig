@@ -102,4 +102,10 @@ pub const Gfx = struct {
         const location = gl.getUniformLocation(program, @ptrCast(name));
         gl.uniformMatrix4fv(location, 1, gl.FALSE, &ma);
     }
+
+    pub fn setUniformBufferObject(name: []const u8, ubo: gl.Uint, program: gl.Uint, buffer_binding_point: gl.Uint) !void {
+        const blockIndex: gl.Uint = gl.getUniformBlockIndex(program, @ptrCast(name));
+        gl.uniformBlockBinding(program, blockIndex, buffer_binding_point);
+        gl.bindBufferBase(gl.UNIFORM_BUFFER, buffer_binding_point, ubo);
+    }
 };

@@ -115,6 +115,10 @@ pub const Game = struct {
                 .codeFont = codeFont,
                 .gameFont = gameFont,
             },
+            .gfx = gameState.Gfx{
+                .ubos = std.AutoHashMap(gl.Uint, gl.Uint).init(allocator),
+                .renderConfigs = std.AutoHashMap(blecs.ecs.entity_t, *gameState.ElementsRendererConfig).init(allocator),
+            },
             .window = window,
         };
 
@@ -125,6 +129,12 @@ pub const Game = struct {
 
     pub fn deinit(_: Game) void {
         _ = blecs.ecs.fini(state.world);
+        state.gfx.ubos.deinit();
+        var cfgs = state.gfx.renderConfigs.valueIterator();
+        while (cfgs.next()) |rcfg| {
+            state.allocator.destroy(rcfg);
+        }
+        state.gfx.renderConfigs.deinit();
         zstbi.deinit();
         zmesh.deinit();
         zgui.backend.deinit();

@@ -6,6 +6,8 @@ const game = @import("../../game.zig");
 const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
 
+pub const GameUBOBindingPoint: gl.Uint = 0;
+
 pub fn init() void {
     game.state.entities.screen = ecs.new_entity(game.state.world, "Screen");
     const gameData = ecs.new_entity(game.state.world, "ScreenGameData");
@@ -72,7 +74,7 @@ fn initFloor(gameData: ecs.entity_t) void {
     );
     _ = ecs.set(game.state.world, c_f, components.shape.Scale, .{ .x = 0.33, .y = 0.5, .z = 1 });
     _ = ecs.set(game.state.world, c_f, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
-    _ = ecs.add(game.state.world, c_f, components.shape.UBO);
+    _ = ecs.set(game.state.world, c_f, components.shape.UBO, .{ .binding_point = GameUBOBindingPoint });
     _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_f, components.Debug);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, gameData);
