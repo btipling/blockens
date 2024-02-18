@@ -1,9 +1,11 @@
 const std = @import("std");
+const zm = @import("zmath");
 const math = @import("../../math/math.zig");
 
 pub const ShaderGen = struct {
     pub const vertexShaderConfig = struct {
         has_uniform_mat: bool = false,
+        inline_mat: ?zm.Mat = null,
     };
 
     pub const fragmentShaderConfig = struct {
@@ -22,11 +24,12 @@ pub const ShaderGen = struct {
         }
         try buf.appendSlice(allocator, "void main()\n");
         try buf.appendSlice(allocator, "{\n");
+        try buf.appendSlice(allocator, "    vec4 pos;\n");
+        try buf.appendSlice(allocator, "    pos = vec4(position.xyz, 1.0);\n");
         if (cfg.has_uniform_mat) {
-            try buf.appendSlice(allocator, "    gl_Position = transform * vec4(position.xyz, 1.0);\n");
-        } else {
-            try buf.appendSlice(allocator, "    gl_Position = vec4(position.xyz, 1.0);\n");
+            try buf.appendSlice(allocator, "    pos = transform * pos;\n");
         }
+        try buf.appendSlice(allocator, "    gl_Position = pos;\n");
         try buf.appendSlice(allocator, "}\n");
         const ownedSentinelSlice: [:0]const u8 = try buf.toOwnedSliceSentinel(allocator, 0);
         std.debug.print("generated vertex shader: \n {s}\n", .{ownedSentinelSlice});
