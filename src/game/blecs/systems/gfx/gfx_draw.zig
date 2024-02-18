@@ -35,13 +35,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             const parent = ecs.get_parent(world, entity);
             if (parent == screen.gameDataEntity) {
-                // std.debug.print("has game data\n", .{});
                 if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Game))) {
                     continue;
                 }
             }
             if (parent == screen.settingDataEntity) {
-                // std.debug.print("has settings data\n", .{});
                 if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Settings))) {
                     continue;
                 }

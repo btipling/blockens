@@ -18,7 +18,6 @@ pub fn init() void {
         .gameDataEntity = gameData,
         .settingDataEntity = settingsData,
     });
-    std.debug.print("initialScreen? current is {d}\n", .{initialScreen});
 
     game.state.entities.clock = ecs.new_entity(game.state.world, "Clock");
     _ = ecs.set(game.state.world, game.state.entities.clock, components.Time, .{ .startTime = 0, .currentTime = 0 });
