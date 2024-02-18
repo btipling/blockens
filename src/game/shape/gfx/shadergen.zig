@@ -1,4 +1,5 @@
 const std = @import("std");
+const gl = @import("zopengl");
 const zm = @import("zmath");
 const math = @import("../../math/math.zig");
 
@@ -47,18 +48,8 @@ pub const ShaderGen = struct {
         try buf.appendSlice(allocator, "{\n");
         // magenta to highlight shader without materials
         if (cfg.color) |c| {
-            var buffer: [250]u8 = undefined;
-            const line = try std.fmt.bufPrint(
-                &buffer,
-                "    FragColor = vec4({d}, {d}, {d}, {d});\n",
-                .{
-                    c.value[0],
-                    c.value[1],
-                    c.value[2],
-                    c.value[3],
-                },
-            );
-            try buf.appendSlice(allocator, line);
+            const line = try vec4ToBuf("    FragColor = vec4({d}, {d}, {d}, {d});\n", c.value[0], c.value[1], c.value[2], c.value[3]);
+            try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
         } else {
             try buf.appendSlice(allocator, "    FragColor = vec4(1.0, 0.0, 1.0, 1.0);\n");
         }
@@ -66,5 +57,17 @@ pub const ShaderGen = struct {
         const ownedSentinelSlice: [:0]const u8 = try buf.toOwnedSliceSentinel(allocator, 0);
         std.debug.print("generated fragment shader: \n {s}\n", .{ownedSentinelSlice});
         return ownedSentinelSlice;
+    }
+
+    fn vec4ToBuf(
+        comptime fmt: []const u8,
+        v0: gl.Float,
+        v1: gl.Float,
+        v2: gl.Float,
+        v3: gl.Float,
+    ) ![250:0]u8 {
+        var buffer: [250:0]u8 = [_:0]u8{0} ** 250;
+        _ = try std.fmt.bufPrint(&buffer, fmt, .{ v0, v1, v2, v3 });
+        return buffer;
     }
 };
