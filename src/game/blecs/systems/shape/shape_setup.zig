@@ -33,6 +33,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             var translation: ?math.vecs.Vflx4 = null;
             var color: ?math.vecs.Vflx4 = null;
             var debug = false;
+            var has_ubo = false;
             if (ecs.get_id(world, entity, ecs.id(components.shape.Rotation))) |opaque_ptr| {
                 const r: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
                 rotation = r.toVec();
@@ -52,12 +53,16 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (ecs.has_id(world, entity, ecs.id(components.Debug))) {
                 debug = true;
             }
+            if (ecs.has_id(world, entity, ecs.id(components.shape.UBO))) {
+                has_ubo = true;
+            }
 
             var plane = zmesh.Shape.initPlane(1, 1);
             defer plane.deinit();
             const v_cfg = gfx.shadergen.ShaderGen.vertexShaderConfig{
                 .debug = debug,
-                .has_uniform_mat = true,
+                .has_uniform_mat = debug,
+                .has_ubo = has_ubo,
                 .scale = scale,
                 .rotation = rotation,
                 .translation = translation,
@@ -72,13 +77,15 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             @memcpy(positions, plane.positions);
             const indices: []u32 = game.state.allocator.alloc(u32, plane.indices.len) catch unreachable;
             @memcpy(indices, plane.indices);
-            _ = ecs.set(world, entity, components.gfx.ElementsRendererConfig, .{
+            var erc: components.gfx.ElementsRendererConfig = .{
                 .vertexShader = vertexShader,
                 .fragmentShader = fragmentShader,
                 .positions = positions,
                 .indices = indices,
-                .transform = zm.identity(),
-            });
+                .transform = null,
+            };
+            if (debug) erc.transform = zm.identity();
+            _ = ecs.set(world, entity, components.gfx.ElementsRendererConfig, erc);
             ecs.remove(world, entity, components.shape.NeedsSetup);
         }
     }

@@ -3,10 +3,15 @@ const gl = @import("zopengl");
 const zm = @import("zmath");
 const math = @import("../../math/math.zig");
 
+pub const TransformMatName: []const u8 = "transform";
+pub const UBOName: []const u8 = "DataBlock";
+pub const UBOMatName: []const u8 = "dataTransform";
+
 pub const ShaderGen = struct {
     pub const vertexShaderConfig = struct {
         debug: bool = false,
         has_uniform_mat: bool = false,
+        has_ubo: bool = false,
         scale: ?math.vecs.Vflx4 = null,
         rotation: ?math.vecs.Vflx4 = null,
         translation: ?math.vecs.Vflx4 = null,
@@ -42,7 +47,16 @@ pub const ShaderGen = struct {
         try buf.appendSlice(allocator, "#version 330 core\n");
         try buf.appendSlice(allocator, "layout (location = 0) in vec3 position;\n\n");
         if (cfg.has_uniform_mat) {
-            try buf.appendSlice(allocator, "\n\nuniform mat4 transform;\n\n");
+            try buf.appendSlice(allocator, "\nuniform mat4 ");
+            try buf.appendSlice(allocator, TransformMatName);
+            try buf.appendSlice(allocator, ";\n\n");
+        }
+        if (cfg.has_ubo) {
+            try buf.appendSlice(allocator, "\nlayout(std140) uniform ");
+            try buf.appendSlice(allocator, UBOName);
+            try buf.appendSlice(allocator, " {\n    mat4 ");
+            try buf.appendSlice(allocator, UBOMatName);
+            try buf.appendSlice(allocator, ";\n};\n\n");
         }
         try buf.appendSlice(allocator, "void main()\n");
         try buf.appendSlice(allocator, "{\n");
@@ -62,7 +76,14 @@ pub const ShaderGen = struct {
             try buf.appendSlice(allocator, "    pos = inline_transform * pos;\n");
         }
         if (cfg.has_uniform_mat) {
-            try buf.appendSlice(allocator, "    pos = transform * pos;\n");
+            try buf.appendSlice(allocator, "    pos = ");
+            try buf.appendSlice(allocator, TransformMatName);
+            try buf.appendSlice(allocator, " * pos;\n");
+        }
+        if (cfg.has_ubo) {
+            try buf.appendSlice(allocator, "    pos = ");
+            try buf.appendSlice(allocator, UBOMatName);
+            try buf.appendSlice(allocator, " * pos;\n");
         }
         try buf.appendSlice(allocator, "    gl_Position = pos;\n");
         try buf.appendSlice(allocator, "}\n");

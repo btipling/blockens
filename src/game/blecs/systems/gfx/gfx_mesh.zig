@@ -7,6 +7,7 @@ const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
 const gfx = @import("../../../shape/gfx/gfx.zig");
+const shadergen = @import("../../../shape/gfx/shadergen.zig");
 
 pub fn init() void {
     const s = system();
@@ -43,7 +44,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             gfx.Gfx.addVertexAttribute([3]gl.Float, er.positions.ptr, @intCast(er.positions.len)) catch unreachable;
 
             if (er.transform) |t| {
-                gfx.Gfx.setUniformMat("transform", program, t) catch unreachable;
+                gfx.Gfx.setUniformMat(shadergen.TransformMatName, program, t) catch unreachable;
             }
 
             ecs.remove(it.world, entity, components.gfx.ElementsRendererConfig);
