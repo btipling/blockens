@@ -20,6 +20,7 @@ pub fn init() void {
     });
 
     initCrossHairs(gameData);
+    initFloor(gameData);
     initMenu();
 }
 
@@ -57,4 +58,21 @@ fn initCrossHairs(gameData: ecs.entity_t) void {
     _ = ecs.set(game.state.world, c_vrt, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
     _ = ecs.add(game.state.world, c_vrt, components.shape.NeedsSetup);
     ecs.add_pair(game.state.world, c_vrt, ecs.ChildOf, gameData);
+}
+
+fn initFloor(gameData: ecs.entity_t) void {
+    game.state.entities.floor = ecs.new_entity(game.state.world, "WorldFloor");
+    const c_f = helpers.new_child(game.state.world, game.state.entities.floor);
+    _ = ecs.add(game.state.world, c_f, components.shape.Shape);
+    const cr_c = math.vecs.Vflx4.initBytes(34, 32, 52, 255);
+    _ = ecs.set(
+        game.state.world,
+        c_f,
+        components.shape.Color,
+        components.shape.Color.fromVec(cr_c),
+    );
+    _ = ecs.set(game.state.world, c_f, components.shape.Scale, .{ .x = 0.33, .y = 0.5, .z = 1 });
+    _ = ecs.set(game.state.world, c_f, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
+    _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
+    ecs.add_pair(game.state.world, c_f, ecs.ChildOf, gameData);
 }
