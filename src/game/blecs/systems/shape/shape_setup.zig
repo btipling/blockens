@@ -32,6 +32,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             var scale: ?math.vecs.Vflx4 = null;
             var translation: ?math.vecs.Vflx4 = null;
             var color: ?math.vecs.Vflx4 = null;
+            var debug = false;
             if (ecs.get_id(world, entity, ecs.id(components.shape.Rotation))) |opaque_ptr| {
                 const r: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
                 rotation = r.toVec();
@@ -48,10 +49,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 const c: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
                 color = c.toVec();
             }
+            if (ecs.has_id(world, entity, ecs.id(components.Debug))) {
+                debug = true;
+            }
 
             var plane = zmesh.Shape.initPlane(1, 1);
             defer plane.deinit();
             const v_cfg = gfx.shadergen.ShaderGen.vertexShaderConfig{
+                .debug = debug,
                 .has_uniform_mat = true,
                 .scale = scale,
                 .rotation = rotation,
@@ -59,6 +64,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             };
             const vertexShader: [:0]const u8 = gfx.shadergen.ShaderGen.genVertexShader(game.state.allocator, v_cfg) catch unreachable;
             const f_cfg = gfx.shadergen.ShaderGen.fragmentShaderConfig{
+                .debug = debug,
                 .color = color,
             };
             const fragmentShader: [:0]const u8 = gfx.shadergen.ShaderGen.genFragmentShader(game.state.allocator, f_cfg) catch unreachable;

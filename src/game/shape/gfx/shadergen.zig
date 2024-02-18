@@ -5,6 +5,7 @@ const math = @import("../../math/math.zig");
 
 pub const ShaderGen = struct {
     pub const vertexShaderConfig = struct {
+        debug: bool = false,
         has_uniform_mat: bool = false,
         scale: ?math.vecs.Vflx4 = null,
         rotation: ?math.vecs.Vflx4 = null,
@@ -12,6 +13,7 @@ pub const ShaderGen = struct {
     };
 
     pub const fragmentShaderConfig = struct {
+        debug: bool = false,
         color: ?math.vecs.Vflx4 = null,
     };
 
@@ -65,7 +67,7 @@ pub const ShaderGen = struct {
         try buf.appendSlice(allocator, "    gl_Position = pos;\n");
         try buf.appendSlice(allocator, "}\n");
         const ownedSentinelSlice: [:0]const u8 = try buf.toOwnedSliceSentinel(allocator, 0);
-        std.debug.print("generated vertex shader: \n {s}\n", .{ownedSentinelSlice});
+        if (cfg.debug) std.debug.print("generated vertex shader: \n {s}\n", .{ownedSentinelSlice});
         return ownedSentinelSlice;
     }
 
@@ -87,7 +89,7 @@ pub const ShaderGen = struct {
         }
         try buf.appendSlice(allocator, "}\n");
         const ownedSentinelSlice: [:0]const u8 = try buf.toOwnedSliceSentinel(allocator, 0);
-        std.debug.print("generated fragment shader: \n {s}\n", .{ownedSentinelSlice});
+        if (cfg.debug) std.debug.print("generated fragment shader: \n {s}\n", .{ownedSentinelSlice});
         return ownedSentinelSlice;
     }
 

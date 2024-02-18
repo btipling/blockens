@@ -21,9 +21,12 @@ pub const Sky = struct {
     };
 };
 
+pub const Debug = struct {};
+
 pub fn init() void {
     ecs.COMPONENT(game.state.world, Time);
     ecs.COMPONENT(game.state.world, Sky);
+    ecs.TAG(game.state.world, Debug);
     shape.init();
     gfx.init();
     ui.init();
