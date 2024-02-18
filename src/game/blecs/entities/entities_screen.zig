@@ -75,6 +75,7 @@ fn initFloor(gameData: ecs.entity_t) void {
     _ = ecs.set(game.state.world, c_f, components.shape.Scale, .{ .x = 0.33, .y = 0.5, .z = 1 });
     _ = ecs.set(game.state.world, c_f, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
     _ = ecs.set(game.state.world, c_f, components.shape.UBO, .{ .binding_point = GameUBOBindingPoint });
+    _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{ .x = 0, .y = 0.25, .z = -1 });
     _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_f, components.Debug);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, gameData);
