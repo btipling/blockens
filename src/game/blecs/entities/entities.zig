@@ -34,15 +34,26 @@ pub fn init() void {
     });
 
     game.state.entities.crosshair = ecs.new_entity(game.state.world, "Crosshair");
-    _ = ecs.set(game.state.world, game.state.entities.crosshair, components.shape.Plane, .{
+    const c_hrz = helpers.new_child(game.state.world, game.state.entities.crosshair);
+    _ = ecs.set(game.state.world, c_hrz, components.shape.Plane, .{
         .color = math.vecs.Vflx4.initBytes(33, 33, 33, 255),
-        .scale = math.vecs.Vflx4.initFloats(0.05, 0.005, 1, 0),
+        .scale = math.vecs.Vflx4.initFloats(0.025, 0.004, 1, 0),
         .rotation = null,
         .translation = math.vecs.Vflx4.initFloats(-0.5, -0.5, 0, 0),
     });
-    _ = ecs.add(game.state.world, game.state.entities.crosshair, tags.Hud);
-    _ = ecs.add(game.state.world, game.state.entities.crosshair, components.shape.NeedsSetup);
-    ecs.add_pair(game.state.world, game.state.entities.crosshair, ecs.ChildOf, gameData);
+    _ = ecs.add(game.state.world, c_hrz, tags.Hud);
+    _ = ecs.add(game.state.world, c_hrz, components.shape.NeedsSetup);
+    ecs.add_pair(game.state.world, c_hrz, ecs.ChildOf, gameData);
+    const c_vrt = helpers.new_child(game.state.world, game.state.entities.crosshair);
+    _ = ecs.set(game.state.world, c_vrt, components.shape.Plane, .{
+        .color = math.vecs.Vflx4.initBytes(33, 33, 33, 255),
+        .scale = math.vecs.Vflx4.initFloats(0.0025, 0.04, 1, 0),
+        .rotation = null,
+        .translation = math.vecs.Vflx4.initFloats(-0.5, -0.5, 0, 0),
+    });
+    _ = ecs.add(game.state.world, c_vrt, tags.Hud);
+    _ = ecs.add(game.state.world, c_vrt, components.shape.NeedsSetup);
+    ecs.add_pair(game.state.world, c_vrt, ecs.ChildOf, gameData);
 
     game.state.entities.menu = ecs.new_entity(game.state.world, "Menu");
     _ = ecs.set(game.state.world, game.state.entities.menu, components.ui.Menu, .{
