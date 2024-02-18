@@ -151,7 +151,6 @@ pub const Game = struct {
 
     pub fn run(_: *Game) !void {
         std.debug.print("\nHello blockens!\n", .{});
-
         main_loop: while (!state.window.shouldClose()) {
             glfw.pollEvents();
 
