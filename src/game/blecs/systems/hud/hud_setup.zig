@@ -31,9 +31,23 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
             var plane = zmesh.Shape.initPlane(1, 1);
             defer plane.deinit();
-
+            var inline_mat: ?zm.Mat = null;
+            var m = zm.identity();
+            if (pls[i].rotation) |r| {
+                m = zm.mul(m, zm.quatToMat(r.value));
+                inline_mat = m;
+            }
+            if (pls[i].scale) |s| {
+                m = zm.mul(m, zm.scalingV(s.value));
+                inline_mat = m;
+            }
+            if (pls[i].translate) |t| {
+                m = zm.mul(m, zm.translationV(t.value));
+                inline_mat = m;
+            }
             const v_cfg = gfx.shadergen.ShaderGen.vertexShaderConfig{
                 .has_uniform_mat = true,
+                .inline_mat = inline_mat,
             };
             const vertexShader: [:0]const u8 = gfx.shadergen.ShaderGen.genVertexShader(game.state.allocator, v_cfg) catch unreachable;
             const f_cfg = gfx.shadergen.ShaderGen.fragmentShaderConfig{
@@ -49,7 +63,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .fragmentShader = fragmentShader,
                 .positions = positions,
                 .indices = indices,
-                .transform = zm.scaling(0.5, 0.5, 0.5),
+                .transform = zm.identity(),
             });
             ecs.remove(world, entity, components.shape.NeedsSetup);
         }

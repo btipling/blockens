@@ -27,6 +27,19 @@ pub const ShaderGen = struct {
         try buf.appendSlice(allocator, "{\n");
         try buf.appendSlice(allocator, "    vec4 pos;\n");
         try buf.appendSlice(allocator, "    pos = vec4(position.xyz, 1.0);\n");
+        if (cfg.inline_mat) |m| {
+            const mr = zm.matToArr(m);
+            var line = try vec4ToBuf("    vec4 c0 = vec4({d}, {d}, {d}, {d});\n", mr[0], mr[1], mr[2], mr[3]);
+            try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
+            line = try vec4ToBuf("    vec4 c1 = vec4({d}, {d}, {d}, {d});\n", mr[4], mr[5], mr[6], mr[7]);
+            try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
+            line = try vec4ToBuf("    vec4 c2 = vec4({d}, {d}, {d}, {d});\n", mr[8], mr[9], mr[10], mr[11]);
+            try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
+            line = try vec4ToBuf("    vec4 c3 = vec4({d}, {d}, {d}, {d});\n", mr[12], mr[13], mr[14], mr[15]);
+            try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
+            try buf.appendSlice(allocator, "    mat4 inline_transform = mat4(c0, c1, c2, c3);\n");
+            try buf.appendSlice(allocator, "    pos = inline_transform * pos;\n");
+        }
         if (cfg.has_uniform_mat) {
             try buf.appendSlice(allocator, "    pos = transform * pos;\n");
         }
