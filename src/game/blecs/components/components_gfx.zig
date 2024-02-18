@@ -15,6 +15,7 @@ pub const ElementsRendererConfig = struct {
     fragmentShader: [:0]const u8 = undefined,
     positions: [][3]gl.Float = undefined,
     indices: []u32 = undefined,
+    transform: ?zm.Mat = null,
 };
 
 pub const ElementsRenderer = struct {

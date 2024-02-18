@@ -25,7 +25,7 @@ pub fn init() void {
     game.state.entities.gfx = ecs.new_entity(game.state.world, "Gfx");
     _ = ecs.set(game.state.world, game.state.entities.gfx, components.gfx.BaseRenderer, .{
         .clear = gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
-        .bgColor = math.vecs.Vflx4.initBytes(135, 206, 235, 1.0),
+        .bgColor = math.vecs.Vflx4.initBytes(135, 206, 235, 255),
     });
 
     game.state.entities.sky = ecs.new_entity(game.state.world, "Sky");
@@ -35,7 +35,7 @@ pub fn init() void {
 
     game.state.entities.crosshair = ecs.new_entity(game.state.world, "Crosshair");
     _ = ecs.set(game.state.world, game.state.entities.crosshair, components.shape.Plane, .{
-        .color = math.vecs.Vflx4.initBytes(135, 206, 235, 1.0),
+        .color = math.vecs.Vflx4.initBytes(135, 206, 235, 255),
         .translate = null,
         .scale = null,
         .rotation = null,
