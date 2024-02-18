@@ -46,7 +46,7 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     glfw.windowHintTyped(.context_version_major, gl_major);
     glfw.windowHintTyped(.context_version_minor, gl_minor);
     glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
-    glfw.windowHintTyped(.opengl_forward_compat, true);
+    glfw.windowHintTyped(.opengl_forward_compat, false);
     glfw.windowHintTyped(.client_api, .opengl_api);
     glfw.windowHintTyped(.doublebuffer, true);
     glfw.windowHintTyped(.resizable, false);
