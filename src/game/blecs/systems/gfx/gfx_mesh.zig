@@ -42,10 +42,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             gl.useProgram(program);
             gfx.Gfx.addVertexAttribute([3]gl.Float, er.positions.ptr, @intCast(er.positions.len)) catch unreachable;
 
-            var m = zm.translation(0, 0, -1);
-            const scale = 0.5;
-            m = zm.mul(m, zm.scaling(scale, scale, scale));
-            gfx.Gfx.setUniformMat("transform", program, m) catch unreachable;
+            gfx.Gfx.setUniformMat("transform", program, zm.identity()) catch unreachable;
 
             ecs.remove(it.world, entity, components.gfx.ElementsRendererConfig);
             _ = ecs.set(world, entity, components.gfx.ElementsRenderer, .{
