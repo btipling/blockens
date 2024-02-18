@@ -77,6 +77,8 @@ pub const Translation = struct {
     }
 };
 
+pub const UBO = struct {};
+
 pub const NeedsSetup = struct {};
 
 pub fn init() void {
@@ -85,5 +87,6 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, Rotation);
     ecs.COMPONENT(game.state.world, Scale);
     ecs.COMPONENT(game.state.world, Translation);
+    ecs.TAG(game.state.world, UBO);
     ecs.TAG(game.state.world, NeedsSetup);
 }

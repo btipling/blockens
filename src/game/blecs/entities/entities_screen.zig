@@ -5,7 +5,6 @@ const math = @import("../../math/math.zig");
 const game = @import("../../game.zig");
 const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
-const tags = @import("../tags.zig");
 
 pub fn init() void {
     game.state.entities.screen = ecs.new_entity(game.state.world, "Screen");
