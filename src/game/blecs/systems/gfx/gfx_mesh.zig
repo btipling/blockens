@@ -52,10 +52,21 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const fs = gfx.Gfx.initFragmentShader(fragmentShader) catch unreachable;
             const program = gfx.Gfx.initProgram(&[_]gl.Uint{ vs, fs }) catch unreachable;
             gl.useProgram(program);
-            gfx.Gfx.addVertexAttribute([3]gl.Float, positions.ptr, @intCast(positions.len)) catch unreachable;
+            gfx.Gfx.addVertexAttribute([3]gl.Float, positions.ptr, @intCast(positions.len));
 
             if (er.transform) |t| {
-                gfx.Gfx.setUniformMat(shadergen.TransformMatName, program, t) catch unreachable;
+                gfx.Gfx.setUniformMat(shadergen.TransformMatName, program, t);
+            }
+
+            if (er.ubo_binding_point) |ubo_binding_point| {
+                var ubo: gl.Uint = 0;
+                ubo = game.state.gfx.ubos.get(ubo_binding_point) orelse blk: {
+                    const m = zm.identity();
+                    const new_ubo = gfx.Gfx.initUniformBufferObject(m);
+                    game.state.gfx.ubos.put(ubo_binding_point, new_ubo) catch unreachable;
+                    break :blk new_ubo;
+                };
+                gfx.Gfx.setUniformBufferObject(shadergen.UBOName, program, ubo, ubo_binding_point);
             }
 
             ecs.remove(it.world, entity, components.gfx.ElementsRendererConfig);

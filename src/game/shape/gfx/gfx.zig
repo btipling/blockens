@@ -85,7 +85,7 @@ pub const Gfx = struct {
         return shaderProgram;
     }
 
-    pub fn addVertexAttribute(comptime T: type, dataptr: ?*const anyopaque, len: gl.Int) !void {
+    pub fn addVertexAttribute(comptime T: type, dataptr: ?*const anyopaque, len: gl.Int) void {
         const size = len * @sizeOf(T);
         const stride = @sizeOf(T);
         gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
@@ -93,7 +93,7 @@ pub const Gfx = struct {
         gl.enableVertexAttribArray(0);
     }
 
-    pub fn setUniformMat(name: []const u8, program: gl.Uint, m: zm.Mat) !void {
+    pub fn setUniformMat(name: []const u8, program: gl.Uint, m: zm.Mat) void {
         gl.useProgram(program);
 
         var ma: [16]gl.Float = [_]gl.Float{undefined} ** 16;
@@ -103,9 +103,23 @@ pub const Gfx = struct {
         gl.uniformMatrix4fv(location, 1, gl.FALSE, &ma);
     }
 
-    pub fn setUniformBufferObject(name: []const u8, ubo: gl.Uint, program: gl.Uint, buffer_binding_point: gl.Uint) !void {
+    pub fn setUniformBufferObject(name: []const u8, program: gl.Uint, ubo: gl.Uint, buffer_binding_point: gl.Uint) void {
         const blockIndex: gl.Uint = gl.getUniformBlockIndex(program, @ptrCast(name));
         gl.uniformBlockBinding(program, blockIndex, buffer_binding_point);
         gl.bindBufferBase(gl.UNIFORM_BUFFER, buffer_binding_point, ubo);
+    }
+
+    pub fn initUniformBufferObject(data: zm.Mat) gl.Uint {
+        var ubo: gl.Uint = undefined;
+        gl.genBuffers(1, &ubo);
+        gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
+
+        var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+        zm.storeMat(&transform, data);
+
+        const size = @as(isize, @intCast(transform.len * @sizeOf(gl.Float)));
+        gl.bufferData(gl.UNIFORM_BUFFER, size, &transform, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
+        return ubo;
     }
 };

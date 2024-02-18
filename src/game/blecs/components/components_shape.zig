@@ -78,7 +78,6 @@ pub const Translation = struct {
 };
 
 pub const UBO = struct {
-    ubo: gl.Uint = 0,
     binding_point: gl.Uint = 0,
 };
 

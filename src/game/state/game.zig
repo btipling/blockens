@@ -33,7 +33,6 @@ pub const ElementsRendererConfig = struct {
     indices: []u32 = undefined,
     transform: ?zm.Mat = null,
     ubo_binding_point: ?gl.Uint = null,
-    ubo: ?gl.Uint = null,
 };
 
 pub const Gfx = struct {
