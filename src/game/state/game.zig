@@ -13,6 +13,7 @@ pub const Entities = struct {
     floor: usize = 0,
     crosshair: usize = 0,
     menu: usize = 0,
+    game_camera: usize = 0,
 };
 
 pub const Input = struct {

@@ -12,45 +12,53 @@ pub const Screen = struct {
 };
 
 pub const Camera = struct {};
-pub const EyePosition = struct {
+pub const CameraPosition = struct {
     x: gl.Float = 0,
     y: gl.Float = 0,
     z: gl.Float = 0,
+    w: gl.Float = 0,
 
-    pub fn toVec(self: EyePosition) math.vecs.Vflx4 {
+    pub fn toVec(self: CameraPosition) math.vecs.Vflx4 {
         return math.vecs.Vflx4.initFloats(
             self.x,
             self.y,
             self.z,
-            0,
+            self.w,
         );
     }
 };
-pub const EyeDirection = struct {
+pub const CameraFront = struct {
     x: gl.Float = 0,
     y: gl.Float = 0,
     z: gl.Float = 0,
+    w: gl.Float = 0,
 
-    pub fn toVec(self: EyeDirection) math.vecs.Vflx4 {
+    pub fn toVec(self: CameraFront) math.vecs.Vflx4 {
         return math.vecs.Vflx4.initFloats(
             self.x,
             self.y,
             self.z,
-            0,
+            self.w,
         );
     }
 };
+pub const CameraRotation = struct {
+    yaw: gl.Float = 0,
+    pitch: gl.Float = 0,
+};
+
 pub const UpDirection = struct {
     x: gl.Float = 0,
     y: gl.Float = 0,
     z: gl.Float = 0,
+    w: gl.Float = 0,
 
     pub fn toVec(self: UpDirection) math.vecs.Vflx4 {
         return math.vecs.Vflx4.initFloats(
             self.x,
             self.y,
             self.z,
-            0,
+            self.w,
         );
     }
 };
@@ -85,8 +93,9 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, Screen);
 
     ecs.TAG(game.state.world, Camera);
-    ecs.COMPONENT(game.state.world, EyePosition);
-    ecs.COMPONENT(game.state.world, EyeDirection);
+    ecs.COMPONENT(game.state.world, CameraPosition);
+    ecs.COMPONENT(game.state.world, CameraFront);
+    ecs.COMPONENT(game.state.world, CameraRotation);
     ecs.COMPONENT(game.state.world, UpDirection);
 
     ecs.COMPONENT(game.state.world, Perspective);

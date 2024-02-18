@@ -3,6 +3,7 @@ const ecs = @import("zflecs");
 const gl = @import("zopengl");
 const math = @import("../../math/math.zig");
 const game = @import("../../game.zig");
+const config = @import("../../config.zig");
 const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
 
@@ -23,6 +24,7 @@ pub fn init() void {
     initCrossHairs(gameData);
     initFloor(gameData);
     initMenu();
+    initCamera(gameData);
 }
 
 fn initMenu() void {
@@ -79,4 +81,26 @@ fn initFloor(gameData: ecs.entity_t) void {
     _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_f, components.Debug);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, gameData);
+}
+
+fn initCamera(gameData: ecs.entity_t) void {
+    game.state.entities.game_camera = ecs.new_entity(game.state.world, "GameCamera");
+    const camera = helpers.new_child(game.state.world, game.state.entities.floor);
+    _ = ecs.add(game.state.world, camera, components.screen.Camera);
+    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .x = -68.0, .y = 78.0, .z = -70, .w = 1.0 });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .x = 0.459, .y = -0.31, .z = 0.439, .w = 0 });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 41.6, .pitch = -19.4 });
+    _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .x = 0, .y = 1.0, .z = 0, .w = 0 });
+    // These dimensions should also be component data to support monitors other than the one I've been working with:
+    const h: gl.Float = @floatFromInt(config.windows_height);
+    const w: gl.Float = @floatFromInt(config.windows_width);
+    _ = ecs.set(game.state.world, camera, components.screen.Perspective, .{
+        .fovy = config.fov,
+        .aspect = w / h,
+        .near = config.near,
+        .far = config.far,
+    });
+    ecs.add_pair(game.state.world, camera, ecs.ChildOf, gameData);
+    // const ps = zm.perspectiveFovRh(config.fov, aspect, config.near, config.far);
+    // zm.storeMat(&projection, ps);
 }
