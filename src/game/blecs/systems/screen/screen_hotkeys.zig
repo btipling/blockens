@@ -21,7 +21,7 @@ fn system() ecs.system_desc_t {
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
     const world = it.world;
-    const screen: *components.screen.Screen = ecs.get_mut(
+    const screen: *const components.screen.Screen = ecs.get(
         game.state.world,
         game.state.entities.screen,
         components.screen.Screen,
@@ -31,13 +31,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         return;
     }
     while (ecs.iter_next(it)) {
-        for (0..it.count()) |i| {
-            const entity = it.entities()[i];
+        for (0..it.count()) |_| {
             if (input.keys.pressedKey(.F1)) {
-                screen_helpers.showSettingsScreen(world, screen, entity);
+                screen_helpers.showSettingsScreen();
             }
             if (input.keys.pressedKey(.F2)) {
-                screen_helpers.showGameScreen(world, screen, entity);
+                screen_helpers.showGameScreen();
             }
             if (input.keys.pressedKey(.F12)) {
                 game.state.quit = true;

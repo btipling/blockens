@@ -5,6 +5,7 @@ const gl = @import("zopengl");
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
+const screen_helpers = @import("../../../screen/screen.zig");
 
 pub fn init() void {
     const s = system();
@@ -23,15 +24,23 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const ms: []components.ui.Menu = ecs.field(it, components.ui.Menu, 1) orelse return;
             const menu = ms[i];
-            if (!menu.visible) continue;
-
+            if (!menu.visible) {
+                game.state.window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
+                continue;
+            }
+            game.state.window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.normal);
             if (zgui.beginMainMenuBar()) {
                 zgui.pushStyleVar2f(.{ .idx = .item_spacing, .v = [2]f32{ 20.0, 20.0 } });
                 if (zgui.menuItem("game", .{})) {
-                    std.debug.print("picked game menu item\n", .{});
+                    screen_helpers.showGameScreen();
                 }
                 if (zgui.menuItem("settings", .{})) {
-                    std.debug.print("picked settings menu item\n", .{});
+                    screen_helpers.showSettingsScreen();
+                }
+                const ww = zgui.getWindowWidth();
+                zgui.sameLine(.{ .offset_from_start_x = ww - 150.0 });
+                if (zgui.menuItem("exit", .{})) {
+                    game.state.quit = true;
                 }
                 zgui.popStyleVar(.{ .count = 1 });
                 zgui.endMainMenuBar();
