@@ -5,11 +5,7 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
 
-    // for sqlite, which recommends using an arena allocator
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-
-    var g = try game.Game.init(gpa.allocator(), arena.allocator());
+    var g = try game.Game.init(gpa.allocator());
     defer g.deinit();
     return g.run();
 }

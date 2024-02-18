@@ -92,10 +92,7 @@ fn initGL(gl_major: u8, gl_minor: u8, window: *glfw.Window) !void {
 }
 
 pub const Game = struct {
-    allocator: std.mem.Allocator,
-    sqliteAlloc: std.mem.Allocator,
-
-    pub fn init(allocator: std.mem.Allocator, sqliteAlloc: std.mem.Allocator) !Game {
+    pub fn init(allocator: std.mem.Allocator) !Game {
         // TODO: Move more of run into init and create a separate render loop in a thread
         // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
         glfw.init() catch @panic("Unable to init glfw");
@@ -131,13 +128,10 @@ pub const Game = struct {
 
         blecs.init();
 
-        return .{
-            .allocator = allocator,
-            .sqliteAlloc = sqliteAlloc,
-        };
+        return .{};
     }
 
-    pub fn deinit(self: *Game) void {
+    pub fn deinit(_: Game) void {
         _ = blecs.ecs.fini(state.world);
         zstbi.deinit();
         zmesh.deinit();
@@ -145,11 +139,11 @@ pub const Game = struct {
         zgui.deinit();
         state.window.destroy();
         glfw.terminate();
-        self.allocator.destroy(state);
+        state.allocator.destroy(state);
         std.debug.print("\nGoodbye blockens!\n", .{});
     }
 
-    pub fn run(_: *Game) !void {
+    pub fn run(_: Game) !void {
         std.debug.print("\nHello blockens!\n", .{});
         main_loop: while (!state.window.shouldClose()) {
             glfw.pollEvents();
