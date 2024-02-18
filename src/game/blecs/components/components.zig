@@ -2,10 +2,10 @@ const ecs = @import("zflecs");
 const gl = @import("zopengl");
 const math = @import("../../math/math.zig");
 const game = @import("../../game.zig");
-pub const shape = @import("shape.zig");
-pub const gfx = @import("gfx.zig");
-pub const ui = @import("ui.zig");
-pub const screen = @import("screen.zig");
+pub const shape = @import("components_shape.zig");
+pub const gfx = @import("components_gfx.zig");
+pub const ui = @import("components_ui.zig");
+pub const screen = @import("components_screen.zig");
 
 pub const Time = struct {
     startTime: i64 = 0,

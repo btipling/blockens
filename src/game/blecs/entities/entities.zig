@@ -3,12 +3,16 @@ const gl = @import("zopengl");
 const math = @import("../../math/math.zig");
 const game = @import("../../game.zig");
 const components = @import("../components/components.zig");
+const helpers = @import("../helpers.zig");
 const tags = @import("../tags.zig");
 
 pub fn init() void {
     game.state.entities.screen = ecs.new_entity(game.state.world, "Screen");
-    _ = ecs.add(game.state.world, game.state.entities.screen, components.screen.Screen);
-    _ = ecs.add(game.state.world, game.state.entities.screen, components.screen.Game);
+    const initialScreen = helpers.new_child(game.state.world, game.state.entities.screen);
+    _ = ecs.add(game.state.world, initialScreen, components.screen.Game);
+    _ = ecs.set(game.state.world, game.state.entities.screen, components.screen.Screen, .{
+        .current = initialScreen,
+    });
 
     game.state.entities.clock = ecs.new_entity(game.state.world, "Clock");
     _ = ecs.set(game.state.world, game.state.entities.clock, components.Time, .{ .startTime = 0, .currentTime = 0 });
