@@ -152,10 +152,12 @@ pub const Game = struct {
                 break :main_loop;
             }
 
-            const fb_size = state.window.getFramebufferSize();
-            const w: u32 = @intCast(fb_size[0]);
-            const h: u32 = @intCast(fb_size[1]);
-            zgui.backend.newFrame(w, h);
+            {
+                const fb_size = state.window.getFramebufferSize();
+                const w: u32 = @intCast(fb_size[0]);
+                const h: u32 = @intCast(fb_size[1]);
+                zgui.backend.newFrame(w, h);
+            }
             _ = blecs.ecs.progress(state.world, 0);
             zgui.backend.draw();
             state.window.swapBuffers();
