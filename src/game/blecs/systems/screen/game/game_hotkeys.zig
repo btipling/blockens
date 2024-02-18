@@ -1,9 +1,12 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const gl = @import("zopengl");
+const glfw = @import("zglfw");
 const components = @import("../../../components/components.zig");
 const game = @import("../../../../game.zig");
 const input = @import("../../../../input/input.zig");
+
+var pressedKeyState: ?glfw.Key = null;
 
 pub fn init() void {
     const s = system();
@@ -18,10 +21,26 @@ fn system() ecs.system_desc_t {
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
+    const menu: *components.ui.Menu = ecs.get_mut(
+        game.state.world,
+        game.state.entities.menu,
+        components.ui.Menu,
+    ) orelse unreachable;
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
-            if (input.keys.pressedKey(.F3)) {
-                std.debug.print("F3 pressed on game screen!\n", .{});
+            if (input.keys.holdKey(.F3)) {
+                menu.visible = true;
+                pressedKeyState = .F3;
+            } else {
+                if (pressedKeyState) |k| {
+                    switch (k) {
+                        .F3 => {
+                            menu.visible = false;
+                            pressedKeyState = null;
+                        },
+                        else => {},
+                    }
+                }
             }
         }
     }
