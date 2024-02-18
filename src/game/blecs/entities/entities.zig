@@ -36,9 +36,9 @@ pub fn init() void {
     game.state.entities.crosshair = ecs.new_entity(game.state.world, "Crosshair");
     _ = ecs.set(game.state.world, game.state.entities.crosshair, components.shape.Plane, .{
         .color = math.vecs.Vflx4.initBytes(33, 33, 33, 255),
-        .translation = null,
-        .scale = null,
+        .scale = math.vecs.Vflx4.initFloats(0.05, 0.005, 1, 0),
         .rotation = null,
+        .translation = math.vecs.Vflx4.initFloats(-0.5, -0.5, 0, 0),
     });
     _ = ecs.add(game.state.world, game.state.entities.crosshair, tags.Hud);
     _ = ecs.add(game.state.world, game.state.entities.crosshair, components.shape.NeedsSetup);

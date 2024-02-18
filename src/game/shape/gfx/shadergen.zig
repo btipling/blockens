@@ -23,16 +23,16 @@ pub const ShaderGen = struct {
         var inline_mat: ?zm.Mat = null;
         {
             var m = zm.identity();
+            if (cfg.translation) |t| {
+                m = zm.mul(m, zm.translationV(t.value));
+                inline_mat = m;
+            }
             if (cfg.scale) |s| {
                 m = zm.mul(m, zm.scalingV(s.value));
                 inline_mat = m;
             }
             if (cfg.rotation) |r| {
                 m = zm.mul(m, zm.quatToMat(r.value));
-                inline_mat = m;
-            }
-            if (cfg.translation) |t| {
-                m = zm.mul(m, zm.translationV(t.value));
                 inline_mat = m;
             }
         }

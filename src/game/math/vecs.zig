@@ -51,7 +51,11 @@ pub const Vflx4 = struct {
     }
 
     pub fn set(self: *Vflx4, v0: gl.Float, v1: gl.Float, v2: gl.Float, v3: gl.Float) void {
-        self.value = zm.f32x4(v0, v1, v2, v3);
+        return self.setVec(zm.f32x4(v0, v1, v2, v3));
+    }
+
+    pub fn setVec(self: *Vflx4, v: zm.F32x4) void {
+        self.value = v;
         zm.storeArr4(&self.arr, self.value);
         self.buffer = [_]u8{0} ** 100;
     }
