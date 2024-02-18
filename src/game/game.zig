@@ -4,17 +4,9 @@ const zgui = @import("zgui");
 const gl = @import("zopengl");
 const zstbi = @import("zstbi");
 const zmesh = @import("zmesh");
-const zm = @import("zmath");
 const cfg = @import("config.zig");
 const ui = @import("ui/ui.zig");
-const cube = @import("./shape/cube.zig");
-const plane = @import("./shape/plane.zig");
-const cursor = @import("./shape/cursor.zig");
-const screen = @import("./screen/screen.zig");
-const oldState = @import("state/state.zig");
 const gameState = @import("state/game.zig");
-const chunk = @import("chunk.zig");
-const math = @import("./math/math.zig");
 const blecs = @import("blecs/blecs.zig");
 
 const pressStart2PFont = @embedFile("assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
