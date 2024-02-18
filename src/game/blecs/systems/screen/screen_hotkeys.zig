@@ -5,6 +5,7 @@ const components = @import("../../components/components.zig");
 const helpers = @import("../../helpers.zig");
 const game = @import("../../../game.zig");
 const input = @import("../../../input/input.zig");
+const screen_helpers = @import("../../../screen/screen.zig");
 
 pub fn init() void {
     const s = system();
@@ -33,14 +34,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             if (input.keys.pressedKey(.F1)) {
-                helpers.delete_children(world, entity);
-                screen.current = helpers.new_child(world, entity);
-                ecs.add(game.state.world, screen.current, components.screen.Settings);
+                screen_helpers.showSettingsScreen(world, screen, entity);
             }
             if (input.keys.pressedKey(.F2)) {
-                helpers.delete_children(world, entity);
-                screen.current = helpers.new_child(world, entity);
-                ecs.add(game.state.world, screen.current, components.screen.Game);
+                screen_helpers.showGameScreen(world, screen, entity);
             }
             if (input.keys.pressedKey(.F12)) {
                 game.state.quit = true;

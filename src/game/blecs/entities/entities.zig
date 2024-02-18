@@ -43,4 +43,9 @@ pub fn init() void {
     _ = ecs.add(game.state.world, game.state.entities.crosshair, tags.Hud);
     _ = ecs.add(game.state.world, game.state.entities.crosshair, components.shape.NeedsSetup);
     ecs.add_pair(game.state.world, game.state.entities.crosshair, ecs.ChildOf, gameData);
+
+    game.state.entities.menu = ecs.new_entity(game.state.world, "Menu");
+    _ = ecs.set(game.state.world, game.state.entities.menu, components.ui.Menu, .{
+        .visible = false,
+    });
 }

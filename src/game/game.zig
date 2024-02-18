@@ -18,6 +18,9 @@ const chunk = @import("chunk.zig");
 const math = @import("./math/math.zig");
 const blecs = @import("blecs/blecs.zig");
 
+const pressStart2PFont = @embedFile("assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
+const robotoMonoFont = @embedFile("assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
+
 var ctrls: *controls.Controls = undefined;
 
 fn cursorPosCallback(window: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) void {
@@ -49,7 +52,7 @@ const GL_DEBUG_OUTPUT = 0x92E0;
 
 pub var state: *gameState.Game = undefined;
 
-fn initWindow(gl_major: u8, gl_minor: u8) !void {
+fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     glfw.windowHintTyped(.context_version_major, gl_major);
     glfw.windowHintTyped(.context_version_minor, gl_minor);
     glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
@@ -60,20 +63,21 @@ fn initWindow(gl_major: u8, gl_minor: u8) !void {
     glfw.windowHintTyped(.focused, true);
     glfw.windowHintTyped(.maximized, true);
     glfw.windowHintTyped(.decorated, false);
-    state.window = glfw.Window.create(cfg.windows_width, cfg.windows_height, cfg.game_name, null) catch |err| {
+    const window = glfw.Window.create(cfg.windows_width, cfg.windows_height, cfg.game_name, null) catch |err| {
         std.log.err("Failed to create game window.", .{});
         return err;
     };
-    state.window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
-    glfw.makeContextCurrent(state.window);
+    window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
+    glfw.makeContextCurrent(window);
     glfw.swapInterval(1);
+    return window;
 }
 
-fn initGL(gl_major: u8, gl_minor: u8) !void {
+fn initGL(gl_major: u8, gl_minor: u8, window: *glfw.Window) !void {
     try gl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
 
     {
-        const dimensions: [2]i32 = state.window.getSize();
+        const dimensions: [2]i32 = window.getSize();
         const w = dimensions[0];
         const h = dimensions[1];
         std.debug.print("Window size is {d}x{d}\n", .{ w, h });
@@ -96,9 +100,35 @@ pub const Game = struct {
     pub fn init(allocator: std.mem.Allocator, sqliteAlloc: std.mem.Allocator) !Game {
         // TODO: Move more of run into init and create a separate render loop in a thread
         // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
+        glfw.init() catch @panic("Unable to init glfw");
+
+        const gl_major = 4;
+        const gl_minor = 6;
+
+        const window = try initWindow(gl_major, gl_minor);
+
+        try initGL(gl_major, gl_minor, window);
+
+        _ = window.setCursorPosCallback(cursorPosCallback);
+
+        zgui.init(allocator);
+        const glsl_version: [*c]const u8 = "#version 130";
+        zgui.backend.initWithGlSlVersion(window, glsl_version);
+        zmesh.init(allocator);
+        zstbi.init(allocator);
+        zstbi.setFlipVerticallyOnLoad(false);
+        const gameFont = zgui.io.addFontFromMemory(pressStart2PFont, std.math.floor(24.0 * 1.1));
+        const codeFont = zgui.io.addFontFromMemory(robotoMonoFont, std.math.floor(40.0 * 1.1));
+        zgui.io.setDefaultFont(gameFont);
+
         state = try allocator.create(gameState.Game);
         state.* = .{
             .allocator = allocator,
+            .ui = gameState.UI{
+                .codeFont = codeFont,
+                .gameFont = gameFont,
+            },
+            .window = window,
         };
 
         blecs.init();
@@ -111,41 +141,18 @@ pub const Game = struct {
 
     pub fn deinit(self: *Game) void {
         _ = blecs.ecs.fini(state.world);
+        zstbi.deinit();
+        zmesh.deinit();
+        zgui.backend.deinit();
+        zgui.deinit();
         state.window.destroy();
+        glfw.terminate();
         self.allocator.destroy(state);
         std.debug.print("\nGoodbye blockens!\n", .{});
     }
 
     pub fn run(self: *Game) !void {
         std.debug.print("\nHello blockens!\n", .{});
-        glfw.init() catch {
-            std.log.err("Failed to initialize GLFW library.", .{});
-            return;
-        };
-        defer glfw.terminate();
-
-        const gl_major = 4;
-        const gl_minor = 6;
-
-        try initWindow(gl_major, gl_minor);
-
-        try initGL(gl_major, gl_minor);
-
-        _ = state.window.setCursorPosCallback(cursorPosCallback);
-
-        zgui.init(self.allocator);
-        defer zgui.deinit();
-
-        const glsl_version: [*c]const u8 = "#version 130";
-        zgui.backend.initWithGlSlVersion(state.window, glsl_version);
-        defer zgui.backend.deinit();
-
-        zmesh.init(self.allocator);
-        defer zmesh.deinit();
-
-        zstbi.init(self.allocator);
-        defer zstbi.deinit();
-        zstbi.setFlipVerticallyOnLoad(false);
 
         var appState = try oldState.State.init(self.allocator, self.sqliteAlloc);
         defer appState.deinit();
@@ -216,6 +223,10 @@ pub const Game = struct {
                 break :main_loop;
             }
 
+            const fb_size = state.window.getFramebufferSize();
+            const w: u32 = @intCast(fb_size[0]);
+            const h: u32 = @intCast(fb_size[1]);
+            zgui.backend.newFrame(w, h);
             _ = blecs.ecs.progress(state.world, 0);
             // switch (appState.app.currentScreen) {
             //     .game => {
@@ -241,6 +252,7 @@ pub const Game = struct {
             //         window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
             //     },
             // }
+            zgui.backend.draw();
             state.window.swapBuffers();
         }
     }
