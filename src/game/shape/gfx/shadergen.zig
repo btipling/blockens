@@ -6,7 +6,9 @@ const math = @import("../../math/math.zig");
 pub const ShaderGen = struct {
     pub const vertexShaderConfig = struct {
         has_uniform_mat: bool = false,
-        inline_mat: ?zm.Mat = null,
+        scale: ?math.vecs.Vflx4 = null,
+        rotation: ?math.vecs.Vflx4 = null,
+        translation: ?math.vecs.Vflx4 = null,
     };
 
     pub const fragmentShaderConfig = struct {
@@ -18,6 +20,23 @@ pub const ShaderGen = struct {
         var buf = std.ArrayListUnmanaged(u8){};
         defer buf.deinit(allocator);
 
+        var inline_mat: ?zm.Mat = null;
+        {
+            var m = zm.identity();
+            if (cfg.scale) |s| {
+                m = zm.mul(m, zm.scalingV(s.value));
+                inline_mat = m;
+            }
+            if (cfg.rotation) |r| {
+                m = zm.mul(m, zm.quatToMat(r.value));
+                inline_mat = m;
+            }
+            if (cfg.translation) |t| {
+                m = zm.mul(m, zm.translationV(t.value));
+                inline_mat = m;
+            }
+        }
+
         try buf.appendSlice(allocator, "#version 330 core\n");
         try buf.appendSlice(allocator, "layout (location = 0) in vec3 position;\n\n");
         if (cfg.has_uniform_mat) {
@@ -27,7 +46,7 @@ pub const ShaderGen = struct {
         try buf.appendSlice(allocator, "{\n");
         try buf.appendSlice(allocator, "    vec4 pos;\n");
         try buf.appendSlice(allocator, "    pos = vec4(position.xyz, 1.0);\n");
-        if (cfg.inline_mat) |m| {
+        if (inline_mat) |m| {
             const mr = zm.matToArr(m);
             var line = try vec4ToBuf("    vec4 c0 = vec4({d}, {d}, {d}, {d});\n", mr[0], mr[1], mr[2], mr[3]);
             try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));

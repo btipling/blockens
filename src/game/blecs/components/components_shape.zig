@@ -6,9 +6,9 @@ const game = @import("../../game.zig");
 
 pub const Plane = struct {
     color: ?math.vecs.Vflx4 = null,
-    translate: ?math.vecs.Vflx4 = null,
     scale: ?math.vecs.Vflx4 = null,
     rotation: ?math.vecs.Vflx4 = null,
+    translation: ?math.vecs.Vflx4 = null,
 };
 
 // Tags
