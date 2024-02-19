@@ -16,10 +16,14 @@ pub const Entities = struct {
     game_camera: usize = 0,
 };
 
-pub const Input = struct {
-    last_key: i64 = 0,
+pub const Cursor = struct {
     last_x: f64 = 0,
     last_y: f64 = 0,
+};
+
+pub const Input = struct {
+    last_key: i64 = 0,
+    cursor: ?Cursor = null,
 };
 
 pub const UI = struct {

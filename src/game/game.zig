@@ -14,8 +14,10 @@ const robotoMonoFont = @embedFile("assets/fonts/Roboto_Mono/RobotoMono-Regular.t
 
 fn cursorPosCallback(window: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) void {
     _ = window;
-    state.input.last_x = xpos;
-    state.input.last_y = ypos;
+    _ = xpos;
+    _ = ypos;
+    // state.input.last_x = xpos;
+    // state.input.last_y = ypos;
 }
 
 fn glErrorCallbackfn(

@@ -25,6 +25,7 @@ pub fn init() void {
     initFloor(gameData);
     initMenu();
     initCamera(gameData);
+    initCursor(gameData);
 }
 
 fn initMenu() void {
@@ -102,6 +103,8 @@ fn initCamera(gameData: ecs.entity_t) void {
     });
     _ = ecs.add(game.state.world, camera, components.screen.Updated);
     ecs.add_pair(game.state.world, camera, ecs.ChildOf, gameData);
-    // const ps = zm.perspectiveFovRh(config.fov, aspect, config.near, config.far);
-    // zm.storeMat(&projection, ps);
+}
+
+fn initCursor(gameData: ecs.entity_t) void {
+    _ = ecs.add(game.state.world, gameData, components.screen.Cursor);
 }
