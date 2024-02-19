@@ -16,7 +16,7 @@ pub fn init() void {
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
     desc.query.filter.terms[0] = .{ .id = ecs.id(components.screen.Camera) };
-    desc.query.filter.terms[0] = .{ .id = ecs.id(components.screen.Updated) };
+    desc.query.filter.terms[1] = .{ .id = ecs.id(components.screen.Updated) };
     desc.run = run;
     return desc;
 }
