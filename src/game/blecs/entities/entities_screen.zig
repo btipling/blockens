@@ -100,6 +100,7 @@ fn initCamera(gameData: ecs.entity_t) void {
         .near = config.near,
         .far = config.far,
     });
+    _ = ecs.add(game.state.world, camera, components.screen.Updated);
     ecs.add_pair(game.state.world, camera, ecs.ChildOf, gameData);
     // const ps = zm.perspectiveFovRh(config.fov, aspect, config.near, config.far);
     // zm.storeMat(&projection, ps);

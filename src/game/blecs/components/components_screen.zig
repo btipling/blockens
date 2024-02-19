@@ -88,6 +88,7 @@ pub const WorldLocation = struct {
 pub const Data = struct {};
 pub const Game = struct {};
 pub const Settings = struct {};
+pub const Updated = struct {};
 
 pub fn init() void {
     ecs.COMPONENT(game.state.world, Screen);
@@ -104,4 +105,5 @@ pub fn init() void {
     ecs.TAG(game.state.world, Data);
     ecs.TAG(game.state.world, Game);
     ecs.TAG(game.state.world, Settings);
+    ecs.TAG(game.state.world, Updated);
 }

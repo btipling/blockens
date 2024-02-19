@@ -122,4 +122,13 @@ pub const Gfx = struct {
         gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
         return ubo;
     }
+
+    pub fn updateUniformBufferObject(updated: zm.Mat, ubo: gl.Uint) void {
+        gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
+        var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+        zm.storeMat(&transform, updated);
+        const size: isize = @intCast(transform.len * @sizeOf(gl.Float));
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 0, size, &transform);
+        gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
+    }
 };
