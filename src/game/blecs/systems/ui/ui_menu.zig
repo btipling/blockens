@@ -45,7 +45,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         screen_helpers.showSettingsScreen();
                     }
                     if (zgui.menuItem("Block Textures", .{})) {
-                        screen_helpers.showSettingsScreen();
+                        screen_helpers.showBlockTextureGen();
                     }
                     if (zgui.menuItem("Block", .{})) {
                         screen_helpers.showSettingsScreen();

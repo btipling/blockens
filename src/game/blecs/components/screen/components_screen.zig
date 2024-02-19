@@ -1,7 +1,8 @@
 const gl = @import("zopengl");
 const ecs = @import("zflecs");
-const game = @import("../../game.zig");
-const math = @import("../../math/math.zig");
+const game = @import("../../../game.zig");
+const math = @import("../../../math/math.zig");
+pub const texture_gen = @import("components_texture_gen.zig");
 
 pub const Screen = struct {
     current: u64 = 0,
@@ -74,4 +75,5 @@ pub fn init() void {
     ecs.TAG(game.state.world, Cursor);
     ecs.TAG(game.state.world, Settings);
     ecs.TAG(game.state.world, Updated);
+    texture_gen.init();
 }
