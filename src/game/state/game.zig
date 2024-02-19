@@ -17,8 +17,8 @@ pub const Entities = struct {
 };
 
 pub const Cursor = struct {
-    last_x: f64 = 0,
-    last_y: f64 = 0,
+    last_x: gl.Float = 0,
+    last_y: gl.Float = 0,
 };
 
 pub const Input = struct {

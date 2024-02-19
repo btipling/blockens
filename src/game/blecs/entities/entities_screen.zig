@@ -85,8 +85,8 @@ fn initFloor(gameData: ecs.entity_t) void {
 }
 
 fn initCamera(gameData: ecs.entity_t) void {
-    game.state.entities.game_camera = ecs.new_entity(game.state.world, "GameCamera");
-    const camera = helpers.new_child(game.state.world, game.state.entities.floor);
+    const camera = ecs.new_entity(game.state.world, "GameCamera");
+    game.state.entities.game_camera = camera;
     _ = ecs.add(game.state.world, camera, components.screen.Camera);
     _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .x = -68.0, .y = 78.0, .z = -70, .w = 1.0 });
     _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .x = 0.459, .y = -0.31, .z = 0.439, .w = 0 });

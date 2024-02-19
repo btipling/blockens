@@ -35,11 +35,13 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const parent = ecs.get_parent(world, entity);
             if (parent == screen.gameDataEntity) {
                 if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Game))) {
+                    ecs.remove(world, entity, components.screen.Updated);
                     continue;
                 }
             }
             if (parent == screen.settingDataEntity) {
                 if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Settings))) {
+                    ecs.remove(world, entity, components.screen.Updated);
                     continue;
                 }
             }

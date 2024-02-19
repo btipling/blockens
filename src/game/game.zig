@@ -8,16 +8,13 @@ const cfg = @import("config.zig");
 const ui = @import("ui/ui.zig");
 const gameState = @import("state/game.zig");
 const blecs = @import("blecs/blecs.zig");
+const input = @import("input/input.zig");
 
 const pressStart2PFont = @embedFile("assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
 const robotoMonoFont = @embedFile("assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
 
-fn cursorPosCallback(window: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) void {
-    _ = window;
-    _ = xpos;
-    _ = ypos;
-    // state.input.last_x = xpos;
-    // state.input.last_y = ypos;
+fn cursorPosCallback(_: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) void {
+    input.cursor.cursorPosCallback(xpos, ypos);
 }
 
 fn glErrorCallbackfn(
