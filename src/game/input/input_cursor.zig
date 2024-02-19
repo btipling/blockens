@@ -55,17 +55,12 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
     game.state.input.cursor.?.last_x = x;
     game.state.input.cursor.?.last_y = y;
     const imguiWantsMouse = zgui.io.getWantCaptureMouse();
-    const screen: *blecs.components.screen.Screen = blecs.ecs.get_mut(
+    const menu: *const blecs.components.ui.Menu = blecs.ecs.get(
         game.state.world,
-        game.state.entities.screen,
-        blecs.components.screen.Screen,
+        game.state.entities.menu,
+        blecs.components.ui.Menu,
     ) orelse unreachable;
-    const screen_is_game = blecs.ecs.has_id(
-        game.state.world,
-        screen.current,
-        blecs.ecs.id(blecs.components.screen.Game),
-    );
-    if (imguiWantsMouse or !screen_is_game) {
+    if (imguiWantsMouse or menu.visible) {
         return;
     }
 
