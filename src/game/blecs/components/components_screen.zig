@@ -28,20 +28,9 @@ pub const CameraPosition = struct {
     }
 };
 pub const CameraFront = struct {
-    x: gl.Float = 0,
-    y: gl.Float = 0,
-    z: gl.Float = 0,
-    w: gl.Float = 0,
-
-    pub fn toVec(self: CameraFront) math.vecs.Vflx4 {
-        return math.vecs.Vflx4.initFloats(
-            self.x,
-            self.y,
-            self.z,
-            self.w,
-        );
-    }
+    front: @Vector(4, gl.Float) = undefined,
 };
+
 pub const CameraRotation = struct {
     yaw: gl.Float = 0,
     pitch: gl.Float = 0,

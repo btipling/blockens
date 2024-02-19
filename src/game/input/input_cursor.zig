@@ -1,5 +1,6 @@
 const std = @import("std");
 const gl = @import("zopengl");
+const zm = @import("zmath");
 const game = @import("../game.zig");
 const blecs = @import("../blecs/blecs.zig");
 const zgui = @import("zgui");
@@ -20,6 +21,7 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
         needsUpdate = true;
     }
     if (!needsUpdate) return;
+
     var x_offset = x - last_x;
     var y_offset = last_y - y;
 
@@ -68,10 +70,7 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
         std.debug.print("no camera front yet\n", .{});
         return;
     };
-    camera_front.x = front[0];
-    camera_front.y = front[1];
-    camera_front.z = front[2];
-    camera_front.w = front[3];
+    camera_front.front = zm.normalize4(front);
     camera_rot.pitch = camera_rot_pitch;
     camera_rot.yaw = camera_rot_yaw;
     blecs.ecs.add(

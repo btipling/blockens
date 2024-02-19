@@ -50,7 +50,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 continue;
             };
             var camera_position: math.vecs.Vflx4 = undefined;
-            var camera_front: math.vecs.Vflx4 = undefined;
+            var camera_front: @Vector(4, gl.Float) = undefined;
             var up_direction: math.vecs.Vflx4 = undefined;
             var pitch: gl.Float = 0;
             var yaw: gl.Float = 0;
@@ -64,7 +64,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             } else unreachable;
             if (ecs.get_id(world, entity, ecs.id(components.screen.CameraFront))) |opaque_ptr| {
                 const cf: *const components.screen.CameraFront = @ptrCast(@alignCast(opaque_ptr));
-                camera_front = cf.toVec();
+                camera_front = cf.front;
             } else unreachable;
             if (ecs.get_id(world, entity, ecs.id(components.screen.CameraRotation))) |opaque_ptr| {
                 const cr: *const components.screen.CameraRotation = @ptrCast(@alignCast(opaque_ptr));
@@ -84,7 +84,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             } else unreachable;
             const lookAt = zm.lookAtRh(
                 camera_position.value,
-                camera_position.value + camera_front.value,
+                camera_position.value + camera_front,
                 up_direction.value,
             );
             const ps = zm.perspectiveFovRh(fovy, aspect, near, far);

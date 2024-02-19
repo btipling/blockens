@@ -74,7 +74,7 @@ fn getSpeed() gl.Float {
 }
 
 fn goForward() void {
-    var camera_front: *const components.screen.CameraFront = ecs.get(
+    const camera_front: *const components.screen.CameraFront = ecs.get(
         game.state.world,
         game.state.entities.game_camera,
         components.screen.CameraFront,
@@ -88,11 +88,11 @@ fn goForward() void {
     ) orelse {
         return;
     };
-    const cf = camera_front.toVec();
+    const cf = camera_front.front;
     const cp = camera_pos.toVec();
     const speed = getSpeed();
     const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
-    const np = cp.value + cf.value * cameraSpeed;
+    const np = cp.value + cf * cameraSpeed;
     updateConditionally(camera_pos, np, cp.value);
 }
 
@@ -111,11 +111,11 @@ fn goBack() void {
     ) orelse {
         return;
     };
-    const cf = camera_front.toVec();
+    const cf = camera_front.front;
     const cp = camera_pos.toVec();
     const speed = getSpeed();
     const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
-    const np = cp.value - cf.value * cameraSpeed;
+    const np = cp.value - cf * cameraSpeed;
     updateConditionally(camera_pos, np, cp.value);
 }
 
@@ -141,12 +141,12 @@ fn goLeft() void {
     ) orelse {
         return;
     };
-    const cf = camera_front.toVec();
+    const cf = camera_front.front;
     const cu = camera_up.toVec();
     const cp = camera_pos.toVec();
     const speed = getSpeed();
     const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
-    const np = cp.value - zm.normalize3(zm.cross3(cf.value, cu.value)) * cameraSpeed;
+    const np = cp.value - zm.normalize3(zm.cross3(cf, cu.value)) * cameraSpeed;
     updateConditionally(camera_pos, np, cp.value);
 }
 
@@ -172,12 +172,12 @@ fn goRight() void {
     ) orelse {
         return;
     };
-    const cf = camera_front.toVec();
+    const cf = camera_front.front;
     const cu = camera_up.toVec();
     const cp = camera_pos.toVec();
     const speed = getSpeed();
     const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
-    const np = cp.value + zm.normalize3(zm.cross3(cf.value, cu.value)) * cameraSpeed;
+    const np = cp.value + zm.normalize3(zm.cross3(cf, cu.value)) * cameraSpeed;
     updateConditionally(camera_pos, np, cp.value);
 }
 
