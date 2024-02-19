@@ -29,24 +29,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     ) orelse unreachable;
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
-            if (input.keys.holdKey(.w)) {
-                goForward();
-            }
-            if (input.keys.holdKey(.s)) {
-                goBack();
-            }
-            if (input.keys.holdKey(.a)) {
-                goLeft();
-            }
-            if (input.keys.holdKey(.d)) {
-                goRight();
-            }
-            if (input.keys.holdKey(.space)) {
-                goUp();
-            }
-            if (input.keys.holdKey(.left_shift)) {
-                goDown();
-            }
+            if (input.keys.holdKey(.w)) goForward();
+            if (input.keys.holdKey(.s)) goBack();
+            if (input.keys.holdKey(.a)) goLeft();
+            if (input.keys.holdKey(.d)) goRight();
+            if (input.keys.holdKey(.space)) goUp();
+            if (input.keys.holdKey(.left_shift)) goDown();
             if (input.keys.holdKey(.F3)) {
                 menu.visible = true;
                 pressedKeyState = .F3;
@@ -67,9 +55,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
 fn getSpeed() gl.Float {
     var speed = 2.5 * game.state.input.delta_time;
-    if (!input.keys.holdKey(.left_control)) {
-        speed *= 20;
-    }
+    if (!input.keys.holdKey(.left_control)) speed *= 20;
     return speed;
 }
 
@@ -78,16 +64,12 @@ fn goForward() void {
         game.state.world,
         game.state.entities.game_camera,
         components.screen.CameraFront,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     var camera_pos: *components.screen.CameraPosition = ecs.get_mut(
         game.state.world,
         game.state.entities.game_camera,
         components.screen.CameraPosition,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     _ = &camera_pos;
     const cf = camera_front.front;
     const cp = camera_pos.pos;
@@ -102,16 +84,12 @@ fn goBack() void {
         game.state.world,
         game.state.entities.game_camera,
         components.screen.CameraFront,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     var camera_pos: *components.screen.CameraPosition = ecs.get_mut(
         game.state.world,
         game.state.entities.game_camera,
         components.screen.CameraPosition,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     _ = &camera_pos;
     const cf = camera_front.front;
     const cp = camera_pos.pos;
@@ -126,23 +104,17 @@ fn goLeft() void {
         game.state.world,
         game.state.entities.game_camera,
         components.screen.CameraFront,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     const camera_up: *const components.screen.UpDirection = ecs.get(
         game.state.world,
         game.state.entities.game_camera,
         components.screen.UpDirection,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     var camera_pos: *components.screen.CameraPosition = ecs.get_mut(
         game.state.world,
         game.state.entities.game_camera,
         components.screen.CameraPosition,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     _ = &camera_pos;
     const cf = camera_front.front;
     const cu = camera_up.up;
@@ -158,23 +130,17 @@ fn goRight() void {
         game.state.world,
         game.state.entities.game_camera,
         components.screen.CameraFront,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     const camera_up: *const components.screen.UpDirection = ecs.get(
         game.state.world,
         game.state.entities.game_camera,
         components.screen.UpDirection,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     var camera_pos: *components.screen.CameraPosition = ecs.get_mut(
         game.state.world,
         game.state.entities.game_camera,
         components.screen.CameraPosition,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     _ = &camera_pos;
     const cf = camera_front.front;
     const cu = camera_up.up;
@@ -190,16 +156,12 @@ fn goUp() void {
         game.state.world,
         game.state.entities.game_camera,
         components.screen.UpDirection,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     var camera_pos: *components.screen.CameraPosition = ecs.get_mut(
         game.state.world,
         game.state.entities.game_camera,
         components.screen.CameraPosition,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     _ = &camera_pos;
     const cu = camera_up.up;
     const cp = camera_pos.pos;
@@ -215,16 +177,12 @@ fn goDown() void {
         game.state.world,
         game.state.entities.game_camera,
         components.screen.UpDirection,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     var camera_pos: *components.screen.CameraPosition = ecs.get_mut(
         game.state.world,
         game.state.entities.game_camera,
         components.screen.CameraPosition,
-    ) orelse {
-        return;
-    };
+    ) orelse return;
     _ = &camera_pos;
     const cu = camera_up.up;
     const cp = camera_pos.pos;
@@ -236,9 +194,7 @@ fn goDown() void {
 }
 
 fn updateConditionally(camera_pos: *components.screen.CameraPosition, np: [4]gl.Float, cp: [4]gl.Float) void {
-    if (std.mem.eql(gl.Float, &np, &cp)) {
-        return;
-    }
+    if (std.mem.eql(gl.Float, &np, &cp)) return;
     camera_pos.pos = np;
     ecs.add(
         game.state.world,

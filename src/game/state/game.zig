@@ -15,6 +15,7 @@ pub const Entities = struct {
     menu: usize = 0,
     game_camera: usize = 0,
     wall: usize = 0,
+    ui: usize = 0,
 };
 
 pub const Cursor = struct {

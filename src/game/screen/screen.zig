@@ -14,6 +14,7 @@ pub fn showSettingsScreen() void {
     blecs.helpers.delete_children(game.state.world, game.state.entities.screen);
     screen.current = blecs.helpers.new_child(game.state.world, game.state.entities.screen);
     blecs.ecs.add(game.state.world, screen.current, blecs.components.screen.Settings);
+    blecs.ecs.remove(game.state.world, game.state.entities.ui, blecs.components.ui.GameInfo);
     const menu: *blecs.components.ui.Menu = blecs.ecs.get_mut(
         game.state.world,
         game.state.entities.menu,
@@ -31,6 +32,7 @@ pub fn showGameScreen() void {
     blecs.helpers.delete_children(game.state.world, game.state.entities.screen);
     screen.current = blecs.helpers.new_child(game.state.world, game.state.entities.screen);
     blecs.ecs.add(game.state.world, screen.current, blecs.components.screen.Game);
+    blecs.ecs.add(game.state.world, game.state.entities.ui, blecs.components.ui.GameInfo);
     const menu: *blecs.components.ui.Menu = blecs.ecs.get_mut(
         game.state.world,
         game.state.entities.menu,

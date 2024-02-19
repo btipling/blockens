@@ -33,10 +33,7 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
         game.state.world,
         game.state.entities.game_camera,
         blecs.components.screen.CameraRotation,
-    ) orelse {
-        std.debug.print("no camera position yet\n", .{});
-        return;
-    };
+    ) orelse return;
     const camera_rot_yaw = camera_rot.yaw + x_offset;
     var camera_rot_pitch = camera_rot.pitch + y_offset;
 
@@ -58,7 +55,17 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
     game.state.input.cursor.?.last_x = x;
     game.state.input.cursor.?.last_y = y;
     const imguiWantsMouse = zgui.io.getWantCaptureMouse();
-    if (imguiWantsMouse) {
+    const screen: *blecs.components.screen.Screen = blecs.ecs.get_mut(
+        game.state.world,
+        game.state.entities.screen,
+        blecs.components.screen.Screen,
+    ) orelse unreachable;
+    const screen_is_game = blecs.ecs.has_id(
+        game.state.world,
+        screen.current,
+        blecs.ecs.id(blecs.components.screen.Game),
+    );
+    if (imguiWantsMouse or !screen_is_game) {
         return;
     }
 
