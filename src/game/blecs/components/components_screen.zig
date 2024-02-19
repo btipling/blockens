@@ -13,19 +13,7 @@ pub const Screen = struct {
 
 pub const Camera = struct {};
 pub const CameraPosition = struct {
-    x: gl.Float = 0,
-    y: gl.Float = 0,
-    z: gl.Float = 0,
-    w: gl.Float = 0,
-
-    pub fn toVec(self: CameraPosition) math.vecs.Vflx4 {
-        return math.vecs.Vflx4.initFloats(
-            self.x,
-            self.y,
-            self.z,
-            self.w,
-        );
-    }
+    pos: @Vector(4, gl.Float) = undefined,
 };
 pub const CameraFront = struct {
     front: @Vector(4, gl.Float) = undefined,
@@ -37,19 +25,7 @@ pub const CameraRotation = struct {
 };
 
 pub const UpDirection = struct {
-    x: gl.Float = 0,
-    y: gl.Float = 0,
-    z: gl.Float = 0,
-    w: gl.Float = 0,
-
-    pub fn toVec(self: UpDirection) math.vecs.Vflx4 {
-        return math.vecs.Vflx4.initFloats(
-            self.x,
-            self.y,
-            self.z,
-            self.w,
-        );
-    }
+    up: @Vector(4, gl.Float) = undefined,
 };
 
 pub const Perspective = struct {

@@ -49,9 +49,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 std.debug.print("no ubo yet\n", .{});
                 continue;
             };
-            var camera_position: math.vecs.Vflx4 = undefined;
+            var camera_position: @Vector(4, gl.Float) = undefined;
             var camera_front: @Vector(4, gl.Float) = undefined;
-            var up_direction: math.vecs.Vflx4 = undefined;
+            var up_direction: @Vector(4, gl.Float) = undefined;
             var pitch: gl.Float = 0;
             var yaw: gl.Float = 0;
             var fovy: gl.Float = 0;
@@ -60,7 +60,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             var far: gl.Float = 0;
             if (ecs.get_id(world, entity, ecs.id(components.screen.CameraPosition))) |opaque_ptr| {
                 const cp: *const components.screen.CameraPosition = @ptrCast(@alignCast(opaque_ptr));
-                camera_position = cp.toVec();
+                camera_position = cp.pos;
             } else unreachable;
             if (ecs.get_id(world, entity, ecs.id(components.screen.CameraFront))) |opaque_ptr| {
                 const cf: *const components.screen.CameraFront = @ptrCast(@alignCast(opaque_ptr));
@@ -73,7 +73,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             } else unreachable;
             if (ecs.get_id(world, entity, ecs.id(components.screen.UpDirection))) |opaque_ptr| {
                 const u: *const components.screen.UpDirection = @ptrCast(@alignCast(opaque_ptr));
-                up_direction = u.toVec();
+                up_direction = u.up;
             } else unreachable;
             if (ecs.get_id(world, entity, ecs.id(components.screen.Perspective))) |opaque_ptr| {
                 const p: *const components.screen.Perspective = @ptrCast(@alignCast(opaque_ptr));
@@ -83,17 +83,17 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 far = p.far;
             } else unreachable;
             const lookAt = zm.lookAtRh(
-                camera_position.value,
-                camera_position.value + camera_front,
-                up_direction.value,
+                camera_position,
+                camera_position + camera_front,
+                up_direction,
             );
             const ps = zm.perspectiveFovRh(fovy, aspect, near, far);
             gfx.Gfx.updateUniformBufferObject(zm.mul(ps, lookAt), ubo);
             std.debug.print("doing camera updated\n", .{});
             std.debug.print("camera pos: ({d}, {d}, {d})\n", .{
-                camera_position.value[0],
-                camera_position.value[1],
-                camera_position.value[2],
+                camera_position[0],
+                camera_position[1],
+                camera_position[2],
             });
             std.debug.print("camera rot: pitch: {d} yaw: {d}\n", .{
                 pitch,

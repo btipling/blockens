@@ -88,12 +88,13 @@ fn goForward() void {
     ) orelse {
         return;
     };
+    _ = &camera_pos;
     const cf = camera_front.front;
-    const cp = camera_pos.toVec();
+    const cp = camera_pos.pos;
     const speed = getSpeed();
     const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
-    const np = cp.value + cf * cameraSpeed;
-    updateConditionally(camera_pos, np, cp.value);
+    const np = cp + cf * cameraSpeed;
+    updateConditionally(camera_pos, np, cp);
 }
 
 fn goBack() void {
@@ -111,12 +112,13 @@ fn goBack() void {
     ) orelse {
         return;
     };
+    _ = &camera_pos;
     const cf = camera_front.front;
-    const cp = camera_pos.toVec();
+    const cp = camera_pos.pos;
     const speed = getSpeed();
     const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
-    const np = cp.value - cf * cameraSpeed;
-    updateConditionally(camera_pos, np, cp.value);
+    const np = cp - cf * cameraSpeed;
+    updateConditionally(camera_pos, np, cp);
 }
 
 fn goLeft() void {
@@ -141,13 +143,14 @@ fn goLeft() void {
     ) orelse {
         return;
     };
+    _ = &camera_pos;
     const cf = camera_front.front;
-    const cu = camera_up.toVec();
-    const cp = camera_pos.toVec();
+    const cu = camera_up.up;
+    const cp = camera_pos.pos;
     const speed = getSpeed();
     const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
-    const np = cp.value - zm.normalize3(zm.cross3(cf, cu.value)) * cameraSpeed;
-    updateConditionally(camera_pos, np, cp.value);
+    const np = cp - zm.normalize3(zm.cross3(cf, cu)) * cameraSpeed;
+    updateConditionally(camera_pos, np, cp);
 }
 
 fn goRight() void {
@@ -172,13 +175,14 @@ fn goRight() void {
     ) orelse {
         return;
     };
+    _ = &camera_pos;
     const cf = camera_front.front;
-    const cu = camera_up.toVec();
-    const cp = camera_pos.toVec();
+    const cu = camera_up.up;
+    const cp = camera_pos.pos;
     const speed = getSpeed();
     const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
-    const np = cp.value + zm.normalize3(zm.cross3(cf, cu.value)) * cameraSpeed;
-    updateConditionally(camera_pos, np, cp.value);
+    const np = cp + zm.normalize3(zm.cross3(cf, cu)) * cameraSpeed;
+    updateConditionally(camera_pos, np, cp);
 }
 
 fn goUp() void {
@@ -199,14 +203,15 @@ fn goUp() void {
         std.debug.print("not going up?\n", .{});
         return;
     };
-    const cu = camera_up.toVec();
-    const cp = camera_pos.toVec();
+    _ = &camera_pos;
+    const cu = camera_up.up;
+    const cp = camera_pos.pos;
     const speed = getSpeed();
     const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
     const upDirection: @Vector(4, gl.Float) = @splat(1.0);
-    const np = cp.value + cu.value * cameraSpeed * upDirection;
+    const np = cp + cu * cameraSpeed * upDirection;
     std.debug.print("going up???\n", .{});
-    updateConditionally(camera_pos, np, cp.value);
+    updateConditionally(camera_pos, np, cp);
 }
 
 fn goDown() void {
@@ -224,13 +229,14 @@ fn goDown() void {
     ) orelse {
         return;
     };
-    const cu = camera_up.toVec();
-    const cp = camera_pos.toVec();
+    _ = &camera_pos;
+    const cu = camera_up.up;
+    const cp = camera_pos.pos;
     const speed = getSpeed();
     const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
     const downDirection: @Vector(4, gl.Float) = @splat(-1.0);
-    const np = cp.value + cu.value * cameraSpeed * downDirection;
-    updateConditionally(camera_pos, np, cp.value);
+    const np = cp + cu * cameraSpeed * downDirection;
+    updateConditionally(camera_pos, np, cp);
 }
 
 fn updateConditionally(camera_pos: *components.screen.CameraPosition, np: [4]gl.Float, cp: [4]gl.Float) void {
@@ -238,10 +244,7 @@ fn updateConditionally(camera_pos: *components.screen.CameraPosition, np: [4]gl.
         std.debug.print("not updating from key pos.\n", .{});
         return;
     }
-    camera_pos.x = np[0];
-    camera_pos.y = np[1];
-    camera_pos.z = np[2];
-    camera_pos.w = np[3];
+    camera_pos.pos = np;
     ecs.add(
         game.state.world,
         game.state.entities.game_camera,

@@ -96,10 +96,10 @@ fn initCamera(gameData: ecs.entity_t) void {
     const camera = ecs.new_entity(game.state.world, "GameCamera");
     game.state.entities.game_camera = camera;
     _ = ecs.add(game.state.world, camera, components.screen.Camera);
-    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .x = 1.0, .y = 1.0, .z = 1.0, .w = 1.0 });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ 1.0, 1.0, 1.0, 1.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 41.6, .pitch = -19.4 });
-    _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .x = 0, .y = 1.0, .z = 0, .w = 0 });
+    _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .up = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 } });
     // These dimensions should also be component data to support monitors other than the one I've been working with:
     const h: gl.Float = @floatFromInt(config.windows_height);
     const w: gl.Float = @floatFromInt(config.windows_width);
