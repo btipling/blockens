@@ -24,6 +24,8 @@ pub const Cursor = struct {
 pub const Input = struct {
     last_key: i64 = 0,
     cursor: ?Cursor = null,
+    lastframe: gl.Float = 0,
+    delta_time: gl.Float = 0,
 };
 
 pub const UI = struct {

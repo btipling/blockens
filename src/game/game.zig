@@ -148,7 +148,11 @@ pub const Game = struct {
         std.debug.print("\nHello blockens!\n", .{});
         main_loop: while (!state.window.shouldClose()) {
             glfw.pollEvents();
-
+            {
+                const currentFrame: gl.Float = @floatCast(glfw.getTime());
+                state.input.delta_time = currentFrame - state.input.lastframe;
+                state.input.lastframe = currentFrame;
+            }
             if (state.quit) {
                 break :main_loop;
             }

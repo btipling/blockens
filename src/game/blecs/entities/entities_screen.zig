@@ -1,6 +1,7 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const gl = @import("zopengl");
+const zm = @import("zmath");
 const math = @import("../../math/math.zig");
 const game = @import("../../game.zig");
 const config = @import("../../config.zig");
@@ -77,6 +78,13 @@ fn initFloor(gameData: ecs.entity_t) void {
     );
     _ = ecs.set(game.state.world, c_f, components.shape.Scale, .{ .x = 100, .y = 100, .z = 100 });
     _ = ecs.set(game.state.world, c_f, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
+    const floor_rot = zm.matToQuat(zm.rotationX(90 * std.math.pi * 2.0));
+    _ = ecs.set(game.state.world, c_f, components.shape.Rotation, .{
+        .w = floor_rot[0],
+        .x = floor_rot[1],
+        .y = floor_rot[2],
+        .z = floor_rot[3],
+    });
     _ = ecs.set(game.state.world, c_f, components.shape.UBO, .{ .binding_point = GameUBOBindingPoint });
     _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{ .x = -25, .y = -25, .z = -25 });
     _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
