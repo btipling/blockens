@@ -88,17 +88,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 up_direction,
             );
             const ps = zm.perspectiveFovRh(fovy, aspect, near, far);
-            gfx.Gfx.updateUniformBufferObject(zm.mul(ps, lookAt), ubo);
-            std.debug.print("doing camera updated\n", .{});
-            std.debug.print("camera pos: ({d}, {d}, {d})\n", .{
-                camera_position[0],
-                camera_position[1],
-                camera_position[2],
-            });
-            std.debug.print("camera rot: pitch: {d} yaw: {d}\n", .{
-                pitch,
-                yaw,
-            });
+            gfx.Gfx.updateUniformBufferObject(zm.mul(lookAt, ps), ubo);
             ecs.remove(world, entity, components.screen.Updated);
         }
     }

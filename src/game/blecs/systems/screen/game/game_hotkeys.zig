@@ -68,7 +68,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 fn getSpeed() gl.Float {
     var speed = 2.5 * game.state.input.delta_time;
     if (!input.keys.holdKey(.left_control)) {
-        speed *= 2;
+        speed *= 20;
     }
     return speed;
 }
@@ -186,13 +186,11 @@ fn goRight() void {
 }
 
 fn goUp() void {
-    std.debug.print("going up?\n", .{});
     const camera_up: *const components.screen.UpDirection = ecs.get(
         game.state.world,
         game.state.entities.game_camera,
         components.screen.UpDirection,
     ) orelse {
-        std.debug.print("not going up?\n", .{});
         return;
     };
     var camera_pos: *components.screen.CameraPosition = ecs.get_mut(
@@ -200,7 +198,6 @@ fn goUp() void {
         game.state.entities.game_camera,
         components.screen.CameraPosition,
     ) orelse {
-        std.debug.print("not going up?\n", .{});
         return;
     };
     _ = &camera_pos;
@@ -210,7 +207,6 @@ fn goUp() void {
     const cameraSpeed: @Vector(4, gl.Float) = @splat(speed);
     const upDirection: @Vector(4, gl.Float) = @splat(1.0);
     const np = cp + cu * cameraSpeed * upDirection;
-    std.debug.print("going up???\n", .{});
     updateConditionally(camera_pos, np, cp);
 }
 
@@ -241,7 +237,6 @@ fn goDown() void {
 
 fn updateConditionally(camera_pos: *components.screen.CameraPosition, np: [4]gl.Float, cp: [4]gl.Float) void {
     if (std.mem.eql(gl.Float, &np, &cp)) {
-        std.debug.print("not updating from key pos.\n", .{});
         return;
     }
     camera_pos.pos = np;

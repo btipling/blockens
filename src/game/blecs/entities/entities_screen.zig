@@ -76,9 +76,9 @@ fn initFloor(gameData: ecs.entity_t) void {
         components.shape.Color,
         components.shape.Color.fromVec(cr_c),
     );
-    _ = ecs.set(game.state.world, c_f, components.shape.Scale, .{ .x = 100, .y = 100, .z = 100 });
+    _ = ecs.set(game.state.world, c_f, components.shape.Scale, .{ .x = 500, .y = 500, .z = 500 });
     _ = ecs.set(game.state.world, c_f, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
-    const floor_rot = zm.matToQuat(zm.rotationX(90 * std.math.pi * 2.0));
+    const floor_rot = zm.matToQuat(zm.rotationX(1.5 * std.math.pi));
     _ = ecs.set(game.state.world, c_f, components.shape.Rotation, .{
         .w = floor_rot[0],
         .x = floor_rot[1],

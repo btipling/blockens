@@ -78,5 +78,4 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
         game.state.entities.game_camera,
         blecs.components.screen.Updated,
     );
-    std.debug.print("mouse updated\n", .{});
 }
