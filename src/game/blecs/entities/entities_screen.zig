@@ -75,10 +75,10 @@ fn initFloor(gameData: ecs.entity_t) void {
         components.shape.Color,
         components.shape.Color.fromVec(cr_c),
     );
-    _ = ecs.set(game.state.world, c_f, components.shape.Scale, .{ .x = 0.33, .y = 0.5, .z = 1 });
+    _ = ecs.set(game.state.world, c_f, components.shape.Scale, .{ .x = 100, .y = 100, .z = 100 });
     _ = ecs.set(game.state.world, c_f, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
     _ = ecs.set(game.state.world, c_f, components.shape.UBO, .{ .binding_point = GameUBOBindingPoint });
-    _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{ .x = 0, .y = 0.25, .z = -1 });
+    _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{ .x = -25, .y = -25, .z = -25 });
     _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_f, components.Debug);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, gameData);
@@ -88,7 +88,7 @@ fn initCamera(gameData: ecs.entity_t) void {
     const camera = ecs.new_entity(game.state.world, "GameCamera");
     game.state.entities.game_camera = camera;
     _ = ecs.add(game.state.world, camera, components.screen.Camera);
-    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .x = -68.0, .y = 78.0, .z = -70, .w = 1.0 });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .x = 1.0, .y = 1.0, .z = 1.0, .w = 1.0 });
     _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .x = 0.459, .y = -0.31, .z = 0.439, .w = 0 });
     _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 41.6, .pitch = -19.4 });
     _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .x = 0, .y = 1.0, .z = 0, .w = 0 });
