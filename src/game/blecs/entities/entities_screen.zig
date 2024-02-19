@@ -24,16 +24,8 @@ pub fn init() void {
 
     initCrossHairs(gameData);
     initFloor(gameData);
-    initMenu();
     initCamera(gameData);
     initCursor(gameData);
-}
-
-fn initMenu() void {
-    game.state.entities.menu = ecs.new_entity(game.state.world, "Menu");
-    _ = ecs.set(game.state.world, game.state.entities.menu, components.ui.Menu, .{
-        .visible = false,
-    });
 }
 
 fn initCrossHairs(gameData: ecs.entity_t) void {
