@@ -120,8 +120,7 @@ pub const Game = struct {
             },
             .window = window,
         };
-        try state.initDb();
-        try state.initScript();
+        try state.initInternals();
 
         blecs.init();
 

@@ -32,7 +32,16 @@ pub const Input = struct {
     delta_time: gl.Float = 0,
 };
 
-pub const UIData = struct {};
+pub const UIData = struct {
+    texture_script_options: std.ArrayList(data.scriptOption) = undefined,
+    texture_gen_loaded_script_id: i32 = 0,
+    texture_gen_buf: [script.maxLuaScriptSize]u8 = [_]u8{0} ** script.maxLuaScriptSize,
+    texture_gen_nameBuf: [script.maxLuaScriptNameSize]u8 = [_]u8{0} ** script.maxLuaScriptNameSize,
+
+    fn deinit(self: *UIData) void {
+        self.texture_script_options.deinit();
+    }
+};
 
 pub const UI = struct {
     gameFont: zgui.Font = undefined,
@@ -69,6 +78,7 @@ pub const Game = struct {
     pub fn initInternals(self: *Game) !void {
         try self.initDb();
         try self.initScript();
+        try self.initUIData();
     }
 
     pub fn deinit(self: *Game) void {
@@ -80,6 +90,8 @@ pub const Game = struct {
         self.gfx.renderConfigs.deinit();
         self.script.deinit();
         self.db.deinit();
+        self.ui.data.deinit();
+        self.allocator.destroy(self.ui.data);
     }
 
     pub fn initDb(self: *Game) !void {
@@ -91,6 +103,13 @@ pub const Game = struct {
         self.db.ensureDefaultWorld() catch |err| {
             std.log.err("Failed to ensure default world: {}\n", .{err});
             return err;
+        };
+    }
+
+    pub fn initUIData(self: *Game) !void {
+        self.ui.data = try self.allocator.create(UIData);
+        self.ui.data.* = UIData{
+            .texture_script_options = std.ArrayList(data.scriptOption).init(self.allocator),
         };
     }
 
