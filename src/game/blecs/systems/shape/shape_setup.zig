@@ -36,7 +36,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const sh: []components.shape.Shape = ecs.field(it, components.shape.Shape, 1) orelse return;
             const mesh_data = switch (sh[i].shape_type) {
                 .plane => plane(),
-                else => return,
+                else => {
+                    ecs.delete(world, entity);
+                    return;
+                },
             };
 
             var rotation: ?math.vecs.Vflx4 = null;
