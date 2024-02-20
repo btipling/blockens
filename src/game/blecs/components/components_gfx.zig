@@ -25,10 +25,12 @@ pub const ElementsRenderer = struct {
 
 // Tags
 pub const CanDraw = struct {};
+pub const NeedsDeletion = struct {};
 
 pub fn init() void {
     ecs.COMPONENT(game.state.world, BaseRenderer);
     ecs.COMPONENT(game.state.world, ElementsRendererConfig);
     ecs.COMPONENT(game.state.world, ElementsRenderer);
     ecs.TAG(game.state.world, CanDraw);
+    ecs.TAG(game.state.world, NeedsDeletion);
 }
