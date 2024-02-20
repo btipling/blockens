@@ -4,6 +4,8 @@ const ecs = @import("zflecs");
 const gl = @import("zopengl");
 const zm = @import("zmath");
 const zgui = @import("zgui");
+const data = @import("../data/data.zig");
+const script = @import("../script/script.zig");
 
 pub const Entities = struct {
     screen: usize = 0,
@@ -53,9 +55,27 @@ pub const Game = struct {
     allocator: std.mem.Allocator = undefined,
     window: *glfw.Window = undefined,
     world: *ecs.world_t = undefined,
+    db: data.Data = undefined,
+    script: script.Script = undefined,
     entities: Entities = .{},
     input: Input = .{},
     ui: UI = .{},
     gfx: Gfx = .{},
     quit: bool = false,
+
+    pub fn initDb(self: *Game) !void {
+        self.db = try data.Data.init(self.allocator);
+        self.db.ensureSchema() catch |err| {
+            std.log.err("Failed to ensure schema: {}\n", .{err});
+            return err;
+        };
+        self.db.ensureDefaultWorld() catch |err| {
+            std.log.err("Failed to ensure default world: {}\n", .{err});
+            return err;
+        };
+    }
+
+    pub fn initScript(self: *Game) !void {
+        self.script = try script.Script.init(self.allocator);
+    }
 };

@@ -120,6 +120,8 @@ pub const Game = struct {
             },
             .window = window,
         };
+        try state.initDb();
+        try state.initScript();
 
         blecs.init();
 
@@ -140,6 +142,8 @@ pub const Game = struct {
         zgui.deinit();
         state.window.destroy();
         glfw.terminate();
+        state.script.deinit();
+        state.db.deinit();
         state.allocator.destroy(state);
         std.debug.print("\nGoodbye blockens!\n", .{});
     }
