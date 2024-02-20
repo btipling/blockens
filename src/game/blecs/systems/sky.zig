@@ -34,7 +34,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             s[i].lastSet = t.currentTime;
             switch (s[i].sun) {
                 .rising => {
-                    if (brightness >= 0.8) {
+                    if (brightness >= 0.9) {
                         s[i].sun = .setting;
                         continue;
                     }
@@ -49,7 +49,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 },
             }
 
-            br.bgColor.setBrightness(@min(@max(brightness, 0.1), 0.8));
+            br.bgColor.setBrightness(@min(@max(brightness, 0.1), 0.9));
         }
     }
 }

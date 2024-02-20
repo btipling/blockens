@@ -67,6 +67,13 @@ pub const Vflx4 = struct {
         self.set(rgb[0], rgb[1], rgb[2], rgb[3]);
     }
 
+    pub fn setHue(self: *Vflx4, hue: gl.Float) void {
+        var hsl = zm.rgbToHsl(self.value);
+        hsl[0] = hue;
+        const rgb = zm.hslToRgb(hsl);
+        self.set(rgb[0], rgb[1], rgb[2], rgb[3]);
+    }
+
     pub fn getBrightness(self: *Vflx4) gl.Float {
         const hsl = zm.rgbToHsl(self.value);
         return hsl[2];

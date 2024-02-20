@@ -113,7 +113,13 @@ fn initCursor() void {
 pub fn initDemoCube() void {
     const c_dc = helpers.new_child(game.state.world, settings_data);
     _ = ecs.set(game.state.world, c_dc, components.shape.Shape, .{ .shape_type = .plane });
-    const cr_c = math.vecs.Vflx4.initBytes(255, 0, 255, 255);
+    var cr_c = math.vecs.Vflx4.initBytes(255, 0, 255, 255);
+    const div: f32 = 100;
+    const time: f32 = @floatFromInt(@divFloor(std.time.milliTimestamp(), 100));
+    const offset: f32 = @mod(time, div);
+    const hue = offset / div;
+    std.debug.print("setting time: {d} offset: {d} hue: {d}\n", .{ time, offset, hue });
+    cr_c.setHue(hue);
     _ = ecs.set(
         game.state.world,
         c_dc,
@@ -122,5 +128,4 @@ pub fn initDemoCube() void {
     );
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_dc, components.Debug);
-    ecs.add_pair(game.state.world, c_dc, ecs.ChildOf, settings_data);
 }
