@@ -1,6 +1,6 @@
 const gfx = @import("entities_gfx.zig");
 const ui = @import("entities_ui.zig");
-const screen = @import("entities_screen.zig");
+pub const screen = @import("entities_screen.zig");
 
 pub fn init() void {
     gfx.init();

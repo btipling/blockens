@@ -82,7 +82,6 @@ fn initFloor() void {
     _ = ecs.set(game.state.world, c_f, components.shape.UBO, .{ .binding_point = GameUBOBindingPoint });
     _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{ .x = -25, .y = -25, .z = -25 });
     _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
-    _ = ecs.add(game.state.world, c_f, components.Debug);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, game_data);
 }
 
@@ -109,4 +108,19 @@ fn initCamera() void {
 
 fn initCursor() void {
     _ = ecs.add(game.state.world, game_data, components.screen.Cursor);
+}
+
+pub fn initDemoCube() void {
+    const c_dc = helpers.new_child(game.state.world, settings_data);
+    _ = ecs.set(game.state.world, c_dc, components.shape.Shape, .{ .shape_type = .plane });
+    const cr_c = math.vecs.Vflx4.initBytes(255, 0, 255, 255);
+    _ = ecs.set(
+        game.state.world,
+        c_dc,
+        components.shape.Color,
+        components.shape.Color.fromVec(cr_c),
+    );
+    _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
+    _ = ecs.add(game.state.world, c_dc, components.Debug);
+    ecs.add_pair(game.state.world, c_dc, ecs.ChildOf, settings_data);
 }

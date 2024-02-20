@@ -4,6 +4,7 @@ const zgui = @import("zgui");
 const gl = @import("zopengl");
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
 const script = @import("../../../script/script.zig");
@@ -177,6 +178,8 @@ fn evalTextureFunc() !void {
     const textureRGBAColor = try game.state.script.evalTextureFunc(game.state.ui.data.texture_buf);
     _ = textureRGBAColor;
     std.debug.print("do something with textureRGBA color\n", .{});
+    entities.screen.initDemoCube();
+    std.debug.print("did something with textureRGBA color\n", .{});
 }
 
 fn saveTextureScriptFunc() !void {
