@@ -111,14 +111,20 @@ fn initCursor() void {
 }
 
 pub fn initDemoCube() void {
+    var it = ecs.children(game.state.world, settings_data);
+    while (ecs.iter_next(&it)) {
+        for (0..it.count()) |i| {
+            const entity = it.entities()[i];
+            _ = ecs.add(game.state.world, entity, components.gfx.NeedsDeletion);
+        }
+    }
     const c_dc = helpers.new_child(game.state.world, settings_data);
     _ = ecs.set(game.state.world, c_dc, components.shape.Shape, .{ .shape_type = .plane });
     var cr_c = math.vecs.Vflx4.initBytes(255, 0, 255, 255);
-    const div: f32 = 100;
-    const time: f32 = @floatFromInt(@divFloor(std.time.milliTimestamp(), 100));
-    const offset: f32 = @mod(time, div);
-    const hue = offset / div;
-    std.debug.print("setting time: {d} offset: {d} hue: {d}\n", .{ time, offset, hue });
+    const div: i64 = 100;
+    const time = std.time.milliTimestamp();
+    const offset: i64 = @mod(time, div);
+    const hue: f32 = @as(f32, @floatFromInt(offset)) / @as(f32, @floatFromInt(div));
     cr_c.setHue(hue);
     _ = ecs.set(
         game.state.world,
