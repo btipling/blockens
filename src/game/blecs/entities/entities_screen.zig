@@ -9,26 +9,28 @@ const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
 
 pub const GameUBOBindingPoint: gl.Uint = 0;
+var game_data: ecs.entity_t = undefined;
+var settings_data: ecs.entity_t = undefined;
 
 pub fn init() void {
     game.state.entities.screen = ecs.new_entity(game.state.world, "Screen");
-    const gameData = ecs.new_entity(game.state.world, "ScreenGameData");
-    const settingsData = ecs.new_entity(game.state.world, "ScreenSettingsData");
+    game_data = ecs.new_entity(game.state.world, "ScreenGameData");
+    settings_data = ecs.new_entity(game.state.world, "ScreenSettingsData");
     const initialScreen = helpers.new_child(game.state.world, game.state.entities.screen);
     _ = ecs.add(game.state.world, initialScreen, components.screen.Game);
     _ = ecs.set(game.state.world, game.state.entities.screen, components.screen.Screen, .{
         .current = initialScreen,
-        .gameDataEntity = gameData,
-        .settingDataEntity = settingsData,
+        .gameDataEntity = game_data,
+        .settingDataEntity = settings_data,
     });
 
-    initCrossHairs(gameData);
-    initFloor(gameData);
-    initCamera(gameData);
-    initCursor(gameData);
+    initCrossHairs();
+    initFloor();
+    initCamera();
+    initCursor();
 }
 
-fn initCrossHairs(gameData: ecs.entity_t) void {
+fn initCrossHairs() void {
     game.state.entities.crosshair = ecs.new_entity(game.state.world, "Crosshair");
     const c_hrz = helpers.new_child(game.state.world, game.state.entities.crosshair);
     _ = ecs.set(game.state.world, c_hrz, components.shape.Shape, .{ .shape_type = .plane });
@@ -42,7 +44,7 @@ fn initCrossHairs(gameData: ecs.entity_t) void {
     _ = ecs.set(game.state.world, c_hrz, components.shape.Scale, .{ .x = 0.025, .y = 0.004, .z = 1 });
     _ = ecs.set(game.state.world, c_hrz, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
     _ = ecs.add(game.state.world, c_hrz, components.shape.NeedsSetup);
-    ecs.add_pair(game.state.world, c_hrz, ecs.ChildOf, gameData);
+    ecs.add_pair(game.state.world, c_hrz, ecs.ChildOf, game_data);
     const c_vrt = helpers.new_child(game.state.world, game.state.entities.crosshair);
     _ = ecs.set(game.state.world, c_vrt, components.shape.Shape, .{ .shape_type = .plane });
     _ = ecs.set(
@@ -54,10 +56,10 @@ fn initCrossHairs(gameData: ecs.entity_t) void {
     _ = ecs.set(game.state.world, c_vrt, components.shape.Scale, .{ .x = 0.0025, .y = 0.04, .z = 1 });
     _ = ecs.set(game.state.world, c_vrt, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
     _ = ecs.add(game.state.world, c_vrt, components.shape.NeedsSetup);
-    ecs.add_pair(game.state.world, c_vrt, ecs.ChildOf, gameData);
+    ecs.add_pair(game.state.world, c_vrt, ecs.ChildOf, game_data);
 }
 
-fn initFloor(gameData: ecs.entity_t) void {
+fn initFloor() void {
     game.state.entities.floor = ecs.new_entity(game.state.world, "WorldFloor");
     const c_f = helpers.new_child(game.state.world, game.state.entities.floor);
     _ = ecs.set(game.state.world, c_f, components.shape.Shape, .{ .shape_type = .plane });
@@ -81,10 +83,10 @@ fn initFloor(gameData: ecs.entity_t) void {
     _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{ .x = -25, .y = -25, .z = -25 });
     _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_f, components.Debug);
-    ecs.add_pair(game.state.world, c_f, ecs.ChildOf, gameData);
+    ecs.add_pair(game.state.world, c_f, ecs.ChildOf, game_data);
 }
 
-fn initCamera(gameData: ecs.entity_t) void {
+fn initCamera() void {
     const camera = ecs.new_entity(game.state.world, "GameCamera");
     game.state.entities.game_camera = camera;
     _ = ecs.add(game.state.world, camera, components.screen.Camera);
@@ -102,9 +104,9 @@ fn initCamera(gameData: ecs.entity_t) void {
         .far = config.far,
     });
     _ = ecs.add(game.state.world, camera, components.screen.Updated);
-    ecs.add_pair(game.state.world, camera, ecs.ChildOf, gameData);
+    ecs.add_pair(game.state.world, camera, ecs.ChildOf, game_data);
 }
 
-fn initCursor(gameData: ecs.entity_t) void {
-    _ = ecs.add(game.state.world, gameData, components.screen.Cursor);
+fn initCursor() void {
+    _ = ecs.add(game.state.world, game_data, components.screen.Cursor);
 }
