@@ -34,9 +34,9 @@ pub const Input = struct {
 
 pub const UIData = struct {
     texture_script_options: std.ArrayList(data.scriptOption) = undefined,
-    texture_gen_loaded_script_id: i32 = 0,
-    texture_gen_buf: [script.maxLuaScriptSize]u8 = [_]u8{0} ** script.maxLuaScriptSize,
-    texture_gen_nameBuf: [script.maxLuaScriptNameSize]u8 = [_]u8{0} ** script.maxLuaScriptNameSize,
+    texture_loaded_script_id: i32 = 0,
+    texture_buf: [script.maxLuaScriptSize]u8 = [_]u8{0} ** script.maxLuaScriptSize,
+    texture_name_buf: [script.maxLuaScriptNameSize]u8 = [_]u8{0} ** script.maxLuaScriptNameSize,
 
     fn deinit(self: *UIData) void {
         self.texture_script_options.deinit();

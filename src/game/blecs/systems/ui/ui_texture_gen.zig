@@ -5,6 +5,8 @@ const gl = @import("zopengl");
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
+const data = @import("../../../data/data.zig");
+const script = @import("../../../script/script.zig");
 const screen_helpers = @import("../../../screen/screen.zig");
 
 pub fn init() void {
@@ -60,28 +62,26 @@ fn drawInput() !void {
             .w = 450,
             .h = 100,
         })) {
-            std.debug.print("eval texture list\n", .{});
+            try evalTextureFunc();
         }
         zgui.sameLine(.{});
         if (zgui.button("Save new texture script", .{
             .w = 650,
             .h = 100,
         })) {
-            std.debug.print("save textur\n", .{});
+            try saveTextureScriptFunc();
         }
         zgui.popStyleVar(.{ .count = 1 });
         zgui.sameLine(.{});
         zgui.pushFont(game.state.ui.codeFont);
         zgui.pushItemWidth(1000);
-        var nameBuf: [1000:0]u8 = [_:0]u8{0} ** 1000;
-        var buf: [1000:0]u8 = [_:0]u8{0} ** 1000;
         _ = zgui.inputTextWithHint("Script name", .{
-            .buf = @ptrCast(&nameBuf),
+            .buf = @ptrCast(&game.state.ui.data.texture_name_buf),
             .hint = "block_script",
         });
         zgui.popItemWidth();
         _ = zgui.inputTextMultiline(" ", .{
-            .buf = @ptrCast(&buf),
+            .buf = @ptrCast(&game.state.ui.data.texture_buf),
             .w = 1984,
             .h = 1840,
         });
@@ -103,42 +103,116 @@ fn drawScriptList() !void {
             .w = 450,
             .h = 100,
         })) {
-            std.debug.print("list texture scripts\n", .{});
+            try listTextureScripts();
         }
         _ = zgui.beginListBox("##listbox", .{
             .w = 800,
             .h = 1400,
         });
-        // for (self.scriptOptions.items) |scriptOption| {
-        //     var buffer: [script.maxLuaScriptNameSize + 10]u8 = undefined;
-        //     const selectableName = try std.fmt.bufPrint(&buffer, "{d}: {s}", .{ scriptOption.id, scriptOption.name });
-        //     var name: [script.maxLuaScriptNameSize:0]u8 = undefined;
-        //     for (name, 0..) |_, i| {
-        //         if (selectableName.len <= i) {
-        //             name[i] = 0;
-        //             break;
-        //         }
-        //         name[i] = selectableName[i];
-        //     }
-        //     if (zgui.selectable(&name, .{})) {
-        //         try self.loadTextureScriptFunc(scriptOption.id);
-        //     }
-        // }
+        for (game.state.ui.data.texture_script_options.items) |scriptOption| {
+            var buffer: [script.maxLuaScriptNameSize + 10]u8 = undefined;
+            const selectableName = try std.fmt.bufPrint(&buffer, "{d}: {s}", .{
+                scriptOption.id,
+                scriptOption.name,
+            });
+            var name: [script.maxLuaScriptNameSize:0]u8 = undefined;
+            for (name, 0..) |_, i| {
+                if (selectableName.len <= i) {
+                    name[i] = 0;
+                    break;
+                }
+                name[i] = selectableName[i];
+            }
+            if (zgui.selectable(&name, .{})) {
+                try loadTextureScriptFunc(scriptOption.id);
+            }
+        }
         zgui.endListBox();
         if (false) {
             if (zgui.button("Update script", .{
                 .w = 450,
                 .h = 100,
             })) {
-                std.debug.print("update texture script\n", .{});
+                try updateTextureScriptFunc();
             }
             if (zgui.button("Delete script", .{
                 .w = 450,
                 .h = 100,
             })) {
-                std.debug.print("delete texture script\n", .{});
+                try deleteTextureScriptFunc();
             }
         }
     }
     zgui.endChild();
+}
+
+fn listTextureScripts() !void {
+    try game.state.db.listTextureScripts(&game.state.ui.data.texture_script_options);
+}
+
+fn loadTextureScriptFunc(scriptId: i32) !void {
+    var scriptData: data.script = undefined;
+    try game.state.db.loadTextureScript(scriptId, &scriptData);
+    var buf = [_]u8{0} ** script.maxLuaScriptSize;
+    var nameBuf = [_]u8{0} ** script.maxLuaScriptNameSize;
+    for (scriptData.name, 0..) |c, i| {
+        if (i >= script.maxLuaScriptNameSize) {
+            break;
+        }
+        nameBuf[i] = c;
+    }
+    for (scriptData.script, 0..) |c, i| {
+        if (i >= script.maxLuaScriptSize) {
+            break;
+        }
+        buf[i] = c;
+    }
+    game.state.ui.data.texture_buf = buf;
+    game.state.ui.data.texture_name_buf = nameBuf;
+    try evalTextureFunc();
+    game.state.ui.data.texture_loaded_script_id = scriptId;
+}
+
+fn evalTextureFunc() !void {
+    const textureRGBAColor = try game.state.script.evalTextureFunc(game.state.ui.data.texture_buf);
+    _ = textureRGBAColor;
+    std.debug.print("do something with textureRGBA color\n", .{});
+}
+
+fn saveTextureScriptFunc() !void {
+    const n = std.mem.indexOf(u8, &game.state.ui.data.texture_name_buf, &([_]u8{0}));
+    if (n) |i| {
+        if (i < 3) {
+            std.log.err("Script name is too short", .{});
+            return;
+        }
+    }
+    try game.state.db.saveTextureScript(
+        &game.state.ui.data.texture_name_buf,
+        &game.state.ui.data.texture_buf,
+    );
+    try listTextureScripts();
+}
+
+fn updateTextureScriptFunc() !void {
+    const n = std.mem.indexOf(u8, &game.state.ui.data.texture_name_buf, &([_]u8{0}));
+    if (n) |i| {
+        if (i < 3) {
+            std.log.err("Script name is too short", .{});
+            return;
+        }
+    }
+    try game.state.db.updateTextureScript(
+        game.state.ui.data.texture_loaded_script_id,
+        &game.state.ui.data.texture_name_buf,
+        &game.state.ui.data.texture_buf,
+    );
+    try listTextureScripts();
+    try loadTextureScriptFunc(game.state.ui.data.texture_loaded_script_id);
+}
+
+fn deleteTextureScriptFunc() !void {
+    try game.state.db.deleteTextureScript(game.state.ui.data.texture_loaded_script_id);
+    try listTextureScripts();
+    game.state.ui.data.texture_loaded_script_id = 0;
 }
