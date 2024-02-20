@@ -130,20 +130,13 @@ pub const Game = struct {
 
     pub fn deinit(_: Game) void {
         _ = blecs.ecs.fini(state.world);
-        state.gfx.ubos.deinit();
-        var cfgs = state.gfx.renderConfigs.valueIterator();
-        while (cfgs.next()) |rcfg| {
-            state.allocator.destroy(rcfg);
-        }
-        state.gfx.renderConfigs.deinit();
         zstbi.deinit();
         zmesh.deinit();
         zgui.backend.deinit();
         zgui.deinit();
         state.window.destroy();
         glfw.terminate();
-        state.script.deinit();
-        state.db.deinit();
+        state.deinit();
         state.allocator.destroy(state);
         std.debug.print("\nGoodbye blockens!\n", .{});
     }

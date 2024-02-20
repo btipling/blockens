@@ -32,9 +32,12 @@ pub const Input = struct {
     delta_time: gl.Float = 0,
 };
 
+pub const UIData = struct {};
+
 pub const UI = struct {
     gameFont: zgui.Font = undefined,
     codeFont: zgui.Font = undefined,
+    data: *UIData = undefined,
 };
 
 pub const ElementsRendererConfig = struct {
@@ -62,6 +65,22 @@ pub const Game = struct {
     ui: UI = .{},
     gfx: Gfx = .{},
     quit: bool = false,
+
+    pub fn initInternals(self: *Game) !void {
+        try self.initDb();
+        try self.initScript();
+    }
+
+    pub fn deinit(self: *Game) void {
+        self.gfx.ubos.deinit();
+        var cfgs = self.gfx.renderConfigs.valueIterator();
+        while (cfgs.next()) |rcfg| {
+            self.allocator.destroy(rcfg);
+        }
+        self.gfx.renderConfigs.deinit();
+        self.script.deinit();
+        self.db.deinit();
+    }
 
     pub fn initDb(self: *Game) !void {
         self.db = try data.Data.init(self.allocator);
