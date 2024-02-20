@@ -128,7 +128,7 @@ fn drawScriptList() !void {
             }
         }
         zgui.endListBox();
-        if (false) {
+        if (game.state.ui.data.texture_loaded_script_id != 0) {
             if (zgui.button("Update script", .{
                 .w = 450,
                 .h = 100,
