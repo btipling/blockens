@@ -23,11 +23,21 @@ fn system() ecs.system_desc_t {
     return desc;
 }
 
+const meshData = struct {
+    positions: [][3]f32,
+    indices: []u32,
+};
+
 fn run(it: *ecs.iter_t) callconv(.C) void {
     const world = it.world;
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
+            const sh: []components.shape.Shape = ecs.field(it, components.shape.Shape, 1) orelse return;
+            const mesh_data = switch (sh[i].shape_type) {
+                .plane => plane(),
+                else => return,
+            };
 
             var rotation: ?math.vecs.Vflx4 = null;
             var scale: ?math.vecs.Vflx4 = null;
@@ -68,8 +78,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 uniform_mat = zm.translationV(u.toVec().value);
             }
 
-            var plane = zmesh.Shape.initPlane(1, 1);
-            defer plane.deinit();
             const v_cfg = gfx.shadergen.ShaderGen.vertexShaderConfig{
                 .debug = debug,
                 .has_uniform_mat = has_uniform_mat,
@@ -84,16 +92,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .color = color,
             };
             const fragmentShader: [:0]const u8 = gfx.shadergen.ShaderGen.genFragmentShader(game.state.allocator, f_cfg) catch unreachable;
-            const positions: [][3]f32 = game.state.allocator.alloc([3]f32, plane.positions.len) catch unreachable;
-            @memcpy(positions, plane.positions);
-            const indices: []u32 = game.state.allocator.alloc(u32, plane.indices.len) catch unreachable;
-            @memcpy(indices, plane.indices);
             var erc = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
             erc.* = .{
                 .vertexShader = vertexShader,
                 .fragmentShader = fragmentShader,
-                .positions = positions,
-                .indices = indices,
+                .positions = mesh_data.positions,
+                .indices = mesh_data.indices,
                 .transform = null,
                 .ubo_binding_point = null,
             };
@@ -105,4 +109,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             ecs.remove(world, entity, components.shape.NeedsSetup);
         }
     }
+}
+
+fn plane() meshData {
+    var p = zmesh.Shape.initPlane(1, 1);
+    defer p.deinit();
+    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, p.positions.len) catch unreachable;
+    @memcpy(positions, p.positions);
+    const indices: []u32 = game.state.allocator.alloc(u32, p.indices.len) catch unreachable;
+    @memcpy(indices, p.indices);
+    return .{ .positions = positions, .indices = indices };
 }

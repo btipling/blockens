@@ -31,7 +31,7 @@ pub fn init() void {
 fn initCrossHairs(gameData: ecs.entity_t) void {
     game.state.entities.crosshair = ecs.new_entity(game.state.world, "Crosshair");
     const c_hrz = helpers.new_child(game.state.world, game.state.entities.crosshair);
-    _ = ecs.add(game.state.world, c_hrz, components.shape.Shape);
+    _ = ecs.set(game.state.world, c_hrz, components.shape.Shape, .{ .shape_type = .plane });
     const cr_c = math.vecs.Vflx4.initBytes(33, 33, 33, 255);
     _ = ecs.set(
         game.state.world,
@@ -44,7 +44,7 @@ fn initCrossHairs(gameData: ecs.entity_t) void {
     _ = ecs.add(game.state.world, c_hrz, components.shape.NeedsSetup);
     ecs.add_pair(game.state.world, c_hrz, ecs.ChildOf, gameData);
     const c_vrt = helpers.new_child(game.state.world, game.state.entities.crosshair);
-    _ = ecs.add(game.state.world, c_vrt, components.shape.Shape);
+    _ = ecs.set(game.state.world, c_vrt, components.shape.Shape, .{ .shape_type = .plane });
     _ = ecs.set(
         game.state.world,
         c_vrt,
@@ -60,7 +60,7 @@ fn initCrossHairs(gameData: ecs.entity_t) void {
 fn initFloor(gameData: ecs.entity_t) void {
     game.state.entities.floor = ecs.new_entity(game.state.world, "WorldFloor");
     const c_f = helpers.new_child(game.state.world, game.state.entities.floor);
-    _ = ecs.add(game.state.world, c_f, components.shape.Shape);
+    _ = ecs.set(game.state.world, c_f, components.shape.Shape, .{ .shape_type = .plane });
     const cr_c = math.vecs.Vflx4.initBytes(34, 32, 52, 255);
     _ = ecs.set(
         game.state.world,

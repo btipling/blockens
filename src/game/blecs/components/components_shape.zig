@@ -4,7 +4,13 @@ const zm = @import("zmath");
 const math = @import("../../math/math.zig");
 const game = @import("../../game.zig");
 
-pub const Shape = struct {};
+pub const Shape = struct {
+    shape_type: ShapeType = .plane,
+    pub const ShapeType = enum {
+        plane,
+        cube,
+    };
+};
 
 pub const Color = struct {
     r: gl.Float = 0,
@@ -84,7 +90,7 @@ pub const UBO = struct {
 pub const NeedsSetup = struct {};
 
 pub fn init() void {
-    ecs.TAG(game.state.world, Shape);
+    ecs.COMPONENT(game.state.world, Shape);
     ecs.COMPONENT(game.state.world, Color);
     ecs.COMPONENT(game.state.world, Rotation);
     ecs.COMPONENT(game.state.world, Scale);
