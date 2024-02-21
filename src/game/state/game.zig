@@ -37,9 +37,11 @@ pub const UIData = struct {
     texture_loaded_script_id: i32 = 0,
     texture_buf: [script.maxLuaScriptSize]u8 = [_]u8{0} ** script.maxLuaScriptSize,
     texture_name_buf: [script.maxLuaScriptNameSize]u8 = [_]u8{0} ** script.maxLuaScriptNameSize,
+    texture_rgba_data: ?[]gl.Uint = null,
 
-    fn deinit(self: *UIData) void {
+    fn deinit(self: *UIData, allocator: std.mem.Allocator) void {
         self.texture_script_options.deinit();
+        if (self.texture_rgba_data) |d| allocator.free(d);
     }
 };
 
@@ -54,8 +56,11 @@ pub const ElementsRendererConfig = struct {
     fragmentShader: [:0]const u8 = undefined,
     positions: [][3]gl.Float = undefined,
     indices: []u32 = undefined,
+    texcoords: ?[][2]gl.Float = null,
+    normals: ?[][3]gl.Float = null,
     transform: ?zm.Mat = null,
     ubo_binding_point: ?gl.Uint = null,
+    has_demo_cube_texture: bool = false,
 };
 
 pub const Gfx = struct {
@@ -90,7 +95,7 @@ pub const Game = struct {
         self.gfx.renderConfigs.deinit();
         self.script.deinit();
         self.db.deinit();
-        self.ui.data.deinit();
+        self.ui.data.deinit(self.allocator);
         self.allocator.destroy(self.ui.data);
     }
 

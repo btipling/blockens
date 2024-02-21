@@ -16,13 +16,13 @@ pub const maxLuaScriptNameSize = 20;
 
 pub const Script = struct {
     luaInstance: Lua,
-    alloc: std.mem.Allocator,
-    pub fn init(alloc: std.mem.Allocator) !Script {
-        var lua: Lua = try Lua.init(alloc);
+    allocator: std.mem.Allocator,
+    pub fn init(allocator: std.mem.Allocator) !Script {
+        var lua: Lua = try Lua.init(allocator);
         lua.openLibs();
         return Script{
             .luaInstance = lua,
-            .alloc = alloc,
+            .allocator = allocator,
         };
     }
 
@@ -30,7 +30,7 @@ pub const Script = struct {
         self.luaInstance.deinit();
     }
 
-    pub fn evalTextureFunc(self: *Script, buf: [maxLuaScriptSize]u8) ![data.RGBAColorTextureSize]gl.Uint {
+    pub fn evalTextureFunc(self: *Script, buf: [maxLuaScriptSize]u8) !?[]gl.Uint {
         std.debug.print("evalTextureFunc from lua {d}\n", .{buf.len});
         self.luaInstance.setTop(0);
         var textureRGBAColor: [data.RGBAColorTextureSize]gl.Uint = [_]gl.Uint{0} ** data.RGBAColorTextureSize;
@@ -47,7 +47,7 @@ pub const Script = struct {
         std.debug.print("evalTextureFunc: nullIndex: {d} \n", .{nullIndex});
         self.luaInstance.doString(luaCString) catch |err| {
             std.log.err("evalTextureFunc: failed to eval lua code from string {}.", .{err});
-            return textureRGBAColor;
+            return null;
         };
         _ = self.luaInstance.getGlobal("textures") catch |err| {
             std.log.err("evalTextureFunc: failed to get global textures. {}", .{err});
@@ -78,7 +78,9 @@ pub const Script = struct {
             textureRGBAColor[i - 1] = @as(gl.Uint, @intCast(color));
             self.luaInstance.pop(1);
         }
-        return textureRGBAColor;
+        const rv: []gl.Uint = try self.allocator.alloc(gl.Uint, textureRGBAColor.len);
+        @memcpy(rv, &textureRGBAColor);
+        return rv;
     }
 
     pub fn evalChunkFunc(self: *Script, buf: [maxLuaScriptSize]u8) ![chunk.chunkSize]i32 {

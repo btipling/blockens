@@ -48,6 +48,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const er = ers[i];
             if (er.enableDepthTest) gl.enable(gl.DEPTH_TEST);
             gl.useProgram(er.program);
+            if (er.texture != 0) {
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, er.texture);
+            }
             gl.bindVertexArray(er.vao);
             gl.drawElements(gl.TRIANGLES, er.numIndices, gl.UNSIGNED_INT, null);
         }

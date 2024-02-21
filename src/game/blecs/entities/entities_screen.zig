@@ -82,6 +82,7 @@ fn initFloor() void {
     _ = ecs.set(game.state.world, c_f, components.shape.UBO, .{ .binding_point = GameUBOBindingPoint });
     _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{ .x = -25, .y = -25, .z = -25 });
     _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
+    _ = ecs.add(game.state.world, c_f, components.Debug);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, game_data);
 }
 
@@ -119,7 +120,7 @@ pub fn initDemoCube() void {
         }
     }
     const c_dc = helpers.new_child(game.state.world, settings_data);
-    _ = ecs.set(game.state.world, c_dc, components.shape.Shape, .{ .shape_type = .plane });
+    _ = ecs.set(game.state.world, c_dc, components.shape.Shape, .{ .shape_type = .cube });
     var cr_c = math.vecs.Vflx4.initBytes(255, 0, 255, 255);
     const div: i64 = 100;
     const time = std.time.milliTimestamp();
@@ -134,6 +135,7 @@ pub fn initDemoCube() void {
     );
     _ = ecs.set(game.state.world, c_dc, components.shape.Scale, .{ .x = 0.25, .y = 0.25, .z = 0.25 });
     _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = -3.75, .y = 2, .z = 0 });
+    _ = ecs.add(game.state.world, c_dc, components.shape.DemoCubeTexture);
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_dc, components.Debug);
 }

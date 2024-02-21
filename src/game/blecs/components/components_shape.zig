@@ -83,6 +83,8 @@ pub const Translation = struct {
     }
 };
 
+pub const DemoCubeTexture = struct {};
+
 pub const UBO = struct {
     binding_point: gl.Uint = 0,
 };
@@ -96,5 +98,6 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, Scale);
     ecs.COMPONENT(game.state.world, Translation);
     ecs.COMPONENT(game.state.world, UBO);
+    ecs.TAG(game.state.world, DemoCubeTexture);
     ecs.TAG(game.state.world, NeedsSetup);
 }

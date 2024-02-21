@@ -175,11 +175,9 @@ fn loadTextureScriptFunc(scriptId: i32) !void {
 }
 
 fn evalTextureFunc() !void {
-    const textureRGBAColor = try game.state.script.evalTextureFunc(game.state.ui.data.texture_buf);
-    _ = textureRGBAColor;
-    std.debug.print("do something with textureRGBA color\n", .{});
+    if (game.state.ui.data.texture_rgba_data) |d| game.state.allocator.free(d);
+    game.state.ui.data.texture_rgba_data = try game.state.script.evalTextureFunc(game.state.ui.data.texture_buf);
     entities.screen.initDemoCube();
-    std.debug.print("did something with textureRGBA color\n", .{});
 }
 
 fn saveTextureScriptFunc() !void {

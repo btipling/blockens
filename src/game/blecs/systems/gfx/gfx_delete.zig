@@ -30,6 +30,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             gl.deleteVertexArrays(1, &er.vao);
             gl.deleteBuffers(1, &er.vbo);
             gl.deleteBuffers(1, &er.ebo);
+            if (er.texture != 0) {
+                gl.deleteTextures(1, &er.texture);
+            }
             ecs.delete(game.state.world, entity);
         }
     }

@@ -12,6 +12,8 @@ pub const ShaderGen = struct {
         debug: bool = false,
         has_uniform_mat: bool = false,
         has_ubo: bool = false,
+        has_texture_coords: bool = false,
+        has_normals: bool = false,
         scale: ?math.vecs.Vflx4 = null,
         rotation: ?math.vecs.Vflx4 = null,
         translation: ?math.vecs.Vflx4 = null,
@@ -19,6 +21,9 @@ pub const ShaderGen = struct {
 
     pub const fragmentShaderConfig = struct {
         debug: bool = false,
+        has_texture: bool = false,
+        has_texture_coords: bool = false,
+        has_normals: bool = false,
         color: ?math.vecs.Vflx4 = null,
     };
 
@@ -43,9 +48,30 @@ pub const ShaderGen = struct {
                 inline_mat = m;
             }
         }
-
+        var location: u8 = 0;
         try buf.appendSlice(allocator, "#version 330 core\n");
-        try buf.appendSlice(allocator, "layout (location = 0) in vec3 position;\n\n");
+        {
+            var line = try attribute_location(location, "position", .vec3);
+            try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
+            location += 1;
+            if (cfg.has_texture_coords) {
+                line = try attribute_location(location, "eTexCoord", .vec2);
+                try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
+                location += 1;
+            }
+            if (cfg.has_normals) {
+                line = try attribute_location(location, "normal", .vec3);
+                try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
+                location += 1;
+            }
+        }
+        try buf.appendSlice(allocator, "\n");
+        if (cfg.has_texture_coords) {
+            try buf.appendSlice(allocator, "\nout vec2 TexCoord;\n");
+        }
+        if (cfg.has_normals) {
+            try buf.appendSlice(allocator, "\nflat out vec3 fragNormal;\n");
+        }
         if (cfg.has_uniform_mat) {
             try buf.appendSlice(allocator, "\nuniform mat4 ");
             try buf.appendSlice(allocator, TransformMatName);
@@ -64,13 +90,13 @@ pub const ShaderGen = struct {
         try buf.appendSlice(allocator, "    pos = vec4(position.xyz, 1.0);\n");
         if (inline_mat) |m| {
             const mr = zm.matToArr(m);
-            var line = try vec4ToBuf("    vec4 c0 = vec4({d}, {d}, {d}, {d});\n", mr[0], mr[1], mr[2], mr[3]);
+            var line = try vec4_to_buf("    vec4 c0 = vec4({d}, {d}, {d}, {d});\n", mr[0], mr[1], mr[2], mr[3]);
             try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
-            line = try vec4ToBuf("    vec4 c1 = vec4({d}, {d}, {d}, {d});\n", mr[4], mr[5], mr[6], mr[7]);
+            line = try vec4_to_buf("    vec4 c1 = vec4({d}, {d}, {d}, {d});\n", mr[4], mr[5], mr[6], mr[7]);
             try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
-            line = try vec4ToBuf("    vec4 c2 = vec4({d}, {d}, {d}, {d});\n", mr[8], mr[9], mr[10], mr[11]);
+            line = try vec4_to_buf("    vec4 c2 = vec4({d}, {d}, {d}, {d});\n", mr[8], mr[9], mr[10], mr[11]);
             try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
-            line = try vec4ToBuf("    vec4 c3 = vec4({d}, {d}, {d}, {d});\n", mr[12], mr[13], mr[14], mr[15]);
+            line = try vec4_to_buf("    vec4 c3 = vec4({d}, {d}, {d}, {d});\n", mr[12], mr[13], mr[14], mr[15]);
             try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
             try buf.appendSlice(allocator, "    mat4 inline_transform = mat4(c0, c1, c2, c3);\n");
             try buf.appendSlice(allocator, "    pos = inline_transform * pos;\n");
@@ -86,6 +112,12 @@ pub const ShaderGen = struct {
             try buf.appendSlice(allocator, " * pos;\n");
         }
         try buf.appendSlice(allocator, "    gl_Position = pos;\n");
+        if (cfg.has_texture_coords) {
+            try buf.appendSlice(allocator, "    TexCoord = eTexCoord;\n");
+        }
+        if (cfg.has_normals) {
+            try buf.appendSlice(allocator, "    fragNormal = normal;\n");
+        }
         try buf.appendSlice(allocator, "}\n");
         const ownedSentinelSlice: [:0]const u8 = try buf.toOwnedSliceSentinel(allocator, 0);
         if (cfg.debug) std.debug.print("generated vertex shader: \n {s}\n", .{ownedSentinelSlice});
@@ -98,15 +130,31 @@ pub const ShaderGen = struct {
         defer buf.deinit(allocator);
 
         try buf.appendSlice(allocator, "#version 330 core\n");
-        try buf.appendSlice(allocator, "out vec4 FragColor;\n\n");
-        try buf.appendSlice(allocator, "void main()\n");
+        try buf.appendSlice(allocator, "out vec4 FragColor;\n");
+        if (cfg.has_texture_coords) {
+            try buf.appendSlice(allocator, "\nin vec2 TexCoord;\n");
+        }
+        if (cfg.has_normals) {
+            try buf.appendSlice(allocator, "\nflat in vec3 fragNormal;\n");
+        }
+        if (cfg.has_texture) {
+            try buf.appendSlice(allocator, "\nuniform sampler2D texture1;\n");
+        }
+        try buf.appendSlice(allocator, "\nvoid main()\n");
         try buf.appendSlice(allocator, "{\n");
         // magenta to highlight shader without materials
         if (cfg.color) |c| {
-            const line = try vec4ToBuf("    FragColor = vec4({d}, {d}, {d}, {d});\n", c.value[0], c.value[1], c.value[2], c.value[3]);
+            const line = try vec4_to_buf("    vec4 Color = vec4({d}, {d}, {d}, {d});\n", c.value[0], c.value[1], c.value[2], c.value[3]);
             try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
         } else {
-            try buf.appendSlice(allocator, "    FragColor = vec4(1.0, 0.0, 1.0, 1.0);\n");
+            try buf.appendSlice(allocator, "    Color = vec4(1.0, 0.0, 1.0, 1.0);\n");
+        }
+        if (cfg.has_texture) {
+            try buf.appendSlice(allocator, "    vec4 textureColor = texture(texture1, TexCoord);\n");
+            try buf.appendSlice(allocator, "    vec4 finalColor = mix(Color, textureColor, textureColor.a);\n");
+            try buf.appendSlice(allocator, "    FragColor = finalColor;\n");
+        } else {
+            try buf.appendSlice(allocator, "    FragColor = Color;\n");
         }
         try buf.appendSlice(allocator, "}\n");
         const ownedSentinelSlice: [:0]const u8 = try buf.toOwnedSliceSentinel(allocator, 0);
@@ -114,7 +162,28 @@ pub const ShaderGen = struct {
         return ownedSentinelSlice;
     }
 
-    fn vec4ToBuf(
+    const varType = enum {
+        vec2,
+        vec3,
+        vec4,
+    };
+
+    fn attribute_location(
+        loc: u8,
+        comptime name: []const u8,
+        var_type: varType,
+    ) ![250:0]u8 {
+        var buffer: [250:0]u8 = [_:0]u8{0} ** 250;
+        const var_type_name: []const u8 = switch (var_type) {
+            .vec2 => "vec2",
+            .vec3 => "vec3",
+            .vec4 => "vec4",
+        };
+        _ = try std.fmt.bufPrint(&buffer, "layout (location = {d}) in {s} {s};\n", .{ loc, var_type_name, name });
+        return buffer;
+    }
+
+    fn vec4_to_buf(
         comptime fmt: []const u8,
         v0: gl.Float,
         v1: gl.Float,
