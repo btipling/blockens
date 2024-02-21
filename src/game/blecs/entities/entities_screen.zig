@@ -132,6 +132,8 @@ pub fn initDemoCube() void {
         components.shape.Color,
         components.shape.Color.fromVec(cr_c),
     );
+    _ = ecs.set(game.state.world, c_dc, components.shape.Scale, .{ .x = 0.25, .y = 0.25, .z = 0.25 });
+    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = -3.75, .y = 2, .z = 0 });
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_dc, components.Debug);
 }
