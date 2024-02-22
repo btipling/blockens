@@ -3,6 +3,7 @@ const gl = @import("zopengl");
 const zm = @import("zmath");
 
 pub const shadergen = @import("shadergen.zig");
+pub const buffer_data = @import("buffer_data.zig");
 
 pub const GfxErr = error{
     RenderError,
@@ -83,14 +84,6 @@ pub const Gfx = struct {
             gl.deleteShader(shader);
         }
         return shaderProgram;
-    }
-
-    pub fn addVertexAttribute(comptime T: type, dataptr: ?*const anyopaque, len: gl.Int) void {
-        const size = len * @sizeOf(T);
-        const stride = @sizeOf(T);
-        gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
-        gl.vertexAttribPointer(0, len, gl.FLOAT, gl.FALSE, stride, null);
-        gl.enableVertexAttribArray(0);
     }
 
     pub fn setUniformMat(name: []const u8, program: gl.Uint, m: zm.Mat) void {

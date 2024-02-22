@@ -56,7 +56,36 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const fs = gfx.Gfx.initFragmentShader(fragmentShader) catch unreachable;
             const program = gfx.Gfx.initProgram(&[_]gl.Uint{ vs, fs }) catch unreachable;
             gl.useProgram(program);
-            gfx.Gfx.addVertexAttribute([3]gl.Float, positions.ptr, @intCast(positions.len));
+            var builder: *gfx.buffer_data.AttributeBuilder = game.state.allocator.create(gfx.buffer_data.AttributeBuilder) catch unreachable;
+            defer game.state.allocator.destroy(builder);
+            builder.* = gfx.buffer_data.AttributeBuilder.init(@intCast(positions.len), vbo, gl.STATIC_DRAW);
+            defer builder.deinit();
+            var pos_loc: gl.Uint = 0;
+            var tc_loc: gl.Uint = 0;
+            var nor_loc: gl.Uint = 0;
+            // same order as defined in shader gen
+            pos_loc = builder.defineAttributeValue(gl.FLOAT, 3); // positions
+            if (texcoords) |_| {
+                tc_loc = builder.defineAttributeValue(gl.FLOAT, 2); // texture coords
+            }
+            if (normals) |_| {
+                nor_loc = builder.defineAttributeValue(gl.FLOAT, 2); // normals
+            }
+            builder.initBuffer();
+            for (0..positions.len) |ii| {
+                var p = positions[ii];
+                builder.addVertexDataAtLocation(gl.Float, pos_loc, &p);
+                if (texcoords) |tcs| {
+                    var t = tcs[i];
+                    builder.addVertexDataAtLocation(gl.Float, pos_loc, &t);
+                }
+                if (normals) |ns| {
+                    var n = ns[i];
+                    builder.addVertexDataAtLocation(gl.Float, pos_loc, &n);
+                }
+                builder.nextVertex();
+            }
+            builder.write();
 
             if (er.transform) |t| {
                 gfx.Gfx.setUniformMat(shadergen.TransformMatName, program, t);
