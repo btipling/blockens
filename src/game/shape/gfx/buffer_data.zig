@@ -15,7 +15,7 @@ pub const AttributeBuilder = struct {
         type: gl.Enum,
         size: gl.Int,
         location: gl.Uint = 0,
-        pointer: ?*const anyopaque,
+        offset: usize,
         normalized: gl.Boolean = gl.FALSE,
     };
 
@@ -40,36 +40,38 @@ pub const AttributeBuilder = struct {
     fn sizeFromType(t: gl.Enum) usize {
         return switch (t) {
             gl.FLOAT => @sizeOf(gl.Float),
-            gl.UNSIGNED_INT => @sizeOf(gl.Uint),
-            gl.INT => @sizeOf(gl.Int),
-            gl.DOUBLE => @sizeOf(gl.Double),
             else => @panic("currently unsupported vertex attribute variable"),
         };
     }
 
-    pub fn defineAttributeValue(self: *AttributeBuilder, t: gl.Enum, size: gl.Int) gl.Uint {
-        var pointer: ?*const anyopaque = null;
+    pub fn definFloatAttributeValue(self: *AttributeBuilder, size: gl.Int) gl.Uint {
         var offset: usize = 0;
         for (self.attr_vars.items) |av| {
             offset += @as(usize, @intCast(av.size)) * sizeFromType(av.type);
         }
-        if (offset > 0) {
-            pointer = @as(*anyopaque, @ptrFromInt(offset));
-        }
         const av: AttributeVariable = .{
-            .type = t,
+            .type = gl.FLOAT,
             .size = size,
             .location = @intCast(self.attr_vars.items.len),
             .normalized = gl.FALSE,
-            .pointer = pointer,
+            .offset = offset,
         };
         self.stride += @as(gl.Sizei, @intCast(av.size)) * @as(gl.Sizei, @intCast(sizeFromType(av.type)));
         self.attr_vars.append(game.state.allocator, av) catch unreachable;
+        std.debug.print("defined float attribute value: \n", .{});
+        std.debug.print("   - size: {d} \n", .{av.size});
+        std.debug.print("   - offset: {d} \n", .{av.offset});
+        std.debug.print("   - location: {d} \n\n", .{av.location});
         return av.location;
     }
 
     pub fn initBuffer(self: *AttributeBuilder) void {
         const s = @as(usize, @intCast(self.stride)) * @as(usize, @intCast(self.num_vertices));
+        std.debug.print("init buffer with stride: {d} num vertices: {d} and size: {d}\n\n", .{
+            self.stride,
+            self.num_vertices,
+            s,
+        });
         self.buffer = game.state.allocator.alloc(u8, s) catch unreachable;
     }
 
@@ -80,40 +82,49 @@ pub const AttributeBuilder = struct {
         }
     }
 
-    // addVertexDataAtLocation - use is responsible for making sure `data` parameter size matches its defineAttributeValue
-    pub fn addVertexDataAtLocation(self: *AttributeBuilder, comptime T: type, location: gl.Uint, data: []T) void {
-        var buffer_offset = self.cur_vertex * @as(usize, @intCast(self.stride));
-        const l: usize = @intCast(location);
-        if (l >= self.attr_vars.items.len) {
-            @panic("invalid location specified");
+    pub fn addFloatAtLocation(self: *AttributeBuilder, location: gl.Uint, data: []gl.Float, vertex_index: usize) void {
+        const av = self.attr_vars.items[location];
+        const dataptr: []const u8 = std.mem.sliceAsBytes(data);
+        std.debug.print("dataptr len: {d}\n", .{dataptr.len});
+        for (dataptr) |b| {
+            std.debug.print("{d} ", .{b});
         }
-        for (0..l) |i| {
-            const av = self.attr_vars.items[i];
-            buffer_offset += @as(usize, @intCast(av.size)) * sizeFromType(av.type);
+        std.debug.print("\n", .{});
+        const stride: usize = @intCast(self.stride);
+        const start = stride * vertex_index + av.offset;
+        std.debug.print("addFloatAtLocation: ", .{});
+        for (0..dataptr.len) |i| {
+            const buf_i = start + i;
+            std.debug.print(" {d} ,", .{buf_i});
+            self.buffer[buf_i] = dataptr[i];
         }
-        if (buffer_offset > @as(usize, @intCast(self.stride)) * @as(usize, @intCast(self.num_vertices))) {
-            @panic("vertex buffer overflow");
-        }
-        if (sizeFromType(self.attr_vars.items[l].type) != @sizeOf(T)) {
-            @panic("type sizes as specified do not match");
-        }
-        const b: [*]u8 = @as([*]u8, @ptrCast(self.buffer)) + buffer_offset;
-        switch (T) {
-            gl.Float => {
-                const aligned: *align(8) []u8 = @alignCast(@ptrCast(data));
-                @memcpy(b, @as([]u8, aligned.*));
-            },
-            else => @panic("unsupported data type"),
-        }
+        std.debug.print("\n", .{});
     }
 
     pub fn write(self: *AttributeBuilder) void {
         gl.bindBuffer(gl.ARRAY_BUFFER, self.vbo);
+
+        std.debug.print("self.buffer len: {d}\n", .{self.buffer.len});
+        for (self.buffer) |b| {
+            std.debug.print("{d} ", .{b});
+        }
+        std.debug.print("\n", .{});
         const dataptr: ?*const anyopaque = @ptrCast(self.buffer);
         const s: gl.Sizeiptr = @as(gl.Sizeiptr, @intCast(self.stride)) * @as(gl.Sizeiptr, @intCast(self.num_vertices));
         gl.bufferData(gl.ARRAY_BUFFER, s, dataptr, self.usage);
-        for (self.attr_vars.items) |av| {
-            gl.vertexAttribPointer(av.location, av.size, av.type, av.normalized, self.stride, av.pointer);
+        for (0..self.attr_vars.items.len) |i| {
+            const av = self.attr_vars.items[i];
+            var pointer: ?*anyopaque = null;
+            if (i > 0) {
+                pointer = @as(*anyopaque, @ptrFromInt(av.offset));
+            }
+            std.debug.print("addVertexAttribute - loc: {d} len: {d} size: {d} stride: {d} \n", .{
+                av.location,
+                av.size,
+                s,
+                self.stride,
+            });
+            gl.vertexAttribPointer(av.location, av.size, av.type, av.normalized, self.stride, pointer);
             gl.enableVertexAttribArray(av.location);
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);

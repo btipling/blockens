@@ -56,6 +56,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const fs = gfx.Gfx.initFragmentShader(fragmentShader) catch unreachable;
             const program = gfx.Gfx.initProgram(&[_]gl.Uint{ vs, fs }) catch unreachable;
             gl.useProgram(program);
+
             var builder: *gfx.buffer_data.AttributeBuilder = game.state.allocator.create(gfx.buffer_data.AttributeBuilder) catch unreachable;
             defer game.state.allocator.destroy(builder);
             builder.* = gfx.buffer_data.AttributeBuilder.init(@intCast(positions.len), vbo, gl.STATIC_DRAW);
@@ -64,24 +65,24 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             var tc_loc: gl.Uint = 0;
             var nor_loc: gl.Uint = 0;
             // same order as defined in shader gen
-            pos_loc = builder.defineAttributeValue(gl.FLOAT, 3); // positions
+            pos_loc = builder.definFloatAttributeValue(3); // positions
             if (texcoords) |_| {
-                tc_loc = builder.defineAttributeValue(gl.FLOAT, 2); // texture coords
+                tc_loc = builder.definFloatAttributeValue(2); // texture coords
             }
             if (normals) |_| {
-                nor_loc = builder.defineAttributeValue(gl.FLOAT, 2); // normals
+                nor_loc = builder.definFloatAttributeValue(3); // normals
             }
             builder.initBuffer();
             for (0..positions.len) |ii| {
                 var p = positions[ii];
-                builder.addVertexDataAtLocation(gl.Float, pos_loc, &p);
+                builder.addFloatAtLocation(pos_loc, &p, ii);
                 if (texcoords) |tcs| {
                     var t = tcs[i];
-                    builder.addVertexDataAtLocation(gl.Float, pos_loc, &t);
+                    builder.addFloatAtLocation(pos_loc, &t, ii);
                 }
                 if (normals) |ns| {
                     var n = ns[i];
-                    builder.addVertexDataAtLocation(gl.Float, pos_loc, &n);
+                    builder.addFloatAtLocation(pos_loc, &n, ii);
                 }
                 builder.nextVertex();
             }
