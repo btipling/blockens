@@ -103,7 +103,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .has_normals = mesh_data.normals != null,
             };
             const fragmentShader: [:0]const u8 = gfx.shadergen.ShaderGen.genFragmentShader(game.state.allocator, f_cfg) catch unreachable;
-            var erc = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
+            var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
             erc.* = .{
                 .vertexShader = vertexShader,
                 .fragmentShader = fragmentShader,
@@ -112,6 +112,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .transform = null,
                 .ubo_binding_point = null,
                 .has_demo_cube_texture = has_demo_cube_texture,
+                .texcoords = mesh_data.texcoords,
+                .normals = mesh_data.normals,
             };
             const erc_id = ecs.new_id(world);
             game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
