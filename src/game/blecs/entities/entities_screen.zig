@@ -121,12 +121,7 @@ pub fn initDemoCube() void {
     }
     const c_dc = helpers.new_child(game.state.world, settings_data);
     _ = ecs.set(game.state.world, c_dc, components.shape.Shape, .{ .shape_type = .cube });
-    var cr_c = math.vecs.Vflx4.initBytes(255, 0, 255, 255);
-    const div: i64 = 100;
-    const time = std.time.milliTimestamp();
-    const offset: i64 = @mod(time, div);
-    const hue: f32 = @as(f32, @floatFromInt(offset)) / @as(f32, @floatFromInt(div));
-    cr_c.setHue(hue);
+    const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
     _ = ecs.set(
         game.state.world,
         c_dc,
@@ -144,8 +139,8 @@ pub fn initDemoCube() void {
         .y = floor_rot[2],
         .z = floor_rot[3],
     });
-    _ = ecs.set(game.state.world, c_dc, components.shape.Scale, .{ .x = 0.25, .y = 0.25, .z = 0.25 });
-    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = -3.75, .y = 2, .z = 0 });
+    _ = ecs.set(game.state.world, c_dc, components.shape.Scale, .{ .x = 0.21, .y = 0.21, .z = 0.25 });
+    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = -5, .y = 3, .z = -1 });
     _ = ecs.add(game.state.world, c_dc, components.shape.DemoCubeTexture);
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_dc, components.Debug);

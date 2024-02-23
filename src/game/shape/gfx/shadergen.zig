@@ -147,7 +147,7 @@ pub const ShaderGen = struct {
             const line = try vec4_to_buf("    vec4 Color = vec4({d}, {d}, {d}, {d});\n", c.value[0], c.value[1], c.value[2], c.value[3]);
             try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
         } else {
-            try buf.appendSlice(allocator, "    Color = vec4(1.0, 0.0, 1.0, 1.0);\n");
+            try buf.appendSlice(allocator, "    vec Color = vec4(1.0, 0.0, 1.0, 1.0);\n");
         }
         if (cfg.has_texture) {
             try buf.appendSlice(allocator, "    vec4 textureColor = texture(texture1, TexCoord);\n");
