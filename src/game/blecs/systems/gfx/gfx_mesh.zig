@@ -78,11 +78,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 builder.addFloatAtLocation(pos_loc, &p, ii);
                 if (texcoords) |tcs| {
                     var t = tcs[i];
-                    builder.addFloatAtLocation(pos_loc, &t, ii);
+                    builder.addFloatAtLocation(tc_loc, &t, ii);
                 }
                 if (normals) |ns| {
                     var n = ns[i];
-                    builder.addFloatAtLocation(pos_loc, &n, ii);
+                    builder.addFloatAtLocation(nor_loc, &n, ii);
                 }
                 builder.nextVertex();
             }

@@ -92,7 +92,7 @@ pub const AttributeBuilder = struct {
         std.debug.print("\n", .{});
         const stride: usize = @intCast(self.stride);
         const start = stride * vertex_index + av.offset;
-        std.debug.print("addFloatAtLocation: ", .{});
+        std.debug.print("addFloatAtLocation - loc: {d}, vertex: {d} \n", .{ location, vertex_index });
         for (0..dataptr.len) |i| {
             const buf_i = start + i;
             std.debug.print(" {d} ,", .{buf_i});
