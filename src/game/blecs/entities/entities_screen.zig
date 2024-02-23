@@ -161,8 +161,7 @@ pub fn initDemoCube() void {
         .y = floor_rot[2],
         .z = floor_rot[3],
     });
-    _ = ecs.set(game.state.world, c_dc, components.shape.Scale, .{ .x = 0.25, .y = 0.25, .z = 0.25 });
-    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = -10, .y = 0, .z = 20 });
+    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = 5.25, .y = 2, .z = 10 });
     _ = ecs.add(game.state.world, c_dc, components.shape.DemoCubeTexture);
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_dc, components.Debug);
