@@ -133,6 +133,17 @@ pub fn initDemoCube() void {
         components.shape.Color,
         components.shape.Color.fromVec(cr_c),
     );
+    const floor_rot = zm.matToQuat(zm.mul(
+        // zm.identity(),
+        zm.rotationX(0.05 * std.math.pi),
+        zm.rotationY(0.25 * std.math.pi),
+    ));
+    _ = ecs.set(game.state.world, c_dc, components.shape.Rotation, .{
+        .w = floor_rot[0],
+        .x = floor_rot[1],
+        .y = floor_rot[2],
+        .z = floor_rot[3],
+    });
     _ = ecs.set(game.state.world, c_dc, components.shape.Scale, .{ .x = 0.25, .y = 0.25, .z = 0.25 });
     _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = -3.75, .y = 2, .z = 0 });
     _ = ecs.add(game.state.world, c_dc, components.shape.DemoCubeTexture);
