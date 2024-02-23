@@ -9,6 +9,7 @@ const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
 
 pub const GameUBOBindingPoint: gl.Uint = 0;
+pub const SettingsUBOBindingPoint: gl.Uint = 1;
 var game_data: ecs.entity_t = undefined;
 var settings_data: ecs.entity_t = undefined;
 
@@ -27,6 +28,7 @@ pub fn init() void {
     initCrossHairs();
     initFloor();
     initCamera();
+    initSettingsCamera();
     initCursor();
 }
 
@@ -89,7 +91,7 @@ fn initFloor() void {
 fn initCamera() void {
     const camera = ecs.new_entity(game.state.world, "GameCamera");
     game.state.entities.game_camera = camera;
-    _ = ecs.add(game.state.world, camera, components.screen.Camera);
+    _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = GameUBOBindingPoint });
     _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ 1.0, 1.0, 1.0, 1.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 41.6, .pitch = -19.4 });
@@ -109,6 +111,26 @@ fn initCamera() void {
 
 fn initCursor() void {
     _ = ecs.add(game.state.world, game_data, components.screen.Cursor);
+}
+
+fn initSettingsCamera() void {
+    const camera = ecs.new_entity(game.state.world, "SettingsCamera");
+    game.state.entities.settings_camera = camera;
+    _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = SettingsUBOBindingPoint });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ 0, 0, 10, 1.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 0, 0, 0, 0.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 32.3, .pitch = 4.8 });
+    _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .up = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 } });
+    const h: gl.Float = @floatFromInt(config.windows_height);
+    const w: gl.Float = @floatFromInt(config.windows_width);
+    _ = ecs.set(game.state.world, camera, components.screen.Perspective, .{
+        .fovy = config.fov,
+        .aspect = w / h,
+        .near = config.near,
+        .far = config.far,
+    });
+    _ = ecs.add(game.state.world, camera, components.screen.Updated);
+    ecs.add_pair(game.state.world, camera, ecs.ChildOf, settings_data);
 }
 
 pub fn initDemoCube() void {
@@ -133,14 +155,15 @@ pub fn initDemoCube() void {
         zm.rotationX(0.05 * std.math.pi),
         zm.rotationY(0.25 * std.math.pi),
     ));
+    _ = ecs.set(game.state.world, c_dc, components.shape.UBO, .{ .binding_point = GameUBOBindingPoint });
     _ = ecs.set(game.state.world, c_dc, components.shape.Rotation, .{
         .w = floor_rot[0],
         .x = floor_rot[1],
         .y = floor_rot[2],
         .z = floor_rot[3],
     });
-    _ = ecs.set(game.state.world, c_dc, components.shape.Scale, .{ .x = 0.21, .y = 0.21, .z = 0.25 });
-    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = -5, .y = 3, .z = -1 });
+    _ = ecs.set(game.state.world, c_dc, components.shape.Scale, .{ .x = 20, .y = 20, .z = 20 });
+    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = 0, .y = 0, .z = -50 });
     _ = ecs.add(game.state.world, c_dc, components.shape.DemoCubeTexture);
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_dc, components.Debug);

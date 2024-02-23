@@ -33,6 +33,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             const parent = ecs.get_parent(world, entity);
+            const c: []components.screen.Camera = ecs.field(it, components.screen.Camera, 1) orelse return;
             if (parent == screen.gameDataEntity) {
                 if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Game))) {
                     ecs.remove(world, entity, components.screen.Updated);
@@ -45,7 +46,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     continue;
                 }
             }
-            const ubo = game.state.gfx.ubos.get(entities.GameUBOBindingPoint) orelse {
+            const ubo = game.state.gfx.ubos.get(c[i].ubo) orelse {
                 std.debug.print("no ubo yet\n", .{});
                 continue;
             };

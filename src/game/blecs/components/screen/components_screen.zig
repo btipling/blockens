@@ -12,7 +12,9 @@ pub const Screen = struct {
     uboBindingPoint: gl.Uint = 0,
 };
 
-pub const Camera = struct {};
+pub const Camera = struct {
+    ubo: gl.Uint = 0,
+};
 pub const CameraPosition = struct {
     pos: @Vector(4, gl.Float) = undefined,
 };
@@ -60,7 +62,7 @@ pub const Updated = struct {};
 pub fn init() void {
     ecs.COMPONENT(game.state.world, Screen);
 
-    ecs.TAG(game.state.world, Camera);
+    ecs.COMPONENT(game.state.world, Camera);
     ecs.COMPONENT(game.state.world, CameraPosition);
     ecs.COMPONENT(game.state.world, CameraFront);
     ecs.COMPONENT(game.state.world, CameraRotation);

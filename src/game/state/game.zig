@@ -16,6 +16,7 @@ pub const Entities = struct {
     crosshair: usize = 0,
     menu: usize = 0,
     game_camera: usize = 0,
+    settings_camera: usize = 0,
     wall: usize = 0,
     ui: usize = 0,
 };
