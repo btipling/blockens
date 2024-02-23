@@ -23,6 +23,11 @@ fn system() ecs.system_desc_t {
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
+    const screen: *const components.screen.Screen = ecs.get(
+        game.state.world,
+        game.state.entities.screen,
+        components.screen.Screen,
+    ) orelse unreachable;
     while (ecs.iter_next(it)) {
         const world = it.world;
         for (0..it.count()) |i| {
@@ -101,6 +106,22 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     break :blk new_ubo;
                 };
                 gfx.Gfx.setUniformBufferObject(shadergen.UBOName, program, ubo, ubo_binding_point);
+
+                var camera: ecs.entity_t = 0;
+
+                const parent = ecs.get_parent(world, entity);
+                if (parent == screen.gameDataEntity) {
+                    camera = game.state.entities.game_camera;
+                }
+                if (parent == screen.settingDataEntity) {
+                    camera = game.state.entities.settings_camera;
+                }
+
+                ecs.add(
+                    game.state.world,
+                    camera,
+                    components.screen.Updated,
+                );
             }
 
             var texture: gl.Uint = 0;

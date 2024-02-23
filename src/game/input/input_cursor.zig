@@ -29,9 +29,20 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
     x_offset *= sensitivity;
     y_offset *= sensitivity;
 
+    const screen: *const blecs.components.screen.Screen = blecs.ecs.get(
+        game.state.world,
+        game.state.entities.screen,
+        blecs.components.screen.Screen,
+    ) orelse unreachable;
+
+    var camera = game.state.entities.game_camera;
+    if (blecs.ecs.has_id(game.state.world, screen.current, blecs.ecs.id(blecs.components.screen.Settings))) {
+        camera = game.state.entities.settings_camera;
+    }
+
     var camera_rot: *blecs.components.screen.CameraRotation = blecs.ecs.get_mut(
         game.state.world,
-        game.state.entities.game_camera,
+        camera,
         blecs.components.screen.CameraRotation,
     ) orelse return;
     const camera_rot_yaw = camera_rot.yaw + x_offset;
@@ -66,7 +77,7 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
 
     var camera_front: *blecs.components.screen.CameraFront = blecs.ecs.get_mut(
         game.state.world,
-        game.state.entities.game_camera,
+        camera,
         blecs.components.screen.CameraFront,
     ) orelse {
         std.debug.print("no camera front yet\n", .{});
@@ -77,7 +88,7 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
     camera_rot.yaw = camera_rot_yaw;
     blecs.ecs.add(
         game.state.world,
-        game.state.entities.game_camera,
+        camera,
         blecs.components.screen.Updated,
     );
 }

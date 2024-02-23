@@ -117,9 +117,9 @@ fn initSettingsCamera() void {
     const camera = ecs.new_entity(game.state.world, "SettingsCamera");
     game.state.entities.settings_camera = camera;
     _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = SettingsUBOBindingPoint });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ 0, 0, 10, 1.0 } });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 0, 0, 0, 0.0 } });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 32.3, .pitch = 4.8 });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ 1.0, 1.0, 1.0, 1.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 41.6, .pitch = -19.4 });
     _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .up = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 } });
     const h: gl.Float = @floatFromInt(config.windows_height);
     const w: gl.Float = @floatFromInt(config.windows_width);
@@ -151,19 +151,18 @@ pub fn initDemoCube() void {
         components.shape.Color.fromVec(cr_c),
     );
     const floor_rot = zm.matToQuat(zm.mul(
-        // zm.identity(),
         zm.rotationX(0.05 * std.math.pi),
         zm.rotationY(0.25 * std.math.pi),
     ));
-    _ = ecs.set(game.state.world, c_dc, components.shape.UBO, .{ .binding_point = GameUBOBindingPoint });
+    _ = ecs.set(game.state.world, c_dc, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
     _ = ecs.set(game.state.world, c_dc, components.shape.Rotation, .{
         .w = floor_rot[0],
         .x = floor_rot[1],
         .y = floor_rot[2],
         .z = floor_rot[3],
     });
-    _ = ecs.set(game.state.world, c_dc, components.shape.Scale, .{ .x = 20, .y = 20, .z = 20 });
-    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = 0, .y = 0, .z = -50 });
+    _ = ecs.set(game.state.world, c_dc, components.shape.Scale, .{ .x = 0.25, .y = 0.25, .z = 0.25 });
+    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = -10, .y = 0, .z = 20 });
     _ = ecs.add(game.state.world, c_dc, components.shape.DemoCubeTexture);
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_dc, components.Debug);
