@@ -11,6 +11,7 @@ pub const VertexShaderGen = struct {
         has_uniform_mat: bool = false,
         has_ubo: bool = false,
         has_texture_coords: bool = false,
+        has_animation_block: bool = false,
         has_normals: bool = false,
         scale: ?math.vecs.Vflx4 = null,
         rotation: ?math.vecs.Vflx4 = null,
@@ -50,6 +51,7 @@ pub const VertexShaderGen = struct {
             try r.gen_out_vars();
             try r.gen_uniforms();
             try r.gen_ubo();
+            try r.gen_animation_block();
             try r.gen_main();
             const ownedSentinelSlice: [:0]const u8 = try r.buf.toOwnedSliceSentinel(r.allocator, 0);
             if (r.cfg.debug) std.debug.print("generated vertex shader: \n {s}\n", .{ownedSentinelSlice});
@@ -98,6 +100,12 @@ pub const VertexShaderGen = struct {
                 try r.buf.appendSlice(r.allocator, " {\n    mat4 ");
                 try r.buf.appendSlice(r.allocator, shader_constants.UBOMatName);
                 try r.buf.appendSlice(r.allocator, ";\n};\n\n");
+            }
+        }
+
+        fn gen_animation_block(r: *runner) !void {
+            if (r.cfg.has_animation_block) {
+                try r.buf.appendSlice(r.allocator, @embedFile("./fragments/animation_block.vs.txt"));
             }
         }
 
