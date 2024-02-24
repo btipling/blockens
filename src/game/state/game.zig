@@ -64,7 +64,7 @@ pub const ElementsRendererConfig = struct {
     normals: ?[][3]gl.Float = null,
     transform: ?zm.Mat = null,
     ubo_binding_point: ?gl.Uint = null,
-    has_demo_cube_texture: bool = false,
+    demo_cube_texture: ?struct { usize, usize } = null,
 };
 
 pub const Gfx = struct {

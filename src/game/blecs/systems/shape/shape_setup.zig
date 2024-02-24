@@ -50,6 +50,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             var ubo_binding_point: gl.Uint = 0;
             var has_uniform_mat = false;
             var has_demo_cube_texture = false;
+            var dc_t_beg: usize = 0;
+            var dc_t_end: usize = 0;
             var uniform_mat = zm.identity();
             if (ecs.get_id(world, entity, ecs.id(components.shape.Rotation))) |opaque_ptr| {
                 const r: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
@@ -70,8 +72,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (ecs.has_id(world, entity, ecs.id(components.Debug))) {
                 debug = true;
             }
-            if (ecs.has_id(world, entity, ecs.id(components.shape.DemoCubeTexture))) {
+            if (ecs.get_id(world, entity, ecs.id(components.shape.DemoCubeTexture))) |opaque_ptr| {
+                const dct: *const components.shape.DemoCubeTexture = @ptrCast(@alignCast(opaque_ptr));
                 has_demo_cube_texture = true;
+                dc_t_beg = dct.beg;
+                dc_t_end = dct.end;
             }
             if (ecs.get_id(world, entity, ecs.id(components.shape.UBO))) |opaque_ptr| {
                 const u: *const components.shape.UBO = @ptrCast(@alignCast(opaque_ptr));
@@ -104,6 +109,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             };
             const fragmentShader: [:0]const u8 = gfx.shadergen.ShaderGen.genFragmentShader(game.state.allocator, f_cfg) catch unreachable;
             var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
+            var dc: ?struct { usize, usize } = null;
+            if (has_demo_cube_texture) {
+                dc = struct { usize, usize }{ dc_t_beg, dc_t_end };
+            }
             erc.* = .{
                 .vertexShader = vertexShader,
                 .fragmentShader = fragmentShader,
@@ -111,7 +120,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .indices = mesh_data.indices,
                 .transform = null,
                 .ubo_binding_point = null,
-                .has_demo_cube_texture = has_demo_cube_texture,
+                .demo_cube_texture = dc,
                 .texcoords = mesh_data.texcoords,
                 .normals = mesh_data.normals,
             };

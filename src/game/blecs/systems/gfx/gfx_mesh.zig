@@ -125,9 +125,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             }
 
             var texture: gl.Uint = 0;
-            if (er.has_demo_cube_texture) {
+            if (er.demo_cube_texture) |dct| {
                 if (game.state.ui.data.texture_rgba_data) |d| {
-                    texture = gfx.Gfx.initTextureFromColors(d);
+                    texture = gfx.Gfx.initTextureFromColors(d[dct[0]..dct[1]]);
                 }
             }
 

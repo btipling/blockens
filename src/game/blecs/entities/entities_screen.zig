@@ -190,7 +190,10 @@ pub fn initDemoCube() void {
     _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{
         .translation = game.state.ui.data.demo_cube_translation,
     });
-    _ = ecs.add(game.state.world, c_dc, components.shape.DemoCubeTexture);
+    _ = ecs.set(game.state.world, c_dc, components.shape.DemoCubeTexture, .{
+        .beg = 0,
+        .end = 16 * 16 * 3,
+    });
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_dc, components.Debug);
     _ = ecs.set(game.state.world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
