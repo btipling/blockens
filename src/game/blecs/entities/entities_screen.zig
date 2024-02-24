@@ -117,7 +117,6 @@ fn initFloor() void {
         .loc = @Vector(4, gl.Float){ -25, -25, -25, 0 },
     });
     _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
-    _ = ecs.add(game.state.world, c_f, components.Debug);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, game_data);
 }
 
@@ -190,13 +189,34 @@ pub fn initDemoCube() void {
     _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{
         .translation = game.state.ui.data.demo_cube_translation,
     });
-    _ = ecs.set(game.state.world, c_dc, components.shape.DemoCubeTexture, .{
-        .beg = 0,
-        .end = 16 * 16 * 3,
-    });
+    _ = ecs.set(game.state.world, c_dc, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 * 3 });
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
-    _ = ecs.add(game.state.world, c_dc, components.Debug);
     _ = ecs.set(game.state.world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
         .translation = game.state.ui.data.demo_cube_pp_translation,
     });
+
+    const p_x_ratio: gl.Float = 0.6666;
+    const c_t1 = helpers.new_child(game.state.world, settings_data);
+    _ = ecs.set(game.state.world, c_t1, components.shape.Shape, .{ .shape_type = .plane });
+    _ = ecs.set(game.state.world, c_t1, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ 14 * p_x_ratio, 1, 1, 0 } });
+    _ = ecs.set(game.state.world, c_t1, components.shape.Translation, .{ .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 } });
+    _ = ecs.set(game.state.world, c_t1, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 });
+    _ = ecs.add(game.state.world, c_t1, components.shape.NeedsSetup);
+    _ = ecs.add(game.state.world, c_t1, components.Debug);
+
+    // const c_t2 = helpers.new_child(game.state.world, game.state.entities.crosshair);
+    // _ = ecs.set(game.state.world, c_t2, components.shape.Shape, .{ .shape_type = .plane });
+    // _ = ecs.set(game.state.world, c_t2, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ 14 * p_x_ratio, 1, 1, 0 } });
+    // _ = ecs.set(game.state.world, c_t2, components.shape.Translation, .{ .translation = @Vector(4, gl.Float){ -1, 0, 0, 0 } });
+    // _ = ecs.set(game.state.world, c_t2, components.shape.DemoCubeTexture, .{ .beg = 16 * 16, .end = 16 * 16 * 2 });
+    // _ = ecs.add(game.state.world, c_t2, components.shape.NeedsSetup);
+    // ecs.add_pair(game.state.world, c_t2, ecs.ChildOf, settings_data);
+
+    // const c_t3 = helpers.new_child(game.state.world, game.state.entities.crosshair);
+    // _ = ecs.set(game.state.world, c_t3, components.shape.Shape, .{ .shape_type = .plane });
+    // _ = ecs.set(game.state.world, c_t3, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ 14 * p_x_ratio, 1, 1, 0 } });
+    // _ = ecs.set(game.state.world, c_t3, components.shape.Translation, .{ .translation = @Vector(4, gl.Float){ 0, -1, 0, 0 } });
+    // _ = ecs.set(game.state.world, c_t3, components.shape.DemoCubeTexture, .{ .beg = 16 * 16 * 2, .end = 16 * 16 * 3 });
+    // _ = ecs.add(game.state.world, c_t3, components.shape.NeedsSetup);
+    // ecs.add_pair(game.state.world, c_t3, ecs.ChildOf, settings_data);
 }
