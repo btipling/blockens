@@ -13,71 +13,58 @@ pub const Shape = struct {
 };
 
 pub const Color = struct {
-    r: gl.Float = 0,
-    g: gl.Float = 0,
-    b: gl.Float = 0,
-    a: gl.Float = 0,
+    color: @Vector(4, gl.Float) = undefined,
 
     pub fn fromVec(v: math.vecs.Vflx4) Color {
         return Color{
-            .r = v.value[0],
-            .g = v.value[1],
-            .b = v.value[2],
-            .a = v.value[3],
+            .color = v.value,
         };
     }
 
     pub fn toVec(self: Color) math.vecs.Vflx4 {
         return math.vecs.Vflx4.initFloats(
-            self.r,
-            self.g,
-            self.b,
-            self.a,
+            self.color[0],
+            self.color[1],
+            self.color[2],
+            self.color[3],
         );
     }
 };
 
 pub const Rotation = struct {
-    w: gl.Float = 0,
-    x: gl.Float = 0,
-    y: gl.Float = 0,
-    z: gl.Float = 0,
+    rot: @Vector(4, gl.Float) = undefined,
 
     pub fn toVec(self: Rotation) math.vecs.Vflx4 {
         return math.vecs.Vflx4.initFloats(
-            self.w,
-            self.x,
-            self.y,
-            self.z,
+            self.rot[0],
+            self.rot[1],
+            self.rot[2],
+            self.rot[3],
         );
     }
 };
 
 pub const Scale = struct {
-    x: gl.Float = 0,
-    y: gl.Float = 0,
-    z: gl.Float = 0,
+    scale: @Vector(4, gl.Float) = undefined,
 
     pub fn toVec(self: Scale) math.vecs.Vflx4 {
         return math.vecs.Vflx4.initFloats(
-            self.x,
-            self.y,
-            self.z,
+            self.scale[0],
+            self.scale[1],
+            self.scale[2],
             0,
         );
     }
 };
 
 pub const Translation = struct {
-    x: gl.Float = 0,
-    y: gl.Float = 0,
-    z: gl.Float = 0,
+    translation: @Vector(4, gl.Float) = undefined,
 
     pub fn toVec(self: Translation) math.vecs.Vflx4 {
         return math.vecs.Vflx4.initFloats(
-            self.x,
-            self.y,
-            self.z,
+            self.translation[0],
+            self.translation[1],
+            self.translation[2],
             0,
         );
     }

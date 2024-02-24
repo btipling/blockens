@@ -39,15 +39,13 @@ pub const Perspective = struct {
 };
 
 pub const WorldLocation = struct {
-    x: gl.Float = 0,
-    y: gl.Float = 0,
-    z: gl.Float = 0,
+    loc: @Vector(4, gl.Float) = undefined,
 
     pub fn toVec(self: WorldLocation) math.vecs.Vflx4 {
         return math.vecs.Vflx4.initFloats(
-            self.x,
-            self.y,
-            self.z,
+            self.loc[0],
+            self.loc[1],
+            self.loc[2],
             0,
         );
     }

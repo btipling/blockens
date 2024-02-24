@@ -45,14 +45,20 @@ fn initCrossHairs() void {
     );
     const p_x_ratio: gl.Float = 0.6666;
     _ = ecs.set(game.state.world, c_hrz, components.shape.Scale, .{
-        .x = 0.004 * p_x_ratio,
-        .y = 0.04,
-        .z = 1,
+        .scale = @Vector(4, gl.Float){
+            0.004 * p_x_ratio,
+            0.04,
+            1,
+            0,
+        },
     });
     _ = ecs.set(game.state.world, c_hrz, components.shape.Translation, .{
-        .x = 0,
-        .y = -0.018,
-        .z = 0,
+        .translation = @Vector(4, gl.Float){
+            0,
+            -0.018,
+            0,
+            0,
+        },
     });
     _ = ecs.add(game.state.world, c_hrz, components.shape.NeedsSetup);
     ecs.add_pair(game.state.world, c_hrz, ecs.ChildOf, game_data);
@@ -66,14 +72,20 @@ fn initCrossHairs() void {
         components.shape.Color.fromVec(cr_c2),
     );
     _ = ecs.set(game.state.world, c_vrt, components.shape.Scale, .{
-        .x = 0.04 * p_x_ratio,
-        .y = 0.004,
-        .z = 1,
+        .scale = @Vector(4, gl.Float){
+            0.04 * p_x_ratio,
+            0.004,
+            1,
+            0,
+        },
     });
     _ = ecs.set(game.state.world, c_vrt, components.shape.Translation, .{
-        .x = -0.018 * p_x_ratio,
-        .y = 0,
-        .z = 0,
+        .translation = @Vector(4, gl.Float){
+            -0.018 * p_x_ratio,
+            0,
+            0,
+            0,
+        },
     });
     _ = ecs.add(game.state.world, c_vrt, components.shape.NeedsSetup);
     ecs.add_pair(game.state.world, c_vrt, ecs.ChildOf, game_data);
@@ -90,17 +102,20 @@ fn initFloor() void {
         components.shape.Color,
         components.shape.Color.fromVec(cr_c),
     );
-    _ = ecs.set(game.state.world, c_f, components.shape.Scale, .{ .x = 500, .y = 500, .z = 500 });
-    _ = ecs.set(game.state.world, c_f, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
+    _ = ecs.set(game.state.world, c_f, components.shape.Scale, .{
+        .scale = @Vector(4, gl.Float){ 500, 500, 500, 0 },
+    });
+    _ = ecs.set(game.state.world, c_f, components.shape.Translation, .{
+        .translation = @Vector(4, gl.Float){ -0.5, -0.5, 20, 0 },
+    });
     const floor_rot = zm.matToQuat(zm.rotationX(1.5 * std.math.pi));
     _ = ecs.set(game.state.world, c_f, components.shape.Rotation, .{
-        .w = floor_rot[0],
-        .x = floor_rot[1],
-        .y = floor_rot[2],
-        .z = floor_rot[3],
+        .rot = floor_rot,
     });
     _ = ecs.set(game.state.world, c_f, components.shape.UBO, .{ .binding_point = GameUBOBindingPoint });
-    _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{ .x = -25, .y = -25, .z = -25 });
+    _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{
+        .loc = @Vector(4, gl.Float){ -25, -25, -25, 0 },
+    });
     _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_f, components.Debug);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, game_data);
@@ -171,12 +186,11 @@ pub fn initDemoCube() void {
     const floor_rot = zm.matToQuat(zm.rotationY(0.25 * std.math.pi));
     _ = ecs.set(game.state.world, c_dc, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
     _ = ecs.set(game.state.world, c_dc, components.shape.Rotation, .{
-        .w = floor_rot[0],
-        .x = floor_rot[1],
-        .y = floor_rot[2],
-        .z = floor_rot[3],
+        .rot = floor_rot,
     });
-    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = 0, .y = 0, .z = 2.5 });
+    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{
+        .translation = @Vector(4, gl.Float){ 0, 0, 2.5, 0 },
+    });
     _ = ecs.add(game.state.world, c_dc, components.shape.DemoCubeTexture);
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_dc, components.Debug);
