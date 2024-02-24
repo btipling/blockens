@@ -111,7 +111,7 @@ pub const Gfx = struct {
         zm.storeMat(&transform, data);
 
         const size = @as(isize, @intCast(transform.len * @sizeOf(gl.Float)));
-        gl.bufferData(gl.UNIFORM_BUFFER, size, &transform, gl.STATIC_DRAW);
+        gl.bufferData(gl.UNIFORM_BUFFER, size, &transform, gl.DYNAMIC_DRAW);
         gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
         return ubo;
     }

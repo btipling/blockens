@@ -49,7 +49,7 @@ pub const ShaderGen = struct {
             }
         }
         var location: u8 = 0;
-        try buf.appendSlice(allocator, "#version 330 core\n");
+        try buf.appendSlice(allocator, "#version 450 core\n");
         {
             var line = try attribute_location(location, "position", .vec3);
             try buf.appendSlice(allocator, std.mem.sliceTo(&line, 0));
