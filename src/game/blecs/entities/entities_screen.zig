@@ -93,8 +93,8 @@ fn initCamera() void {
     game.state.entities.game_camera = camera;
     _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = GameUBOBindingPoint });
     _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ 1.0, 1.0, 1.0, 1.0 } });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 } });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 41.6, .pitch = -19.4 });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 0.03, -0.155, -0.7, 0.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = -90, .pitch = -19.4 });
     _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .up = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 } });
     // These dimensions should also be component data to support monitors other than the one I've been working with:
     const h: gl.Float = @floatFromInt(config.windows_height);
@@ -117,9 +117,9 @@ fn initSettingsCamera() void {
     const camera = ecs.new_entity(game.state.world, "SettingsCamera");
     game.state.entities.settings_camera = camera;
     _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = SettingsUBOBindingPoint });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ 1.0, 1.0, 1.0, 1.0 } });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 0.459, -0.31, 0.439, 0.0 } });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 41.6, .pitch = -19.4 });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ -10, 0, 0.0, 0.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 1, 0, 0, 0.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 0, .pitch = 0 });
     _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .up = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 } });
     const h: gl.Float = @floatFromInt(config.windows_height);
     const w: gl.Float = @floatFromInt(config.windows_width);
@@ -150,10 +150,7 @@ pub fn initDemoCube() void {
         components.shape.Color,
         components.shape.Color.fromVec(cr_c),
     );
-    const floor_rot = zm.matToQuat(zm.mul(
-        zm.rotationX(0.05 * std.math.pi),
-        zm.rotationY(0.25 * std.math.pi),
-    ));
+    const floor_rot = zm.matToQuat(zm.rotationY(0.25 * std.math.pi));
     _ = ecs.set(game.state.world, c_dc, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
     _ = ecs.set(game.state.world, c_dc, components.shape.Rotation, .{
         .w = floor_rot[0],
@@ -161,7 +158,7 @@ pub fn initDemoCube() void {
         .y = floor_rot[2],
         .z = floor_rot[3],
     });
-    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = 5.25, .y = 2, .z = 10 });
+    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{ .x = 0, .y = 0, .z = 2.5 });
     _ = ecs.add(game.state.world, c_dc, components.shape.DemoCubeTexture);
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_dc, components.Debug);

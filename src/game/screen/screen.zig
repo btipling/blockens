@@ -25,12 +25,7 @@ pub fn showSettingsScreen() void {
     screen.current = blecs.helpers.new_child(game.state.world, game.state.entities.screen);
     blecs.ecs.add(game.state.world, screen.current, blecs.components.screen.Settings);
     blecs.ecs.remove(game.state.world, game.state.entities.ui, blecs.components.ui.GameInfo);
-    const menu: *blecs.components.ui.Menu = blecs.ecs.get_mut(
-        game.state.world,
-        game.state.entities.menu,
-        blecs.components.ui.Menu,
-    ) orelse unreachable;
-    menu.visible = true;
+    blecs.ecs.add(game.state.world, game.state.entities.ui, blecs.components.ui.Menu);
 }
 
 pub fn showGameScreen() void {
@@ -43,10 +38,8 @@ pub fn showGameScreen() void {
     screen.current = blecs.helpers.new_child(game.state.world, game.state.entities.screen);
     blecs.ecs.add(game.state.world, screen.current, blecs.components.screen.Game);
     blecs.ecs.add(game.state.world, game.state.entities.ui, blecs.components.ui.GameInfo);
-    const menu: *blecs.components.ui.Menu = blecs.ecs.get_mut(
-        game.state.world,
-        game.state.entities.menu,
-        blecs.components.ui.Menu,
-    ) orelse unreachable;
-    menu.visible = false;
+    blecs.ecs.remove(game.state.world, game.state.entities.ui, blecs.components.ui.Menu);
 }
+
+pub fn toggleCameraOptions() void {}
+pub fn toggleDemoOptions() void {}

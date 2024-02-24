@@ -21,13 +21,7 @@ fn system() ecs.system_desc_t {
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
-        for (0..it.count()) |i| {
-            const ms: []components.ui.Menu = ecs.field(it, components.ui.Menu, 1) orelse return;
-            const menu = ms[i];
-            if (!menu.visible) {
-                game.state.window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
-                continue;
-            }
+        for (0..it.count()) |_| {
             game.state.window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.normal);
             if (zgui.beginMainMenuBar()) {
                 zgui.pushStyleVar2f(.{ .idx = .item_spacing, .v = [2]f32{ 20.0, 20.0 } });
@@ -55,6 +49,15 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                     if (zgui.menuItem("Character", .{})) {
                         screen_helpers.showSettingsScreen();
+                    }
+                    zgui.endMenu();
+                }
+                if (zgui.beginMenu("Settings UI", true)) {
+                    if (zgui.menuItem("Toogle Camera Options", .{})) {
+                        screen_helpers.toggleCameraOptions();
+                    }
+                    if (zgui.menuItem("Toggle Demo Cube Options", .{})) {
+                        screen_helpers.toggleDemoOptions();
                     }
                     zgui.endMenu();
                 }

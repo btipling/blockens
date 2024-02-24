@@ -22,11 +22,6 @@ fn system() ecs.system_desc_t {
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
-    const menu: *components.ui.Menu = ecs.get_mut(
-        game.state.world,
-        game.state.entities.menu,
-        components.ui.Menu,
-    ) orelse unreachable;
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
             if (input.keys.holdKey(.w)) goForward();
@@ -36,13 +31,13 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (input.keys.holdKey(.space)) goUp();
             if (input.keys.holdKey(.left_shift)) goDown();
             if (input.keys.holdKey(.F3)) {
-                menu.visible = true;
+                ecs.add(game.state.world, game.state.entities.ui, components.ui.Menu);
                 pressedKeyState = .F3;
             } else {
                 if (pressedKeyState) |k| {
                     switch (k) {
                         .F3 => {
-                            menu.visible = false;
+                            ecs.remove(game.state.world, game.state.entities.ui, components.ui.Menu);
                             pressedKeyState = null;
                         },
                         else => {},
