@@ -150,7 +150,7 @@ fn initSettingsCamera() void {
     const camera = ecs.new_entity(game.state.world, "SettingsCamera");
     game.state.entities.settings_camera = camera;
     _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = SettingsUBOBindingPoint });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ -10, 0, 0.0, 0.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ -8, 0, 0.0, 0.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 1, 0, 0, 0.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 0, .pitch = 0 });
     _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .up = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 } });
@@ -193,4 +193,7 @@ pub fn initDemoCube() void {
     _ = ecs.add(game.state.world, c_dc, components.shape.DemoCubeTexture);
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_dc, components.Debug);
+    _ = ecs.set(game.state.world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
+        .translation = game.state.ui.data.demo_cube_pp_translation,
+    });
 }

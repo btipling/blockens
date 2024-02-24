@@ -38,6 +38,10 @@ pub const Perspective = struct {
     far: gl.Float,
 };
 
+pub const PostPerspective = struct {
+    translation: @Vector(4, gl.Float) = undefined,
+};
+
 pub const WorldLocation = struct {
     loc: @Vector(4, gl.Float) = undefined,
 
@@ -67,6 +71,7 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, UpDirection);
 
     ecs.COMPONENT(game.state.world, Perspective);
+    ecs.COMPONENT(game.state.world, PostPerspective);
     ecs.COMPONENT(game.state.world, WorldLocation);
 
     ecs.TAG(game.state.world, Data);

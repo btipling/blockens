@@ -26,6 +26,7 @@ pub fn showSettingsScreen() void {
     blecs.ecs.add(game.state.world, screen.current, blecs.components.screen.Settings);
     blecs.ecs.remove(game.state.world, game.state.entities.ui, blecs.components.ui.GameInfo);
     blecs.ecs.add(game.state.world, game.state.entities.ui, blecs.components.ui.Menu);
+    blecs.ecs.remove(game.state.world, game.state.entities.settings_camera, blecs.components.screen.PostPerspective);
 }
 
 pub fn showGameScreen() void {

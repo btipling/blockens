@@ -51,6 +51,18 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 })) {
                     entities.screen.initDemoCube();
                 }
+                if (zgui.inputFloat4("perspective translate input", .{
+                    .v = &game.state.ui.data.demo_cube_pp_translation,
+                })) {
+                    entities.screen.initDemoCube();
+                }
+                if (zgui.sliderFloat4("perspective translate slider", .{
+                    .v = &game.state.ui.data.demo_cube_pp_translation,
+                    .min = -10,
+                    .max = 10,
+                })) {
+                    entities.screen.initDemoCube();
+                }
             }
             zgui.end();
         }

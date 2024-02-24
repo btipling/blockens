@@ -59,6 +59,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             var aspect: gl.Float = 0;
             var near: gl.Float = 0;
             var far: gl.Float = 0;
+            var post_perspective: ?@Vector(4, gl.Float) = null;
             if (ecs.get_id(world, entity, ecs.id(components.screen.CameraPosition))) |opaque_ptr| {
                 const cp: *const components.screen.CameraPosition = @ptrCast(@alignCast(opaque_ptr));
                 camera_position = cp.pos;
@@ -83,13 +84,23 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 near = p.near;
                 far = p.far;
             } else unreachable;
+            if (ecs.has_id(world, entity, ecs.id(components.screen.PostPerspective))) {
+                if (ecs.get_id(world, entity, ecs.id(components.screen.PostPerspective))) |opaque_ptr| {
+                    const pp: *const components.screen.PostPerspective = @ptrCast(@alignCast(opaque_ptr));
+                    post_perspective = pp.translation;
+                } else unreachable;
+            }
             const lookAt = zm.lookAtRh(
                 camera_position,
                 camera_position + camera_front,
                 up_direction,
             );
             const ps = zm.perspectiveFovRh(fovy, aspect, near, far);
-            gfx.Gfx.updateUniformBufferObject(zm.mul(lookAt, ps), ubo);
+            var m = zm.mul(lookAt, ps);
+            if (post_perspective) |pp| {
+                m = zm.mul(m, zm.translationV(pp));
+            }
+            gfx.Gfx.updateUniformBufferObject(m, ubo);
             ecs.remove(world, entity, components.screen.Updated);
         }
     }
