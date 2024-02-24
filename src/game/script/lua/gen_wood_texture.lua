@@ -8,8 +8,8 @@ function darken(color, brightness)
     local b = (color >> 16) & 0xFF
     local g = (color >> 8) & 0xFF
     local r = color & 0xFF
-    finalColor = finalColor | (a << 24)
-    finalColor = finalColor | (math.floor(b * (brightness / 255)) << 16)
+    finalColor = finalColor | (a << 24) 
+    finalColor = finalColor | (math.floor(b * (brightness / 255)) << 16) 
     finalColor = finalColor | (math.floor(g * (brightness / 255)) << 8)
     finalColor = finalColor | math.floor(r * (brightness / 255))
     return finalColor
@@ -25,10 +25,10 @@ function generate_textures()
         x = ii % 16
         y = math.floor(ii / 16) % 16
         s = math.floor(ii / (16 * 16))
-
-
+        
+        
         if x > 0 and x < 15 and (s == 0 or s == 2) and y > 0 and y < 15 then
-            pixelcolor = rgba_to_int(188, 152, 49, 98)
+            pixelcolor = rgba_to_int(188, 152, 49, 255)
             local xd = (x - 7)
             local yd = (y - 7)
             if xd < 0 then

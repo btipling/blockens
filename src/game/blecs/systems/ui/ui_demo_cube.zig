@@ -63,6 +63,42 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 })) {
                     entities.screen.initDemoCube();
                 }
+                if (zgui.inputFloat4("p1 pos input", .{
+                    .v = &game.state.ui.data.demo_cube_plane_1_tl,
+                })) {
+                    entities.screen.initDemoCube();
+                }
+                if (zgui.sliderFloat4("p1 pos slider", .{
+                    .v = &game.state.ui.data.demo_cube_plane_1_tl,
+                    .min = -10,
+                    .max = 10,
+                })) {
+                    entities.screen.initDemoCube();
+                }
+                if (zgui.inputFloat4("p2 pos input", .{
+                    .v = &game.state.ui.data.demo_cube_plane_1_t2,
+                })) {
+                    entities.screen.initDemoCube();
+                }
+                if (zgui.sliderFloat4("p2 pos slider", .{
+                    .v = &game.state.ui.data.demo_cube_plane_1_t2,
+                    .min = -10,
+                    .max = 10,
+                })) {
+                    entities.screen.initDemoCube();
+                }
+                if (zgui.inputFloat4("p3 pos input", .{
+                    .v = &game.state.ui.data.demo_cube_plane_1_t3,
+                })) {
+                    entities.screen.initDemoCube();
+                }
+                if (zgui.sliderFloat4("p3 pos slider", .{
+                    .v = &game.state.ui.data.demo_cube_plane_1_t3,
+                    .min = -10,
+                    .max = 10,
+                })) {
+                    entities.screen.initDemoCube();
+                }
             }
             zgui.end();
         }
