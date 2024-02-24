@@ -45,23 +45,35 @@ pub const VertexShaderGen = struct {
         }
 
         fn run(r: *runner) ![:0]const u8 {
-            var location: u8 = 0;
             try r.buf.appendSlice(r.allocator, "#version 450 core\n");
-            {
-                var line = try shader_helpers.attribute_location(location, "position", .vec3);
+            try r.gen_attribute_vars();
+            try r.gen_out_vars();
+            try r.gen_uniforms();
+            try r.gen_ubo();
+            try r.gen_main();
+            const ownedSentinelSlice: [:0]const u8 = try r.buf.toOwnedSliceSentinel(r.allocator, 0);
+            if (r.cfg.debug) std.debug.print("generated vertex shader: \n {s}\n", .{ownedSentinelSlice});
+            return ownedSentinelSlice;
+        }
+
+        fn gen_attribute_vars(r: *runner) !void {
+            var location: u8 = 0;
+            var line = try shader_helpers.attribute_location(location, "position", .vec3);
+            try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+            location += 1;
+            if (r.cfg.has_texture_coords) {
+                line = try shader_helpers.attribute_location(location, "eTexCoord", .vec2);
                 try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
                 location += 1;
-                if (r.cfg.has_texture_coords) {
-                    line = try shader_helpers.attribute_location(location, "eTexCoord", .vec2);
-                    try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
-                    location += 1;
-                }
-                if (r.cfg.has_normals) {
-                    line = try shader_helpers.attribute_location(location, "normal", .vec3);
-                    try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
-                    location += 1;
-                }
             }
+            if (r.cfg.has_normals) {
+                line = try shader_helpers.attribute_location(location, "normal", .vec3);
+                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+                location += 1;
+            }
+        }
+
+        fn gen_out_vars(r: *runner) !void {
             try r.buf.appendSlice(r.allocator, "\n");
             if (r.cfg.has_texture_coords) {
                 try r.buf.appendSlice(r.allocator, "\nout vec2 TexCoord;\n");
@@ -69,11 +81,17 @@ pub const VertexShaderGen = struct {
             if (r.cfg.has_normals) {
                 try r.buf.appendSlice(r.allocator, "\nflat out vec3 fragNormal;\n");
             }
+        }
+
+        fn gen_uniforms(r: *runner) !void {
             if (r.cfg.has_uniform_mat) {
                 try r.buf.appendSlice(r.allocator, "\nuniform mat4 ");
                 try r.buf.appendSlice(r.allocator, shader_constants.TransformMatName);
                 try r.buf.appendSlice(r.allocator, ";\n\n");
             }
+        }
+
+        fn gen_ubo(r: *runner) !void {
             if (r.cfg.has_ubo) {
                 try r.buf.appendSlice(r.allocator, "\nlayout(std140) uniform ");
                 try r.buf.appendSlice(r.allocator, shader_constants.UBOName);
@@ -81,32 +99,6 @@ pub const VertexShaderGen = struct {
                 try r.buf.appendSlice(r.allocator, shader_constants.UBOMatName);
                 try r.buf.appendSlice(r.allocator, ";\n};\n\n");
             }
-            try r.buf.appendSlice(r.allocator, "void main()\n");
-            try r.buf.appendSlice(r.allocator, "{\n");
-            try r.buf.appendSlice(r.allocator, "    vec4 pos;\n");
-            try r.buf.appendSlice(r.allocator, "    pos = vec4(position.xyz, 1.0);\n");
-            try r.gen_inline_mat();
-            if (r.cfg.has_uniform_mat) {
-                try r.buf.appendSlice(r.allocator, "    pos = ");
-                try r.buf.appendSlice(r.allocator, shader_constants.TransformMatName);
-                try r.buf.appendSlice(r.allocator, " * pos;\n");
-            }
-            if (r.cfg.has_ubo) {
-                try r.buf.appendSlice(r.allocator, "    pos = ");
-                try r.buf.appendSlice(r.allocator, shader_constants.UBOMatName);
-                try r.buf.appendSlice(r.allocator, " * pos;\n");
-            }
-            try r.buf.appendSlice(r.allocator, "    gl_Position = pos;\n");
-            if (r.cfg.has_texture_coords) {
-                try r.buf.appendSlice(r.allocator, "    TexCoord = eTexCoord;\n");
-            }
-            if (r.cfg.has_normals) {
-                try r.buf.appendSlice(r.allocator, "    fragNormal = normal;\n");
-            }
-            try r.buf.appendSlice(r.allocator, "}\n");
-            const ownedSentinelSlice: [:0]const u8 = try r.buf.toOwnedSliceSentinel(r.allocator, 0);
-            if (r.cfg.debug) std.debug.print("generated vertex shader: \n {s}\n", .{ownedSentinelSlice});
-            return ownedSentinelSlice;
         }
 
         fn gen_inline_mat(r: *runner) !void {
@@ -139,6 +131,32 @@ pub const VertexShaderGen = struct {
                 try r.buf.appendSlice(r.allocator, "    mat4 inline_transform = mat4(c0, c1, c2, c3);\n");
                 try r.buf.appendSlice(r.allocator, "    pos = inline_transform * pos;\n");
             }
+        }
+
+        fn gen_main(r: *runner) !void {
+            try r.buf.appendSlice(r.allocator, "void main()\n");
+            try r.buf.appendSlice(r.allocator, "{\n");
+            try r.buf.appendSlice(r.allocator, "    vec4 pos;\n");
+            try r.buf.appendSlice(r.allocator, "    pos = vec4(position.xyz, 1.0);\n");
+            try r.gen_inline_mat();
+            if (r.cfg.has_uniform_mat) {
+                try r.buf.appendSlice(r.allocator, "    pos = ");
+                try r.buf.appendSlice(r.allocator, shader_constants.TransformMatName);
+                try r.buf.appendSlice(r.allocator, " * pos;\n");
+            }
+            if (r.cfg.has_ubo) {
+                try r.buf.appendSlice(r.allocator, "    pos = ");
+                try r.buf.appendSlice(r.allocator, shader_constants.UBOMatName);
+                try r.buf.appendSlice(r.allocator, " * pos;\n");
+            }
+            try r.buf.appendSlice(r.allocator, "    gl_Position = pos;\n");
+            if (r.cfg.has_texture_coords) {
+                try r.buf.appendSlice(r.allocator, "    TexCoord = eTexCoord;\n");
+            }
+            if (r.cfg.has_normals) {
+                try r.buf.appendSlice(r.allocator, "    fragNormal = normal;\n");
+            }
+            try r.buf.appendSlice(r.allocator, "}\n");
         }
     };
 };
