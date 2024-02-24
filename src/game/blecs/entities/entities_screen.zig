@@ -43,20 +43,38 @@ fn initCrossHairs() void {
         components.shape.Color,
         components.shape.Color.fromVec(cr_c),
     );
-    _ = ecs.set(game.state.world, c_hrz, components.shape.Scale, .{ .x = 0.025, .y = 0.004, .z = 1 });
-    _ = ecs.set(game.state.world, c_hrz, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
+    const p_x_ratio: gl.Float = 0.6666;
+    _ = ecs.set(game.state.world, c_hrz, components.shape.Scale, .{
+        .x = 0.004 * p_x_ratio,
+        .y = 0.04,
+        .z = 1,
+    });
+    _ = ecs.set(game.state.world, c_hrz, components.shape.Translation, .{
+        .x = 0,
+        .y = -0.018,
+        .z = 0,
+    });
     _ = ecs.add(game.state.world, c_hrz, components.shape.NeedsSetup);
     ecs.add_pair(game.state.world, c_hrz, ecs.ChildOf, game_data);
     const c_vrt = helpers.new_child(game.state.world, game.state.entities.crosshair);
     _ = ecs.set(game.state.world, c_vrt, components.shape.Shape, .{ .shape_type = .plane });
+    const cr_c2 = math.vecs.Vflx4.initBytes(33, 33, 33, 255);
     _ = ecs.set(
         game.state.world,
         c_vrt,
         components.shape.Color,
-        components.shape.Color.fromVec(cr_c),
+        components.shape.Color.fromVec(cr_c2),
     );
-    _ = ecs.set(game.state.world, c_vrt, components.shape.Scale, .{ .x = 0.0025, .y = 0.04, .z = 1 });
-    _ = ecs.set(game.state.world, c_vrt, components.shape.Translation, .{ .x = -0.5, .y = -0.5, .z = 0 });
+    _ = ecs.set(game.state.world, c_vrt, components.shape.Scale, .{
+        .x = 0.04 * p_x_ratio,
+        .y = 0.004,
+        .z = 1,
+    });
+    _ = ecs.set(game.state.world, c_vrt, components.shape.Translation, .{
+        .x = -0.018 * p_x_ratio,
+        .y = 0,
+        .z = 0,
+    });
     _ = ecs.add(game.state.world, c_vrt, components.shape.NeedsSetup);
     ecs.add_pair(game.state.world, c_vrt, ecs.ChildOf, game_data);
 }

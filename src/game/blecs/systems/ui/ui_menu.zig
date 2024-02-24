@@ -22,7 +22,6 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
-            game.state.window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.normal);
             if (zgui.beginMainMenuBar()) {
                 zgui.pushStyleVar2f(.{ .idx = .item_spacing, .v = [2]f32{ 20.0, 20.0 } });
                 if (zgui.beginMenu("Game", true)) {

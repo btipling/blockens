@@ -41,5 +41,22 @@ pub fn showGameScreen() void {
     blecs.ecs.remove(game.state.world, game.state.entities.ui, blecs.components.ui.Menu);
 }
 
-pub fn toggleCameraOptions() void {}
-pub fn toggleDemoOptions() void {}
+pub fn toggleCameraOptions() void {
+    toggleUI(blecs.components.ui.SettingsCamera);
+}
+
+pub fn toggleDemoOptions() void {
+    toggleUI(blecs.components.ui.DemoCube);
+}
+
+fn toggleUI(comptime T: type) void {
+    if (blecs.ecs.has_id(
+        game.state.world,
+        game.state.entities.ui,
+        blecs.ecs.id(T),
+    )) {
+        blecs.ecs.remove(game.state.world, game.state.entities.ui, T);
+        return;
+    }
+    blecs.ecs.add(game.state.world, game.state.entities.ui, T);
+}
