@@ -183,13 +183,12 @@ pub fn initDemoCube() void {
         components.shape.Color,
         components.shape.Color.fromVec(cr_c),
     );
-    const floor_rot = zm.matToQuat(zm.rotationY(0.25 * std.math.pi));
     _ = ecs.set(game.state.world, c_dc, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
     _ = ecs.set(game.state.world, c_dc, components.shape.Rotation, .{
-        .rot = floor_rot,
+        .rot = game.state.ui.data.demo_cube_rotation,
     });
     _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{
-        .translation = @Vector(4, gl.Float){ 0, 0, 2.5, 0 },
+        .translation = game.state.ui.data.demo_cube_translation,
     });
     _ = ecs.add(game.state.world, c_dc, components.shape.DemoCubeTexture);
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);

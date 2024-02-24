@@ -49,7 +49,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         components.screen.Updated,
                     );
                 }
-                if (zgui.sliderFloat4("pos slider", .{ .v = &camera_p.pos, .min = -100, .max = 100 })) {
+                if (zgui.sliderFloat4("pos slider", .{ .v = &camera_p.pos, .min = -10, .max = 10 })) {
                     ecs.add(
                         game.state.world,
                         game.state.entities.settings_camera,
@@ -63,7 +63,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         components.screen.Updated,
                     );
                 }
-                if (zgui.sliderFloat4("face slider", .{ .v = &camera_f.front, .min = -100, .max = 100 })) {
+                if (zgui.sliderFloat4("face slider", .{ .v = &camera_f.front, .min = -10, .max = 10 })) {
                     ecs.add(
                         game.state.world,
                         game.state.entities.settings_camera,
@@ -77,7 +77,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         components.screen.Updated,
                     );
                 }
-                if (zgui.sliderFloat("yaw slider", .{ .v = &camera_r.yaw, .min = -100, .max = 100 })) {
+                if (zgui.sliderFloat("yaw slider", .{ .v = &camera_r.yaw, .min = -10, .max = 10 })) {
                     ecs.add(
                         game.state.world,
                         game.state.entities.settings_camera,
@@ -91,7 +91,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         components.screen.Updated,
                     );
                 }
-                if (zgui.sliderFloat("pitch slider", .{ .v = &camera_r.pitch, .min = -100, .max = 100 })) {
+                if (zgui.sliderFloat("pitch slider", .{ .v = &camera_r.pitch, .min = -10, .max = 10 })) {
                     ecs.add(
                         game.state.world,
                         game.state.entities.settings_camera,
