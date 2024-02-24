@@ -45,22 +45,6 @@ pub const VertexShaderGen = struct {
         }
 
         fn run(r: *runner) ![:0]const u8 {
-            var inline_mat: ?zm.Mat = null;
-            {
-                var m = zm.identity();
-                if (r.cfg.scale) |s| {
-                    m = zm.mul(m, zm.scalingV(s.value));
-                    inline_mat = m;
-                }
-                if (r.cfg.rotation) |_r| {
-                    m = zm.mul(m, zm.quatToMat(_r.value));
-                    inline_mat = m;
-                }
-                if (r.cfg.translation) |t| {
-                    m = zm.mul(m, zm.translationV(t.value));
-                    inline_mat = m;
-                }
-            }
             var location: u8 = 0;
             try r.buf.appendSlice(r.allocator, "#version 450 core\n");
             {
@@ -101,19 +85,7 @@ pub const VertexShaderGen = struct {
             try r.buf.appendSlice(r.allocator, "{\n");
             try r.buf.appendSlice(r.allocator, "    vec4 pos;\n");
             try r.buf.appendSlice(r.allocator, "    pos = vec4(position.xyz, 1.0);\n");
-            if (inline_mat) |m| {
-                const mr = zm.matToArr(m);
-                var line = try shader_helpers.vec4_to_buf("    vec4 c0 = vec4({d}, {d}, {d}, {d});\n", mr[0], mr[1], mr[2], mr[3]);
-                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
-                line = try shader_helpers.vec4_to_buf("    vec4 c1 = vec4({d}, {d}, {d}, {d});\n", mr[4], mr[5], mr[6], mr[7]);
-                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
-                line = try shader_helpers.vec4_to_buf("    vec4 c2 = vec4({d}, {d}, {d}, {d});\n", mr[8], mr[9], mr[10], mr[11]);
-                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
-                line = try shader_helpers.vec4_to_buf("    vec4 c3 = vec4({d}, {d}, {d}, {d});\n", mr[12], mr[13], mr[14], mr[15]);
-                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
-                try r.buf.appendSlice(r.allocator, "    mat4 inline_transform = mat4(c0, c1, c2, c3);\n");
-                try r.buf.appendSlice(r.allocator, "    pos = inline_transform * pos;\n");
-            }
+            try r.gen_inline_mat();
             if (r.cfg.has_uniform_mat) {
                 try r.buf.appendSlice(r.allocator, "    pos = ");
                 try r.buf.appendSlice(r.allocator, shader_constants.TransformMatName);
@@ -135,6 +107,38 @@ pub const VertexShaderGen = struct {
             const ownedSentinelSlice: [:0]const u8 = try r.buf.toOwnedSliceSentinel(r.allocator, 0);
             if (r.cfg.debug) std.debug.print("generated vertex shader: \n {s}\n", .{ownedSentinelSlice});
             return ownedSentinelSlice;
+        }
+
+        fn gen_inline_mat(r: *runner) !void {
+            var inline_mat: ?zm.Mat = null;
+            {
+                var m = zm.identity();
+                if (r.cfg.scale) |s| {
+                    m = zm.mul(m, zm.scalingV(s.value));
+                    inline_mat = m;
+                }
+                if (r.cfg.rotation) |_r| {
+                    m = zm.mul(m, zm.quatToMat(_r.value));
+                    inline_mat = m;
+                }
+                if (r.cfg.translation) |t| {
+                    m = zm.mul(m, zm.translationV(t.value));
+                    inline_mat = m;
+                }
+            }
+            if (inline_mat) |m| {
+                const mr = zm.matToArr(m);
+                var line = try shader_helpers.vec4_to_buf("    vec4 c0 = vec4({d}, {d}, {d}, {d});\n", mr[0], mr[1], mr[2], mr[3]);
+                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+                line = try shader_helpers.vec4_to_buf("    vec4 c1 = vec4({d}, {d}, {d}, {d});\n", mr[4], mr[5], mr[6], mr[7]);
+                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+                line = try shader_helpers.vec4_to_buf("    vec4 c2 = vec4({d}, {d}, {d}, {d});\n", mr[8], mr[9], mr[10], mr[11]);
+                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+                line = try shader_helpers.vec4_to_buf("    vec4 c3 = vec4({d}, {d}, {d}, {d});\n", mr[12], mr[13], mr[14], mr[15]);
+                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+                try r.buf.appendSlice(r.allocator, "    mat4 inline_transform = mat4(c0, c1, c2, c3);\n");
+                try r.buf.appendSlice(r.allocator, "    pos = inline_transform * pos;\n");
+            }
         }
     };
 };
