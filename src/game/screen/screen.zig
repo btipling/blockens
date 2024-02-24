@@ -50,11 +50,7 @@ pub fn toggleDemoOptions() void {
 }
 
 fn toggleUI(comptime T: type) void {
-    if (blecs.ecs.has_id(
-        game.state.world,
-        game.state.entities.ui,
-        blecs.ecs.id(T),
-    )) {
+    if (blecs.ecs.has_id(game.state.world, game.state.entities.ui, blecs.ecs.id(T))) {
         blecs.ecs.remove(game.state.world, game.state.entities.ui, T);
         return;
     }

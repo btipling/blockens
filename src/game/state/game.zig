@@ -39,8 +39,8 @@ pub const UIData = struct {
     texture_buf: [script.maxLuaScriptSize]u8 = [_]u8{0} ** script.maxLuaScriptSize,
     texture_name_buf: [script.maxLuaScriptNameSize]u8 = [_]u8{0} ** script.maxLuaScriptNameSize,
     texture_rgba_data: ?[]gl.Uint = null,
-    demo_cube_rotation: @Vector(4, gl.Float) = zm.matToQuat(zm.rotationY(0.25 * std.math.pi)),
-    demo_cube_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 0, 0, 2.5, 0 },
+    demo_cube_rotation: @Vector(4, gl.Float) = zm.matToQuat(zm.rotationY(0 * std.math.pi)),
+    demo_cube_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 0, 0, 0, 0 },
 
     fn deinit(self: *UIData, allocator: std.mem.Allocator) void {
         self.texture_script_options.deinit();
