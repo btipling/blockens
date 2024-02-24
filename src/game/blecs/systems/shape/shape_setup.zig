@@ -104,7 +104,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .debug = debug,
                 .color = color,
                 .has_texture_coords = mesh_data.texcoords != null,
-                .has_texture = mesh_data.texcoords != null,
+                .has_texture = has_demo_cube_texture and mesh_data.texcoords != null,
                 .has_normals = mesh_data.normals != null,
             };
             const fragmentShader: [:0]const u8 = gfx.shadergen.ShaderGen.genFragmentShader(game.state.allocator, f_cfg) catch unreachable;
@@ -142,7 +142,19 @@ fn plane() meshData {
     @memcpy(positions, p.positions);
     const indices: []u32 = game.state.allocator.alloc(u32, p.indices.len) catch unreachable;
     @memcpy(indices, p.indices);
-    return .{ .positions = positions, .indices = indices };
+    var texcoords: ?[][2]gl.Float = null;
+    if (p.texcoords) |_| {
+        const tc: [][2]gl.Float = game.state.allocator.alloc([2]gl.Float, p.texcoords.?.len) catch unreachable;
+        @memcpy(tc, p.texcoords.?);
+        texcoords = tc;
+    }
+    var normals: ?[][3]gl.Float = null;
+    if (p.normals) |_| {
+        const ns: [][3]gl.Float = game.state.allocator.alloc([3]gl.Float, p.normals.?.len) catch unreachable;
+        @memcpy(ns, p.normals.?);
+        normals = ns;
+    }
+    return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
 }
 
 // :: Cube
