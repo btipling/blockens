@@ -89,7 +89,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 uniform_mat = zm.translationV(u.toVec().value);
             }
 
-            const v_cfg = gfx.shadergen.ShaderGen.vertexShaderConfig{
+            const v_cfg = gfx.shadergen.vertex.VertexShaderGen.vertexShaderConfig{
                 .debug = debug,
                 .has_uniform_mat = has_uniform_mat,
                 .has_ubo = has_ubo,
@@ -99,15 +99,21 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .has_texture_coords = mesh_data.texcoords != null,
                 .has_normals = mesh_data.normals != null,
             };
-            const vertexShader: [:0]const u8 = gfx.shadergen.ShaderGen.genVertexShader(game.state.allocator, v_cfg) catch unreachable;
-            const f_cfg = gfx.shadergen.ShaderGen.fragmentShaderConfig{
+            const vertexShader: [:0]const u8 = gfx.shadergen.vertex.VertexShaderGen.genVertexShader(
+                game.state.allocator,
+                v_cfg,
+            ) catch unreachable;
+            const f_cfg = gfx.shadergen.fragment.FragmentShaderGen.fragmentShaderConfig{
                 .debug = debug,
                 .color = color,
                 .has_texture_coords = mesh_data.texcoords != null,
                 .has_texture = has_demo_cube_texture and mesh_data.texcoords != null,
                 .has_normals = mesh_data.normals != null,
             };
-            const fragmentShader: [:0]const u8 = gfx.shadergen.ShaderGen.genFragmentShader(game.state.allocator, f_cfg) catch unreachable;
+            const fragmentShader: [:0]const u8 = gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(
+                game.state.allocator,
+                f_cfg,
+            ) catch unreachable;
             var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
             var dc: ?struct { usize, usize } = null;
             if (has_demo_cube_texture) {

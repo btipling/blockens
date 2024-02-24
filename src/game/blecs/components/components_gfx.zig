@@ -5,16 +5,8 @@ const zm = @import("zmath");
 const math = @import("../../math/math.zig");
 const game = @import("../../game.zig");
 
-pub const UBO = struct {
-    ubo: gl.Uint,
-};
-
-pub const UBOMat = struct {
-    offset: gl.Uint,
-};
-
-pub const UBOVec4 = struct {
-    offset: gl.Uint,
+pub const AnimationSSBO = struct {
+    ssbo: gl.Uint,
 };
 
 pub const BaseRenderer = struct {
