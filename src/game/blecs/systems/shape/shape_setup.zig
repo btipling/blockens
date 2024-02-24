@@ -107,10 +107,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .has_texture = has_demo_cube_texture and mesh_data.texcoords != null,
                 .has_normals = mesh_data.normals != null,
             };
-            const fragmentShader: [:0]const u8 = gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(
-                game.state.allocator,
-                f_cfg,
-            ) catch unreachable;
+            const fragmentShader: [:0]const u8 = gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;
             var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
             var dc: ?struct { usize, usize } = null;
             if (has_demo_cube_texture) {
