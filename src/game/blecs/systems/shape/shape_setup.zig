@@ -99,10 +99,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .has_texture_coords = mesh_data.texcoords != null,
                 .has_normals = mesh_data.normals != null,
             };
-            const vertexShader: [:0]const u8 = gfx.shadergen.vertex.VertexShaderGen.genVertexShader(
-                game.state.allocator,
-                v_cfg,
-            ) catch unreachable;
+            const vertexShader: [:0]const u8 = gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
             const f_cfg = gfx.shadergen.fragment.FragmentShaderGen.fragmentShaderConfig{
                 .debug = debug,
                 .color = color,
