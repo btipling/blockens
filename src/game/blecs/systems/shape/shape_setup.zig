@@ -43,33 +43,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
             const e = extractions.extract(world, entity);
 
-            const v_cfg = gfx.shadergen.vertex.VertexShaderGen.vertexShaderConfig{
-                .debug = e.debug,
-                .has_uniform_mat = e.has_uniform_mat,
-                .has_ubo = e.has_ubo,
-                .scale = e.scale,
-                .rotation = e.rotation,
-                .translation = e.translation,
-                .has_texture_coords = mesh_data.texcoords != null,
-                .has_normals = mesh_data.normals != null,
-            };
-            const vertexShader: [:0]const u8 = gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
-            const f_cfg = gfx.shadergen.fragment.FragmentShaderGen.fragmentShaderConfig{
-                .debug = e.debug,
-                .color = e.color,
-                .has_texture_coords = mesh_data.texcoords != null,
-                .has_texture = e.has_demo_cube_texture and mesh_data.texcoords != null,
-                .has_normals = mesh_data.normals != null,
-            };
-            const fragmentShader: [:0]const u8 = gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;
             var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
             var dc: ?struct { usize, usize } = null;
             if (e.has_demo_cube_texture) {
                 dc = struct { usize, usize }{ e.dc_t_beg, e.dc_t_end };
             }
             erc.* = .{
-                .vertexShader = vertexShader,
-                .fragmentShader = fragmentShader,
+                .vertexShader = shaders.genVertexShader(&e, &mesh_data),
+                .fragmentShader = shaders.genFragmentShader(&e, &mesh_data),
                 .positions = mesh_data.positions,
                 .indices = mesh_data.indices,
                 .transform = null,
@@ -87,6 +68,32 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         }
     }
 }
+
+const shaders = struct {
+    fn genVertexShader(e: *const extractions, mesh_data: *const meshData) [:0]const u8 {
+        const v_cfg = gfx.shadergen.vertex.VertexShaderGen.vertexShaderConfig{
+            .debug = e.debug,
+            .has_uniform_mat = e.has_uniform_mat,
+            .has_ubo = e.has_ubo,
+            .scale = e.scale,
+            .rotation = e.rotation,
+            .translation = e.translation,
+            .has_texture_coords = mesh_data.texcoords != null,
+            .has_normals = mesh_data.normals != null,
+        };
+        return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
+    }
+    fn genFragmentShader(e: *const extractions, mesh_data: *const meshData) [:0]const u8 {
+        const f_cfg = gfx.shadergen.fragment.FragmentShaderGen.fragmentShaderConfig{
+            .debug = e.debug,
+            .color = e.color,
+            .has_texture_coords = mesh_data.texcoords != null,
+            .has_texture = e.has_demo_cube_texture and mesh_data.texcoords != null,
+            .has_normals = mesh_data.normals != null,
+        };
+        return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;
+    }
+};
 
 const extractions = struct {
     rotation: ?math.vecs.Vflx4 = null,
