@@ -57,8 +57,8 @@ pub const VertexShaderGen = struct {
             try r.gen_uniforms();
             try r.gen_ubo();
             try r.gen_animation_block();
-            try r.gen_main();
             try r.gen_math();
+            try r.gen_main();
             const ownedSentinelSlice: [:0]const u8 = try r.buf.toOwnedSliceSentinel(r.allocator, 0);
             if (r.cfg.debug) std.debug.print("generated vertex shader: \n {s}\n", .{ownedSentinelSlice});
             return ownedSentinelSlice;
@@ -164,13 +164,15 @@ pub const VertexShaderGen = struct {
             r.a("    pos = vec4(position.xyz, 1.0);\n");
             try r.gen_inline_mat();
             if (r.cfg.animation_block_index != null) {
-                r.a("    key_frame kf = frames[1];\n");
+                r.a("    key_frame kf = frames[2];\n");
+                r.a("    mat4 rot = quat_to_mat(kf.rotation);\n");
+                r.a("    pos = rot * pos;\n");
                 r.a("    vec4 kft0 = vec4(1, 0, 0, 0);\n");
                 r.a("    vec4 kft1 = vec4(0, 1, 0, 0);\n");
                 r.a("    vec4 kft2 = vec4(0, 0, 1, 0);\n");
                 r.a("    vec4 kft3 =  vec4(kf.translation.x, kf.translation.y, kf.translation.z, 1);\n");
-                r.a("    mat4 my_mat = mat4(kft0, kft1, kft2, kft3);\n");
-                r.a("    pos = my_mat * pos;\n");
+                r.a("    mat4 trans = mat4(kft0, kft1, kft2, kft3);\n");
+                r.a("    pos = trans * pos;\n");
             }
             if (r.cfg.has_uniform_mat) {
                 r.a("    pos = ");
@@ -196,6 +198,7 @@ pub const VertexShaderGen = struct {
             if (r.cfg.animation_block_index != null) {
                 r.a("\n");
                 r.a(@embedFile("fragments/q_to_mat.vs.txt"));
+                r.a("\n");
                 r.a(@embedFile("fragments/slerp.vs.txt"));
                 r.a("\n");
             }

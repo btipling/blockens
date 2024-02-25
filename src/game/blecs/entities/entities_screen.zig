@@ -119,6 +119,7 @@ fn initFloor() void {
         .loc = @Vector(4, gl.Float){ -25, -25, -25, 0 },
     });
     _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
+    _ = ecs.add(game.state.world, c_f, components.Debug);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, game_data);
 }
 
@@ -201,13 +202,21 @@ pub fn initDemoCube() void {
     const kf1 = ecs.new_id(world);
     _ = ecs.set(world, kf1, components.gfx.AnimationKeyFrame, .{
         .translation = @Vector(4, gl.Float){ 1, 0, 0, 0 },
+        .rotation = @Vector(4, gl.Float){ 0.777, 0, 0.777, 0 },
     });
     const kf2 = ecs.new_id(world);
     _ = ecs.set(world, kf2, components.gfx.AnimationKeyFrame, .{
         .translation = @Vector(4, gl.Float){ 0, 1, 0, 0 },
+        .rotation = @Vector(4, gl.Float){ -0.777, 0, 0.777, 0 },
+    });
+    const kf3 = ecs.new_id(world);
+    _ = ecs.set(world, kf3, components.gfx.AnimationKeyFrame, .{
+        .translation = @Vector(4, gl.Float){ 0, 0, 0.5, 0 },
+        .rotation = @Vector(4, gl.Float){ 0.917034, 0.326556, -0.144235, 0.177781 },
     });
     ecs.add_pair(world, kf1, ecs.ChildOf, animation);
     ecs.add_pair(world, kf2, ecs.ChildOf, animation);
+    ecs.add_pair(world, kf3, ecs.ChildOf, animation);
 
     const p_x_ratio: gl.Float = 0.6666;
     const p_scale: gl.Float = 0.3;
