@@ -159,15 +159,13 @@ pub const VertexShaderGen = struct {
             try r.buf.appendSlice(r.allocator, "    pos = vec4(position.xyz, 1.0);\n");
             try r.gen_inline_mat();
             if (r.cfg.animation_block_index != null) {
-                try r.buf.appendSlice(r.allocator, "    key_frame kf;\n");
-                try r.buf.appendSlice(r.allocator, "    kf.scale = vec4(1.0, 1.0, 1.0, 0.0);\n");
-                try r.buf.appendSlice(r.allocator, "    kf.rotation = vec4(0.0, 0.0, 1.0, 0.0);\n");
-                try r.buf.appendSlice(r.allocator, "    kf.translation = vec4(1.0, 2.0, 3.0, 0.0);\n");
-                try r.buf.appendSlice(r.allocator, "    vec4 kft0 = vec4(1, 0, 0, kf.translation.x);\n");
-                try r.buf.appendSlice(r.allocator, "    vec4 kft1 = vec4(0, 1, 0, kf.translation.y);\n");
-                try r.buf.appendSlice(r.allocator, "    vec4 kft2 = vec4(0, 0, 1, kf.translation.z);\n");
-                try r.buf.appendSlice(r.allocator, "    vec4 kft3 =  vec4(0, 0, 0, 1);\n");
+                try r.buf.appendSlice(r.allocator, "    key_frame kf = frames[1];\n");
+                try r.buf.appendSlice(r.allocator, "    vec4 kft0 = vec4(1, 0, 0, 0);\n");
+                try r.buf.appendSlice(r.allocator, "    vec4 kft1 = vec4(0, 1, 0, 0);\n");
+                try r.buf.appendSlice(r.allocator, "    vec4 kft2 = vec4(0, 0, 1, 0);\n");
+                try r.buf.appendSlice(r.allocator, "    vec4 kft3 =  vec4(kf.translation.x, kf.translation.y, kf.translation.z, 1);\n");
                 try r.buf.appendSlice(r.allocator, "    mat4 my_mat = mat4(kft0, kft1, kft2, kft3);\n");
+                try r.buf.appendSlice(r.allocator, "    pos = my_mat * pos;\n");
             }
             if (r.cfg.has_uniform_mat) {
                 try r.buf.appendSlice(r.allocator, "    pos = ");
