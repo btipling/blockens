@@ -199,25 +199,50 @@ pub fn initDemoCube() void {
     _ = ecs.set(world, animation, components.gfx.AnimationSSBO, .{
         .ssbo = DemoCubeAnimationBindingPoint,
     });
+
+    //     0.17867
+    // 0.899888
+    // 0.240292
+    // -0.317079
+
+    // -0.007422
+    // 0.513162
+    // 0.299346
+    // 0.299346
+
+    // -0.159525
+    // 0.029397
+    // 0.253406
+    // -0.953663
+
+    // -0.264643
+    // -0.450094
+    // 0.140096
+    // -0.84128
+
+    // -0.254369
+    // -0.953467
+    // -0.157984
+    // -0.035185
     const kf0 = ecs.new_id(world);
     _ = ecs.set(world, kf0, components.gfx.AnimationKeyFrame, .{
         .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
-        .rotation = @Vector(4, gl.Float){ 1.0, 0, 0, 0 },
+        .rotation = @Vector(4, gl.Float){ 0.17867, 0.899888, 0.240292, -0.317079 },
     });
     const kf1 = ecs.new_id(world);
     _ = ecs.set(world, kf1, components.gfx.AnimationKeyFrame, .{
         .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
-        .rotation = @Vector(4, gl.Float){ 0.777, 0, 0.777, 0 },
+        .rotation = @Vector(4, gl.Float){ -0.461112, -0.353858, -0.100431, 0.808 },
     });
     const kf2 = ecs.new_id(world);
     _ = ecs.set(world, kf2, components.gfx.AnimationKeyFrame, .{
         .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
-        .rotation = @Vector(4, gl.Float){ -0.777, 0, 0.777, 0 },
+        .rotation = @Vector(4, gl.Float){ -0.264643, -0.450094, 0.140096, -0.84128 },
     });
     const kf3 = ecs.new_id(world);
     _ = ecs.set(world, kf3, components.gfx.AnimationKeyFrame, .{
         .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
-        .rotation = @Vector(4, gl.Float){ 0.917034, 0.326556, -0.144235, 0.177781 },
+        .rotation = @Vector(4, gl.Float){ 0.056235, -0.646945, 0.46856, -0.598959 },
     });
     ecs.add_pair(world, kf0, ecs.ChildOf, animation);
     ecs.add_pair(world, kf1, ecs.ChildOf, animation);

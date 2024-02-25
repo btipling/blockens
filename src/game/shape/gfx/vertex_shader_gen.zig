@@ -169,8 +169,11 @@ pub const VertexShaderGen = struct {
             r.a("    pos = vec4(position.xyz, 1.0);\n");
             try r.gen_inline_mat();
             if (r.cfg.animation_block_index != null) {
-                r.a("    key_frame kf = frames[2];\n");
-                r.a("    mat4 rot = quat_to_mat(kf.rotation);\n");
+                r.a("    frameIndices indices = get_frame_indices();\n");
+                r.a("    key_frame kf = frames[indices.index1];\n");
+                r.a("    key_frame sf = frames[indices.index2];\n");
+                r.a("    vec4 rotq = slerp(kf.rotation, sf.rotation, indices.t);\n");
+                r.a("    mat4 rot = quat_to_mat(rotq);\n");
                 r.a("    pos = rot * pos;\n");
                 r.a("    vec4 kft0 = vec4(1, 0, 0, 0);\n");
                 r.a("    vec4 kft1 = vec4(0, 1, 0, 0);\n");
