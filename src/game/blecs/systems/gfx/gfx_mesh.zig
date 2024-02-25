@@ -44,12 +44,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const indices: []gl.Uint = er.indices;
             const texcoords: ?[][2]gl.Float = er.texcoords;
             const normals: ?[][3]gl.Float = er.normals;
+            const keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = er.keyframes;
             defer game.state.allocator.free(vertexShader);
             defer game.state.allocator.free(fragmentShader);
             defer game.state.allocator.free(positions);
             defer game.state.allocator.free(indices);
             defer if (texcoords) |t| game.state.allocator.free(t);
             defer if (normals) |n| game.state.allocator.free(n);
+            defer if (keyframes) |kf| game.state.allocator.free(kf);
             defer _ = game.state.gfx.renderConfigs.remove(erc.id);
             defer game.state.allocator.destroy(er);
             defer ecs.delete(world, erc.id);
