@@ -168,70 +168,74 @@ fn initSettingsCamera() void {
 }
 
 pub fn initDemoCube() void {
-    var it = ecs.children(game.state.world, settings_data);
+    const world = game.state.world;
+    var it = ecs.children(world, settings_data);
     while (ecs.iter_next(&it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            _ = ecs.add(game.state.world, entity, components.gfx.NeedsDeletion);
+            _ = ecs.add(world, entity, components.gfx.NeedsDeletion);
         }
     }
-    const c_dc = helpers.new_child(game.state.world, settings_data);
-    _ = ecs.set(game.state.world, c_dc, components.shape.Shape, .{ .shape_type = .cube });
+    const c_dc = helpers.new_child(world, settings_data);
+    _ = ecs.set(world, c_dc, components.shape.Shape, .{ .shape_type = .cube });
     const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
-    _ = ecs.set(game.state.world, c_dc, components.shape.Color, components.shape.Color.fromVec(cr_c));
-    _ = ecs.set(game.state.world, c_dc, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
-    _ = ecs.set(game.state.world, c_dc, components.shape.Rotation, .{
+    _ = ecs.set(world, c_dc, components.shape.Color, components.shape.Color.fromVec(cr_c));
+    _ = ecs.set(world, c_dc, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
+    _ = ecs.set(world, c_dc, components.shape.Rotation, .{
         .rot = game.state.ui.data.demo_cube_rotation,
     });
-    _ = ecs.set(game.state.world, c_dc, components.shape.Translation, .{
+    _ = ecs.set(world, c_dc, components.shape.Translation, .{
         .translation = game.state.ui.data.demo_cube_translation,
     });
-    _ = ecs.set(game.state.world, c_dc, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 * 3 });
-    _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
-    _ = ecs.set(game.state.world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
+    _ = ecs.set(world, c_dc, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 * 3 });
+    _ = ecs.add(world, c_dc, components.shape.NeedsSetup);
+    _ = ecs.add(world, c_dc, components.Debug);
+    _ = ecs.set(world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
         .translation = game.state.ui.data.demo_cube_pp_translation,
     });
-    const animation = helpers.new_child(game.state.world, c_dc);
-    _ = ecs.set(game.state.world, animation, components.gfx.AnimationSSBO, .{
+    // Add animation to cube:
+    const animation = helpers.new_child(world, c_dc);
+    _ = ecs.set(world, animation, components.gfx.AnimationSSBO, .{
         .ssbo = DemoCubeAnimationBindingPoint,
     });
-    const kf1 = helpers.new_child(game.state.world, animation);
-    _ = ecs.set(game.state.world, kf1, components.gfx.AnimationKeyFrame, .{
+    const kf1 = ecs.new_id(world);
+    _ = ecs.set(world, kf1, components.gfx.AnimationKeyFrame, .{
         .translation = @Vector(4, gl.Float){ 1, 0, 0, 0 },
     });
-    const kf2 = helpers.new_child(game.state.world, animation);
-    _ = ecs.set(game.state.world, kf2, components.gfx.AnimationKeyFrame, .{
-        .translation = @Vector(4, gl.Float){ 1, 0, 0, 0 },
+    const kf2 = ecs.new_id(world);
+    _ = ecs.set(world, kf2, components.gfx.AnimationKeyFrame, .{
+        .translation = @Vector(4, gl.Float){ 0, 1, 0, 0 },
     });
+    ecs.add_pair(world, kf1, ecs.ChildOf, animation);
+    ecs.add_pair(world, kf2, ecs.ChildOf, animation);
 
     const p_x_ratio: gl.Float = 0.6666;
     const p_scale: gl.Float = 0.3;
-    const c_t1 = helpers.new_child(game.state.world, settings_data);
-    _ = ecs.set(game.state.world, c_t1, components.shape.Shape, .{ .shape_type = .plane });
-    _ = ecs.set(game.state.world, c_t1, components.shape.Color, components.shape.Color.fromVec(cr_c));
-    _ = ecs.set(game.state.world, c_t1, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
-    _ = ecs.set(game.state.world, c_t1, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_tl });
-    _ = ecs.set(game.state.world, c_t1, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 });
-    _ = ecs.add(game.state.world, c_t1, components.shape.NeedsSetup);
-    _ = ecs.add(game.state.world, c_t1, components.Debug);
+    const c_t1 = helpers.new_child(world, settings_data);
+    _ = ecs.set(world, c_t1, components.shape.Shape, .{ .shape_type = .plane });
+    _ = ecs.set(world, c_t1, components.shape.Color, components.shape.Color.fromVec(cr_c));
+    _ = ecs.set(world, c_t1, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
+    _ = ecs.set(world, c_t1, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_tl });
+    _ = ecs.set(world, c_t1, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 });
+    _ = ecs.add(world, c_t1, components.shape.NeedsSetup);
 
-    const c_t2 = helpers.new_child(game.state.world, settings_data);
-    _ = ecs.set(game.state.world, c_t2, components.shape.Shape, .{ .shape_type = .plane });
-    _ = ecs.set(game.state.world, c_t2, components.shape.Color, components.shape.Color.fromVec(cr_c));
-    _ = ecs.set(game.state.world, c_t2, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
-    _ = ecs.set(game.state.world, c_t2, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_t2 });
-    _ = ecs.set(game.state.world, c_t2, components.shape.DemoCubeTexture, .{ .beg = 16 * 16, .end = 16 * 16 * 2 });
-    _ = ecs.set(game.state.world, c_t2, components.shape.Rotation, .{
+    const c_t2 = helpers.new_child(world, settings_data);
+    _ = ecs.set(world, c_t2, components.shape.Shape, .{ .shape_type = .plane });
+    _ = ecs.set(world, c_t2, components.shape.Color, components.shape.Color.fromVec(cr_c));
+    _ = ecs.set(world, c_t2, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
+    _ = ecs.set(world, c_t2, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_t2 });
+    _ = ecs.set(world, c_t2, components.shape.DemoCubeTexture, .{ .beg = 16 * 16, .end = 16 * 16 * 2 });
+    _ = ecs.set(world, c_t2, components.shape.Rotation, .{
         .rot = zm.matToQuat(zm.rotationZ(1 * std.math.pi)),
     });
-    _ = ecs.add(game.state.world, c_t2, components.shape.NeedsSetup);
-    ecs.add_pair(game.state.world, c_t2, ecs.ChildOf, settings_data);
+    _ = ecs.add(world, c_t2, components.shape.NeedsSetup);
+    ecs.add_pair(world, c_t2, ecs.ChildOf, settings_data);
 
-    const c_t3 = helpers.new_child(game.state.world, settings_data);
-    _ = ecs.set(game.state.world, c_t3, components.shape.Shape, .{ .shape_type = .plane });
-    _ = ecs.set(game.state.world, c_t3, components.shape.Color, components.shape.Color.fromVec(cr_c));
-    _ = ecs.set(game.state.world, c_t3, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
-    _ = ecs.set(game.state.world, c_t3, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_t3 });
-    _ = ecs.set(game.state.world, c_t3, components.shape.DemoCubeTexture, .{ .beg = 16 * 16 * 2, .end = 16 * 16 * 3 });
-    _ = ecs.add(game.state.world, c_t3, components.shape.NeedsSetup);
+    const c_t3 = helpers.new_child(world, settings_data);
+    _ = ecs.set(world, c_t3, components.shape.Shape, .{ .shape_type = .plane });
+    _ = ecs.set(world, c_t3, components.shape.Color, components.shape.Color.fromVec(cr_c));
+    _ = ecs.set(world, c_t3, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
+    _ = ecs.set(world, c_t3, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_t3 });
+    _ = ecs.set(world, c_t3, components.shape.DemoCubeTexture, .{ .beg = 16 * 16 * 2, .end = 16 * 16 * 3 });
+    _ = ecs.add(world, c_t3, components.shape.NeedsSetup);
 }

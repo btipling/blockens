@@ -42,7 +42,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             };
 
             const e = extractions.extract(world, entity);
-
             var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
             var dc: ?struct { usize, usize } = null;
             if (e.has_demo_cube_texture) {
@@ -108,6 +107,19 @@ const extractions = struct {
     has_demo_cube_texture: bool = false,
     dc_t_beg: usize = 0,
     dc_t_end: usize = 0,
+    has_animation_block: bool = false,
+
+    fn extractAnimation(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
+        var it = ecs.children(world, entity);
+        while (ecs.children_next(&it)) {
+            for (0..it.count()) |i| {
+                const child_entity = it.entities()[i];
+                if (ecs.has_id(world, child_entity, ecs.id(components.gfx.AnimationSSBO))) {
+                    e.has_animation_block = true;
+                }
+            }
+        }
+    }
 
     fn extract(world: *ecs.world_t, entity: ecs.entity_t) extractions {
         var e = extractions{};
@@ -146,6 +158,7 @@ const extractions = struct {
             e.has_uniform_mat = true;
             e.uniform_mat = zm.translationV(u.toVec().value);
         }
+        extractAnimation(&e, world, entity);
         return e;
     }
 };
