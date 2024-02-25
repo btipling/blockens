@@ -189,7 +189,6 @@ pub fn initDemoCube() void {
     _ = ecs.set(game.state.world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
         .translation = game.state.ui.data.demo_cube_pp_translation,
     });
-    ecs.add_pair(game.state.world, c_dc, ecs.ChildOf, settings_data);
 
     const p_x_ratio: gl.Float = 0.6666;
     const p_scale: gl.Float = 0.3;
@@ -201,9 +200,8 @@ pub fn initDemoCube() void {
     _ = ecs.set(game.state.world, c_t1, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 });
     _ = ecs.add(game.state.world, c_t1, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_t1, components.Debug);
-    ecs.add_pair(game.state.world, c_t1, ecs.ChildOf, settings_data);
 
-    const c_t2 = helpers.new_child(game.state.world, game.state.entities.crosshair);
+    const c_t2 = helpers.new_child(game.state.world, settings_data);
     _ = ecs.set(game.state.world, c_t2, components.shape.Shape, .{ .shape_type = .plane });
     _ = ecs.set(game.state.world, c_t2, components.shape.Color, components.shape.Color.fromVec(cr_c));
     _ = ecs.set(game.state.world, c_t2, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
@@ -215,12 +213,11 @@ pub fn initDemoCube() void {
     _ = ecs.add(game.state.world, c_t2, components.shape.NeedsSetup);
     ecs.add_pair(game.state.world, c_t2, ecs.ChildOf, settings_data);
 
-    const c_t3 = helpers.new_child(game.state.world, game.state.entities.crosshair);
+    const c_t3 = helpers.new_child(game.state.world, settings_data);
     _ = ecs.set(game.state.world, c_t3, components.shape.Shape, .{ .shape_type = .plane });
     _ = ecs.set(game.state.world, c_t3, components.shape.Color, components.shape.Color.fromVec(cr_c));
     _ = ecs.set(game.state.world, c_t3, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
     _ = ecs.set(game.state.world, c_t3, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_t3 });
     _ = ecs.set(game.state.world, c_t3, components.shape.DemoCubeTexture, .{ .beg = 16 * 16 * 2, .end = 16 * 16 * 3 });
     _ = ecs.add(game.state.world, c_t3, components.shape.NeedsSetup);
-    ecs.add_pair(game.state.world, c_t3, ecs.ChildOf, settings_data);
 }
