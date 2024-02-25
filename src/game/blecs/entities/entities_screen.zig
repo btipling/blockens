@@ -200,30 +200,6 @@ pub fn initDemoCube() void {
         .ssbo = DemoCubeAnimationBindingPoint,
     });
 
-    //     0.17867
-    // 0.899888
-    // 0.240292
-    // -0.317079
-
-    // -0.007422
-    // 0.513162
-    // 0.299346
-    // 0.299346
-
-    // -0.159525
-    // 0.029397
-    // 0.253406
-    // -0.953663
-
-    // -0.264643
-    // -0.450094
-    // 0.140096
-    // -0.84128
-
-    // -0.254369
-    // -0.953467
-    // -0.157984
-    // -0.035185
     const kf0 = ecs.new_id(world);
     _ = ecs.set(world, kf0, components.gfx.AnimationKeyFrame, .{
         .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
