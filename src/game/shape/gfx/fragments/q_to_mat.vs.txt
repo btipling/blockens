@@ -1,0 +1,20 @@
+mat4 quat_to_mat(vec4 q) {
+    float qx = q.x;
+    float qy = q.y;
+    float qz = q.z;
+    float qw = q.w;
+    float xx = qx * qx;
+    float yy = qy * qy;
+    float zz = qz * qz;
+    float xy = qx * qy;
+    float xz = qx * qz;
+    float yz = qy * qz;
+    float wx = qw * qx;
+    float wy = qw * qy;
+    float wz = qw * qz;
+    vec4 row1 = vec4(1.0 - 2.0 * (yy + zz), 2.0 * (xy + wz), 2.0 * (xz - wy), 0);
+    vec4 row2 = vec4(2.0 * (xy - wz), 1.0 - 2.0 * (xx + zz), 2.0 * (yz + wx), 0);
+    vec4 row3 = vec4(2.0 * (xz + wy), 2.0 * (yz - wx), 1.0 - 2.0 * (xx + yy), 0);
+    vec4 row4 = vec4(0, 0, 0, 1);
+    return mat4(row1, row2, row3, row4);
+}

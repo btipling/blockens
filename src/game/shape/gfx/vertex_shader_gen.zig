@@ -46,14 +46,19 @@ pub const VertexShaderGen = struct {
             defer r.buf.deinit(r.allocator);
         }
 
+        fn a(r: *runner, line: []const u8) void {
+            r.buf.appendSlice(r.allocator, line) catch unreachable;
+        }
+
         fn run(r: *runner) ![:0]const u8 {
-            try r.buf.appendSlice(r.allocator, "#version 450 core\n");
+            r.a("#version 450 core\n");
             try r.gen_attribute_vars();
             try r.gen_out_vars();
             try r.gen_uniforms();
             try r.gen_ubo();
             try r.gen_animation_block();
             try r.gen_main();
+            try r.gen_math();
             const ownedSentinelSlice: [:0]const u8 = try r.buf.toOwnedSliceSentinel(r.allocator, 0);
             if (r.cfg.debug) std.debug.print("generated vertex shader: \n {s}\n", .{ownedSentinelSlice});
             return ownedSentinelSlice;
@@ -62,61 +67,61 @@ pub const VertexShaderGen = struct {
         fn gen_attribute_vars(r: *runner) !void {
             var location: u8 = 0;
             var line = try shader_helpers.attribute_location(location, "position", .vec3);
-            try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+            r.a(std.mem.sliceTo(&line, 0));
             location += 1;
             if (r.cfg.has_texture_coords) {
                 line = try shader_helpers.attribute_location(location, "eTexCoord", .vec2);
-                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+                r.a(std.mem.sliceTo(&line, 0));
                 location += 1;
             }
             if (r.cfg.has_normals) {
                 line = try shader_helpers.attribute_location(location, "normal", .vec3);
-                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+                r.a(std.mem.sliceTo(&line, 0));
                 location += 1;
             }
         }
 
         fn gen_out_vars(r: *runner) !void {
-            try r.buf.appendSlice(r.allocator, "\n");
+            r.a("\n");
             if (r.cfg.has_texture_coords) {
-                try r.buf.appendSlice(r.allocator, "\nout vec2 TexCoord;\n");
+                r.a("\nout vec2 TexCoord;\n");
             }
             if (r.cfg.has_normals) {
-                try r.buf.appendSlice(r.allocator, "\nflat out vec3 fragNormal;\n");
+                r.a("\nflat out vec3 fragNormal;\n");
             }
         }
 
         fn gen_uniforms(r: *runner) !void {
             if (r.cfg.has_uniform_mat) {
-                try r.buf.appendSlice(r.allocator, "\nuniform mat4 ");
-                try r.buf.appendSlice(r.allocator, shader_constants.TransformMatName);
-                try r.buf.appendSlice(r.allocator, ";\n\n");
+                r.a("\nuniform mat4 ");
+                r.a(shader_constants.TransformMatName);
+                r.a(";\n\n");
             }
         }
 
         fn gen_ubo(r: *runner) !void {
             if (r.cfg.has_ubo) {
-                try r.buf.appendSlice(r.allocator, "\nlayout(std140) uniform ");
-                try r.buf.appendSlice(r.allocator, shader_constants.UBOName);
-                try r.buf.appendSlice(r.allocator, " {\n    mat4 ");
-                try r.buf.appendSlice(r.allocator, shader_constants.UBOMatName);
-                try r.buf.appendSlice(r.allocator, ";\n};\n\n");
+                r.a("\nlayout(std140) uniform ");
+                r.a(shader_constants.UBOName);
+                r.a(" {\n    mat4 ");
+                r.a(shader_constants.UBOMatName);
+                r.a(";\n};\n\n");
             }
         }
 
         fn gen_animation_block(r: *runner) !void {
             if (r.cfg.animation_block_index) |bi| {
-                try r.buf.appendSlice(r.allocator, "\n\nstruct key_frame {\n");
-                try r.buf.appendSlice(r.allocator, "    vec4 scale;\n");
-                try r.buf.appendSlice(r.allocator, "    vec4 rotation;\n");
-                try r.buf.appendSlice(r.allocator, "    vec4 translation;\n");
-                try r.buf.appendSlice(r.allocator, "};\n\n");
-                try r.buf.appendSlice(r.allocator, "\n");
+                r.a("\n\nstruct key_frame {\n");
+                r.a("    vec4 scale;\n");
+                r.a("    vec4 rotation;\n");
+                r.a("    vec4 translation;\n");
+                r.a("};\n\n");
+                r.a("\n");
                 var line = try shader_helpers.ssbo_binding(bi, shader_constants.AnimationBlockName);
-                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
-                try r.buf.appendSlice(r.allocator, "{\n");
-                try r.buf.appendSlice(r.allocator, "    key_frame frames[];\n");
-                try r.buf.appendSlice(r.allocator, "};\n\n");
+                r.a(std.mem.sliceTo(&line, 0));
+                r.a("{\n");
+                r.a("    key_frame frames[];\n");
+                r.a("};\n\n");
             }
         }
 
@@ -140,51 +145,60 @@ pub const VertexShaderGen = struct {
             if (inline_mat) |m| {
                 const mr = zm.matToArr(m);
                 var line = try shader_helpers.vec4_to_buf("    vec4 c0 = vec4({d}, {d}, {d}, {d});\n", mr[0], mr[1], mr[2], mr[3]);
-                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+                r.a(std.mem.sliceTo(&line, 0));
                 line = try shader_helpers.vec4_to_buf("    vec4 c1 = vec4({d}, {d}, {d}, {d});\n", mr[4], mr[5], mr[6], mr[7]);
-                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+                r.a(std.mem.sliceTo(&line, 0));
                 line = try shader_helpers.vec4_to_buf("    vec4 c2 = vec4({d}, {d}, {d}, {d});\n", mr[8], mr[9], mr[10], mr[11]);
-                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+                r.a(std.mem.sliceTo(&line, 0));
                 line = try shader_helpers.vec4_to_buf("    vec4 c3 = vec4({d}, {d}, {d}, {d});\n", mr[12], mr[13], mr[14], mr[15]);
-                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
-                try r.buf.appendSlice(r.allocator, "    mat4 inline_transform = mat4(c0, c1, c2, c3);\n");
-                try r.buf.appendSlice(r.allocator, "    pos = inline_transform * pos;\n");
+                r.a(std.mem.sliceTo(&line, 0));
+                r.a("    mat4 inline_transform = mat4(c0, c1, c2, c3);\n");
+                r.a("    pos = inline_transform * pos;\n");
             }
         }
 
         fn gen_main(r: *runner) !void {
-            try r.buf.appendSlice(r.allocator, "void main()\n");
-            try r.buf.appendSlice(r.allocator, "{\n");
-            try r.buf.appendSlice(r.allocator, "    vec4 pos;\n");
-            try r.buf.appendSlice(r.allocator, "    pos = vec4(position.xyz, 1.0);\n");
+            r.a("void main()\n");
+            r.a("{\n");
+            r.a("    vec4 pos;\n");
+            r.a("    pos = vec4(position.xyz, 1.0);\n");
             try r.gen_inline_mat();
             if (r.cfg.animation_block_index != null) {
-                try r.buf.appendSlice(r.allocator, "    key_frame kf = frames[1];\n");
-                try r.buf.appendSlice(r.allocator, "    vec4 kft0 = vec4(1, 0, 0, 0);\n");
-                try r.buf.appendSlice(r.allocator, "    vec4 kft1 = vec4(0, 1, 0, 0);\n");
-                try r.buf.appendSlice(r.allocator, "    vec4 kft2 = vec4(0, 0, 1, 0);\n");
-                try r.buf.appendSlice(r.allocator, "    vec4 kft3 =  vec4(kf.translation.x, kf.translation.y, kf.translation.z, 1);\n");
-                try r.buf.appendSlice(r.allocator, "    mat4 my_mat = mat4(kft0, kft1, kft2, kft3);\n");
-                try r.buf.appendSlice(r.allocator, "    pos = my_mat * pos;\n");
+                r.a("    key_frame kf = frames[1];\n");
+                r.a("    vec4 kft0 = vec4(1, 0, 0, 0);\n");
+                r.a("    vec4 kft1 = vec4(0, 1, 0, 0);\n");
+                r.a("    vec4 kft2 = vec4(0, 0, 1, 0);\n");
+                r.a("    vec4 kft3 =  vec4(kf.translation.x, kf.translation.y, kf.translation.z, 1);\n");
+                r.a("    mat4 my_mat = mat4(kft0, kft1, kft2, kft3);\n");
+                r.a("    pos = my_mat * pos;\n");
             }
             if (r.cfg.has_uniform_mat) {
-                try r.buf.appendSlice(r.allocator, "    pos = ");
-                try r.buf.appendSlice(r.allocator, shader_constants.TransformMatName);
-                try r.buf.appendSlice(r.allocator, " * pos;\n");
+                r.a("    pos = ");
+                r.a(shader_constants.TransformMatName);
+                r.a(" * pos;\n");
             }
             if (r.cfg.has_ubo) {
-                try r.buf.appendSlice(r.allocator, "    pos = ");
-                try r.buf.appendSlice(r.allocator, shader_constants.UBOMatName);
-                try r.buf.appendSlice(r.allocator, " * pos;\n");
+                r.a("    pos = ");
+                r.a(shader_constants.UBOMatName);
+                r.a(" * pos;\n");
             }
-            try r.buf.appendSlice(r.allocator, "    gl_Position = pos;\n");
+            r.a("    gl_Position = pos;\n");
             if (r.cfg.has_texture_coords) {
-                try r.buf.appendSlice(r.allocator, "    TexCoord = eTexCoord;\n");
+                r.a("    TexCoord = eTexCoord;\n");
             }
             if (r.cfg.has_normals) {
-                try r.buf.appendSlice(r.allocator, "    fragNormal = normal;\n");
+                r.a("    fragNormal = normal;\n");
             }
-            try r.buf.appendSlice(r.allocator, "}\n");
+            r.a("}\n");
+        }
+
+        fn gen_math(r: *runner) !void {
+            if (r.cfg.animation_block_index != null) {
+                r.a("\n");
+                r.a(@embedFile("fragments/q_to_mat.vs.txt"));
+                r.a(@embedFile("fragments/slerp.vs.txt"));
+                r.a("\n");
+            }
         }
     };
 };

@@ -1,0 +1,16 @@
+vec4 slerp(vec4 p, vec4 q, float t) {
+    float cht = dot(p, q);
+    if (abs(cht) >= 1.0){
+        return p;
+    }
+    float h_theta = acos(cht);
+    float sin_h_theta = sqrt(1.0 - cht*cht);
+    if (abs(sin_h_theta) < 0.001){
+        vec4 q = p * 0.5 + q * 0.5;
+        return normalize(q);
+    }
+    float a = sin((1 - t) * h_theta) / sin_h_theta;
+    float b = sin(t * h_theta) / sin_h_theta; 
+    vec4 rv = p * a + q * b;
+    return normalize(rv);
+}
