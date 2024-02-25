@@ -1,5 +1,5 @@
 const std = @import("std");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const game = @import("../../game.zig");
 
 pub const AttributeBuilder = struct {

@@ -1,6 +1,6 @@
 const std = @import("std");
 const ziglua = @import("ziglua");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const data = @import("../data/data.zig");
 const state = @import("../state/state.zig");
 const chunk = @import("../chunk.zig");

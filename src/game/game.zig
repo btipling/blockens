@@ -1,7 +1,8 @@
 const std = @import("std");
 const glfw = @import("zglfw");
 const zgui = @import("zgui");
-const gl = @import("zopengl");
+const zopengl = @import("zopengl");
+const gl = zopengl.bindings;
 const zstbi = @import("zstbi");
 const zmesh = @import("zmesh");
 const cfg = @import("config.zig");
@@ -63,7 +64,7 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
 }
 
 fn initGL(gl_major: u8, gl_minor: u8, window: *glfw.Window) !void {
-    try gl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
+    try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
 
     {
         const dimensions: [2]i32 = window.getSize();

@@ -1,6 +1,6 @@
 const std = @import("std");
 const zm = @import("zmath");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 
 pub const ViewError = error{
     UpdateError,

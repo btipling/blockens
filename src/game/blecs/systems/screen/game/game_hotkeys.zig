@@ -1,6 +1,6 @@
 const std = @import("std");
 const ecs = @import("zflecs");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const glfw = @import("zglfw");
 const components = @import("../../../components/components.zig");

@@ -1,4 +1,4 @@
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const data = @import("../data/data.zig");
 const screen = @import("screen.zig");
 

@@ -1,4 +1,4 @@
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const ecs = @import("zflecs");
 const game = @import("../../../game.zig");
 const math = @import("../../../math/math.zig");

@@ -1,5 +1,5 @@
 const std = @import("std");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const game_state = @import("../../state/game.zig");
 const game = @import("../../game.zig");

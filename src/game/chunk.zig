@@ -1,6 +1,6 @@
 const std = @import("std");
 const state = @import("./state/state.zig");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 
 pub const chunkDim = 64;
 pub const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;

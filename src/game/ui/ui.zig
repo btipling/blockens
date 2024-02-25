@@ -1,6 +1,6 @@
 const std = @import("std");
 const zgui = @import("zgui");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const glfw = @import("zglfw");
 const texture_gen = @import("texture_gen.zig");
 const world_editor = @import("world_editor.zig");

@@ -1,6 +1,6 @@
 const std = @import("std");
 const sqlite = @import("sqlite");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 
 const createWorldTable = @embedFile("./sql/world/create.sql");
 const insertWorldStmt = @embedFile("./sql/world/insert.sql");

@@ -1,6 +1,6 @@
 const std = @import("std");
 const zglfw = @import("zglfw");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const zgui = @import("zgui");
 const zm = @import("zmath");
 const state = @import("./state/state.zig");

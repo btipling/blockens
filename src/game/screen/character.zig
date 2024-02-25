@@ -1,5 +1,5 @@
 const std = @import("std");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const mobMesh = @import("../shape/mob/mesh.zig");
 const shapeview = @import("../shape/view.zig");

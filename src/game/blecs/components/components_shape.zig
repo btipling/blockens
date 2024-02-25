@@ -1,5 +1,5 @@
 const ecs = @import("zflecs");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const math = @import("../../math/math.zig");
 const game = @import("../../game.zig");

@@ -1,6 +1,6 @@
 const std = @import("std");
 const zm = @import("zmath");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const math = @import("../../math/math.zig");
 const shader_constants = @import("shader_constants.zig");
 const shader_helpers = @import("shader_helpers.zig");

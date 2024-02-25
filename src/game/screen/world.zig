@@ -1,6 +1,6 @@
 const std = @import("std");
 const zm = @import("zmath");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 const state = @import("../state/state.zig");
 const plane = @import("../shape/plane.zig");
 const cursor = @import("../shape/cursor.zig");
