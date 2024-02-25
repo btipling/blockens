@@ -59,6 +59,11 @@ pub const UI = struct {
 };
 
 pub const ElementsRendererConfig = struct {
+    pub const AnimationKeyFrame = struct {
+        scale: @Vector(4, gl.Float),
+        rotation: @Vector(4, gl.Float),
+        translation: @Vector(4, gl.Float),
+    };
     vertexShader: [:0]const u8 = undefined,
     fragmentShader: [:0]const u8 = undefined,
     positions: [][3]gl.Float = undefined,
@@ -68,6 +73,7 @@ pub const ElementsRendererConfig = struct {
     transform: ?zm.Mat = null,
     ubo_binding_point: ?gl.Uint = null,
     demo_cube_texture: ?struct { usize, usize } = null,
+    keyframes: ?[]AnimationKeyFrame = null,
 };
 
 pub const Gfx = struct {

@@ -57,6 +57,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .demo_cube_texture = dc,
                 .texcoords = mesh_data.texcoords,
                 .normals = mesh_data.normals,
+                .keyframes = e.keyframes,
             };
             const erc_id = ecs.new_id(world);
             game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
@@ -79,6 +80,7 @@ const shaders = struct {
             .translation = e.translation,
             .has_texture_coords = mesh_data.texcoords != null,
             .has_normals = mesh_data.normals != null,
+            .has_animation_block = e.has_animation_block,
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
     }
@@ -108,14 +110,42 @@ const extractions = struct {
     dc_t_beg: usize = 0,
     dc_t_end: usize = 0,
     has_animation_block: bool = false,
+    keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = null,
 
     fn extractAnimation(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
         var it = ecs.children(world, entity);
         while (ecs.children_next(&it)) {
             for (0..it.count()) |i| {
                 const child_entity = it.entities()[i];
-                if (ecs.has_id(world, child_entity, ecs.id(components.gfx.AnimationSSBO))) {
+                if (!ecs.has_id(world, child_entity, ecs.id(components.gfx.AnimationSSBO))) {
+                    continue;
+                }
+                var ar = std.ArrayListUnmanaged(
+                    game_state.ElementsRendererConfig.AnimationKeyFrame,
+                ){};
+                defer ar.deinit(game.state.allocator);
+                var cit = ecs.children(world, child_entity);
+                while (ecs.children_next(&cit)) {
+                    for (0..cit.count()) |ii| {
+                        const subchild_entity = cit.entities()[ii];
+                        if (ecs.has_id(world, subchild_entity, ecs.id(components.gfx.AnimationKeyFrame))) {
+                            if (ecs.get_id(world, subchild_entity, ecs.id(components.gfx.AnimationKeyFrame))) |opaque_ptr| {
+                                const akf: *const components.gfx.AnimationKeyFrame = @ptrCast(@alignCast(opaque_ptr));
+                                ar.append(
+                                    game.state.allocator,
+                                    game_state.ElementsRendererConfig.AnimationKeyFrame{
+                                        .scale = akf.scale,
+                                        .rotation = akf.rotation,
+                                        .translation = akf.translation,
+                                    },
+                                ) catch unreachable;
+                            }
+                        }
+                    }
+                }
+                if (ar.items.len > 0) {
                     e.has_animation_block = true;
+                    e.keyframes = ar.toOwnedSlice(game.state.allocator) catch unreachable;
                 }
             }
         }

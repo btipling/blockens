@@ -106,6 +106,7 @@ pub const VertexShaderGen = struct {
         fn gen_animation_block(r: *runner) !void {
             if (r.cfg.has_animation_block) {
                 try r.buf.appendSlice(r.allocator, @embedFile("./fragments/animation_block.vs.txt"));
+                try r.buf.appendSlice(r.allocator, "\n");
             }
         }
 
