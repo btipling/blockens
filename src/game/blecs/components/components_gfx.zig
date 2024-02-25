@@ -29,9 +29,9 @@ pub const AnimationSSBO = struct {
 };
 
 pub const AnimationKeyFrame = struct {
-    scale: @Vector(4, gl.Float) = zm.identity(),
-    rotation: @Vector(4, gl.Float) = zm.identity(),
-    translation: @Vector(4, gl.Float) = zm.identity(),
+    scale: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 1, 1, 1, 1 },
+    rotation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 1, 0, 0, 0 },
+    translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 0, 0, 0, 0 },
 };
 
 pub const CanDraw = struct {};

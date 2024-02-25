@@ -10,6 +10,8 @@ const helpers = @import("../helpers.zig");
 
 pub const GameUBOBindingPoint: gl.Uint = 0;
 pub const SettingsUBOBindingPoint: gl.Uint = 1;
+pub const DemoCubeAnimationBindingPoint: gl.Uint = 2;
+
 var game_data: ecs.entity_t = undefined;
 var settings_data: ecs.entity_t = undefined;
 
@@ -188,6 +190,18 @@ pub fn initDemoCube() void {
     _ = ecs.add(game.state.world, c_dc, components.shape.NeedsSetup);
     _ = ecs.set(game.state.world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
         .translation = game.state.ui.data.demo_cube_pp_translation,
+    });
+    const animation = helpers.new_child(game.state.world, c_dc);
+    _ = ecs.set(game.state.world, animation, components.gfx.AnimationSSBO, .{
+        .ssbo = DemoCubeAnimationBindingPoint,
+    });
+    const kf1 = helpers.new_child(game.state.world, animation);
+    _ = ecs.set(game.state.world, kf1, components.gfx.AnimationKeyFrame, .{
+        .translation = @Vector(4, gl.Float){ 1, 0, 0, 0 },
+    });
+    const kf2 = helpers.new_child(game.state.world, animation);
+    _ = ecs.set(game.state.world, kf2, components.gfx.AnimationKeyFrame, .{
+        .translation = @Vector(4, gl.Float){ 1, 0, 0, 0 },
     });
 
     const p_x_ratio: gl.Float = 0.6666;
