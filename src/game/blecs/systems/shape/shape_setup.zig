@@ -41,77 +41,31 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 else => cube(),
             };
 
-            var rotation: ?math.vecs.Vflx4 = null;
-            var scale: ?math.vecs.Vflx4 = null;
-            var translation: ?math.vecs.Vflx4 = null;
-            var color: ?math.vecs.Vflx4 = null;
-            var debug = false;
-            var has_ubo = false;
-            var ubo_binding_point: gl.Uint = 0;
-            var has_uniform_mat = false;
-            var has_demo_cube_texture = false;
-            var dc_t_beg: usize = 0;
-            var dc_t_end: usize = 0;
-            var uniform_mat = zm.identity();
-            if (ecs.get_id(world, entity, ecs.id(components.shape.Rotation))) |opaque_ptr| {
-                const r: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
-                rotation = r.toVec();
-            }
-            if (ecs.get_id(world, entity, ecs.id(components.shape.Scale))) |opaque_ptr| {
-                const s: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
-                scale = s.toVec();
-            }
-            if (ecs.get_id(world, entity, ecs.id(components.shape.Translation))) |opaque_ptr| {
-                const t: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
-                translation = t.toVec();
-            }
-            if (ecs.get_id(world, entity, ecs.id(components.shape.Color))) |opaque_ptr| {
-                const c: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
-                color = c.toVec();
-            }
-            if (ecs.has_id(world, entity, ecs.id(components.Debug))) {
-                debug = true;
-            }
-            if (ecs.get_id(world, entity, ecs.id(components.shape.DemoCubeTexture))) |opaque_ptr| {
-                const dct: *const components.shape.DemoCubeTexture = @ptrCast(@alignCast(opaque_ptr));
-                has_demo_cube_texture = true;
-                dc_t_beg = dct.beg;
-                dc_t_end = dct.end;
-            }
-            if (ecs.get_id(world, entity, ecs.id(components.shape.UBO))) |opaque_ptr| {
-                const u: *const components.shape.UBO = @ptrCast(@alignCast(opaque_ptr));
-                has_ubo = true;
-                ubo_binding_point = u.binding_point;
-            }
-            if (ecs.get_id(world, entity, ecs.id(components.screen.WorldLocation))) |opaque_ptr| {
-                const u: *const components.screen.WorldLocation = @ptrCast(@alignCast(opaque_ptr));
-                has_uniform_mat = true;
-                uniform_mat = zm.translationV(u.toVec().value);
-            }
+            const e = extractions.extract(world, entity);
 
             const v_cfg = gfx.shadergen.vertex.VertexShaderGen.vertexShaderConfig{
-                .debug = debug,
-                .has_uniform_mat = has_uniform_mat,
-                .has_ubo = has_ubo,
-                .scale = scale,
-                .rotation = rotation,
-                .translation = translation,
+                .debug = e.debug,
+                .has_uniform_mat = e.has_uniform_mat,
+                .has_ubo = e.has_ubo,
+                .scale = e.scale,
+                .rotation = e.rotation,
+                .translation = e.translation,
                 .has_texture_coords = mesh_data.texcoords != null,
                 .has_normals = mesh_data.normals != null,
             };
             const vertexShader: [:0]const u8 = gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
             const f_cfg = gfx.shadergen.fragment.FragmentShaderGen.fragmentShaderConfig{
-                .debug = debug,
-                .color = color,
+                .debug = e.debug,
+                .color = e.color,
                 .has_texture_coords = mesh_data.texcoords != null,
-                .has_texture = has_demo_cube_texture and mesh_data.texcoords != null,
+                .has_texture = e.has_demo_cube_texture and mesh_data.texcoords != null,
                 .has_normals = mesh_data.normals != null,
             };
             const fragmentShader: [:0]const u8 = gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;
             var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
             var dc: ?struct { usize, usize } = null;
-            if (has_demo_cube_texture) {
-                dc = struct { usize, usize }{ dc_t_beg, dc_t_end };
+            if (e.has_demo_cube_texture) {
+                dc = struct { usize, usize }{ e.dc_t_beg, e.dc_t_end };
             }
             erc.* = .{
                 .vertexShader = vertexShader,
@@ -126,13 +80,68 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             };
             const erc_id = ecs.new_id(world);
             game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
-            if (has_uniform_mat) erc.transform = uniform_mat;
-            if (has_ubo) erc.ubo_binding_point = ubo_binding_point;
+            if (e.has_uniform_mat) erc.transform = e.uniform_mat;
+            if (e.has_ubo) erc.ubo_binding_point = e.ubo_binding_point;
             _ = ecs.set(world, entity, components.gfx.ElementsRendererConfig, .{ .id = erc_id });
             ecs.remove(world, entity, components.shape.NeedsSetup);
         }
     }
 }
+
+const extractions = struct {
+    rotation: ?math.vecs.Vflx4 = null,
+    scale: ?math.vecs.Vflx4 = null,
+    translation: ?math.vecs.Vflx4 = null,
+    color: ?math.vecs.Vflx4 = null,
+    debug: bool = false,
+    has_ubo: bool = false,
+    ubo_binding_point: gl.Uint = 0,
+    has_uniform_mat: bool = false,
+    uniform_mat: zm.Mat = zm.identity(),
+    has_demo_cube_texture: bool = false,
+    dc_t_beg: usize = 0,
+    dc_t_end: usize = 0,
+
+    fn extract(world: *ecs.world_t, entity: ecs.entity_t) extractions {
+        var e = extractions{};
+        if (ecs.get_id(world, entity, ecs.id(components.shape.Rotation))) |opaque_ptr| {
+            const r: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
+            e.rotation = r.toVec();
+        }
+        if (ecs.get_id(world, entity, ecs.id(components.shape.Scale))) |opaque_ptr| {
+            const s: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
+            e.scale = s.toVec();
+        }
+        if (ecs.get_id(world, entity, ecs.id(components.shape.Translation))) |opaque_ptr| {
+            const t: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
+            e.translation = t.toVec();
+        }
+        if (ecs.get_id(world, entity, ecs.id(components.shape.Color))) |opaque_ptr| {
+            const c: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
+            e.color = c.toVec();
+        }
+        if (ecs.has_id(world, entity, ecs.id(components.Debug))) {
+            e.debug = true;
+        }
+        if (ecs.get_id(world, entity, ecs.id(components.shape.DemoCubeTexture))) |opaque_ptr| {
+            const dct: *const components.shape.DemoCubeTexture = @ptrCast(@alignCast(opaque_ptr));
+            e.has_demo_cube_texture = true;
+            e.dc_t_beg = dct.beg;
+            e.dc_t_end = dct.end;
+        }
+        if (ecs.get_id(world, entity, ecs.id(components.shape.UBO))) |opaque_ptr| {
+            const u: *const components.shape.UBO = @ptrCast(@alignCast(opaque_ptr));
+            e.has_ubo = true;
+            e.ubo_binding_point = u.binding_point;
+        }
+        if (ecs.get_id(world, entity, ecs.id(components.screen.WorldLocation))) |opaque_ptr| {
+            const u: *const components.screen.WorldLocation = @ptrCast(@alignCast(opaque_ptr));
+            e.has_uniform_mat = true;
+            e.uniform_mat = zm.translationV(u.toVec().value);
+        }
+        return e;
+    }
+};
 
 // :: Plane
 fn plane() meshData {
