@@ -1,0 +1,19 @@
+struct frameIndices {
+    int index1;
+    int index2;
+};
+
+frameIndices get_frame_indices() {
+    float time = timeData.x;
+    frameIndices indices;
+    indices.index1 = int(time); 
+    indices.index2 = indices.index1 + 1;
+    indices.index1 = int(time);
+    indices.index2 = indices.index1 + 1; 
+
+    if (indices.index2 >= 4) {
+        indices.index2 = 0;
+    }
+
+    return indices;
+}

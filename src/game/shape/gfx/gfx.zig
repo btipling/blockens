@@ -108,22 +108,30 @@ pub const Gfx = struct {
         var ubo: gl.Uint = undefined;
         gl.genBuffers(1, &ubo);
         gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
-
-        var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
-        zm.storeMat(&transform, data);
-
-        const size = @as(isize, @intCast(transform.len * @sizeOf(gl.Float)));
-        gl.bufferData(gl.UNIFORM_BUFFER, size, &transform, gl.DYNAMIC_DRAW);
+        const uboStruct = struct {
+            transform: [16]gl.Float = [_]gl.Float{undefined} ** 16,
+            time_data: [4]gl.Float = [_]gl.Float{0} ** 4,
+        };
+        var ubo_data = uboStruct{};
+        zm.storeMat(&ubo_data.transform, data);
+        const size: isize = @intCast(@sizeOf(uboStruct));
+        gl.bufferData(gl.UNIFORM_BUFFER, size, &ubo_data, gl.DYNAMIC_DRAW);
         gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
         return ubo;
     }
 
-    pub fn updateUniformBufferObject(updated: zm.Mat, ubo: gl.Uint) void {
+    pub fn updateUniformBufferObject(updated: zm.Mat, time: gl.Float, ubo: gl.Uint) void {
         gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
-        var transform: [16]gl.Float = [_]gl.Float{undefined} ** 16;
-        zm.storeMat(&transform, updated);
-        const size: isize = @intCast(transform.len * @sizeOf(gl.Float));
-        gl.bufferSubData(gl.UNIFORM_BUFFER, 0, size, &transform);
+        const uboStruct = struct {
+            transform: [16]gl.Float = [_]gl.Float{undefined} ** 16,
+            time_data: [4]gl.Float = [_]gl.Float{0} ** 4,
+        };
+        var ubo_data = uboStruct{};
+        zm.storeMat(&ubo_data.transform, updated);
+        ubo_data.time_data[0] = time;
+
+        const size: isize = @intCast(@sizeOf(uboStruct));
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 0, size, &ubo_data);
         gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
     }
 

@@ -14,6 +14,7 @@ pub const Screen = struct {
 
 pub const Camera = struct {
     ubo: gl.Uint = 0,
+    elapsedTime: gl.Float = 0,
 };
 pub const CameraPosition = struct {
     pos: @Vector(4, gl.Float) = undefined,
@@ -60,6 +61,7 @@ pub const Game = struct {};
 pub const Cursor = struct {};
 pub const Settings = struct {};
 pub const Updated = struct {};
+pub const NeedsAnimation = struct {};
 
 pub fn init() void {
     ecs.COMPONENT(game.state.world, Screen);
@@ -80,5 +82,6 @@ pub fn init() void {
     ecs.TAG(game.state.world, Cursor);
     ecs.TAG(game.state.world, Settings);
     ecs.TAG(game.state.world, Updated);
+    ecs.TAG(game.state.world, NeedsAnimation);
     texture_gen.init();
 }

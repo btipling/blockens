@@ -16,7 +16,6 @@ pub fn init() void {
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
     desc.query.filter.terms[0] = .{ .id = ecs.id(components.screen.Camera) };
-    desc.query.filter.terms[1] = .{ .id = ecs.id(components.screen.Updated) };
     desc.run = run;
     return desc;
 }
@@ -100,7 +99,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (post_perspective) |pp| {
                 m = zm.mul(m, zm.translationV(pp));
             }
-            gfx.Gfx.updateUniformBufferObject(m, ubo);
+            var mut_camera: *components.screen.Camera = ecs.get_mut(
+                game.state.world,
+                entity,
+                components.screen.Camera,
+            ) orelse continue;
+            mut_camera.elapsedTime += it.delta_time;
+            std.debug.print("frame: {d} elapsed: {d}\n", .{ it.delta_time, mut_camera.elapsedTime });
+            gfx.Gfx.updateUniformBufferObject(m, mut_camera.elapsedTime, ubo);
             ecs.remove(world, entity, components.screen.Updated);
         }
     }

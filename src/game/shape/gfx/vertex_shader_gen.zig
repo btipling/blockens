@@ -58,6 +58,7 @@ pub const VertexShaderGen = struct {
             try r.gen_ubo();
             try r.gen_animation_block();
             try r.gen_math();
+            try r.gen_animation_functions();
             try r.gen_main();
             const ownedSentinelSlice: [:0]const u8 = try r.buf.toOwnedSliceSentinel(r.allocator, 0);
             if (r.cfg.debug) std.debug.print("generated vertex shader: \n {s}\n", .{ownedSentinelSlice});
@@ -105,7 +106,11 @@ pub const VertexShaderGen = struct {
                 r.a(shader_constants.UBOName);
                 r.a(" {\n    mat4 ");
                 r.a(shader_constants.UBOMatName);
-                r.a(";\n};\n\n");
+                r.a(";\n");
+                r.a("    vec4 ");
+                r.a(shader_constants.UBOTimeName);
+                r.a(";\n");
+                r.a("};\n\n");
             }
         }
 
@@ -198,9 +203,17 @@ pub const VertexShaderGen = struct {
             if (r.cfg.animation_block_index != null) {
                 r.a("\n");
                 r.a(@embedFile("fragments/q_to_mat.vs.txt"));
-                r.a("\n");
+                r.a("\n\n");
                 r.a(@embedFile("fragments/slerp.vs.txt"));
+                r.a("\n\n");
+            }
+        }
+
+        fn gen_animation_functions(r: *runner) !void {
+            if (r.cfg.animation_block_index != null) {
                 r.a("\n");
+                r.a(@embedFile("fragments/frame_from_time.vs.txt"));
+                r.a("\n\n");
             }
         }
     };
