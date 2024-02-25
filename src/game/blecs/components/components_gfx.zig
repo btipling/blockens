@@ -5,10 +5,6 @@ const zm = @import("zmath");
 const math = @import("../../math/math.zig");
 const game = @import("../../game.zig");
 
-pub const AnimationSSBO = struct {
-    ssbo: gl.Uint,
-};
-
 pub const BaseRenderer = struct {
     clear: gl.Bitfield = 0,
     bgColor: math.vecs.Vflx4 = undefined,
@@ -28,7 +24,16 @@ pub const ElementsRenderer = struct {
     enableDepthTest: bool = true,
 };
 
-// Tags
+pub const AnimationSSBO = struct {
+    ssbo: gl.Uint,
+};
+
+pub const AnimationKeyFrame = struct {
+    scale: @Vector(4, gl.Float) = zm.identity(),
+    rotation: @Vector(4, gl.Float) = zm.identity(),
+    translation: @Vector(4, gl.Float) = zm.identity(),
+};
+
 pub const CanDraw = struct {};
 pub const NeedsDeletion = struct {};
 
@@ -36,6 +41,8 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, BaseRenderer);
     ecs.COMPONENT(game.state.world, ElementsRendererConfig);
     ecs.COMPONENT(game.state.world, ElementsRenderer);
+    ecs.COMPONENT(game.state.world, AnimationSSBO);
+    ecs.COMPONENT(game.state.world, AnimationKeyFrame);
     ecs.TAG(game.state.world, CanDraw);
     ecs.TAG(game.state.world, NeedsDeletion);
 }

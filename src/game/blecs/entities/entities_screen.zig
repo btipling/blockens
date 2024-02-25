@@ -189,6 +189,7 @@ pub fn initDemoCube() void {
     _ = ecs.set(game.state.world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
         .translation = game.state.ui.data.demo_cube_pp_translation,
     });
+    ecs.add_pair(game.state.world, c_dc, ecs.ChildOf, settings_data);
 
     const p_x_ratio: gl.Float = 0.6666;
     const p_scale: gl.Float = 0.3;
@@ -200,6 +201,8 @@ pub fn initDemoCube() void {
     _ = ecs.set(game.state.world, c_t1, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 });
     _ = ecs.add(game.state.world, c_t1, components.shape.NeedsSetup);
     _ = ecs.add(game.state.world, c_t1, components.Debug);
+    ecs.add_pair(game.state.world, c_t1, ecs.ChildOf, settings_data);
+
     const c_t2 = helpers.new_child(game.state.world, game.state.entities.crosshair);
     _ = ecs.set(game.state.world, c_t2, components.shape.Shape, .{ .shape_type = .plane });
     _ = ecs.set(game.state.world, c_t2, components.shape.Color, components.shape.Color.fromVec(cr_c));
