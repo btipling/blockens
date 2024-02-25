@@ -58,6 +58,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .texcoords = mesh_data.texcoords,
                 .normals = mesh_data.normals,
                 .keyframes = e.keyframes,
+                .animation_binding_point = e.animation_binding_point,
             };
             const erc_id = ecs.new_id(world);
             game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
@@ -110,6 +111,7 @@ const extractions = struct {
     dc_t_beg: usize = 0,
     dc_t_end: usize = 0,
     has_animation_block: bool = false,
+    animation_binding_point: ?gl.Uint = null,
     keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = null,
 
     fn extractAnimation(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
@@ -123,6 +125,11 @@ const extractions = struct {
                 var ar = std.ArrayListUnmanaged(
                     game_state.ElementsRendererConfig.AnimationKeyFrame,
                 ){};
+                var ssbo: gl.Uint = 0;
+                if (ecs.get_id(world, child_entity, ecs.id(components.gfx.AnimationSSBO))) |opaque_ptr| {
+                    const a: *const components.gfx.AnimationSSBO = @ptrCast(@alignCast(opaque_ptr));
+                    ssbo = a.ssbo;
+                }
                 defer ar.deinit(game.state.allocator);
                 var cit = ecs.children(world, child_entity);
                 while (ecs.children_next(&cit)) {
@@ -144,6 +151,7 @@ const extractions = struct {
                     }
                 }
                 if (ar.items.len > 0) {
+                    e.animation_binding_point = ssbo;
                     e.has_animation_block = true;
                     e.keyframes = ar.toOwnedSlice(game.state.allocator) catch unreachable;
                 }

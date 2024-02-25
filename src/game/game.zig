@@ -116,6 +116,7 @@ pub const Game = struct {
             },
             .gfx = gameState.Gfx{
                 .ubos = std.AutoHashMap(gl.Uint, gl.Uint).init(allocator),
+                .ssbos = std.AutoHashMap(gl.Uint, gl.Uint).init(allocator),
                 .renderConfigs = std.AutoHashMap(blecs.ecs.entity_t, *gameState.ElementsRendererConfig).init(allocator),
             },
             .window = window,

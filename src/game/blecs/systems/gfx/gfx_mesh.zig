@@ -126,6 +126,34 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 );
             }
 
+            if (er.animation_binding_point) |_| {
+                std.debug.print("wth man\n", .{});
+                // var ssbo: gl.Uint = 0;
+                // ssbo = game.state.gfx.ssbos.get(animation_binding_point) orelse blk: {
+                //     const m = zm.identity();
+                //     const new_ssbo = gfx.Gfx.initUniformBufferObject(m);
+                //     game.state.gfx.ssbos.put(animation_binding_point, new_ssbo) catch unreachable;
+                //     break :blk new_ssbo;
+                // };
+                // gfx.Gfx.setUniformBufferObject(shadergen.constants.UBOName, program, ssbo, animation_binding_point);
+
+                // var camera: ecs.entity_t = 0;
+
+                // const parent = ecs.get_parent(world, entity);
+                // if (parent == screen.gameDataEntity) {
+                //     camera = game.state.entities.game_camera;
+                // }
+                // if (parent == screen.settingDataEntity) {
+                //     camera = game.state.entities.settings_camera;
+                // }
+
+                // ecs.add(
+                //     game.state.world,
+                //     camera,
+                //     components.screen.Updated,
+                // );
+            }
+
             var texture: gl.Uint = 0;
             if (er.demo_cube_texture) |dct| {
                 if (game.state.ui.data.texture_rgba_data) |d| {

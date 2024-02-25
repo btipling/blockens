@@ -73,11 +73,13 @@ pub const ElementsRendererConfig = struct {
     transform: ?zm.Mat = null,
     ubo_binding_point: ?gl.Uint = null,
     demo_cube_texture: ?struct { usize, usize } = null,
+    animation_binding_point: ?gl.Uint = null,
     keyframes: ?[]AnimationKeyFrame = null,
 };
 
 pub const Gfx = struct {
     ubos: std.AutoHashMap(gl.Uint, gl.Uint) = undefined,
+    ssbos: std.AutoHashMap(gl.Uint, gl.Uint) = undefined,
     renderConfigs: std.AutoHashMap(ecs.entity_t, *ElementsRendererConfig) = undefined,
 };
 
@@ -101,6 +103,7 @@ pub const Game = struct {
 
     pub fn deinit(self: *Game) void {
         self.gfx.ubos.deinit();
+        self.gfx.ssbos.deinit();
         var cfgs = self.gfx.renderConfigs.valueIterator();
         while (cfgs.next()) |rcfg| {
             self.allocator.destroy(rcfg);
