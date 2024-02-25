@@ -1,5 +1,6 @@
 const std = @import("std");
 const zm = @import("zmath");
+const gl = @import("zopengl");
 const math = @import("../../math/math.zig");
 const shader_constants = @import("shader_constants.zig");
 const shader_helpers = @import("shader_helpers.zig");
@@ -11,7 +12,7 @@ pub const VertexShaderGen = struct {
         has_uniform_mat: bool = false,
         has_ubo: bool = false,
         has_texture_coords: bool = false,
-        has_animation_block: bool = false,
+        animation_block_index: ?gl.Uint = null,
         has_normals: bool = false,
         scale: ?math.vecs.Vflx4 = null,
         rotation: ?math.vecs.Vflx4 = null,
@@ -104,9 +105,18 @@ pub const VertexShaderGen = struct {
         }
 
         fn gen_animation_block(r: *runner) !void {
-            if (r.cfg.has_animation_block) {
-                try r.buf.appendSlice(r.allocator, @embedFile("./fragments/animation_block.vs.txt"));
+            if (r.cfg.animation_block_index) |bi| {
+                try r.buf.appendSlice(r.allocator, "\n\nstruct key_frame {\n");
+                try r.buf.appendSlice(r.allocator, "\n    vec4 scale;\n");
+                try r.buf.appendSlice(r.allocator, "\n    vec4 rotation;\n");
+                try r.buf.appendSlice(r.allocator, "\n    vec4 translation;\n");
+                try r.buf.appendSlice(r.allocator, "};\n\n");
                 try r.buf.appendSlice(r.allocator, "\n");
+                var line = try shader_helpers.ssbo_binding(bi, shader_constants.AnimationBlockName);
+                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+                try r.buf.appendSlice(r.allocator, "{\n");
+                try r.buf.appendSlice(r.allocator, "    key_frame frames[];\n");
+                try r.buf.appendSlice(r.allocator, "};\n\n");
             }
         }
 

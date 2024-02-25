@@ -2239,7 +2239,7 @@ pub var getObjectPtrLabel: *const fn (
 pub var getProgramResourceIndex: *const fn (
     program: Uint,
     programInterface: Enum,
-    name: [*c]Char,
+    name: [*c]const Char,
 ) callconv(.C) Uint = undefined;
 pub var shaderStorageBlockBinding: *const fn (
     program: Uint,

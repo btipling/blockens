@@ -1,8 +1,0 @@
-struct key_frame {
-   vec4 rotation;
-   vec3 translation;
-};
-
-layout(std430, binding = 0) buffer KeyFrames {
-    key_frame frames[];
-};

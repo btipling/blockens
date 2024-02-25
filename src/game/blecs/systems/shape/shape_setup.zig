@@ -81,7 +81,7 @@ const shaders = struct {
             .translation = e.translation,
             .has_texture_coords = mesh_data.texcoords != null,
             .has_normals = mesh_data.normals != null,
-            .has_animation_block = e.has_animation_block,
+            .animation_block_index = e.animation_binding_point,
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
     }

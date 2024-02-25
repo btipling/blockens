@@ -22,6 +22,15 @@ pub fn attribute_location(
     return buffer;
 }
 
+pub fn ssbo_binding(
+    binding_point: gl.Uint,
+    comptime name: []const u8,
+) ![250:0]u8 {
+    var buffer: [250:0]u8 = [_:0]u8{0} ** 250;
+    _ = try std.fmt.bufPrint(&buffer, "layout (std430, binding = {d}) buffer {s} ", .{ binding_point, name });
+    return buffer;
+}
+
 pub fn vec4_to_buf(
     comptime fmt: []const u8,
     v0: gl.Float,

@@ -127,13 +127,11 @@ pub const Gfx = struct {
         gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
     }
 
-    pub fn setShaderStorageBufferObject(name: []const u8, program: gl.Uint, ssbo: gl.Uint, block_binding_point: gl.Uint) void {
-        const blockIndex: gl.Uint = gl.getProgramResourceIndex(program, gl.SHADER_STORAGE_BLOCK, @ptrCast(name));
-        gl.shaderStorageBlockBinding(program, blockIndex, block_binding_point);
-        gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, block_binding_point, ssbo);
-    }
-
-    pub fn initAnimationShaderStorageBufferObject(data: []game_state.ElementsRendererConfig.AnimationKeyFrame) gl.Uint {
+    pub fn initAnimationShaderStorageBufferObject(
+        block_binding_point: gl.Uint,
+        data: []game_state.ElementsRendererConfig.AnimationKeyFrame,
+    ) gl.Uint {
+        // _ = data;
         const kf = struct {
             scale: [4]gl.Float,
             rotation: [4]gl.Float,
@@ -142,7 +140,7 @@ pub const Gfx = struct {
         var ar = std.ArrayListUnmanaged(kf){};
         defer ar.deinit(game.state.allocator);
         for (data) |d| {
-            try ar.append(game.state.allocator, kf{
+            ar.append(game.state.allocator, kf{
                 .scale = d.scale,
                 .rotation = d.rotation,
                 .translation = d.translation,
@@ -155,7 +153,8 @@ pub const Gfx = struct {
         const data_ptr: *const anyopaque = ar.items.ptr;
 
         const size = @as(isize, @intCast(ar.items.len * @sizeOf(kf)));
-        gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, &data_ptr, gl.STATIC_DRAW);
+        gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, data_ptr, gl.STATIC_DRAW);
+        gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, block_binding_point, ssbo);
         gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, 0);
         return ssbo;
     }
