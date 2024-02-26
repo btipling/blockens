@@ -157,5 +157,12 @@ pub const Game = struct {
     pub fn populateUIOptions(self: *Game) !void {
         try self.db.listBlocks(&self.ui.data.block_options);
         try self.db.listTextureScripts(&self.ui.data.texture_script_options);
+
+        var buf = [_]u8{0} ** script.maxLuaScriptSize;
+        const defaultLuaScript = @embedFile("../script/lua/gen_wood_texture.lua");
+        for (defaultLuaScript, 0..) |c, i| {
+            buf[i] = c;
+        }
+        self.ui.data.texture_buf = buf;
     }
 };
