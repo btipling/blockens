@@ -1,6 +1,6 @@
 const std = @import("std");
 const glfw = @import("zglfw");
-const ecs = @import("zflecs");
+const blecs = @import("../blecs/blecs.zig");
 const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const zgui = @import("zgui");
@@ -80,13 +80,13 @@ pub const ElementsRendererConfig = struct {
 pub const Gfx = struct {
     ubos: std.AutoHashMap(gl.Uint, gl.Uint) = undefined,
     ssbos: std.AutoHashMap(gl.Uint, gl.Uint) = undefined,
-    renderConfigs: std.AutoHashMap(ecs.entity_t, *ElementsRendererConfig) = undefined,
+    renderConfigs: std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig) = undefined,
 };
 
 pub const Game = struct {
     allocator: std.mem.Allocator = undefined,
     window: *glfw.Window = undefined,
-    world: *ecs.world_t = undefined,
+    world: *blecs.ecs.world_t = undefined,
     db: data.Data = undefined,
     script: script.Script = undefined,
     entities: Entities = .{},
@@ -99,6 +99,7 @@ pub const Game = struct {
         try self.initDb();
         try self.initScript();
         try self.initUIData();
+        try self.initGfx();
     }
 
     pub fn deinit(self: *Game) void {
@@ -131,6 +132,14 @@ pub const Game = struct {
         self.ui.data = try self.allocator.create(UIData);
         self.ui.data.* = UIData{
             .texture_script_options = std.ArrayList(data.scriptOption).init(self.allocator),
+        };
+    }
+
+    pub fn initGfx(self: *Game) !void {
+        self.gfx = Gfx{
+            .ubos = std.AutoHashMap(gl.Uint, gl.Uint).init(self.allocator),
+            .ssbos = std.AutoHashMap(gl.Uint, gl.Uint).init(self.allocator),
+            .renderConfigs = std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig).init(self.allocator),
         };
     }
 
