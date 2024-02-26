@@ -169,6 +169,9 @@ fn initSettingsCamera() void {
 }
 
 pub fn initDemoCube() void {
+    if (game.state.ui.data.texture_rgba_data == null) {
+        return;
+    }
     const world = game.state.world;
     var it = ecs.children(world, settings_data);
     while (ecs.iter_next(&it)) {

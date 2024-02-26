@@ -25,6 +25,8 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
+            listTextureScripts() catch unreachable;
+            entities.screen.initDemoCube();
             const xPos: f32 = 700.0;
             const yPos: f32 = 50.0;
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });

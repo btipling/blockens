@@ -25,6 +25,9 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
+            listBlocks() catch unreachable;
+            listTextureScripts() catch unreachable;
+            entities.screen.initDemoCube();
             const xPos: f32 = 700.0;
             const yPos: f32 = 50.0;
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
@@ -52,6 +55,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
 fn listBlocks() !void {
     try game.state.db.listBlocks(&game.state.ui.data.block_options);
+    try listTextureScripts();
 }
 
 fn listTextureScripts() !void {
@@ -81,9 +85,14 @@ fn loadBlock(blockId: i32) !void {
         }
         nameBuf[i] = c;
     }
+    const texture_rgba_data: []gl.Uint = try game.state.allocator.alloc(gl.Uint, blockData.texture.len);
+    @memcpy(texture_rgba_data, &blockData.texture);
 
     game.state.ui.data.block_create_name_buf = nameBuf;
     game.state.ui.data.block_loaded_block_id = blockId;
+    if (game.state.ui.data.texture_rgba_data) |d| game.state.allocator.free(d);
+    game.state.ui.data.texture_rgba_data = texture_rgba_data;
+    entities.screen.initDemoCube();
 }
 
 fn evalTextureFunc() !void {
