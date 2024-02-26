@@ -115,11 +115,6 @@ pub const Game = struct {
                 .codeFont = codeFont,
                 .gameFont = gameFont,
             },
-            .gfx = gameState.Gfx{
-                .ubos = std.AutoHashMap(gl.Uint, gl.Uint).init(allocator),
-                .ssbos = std.AutoHashMap(gl.Uint, gl.Uint).init(allocator),
-                .renderConfigs = std.AutoHashMap(blecs.ecs.entity_t, *gameState.ElementsRendererConfig).init(allocator),
-            },
             .window = window,
         };
         try state.initInternals();

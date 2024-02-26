@@ -593,9 +593,9 @@ pub const Data = struct {
     }
 
     // block crud:
-    fn textureToBlob(texture: [RGBAColorTextureSize]gl.Uint) [TextureBlobArrayStoreSize]u8 {
+    fn textureToBlob(texture: []gl.Uint) [TextureBlobArrayStoreSize]u8 {
         var blob: [TextureBlobArrayStoreSize]u8 = undefined;
-        for (texture, 0..) |t, i| {
+        for (texture, 0..RGBAColorTextureSize) |t, i| {
             const offset = i * 4;
             const a = @as(u8, @truncate(t >> 24));
             const b = @as(u8, @truncate(t >> 16));
@@ -622,7 +622,7 @@ pub const Data = struct {
         return texture;
     }
 
-    pub fn saveBlock(self: *Data, name: []const u8, texture: [RGBAColorTextureSize]gl.Uint) !void {
+    pub fn saveBlock(self: *Data, name: []const u8, texture: []gl.Uint) !void {
         var insertStmt = try self.db.prepare(
             struct {
                 name: sqlite.Text,
@@ -645,7 +645,7 @@ pub const Data = struct {
         };
     }
 
-    pub fn updateBlock(self: *Data, id: i32, name: []const u8, texture: [RGBAColorTextureSize]gl.Uint) !void {
+    pub fn updateBlock(self: *Data, id: i32, name: []const u8, texture: []gl.Uint) !void {
         var updateStmt = try self.db.prepare(
             struct {
                 id: i32,

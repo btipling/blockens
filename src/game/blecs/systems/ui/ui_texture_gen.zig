@@ -32,7 +32,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .w = 2850,
                 .h = 2000,
             });
-            zgui.setNextItemWidth(-1);
             if (zgui.begin("Texture Editor", .{
                 .flags = .{},
             })) {
