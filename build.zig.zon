@@ -30,6 +30,9 @@
             .url = "https://www.sqlite.org/2023/sqlite-autoconf-3440200.tar.gz",
             .hash = "1220808ebe54c856e5e024c42eb97eafc0844f617d47e9e6df11eb2fb881cff071fe",
         },
+        .system_sdk = .{
+            .path = "./libs/system-sdk",
+        },
     },
     .paths = .{
         "",

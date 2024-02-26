@@ -13,28 +13,35 @@ pub const Package = struct {
     pub fn link(pkg: Package, exe: *std.Build.Step.Compile) void {
         exe.root_module.addImport("zglfw", pkg.zglfw);
 
-        const host = (exe.root_module.resolved_target orelse unreachable).result;
+        const b = exe.step.owner;
+        const target = exe.rootModuleTarget();
 
-        switch (host.os.tag) {
+        const system_sdk = b.dependency("system_sdk", .{});
+
+        switch (target.os.tag) {
             .windows => {},
             .macos => {
-                exe.addLibraryPath(.{ .path = path ++ "/macos12/usr/lib" });
+                exe.addLibraryPath(.{ .path = system_sdk.path("macos12/usr/lib").getPath(b) });
             },
-            else => {
-                // We assume Linux (X11)
-                if (host.cpu.arch.isX86()) {
-                    exe.addLibraryPath(.{ .path = path ++ "/linux/lib/x86_64-linux-gnu" });
+            .linux => {
+                if (target.cpu.arch.isX86()) {
+                    exe.addLibraryPath(.{ .path = system_sdk.path("linux/lib/x86_64-linux-gnu").getPath(b) });
                 } else {
-                    exe.addLibraryPath(.{ .path = path ++ "/linux/lib/aarch64-linux-gnu" });
+                    exe.addLibraryPath(.{ .path = system_sdk.path("linux/lib/aarch64-linux-gnu").getPath(b) });
                 }
             },
+            else => {},
         }
 
-        if (pkg.zglfw_c_cpp.linkage) |linkage| {
-            const exeHost = (exe.root_module.resolved_target orelse unreachable).result;
-            if (exeHost.os.tag == .windows and linkage == .dynamic) {
-                exe.defineCMacro("GLFW_DLL", null);
-            }
+        switch (target.os.tag) {
+            .windows => {
+                if (pkg.zglfw_c_cpp.linkage) |linkage| {
+                    if (linkage == .dynamic) {
+                        exe.defineCMacro("GLFW_DLL", null);
+                    }
+                }
+            },
+            else => {},
         }
 
         exe.linkLibrary(pkg.zglfw_c_cpp);
@@ -57,7 +64,7 @@ pub fn package(
     step.addOption(bool, "shared", args.options.shared);
 
     const zglfw = b.addModule("zglfw", .{
-        .root_source_file = .{ .path = path ++ "/src/zglfw.zig" },
+        .root_source_file = .{ .path = thisDir() ++ "/src/zglfw.zig" },
     });
 
     const zglfw_c_cpp = if (args.options.shared) blk: {
@@ -78,20 +85,20 @@ pub fn package(
         .optimize = optimize,
     });
 
-    zglfw_c_cpp.addIncludePath(.{ .path = path ++ "/libs/glfw/include" });
+    zglfw_c_cpp.addIncludePath(.{ .path = thisDir() ++ "/libs/glfw/include" });
     zglfw_c_cpp.linkLibC();
 
-    const host = (zglfw_c_cpp.root_module.resolved_target orelse unreachable).result;
+    const system_sdk = b.dependency("system_sdk", .{});
 
-    const src_dir = path ++ "/libs/glfw/src/";
-
-    switch (host.os.tag) {
+    const src_dir = thisDir() ++ "/libs/glfw/src/";
+    switch (target.result.os.tag) {
         .windows => {
-            zglfw_c_cpp.root_module.linkSystemLibrary("gdi32", .{});
-            zglfw_c_cpp.root_module.linkSystemLibrary("user32", .{});
-            zglfw_c_cpp.root_module.linkSystemLibrary("shell32", .{});
+            zglfw_c_cpp.linkSystemLibrary("gdi32");
+            zglfw_c_cpp.linkSystemLibrary("user32");
+            zglfw_c_cpp.linkSystemLibrary("shell32");
             zglfw_c_cpp.addCSourceFiles(.{
                 .files = &.{
+                    src_dir ++ "platform.c",
                     src_dir ++ "monitor.c",
                     src_dir ++ "init.c",
                     src_dir ++ "vulkan.c",
@@ -100,6 +107,10 @@ pub fn package(
                     src_dir ++ "window.c",
                     src_dir ++ "osmesa_context.c",
                     src_dir ++ "egl_context.c",
+                    src_dir ++ "null_init.c",
+                    src_dir ++ "null_monitor.c",
+                    src_dir ++ "null_window.c",
+                    src_dir ++ "null_joystick.c",
                     src_dir ++ "wgl_context.c",
                     src_dir ++ "win32_thread.c",
                     src_dir ++ "win32_init.c",
@@ -107,17 +118,20 @@ pub fn package(
                     src_dir ++ "win32_time.c",
                     src_dir ++ "win32_joystick.c",
                     src_dir ++ "win32_window.c",
+                    src_dir ++ "win32_module.c",
                 },
                 .flags = &.{"-D_GLFW_WIN32"},
             });
         },
         .macos => {
             zglfw_c_cpp.addFrameworkPath(
-                .{ .path = path ++ "/macos12/System/Library/Frameworks" },
+                .{ .path = system_sdk.path("macos12/System/Library/Frameworks").getPath(b) },
             );
-            zglfw_c_cpp.addSystemIncludePath(.{ .path = path ++ "/macos12/usr/include" });
-            zglfw_c_cpp.addLibraryPath(.{ .path = path ++ "/macos12/usr/lib" });
-            zglfw_c_cpp.root_module.linkSystemLibrary("objc", .{});
+            zglfw_c_cpp.addSystemIncludePath(.{
+                .path = system_sdk.path("macos12/usr/include").getPath(b),
+            });
+            zglfw_c_cpp.addLibraryPath(.{ .path = system_sdk.path("macos12/usr/lib").getPath(b) });
+            zglfw_c_cpp.linkSystemLibrary("objc");
             zglfw_c_cpp.linkFramework("IOKit");
             zglfw_c_cpp.linkFramework("CoreFoundation");
             zglfw_c_cpp.linkFramework("Metal");
@@ -127,6 +141,7 @@ pub fn package(
             zglfw_c_cpp.linkFramework("Foundation");
             zglfw_c_cpp.addCSourceFiles(.{
                 .files = &.{
+                    src_dir ++ "platform.c",
                     src_dir ++ "monitor.c",
                     src_dir ++ "init.c",
                     src_dir ++ "vulkan.c",
@@ -135,8 +150,14 @@ pub fn package(
                     src_dir ++ "window.c",
                     src_dir ++ "osmesa_context.c",
                     src_dir ++ "egl_context.c",
-                    src_dir ++ "nsgl_context.m",
+                    src_dir ++ "null_init.c",
+                    src_dir ++ "null_monitor.c",
+                    src_dir ++ "null_window.c",
+                    src_dir ++ "null_joystick.c",
                     src_dir ++ "posix_thread.c",
+                    src_dir ++ "posix_module.c",
+                    src_dir ++ "posix_poll.c",
+                    src_dir ++ "nsgl_context.m",
                     src_dir ++ "cocoa_time.c",
                     src_dir ++ "cocoa_joystick.m",
                     src_dir ++ "cocoa_init.m",
@@ -146,17 +167,23 @@ pub fn package(
                 .flags = &.{"-D_GLFW_COCOA"},
             });
         },
-        else => {
-            // We assume Linux (X11)
-            zglfw_c_cpp.addSystemIncludePath(.{ .path = path ++ "/linux/include" });
-            if (host.cpu.arch.isX86()) {
-                zglfw_c_cpp.addLibraryPath(.{ .path = path ++ "/linux/lib/x86_64-linux-gnu" });
+        .linux => {
+            zglfw_c_cpp.addSystemIncludePath(.{
+                .path = system_sdk.path("linux/include").getPath(b),
+            });
+            if (target.result.cpu.arch.isX86()) {
+                zglfw_c_cpp.addLibraryPath(.{
+                    .path = system_sdk.path("linux/lib/x86_64-linux-gnu").getPath(b),
+                });
             } else {
-                zglfw_c_cpp.addLibraryPath(.{ .path = path ++ "/linux/lib/aarch64-linux-gnu" });
+                zglfw_c_cpp.addLibraryPath(.{
+                    .path = system_sdk.path("linux/lib/aarch64-linux-gnu").getPath(b),
+                });
             }
-            zglfw_c_cpp.root_module.linkSystemLibrary("X11", .{});
+            zglfw_c_cpp.linkSystemLibrary("X11");
             zglfw_c_cpp.addCSourceFiles(.{
                 .files = &.{
+                    src_dir ++ "platform.c",
                     src_dir ++ "monitor.c",
                     src_dir ++ "init.c",
                     src_dir ++ "vulkan.c",
@@ -165,9 +192,16 @@ pub fn package(
                     src_dir ++ "window.c",
                     src_dir ++ "osmesa_context.c",
                     src_dir ++ "egl_context.c",
-                    src_dir ++ "glx_context.c",
+                    src_dir ++ "null_init.c",
+                    src_dir ++ "null_monitor.c",
+                    src_dir ++ "null_window.c",
+                    src_dir ++ "null_joystick.c",
                     src_dir ++ "posix_time.c",
                     src_dir ++ "posix_thread.c",
+                    src_dir ++ "posix_module.c",
+                    src_dir ++ "posix_poll.c",
+                    src_dir ++ "egl_context.c",
+                    src_dir ++ "glx_context.c",
                     src_dir ++ "linux_joystick.c",
                     src_dir ++ "xkb_unicode.c",
                     src_dir ++ "x11_init.c",
@@ -177,6 +211,7 @@ pub fn package(
                 .flags = &.{"-D_GLFW_X11"},
             });
         },
+        else => {},
     }
 
     return .{
@@ -212,4 +247,8 @@ pub fn runTests(
     zglfw_pkg.link(tests);
 
     return &b.addRunArtifact(tests).step;
+}
+
+inline fn thisDir() []const u8 {
+    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
