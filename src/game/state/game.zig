@@ -105,6 +105,7 @@ pub const Game = struct {
         try self.initScript();
         try self.initUIData();
         try self.initGfx();
+        try self.populateUIOptions();
     }
 
     pub fn deinit(self: *Game) void {
@@ -151,5 +152,10 @@ pub const Game = struct {
 
     pub fn initScript(self: *Game) !void {
         self.script = try script.Script.init(self.allocator);
+    }
+
+    pub fn populateUIOptions(self: *Game) !void {
+        try self.db.listBlocks(&self.ui.data.block_options);
+        try self.db.listTextureScripts(&self.ui.data.texture_script_options);
     }
 };

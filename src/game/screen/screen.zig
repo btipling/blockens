@@ -31,6 +31,7 @@ pub fn showSettingsScreen() void {
         game.state.entities.screen,
         blecs.components.screen.Screen,
     ) orelse unreachable;
+    blecs.entities.screen.clearDemoObjects();
     blecs.helpers.delete_children(game.state.world, game.state.entities.screen);
     screen.current = blecs.helpers.new_child(game.state.world, game.state.entities.screen);
     blecs.ecs.add(game.state.world, screen.current, blecs.components.screen.Settings);

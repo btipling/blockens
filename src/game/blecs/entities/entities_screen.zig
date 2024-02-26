@@ -168,10 +168,7 @@ fn initSettingsCamera() void {
     ecs.add_pair(game.state.world, camera, ecs.ChildOf, settings_data);
 }
 
-pub fn initDemoCube() void {
-    if (game.state.ui.data.texture_rgba_data == null) {
-        return;
-    }
+pub fn clearDemoObjects() void {
     const world = game.state.world;
     var it = ecs.children(world, settings_data);
     while (ecs.iter_next(&it)) {
@@ -180,6 +177,14 @@ pub fn initDemoCube() void {
             _ = ecs.add(world, entity, components.gfx.NeedsDeletion);
         }
     }
+}
+
+pub fn initDemoCube() void {
+    if (game.state.ui.data.texture_rgba_data == null) {
+        return;
+    }
+    const world = game.state.world;
+    clearDemoObjects();
     const c_dc = helpers.new_child(world, settings_data);
     _ = ecs.set(world, c_dc, components.shape.Shape, .{ .shape_type = .cube });
     const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
