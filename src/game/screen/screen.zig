@@ -15,14 +15,14 @@ pub fn showBlockTextureGen() void {
     blecs.ecs.add(game.state.world, screen.current, blecs.components.screen.TextureGen);
 }
 
-pub fn showBlockConfiguration() void {
+pub fn showBlockEditoruration() void {
     showSettingsScreen();
     const screen: *const blecs.components.screen.Screen = blecs.ecs.get(
         game.state.world,
         game.state.entities.screen,
         blecs.components.screen.Screen,
     ) orelse unreachable;
-    blecs.ecs.add(game.state.world, screen.current, blecs.components.screen.BlockConfig);
+    blecs.ecs.add(game.state.world, screen.current, blecs.components.screen.BlockEditor);
 }
 
 pub fn showSettingsScreen() void {

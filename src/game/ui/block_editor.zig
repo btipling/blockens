@@ -73,7 +73,7 @@ pub const BlockEditor = struct {
             try self.drawBlockOptions();
             if (self.loadedBlockId != 0) {
                 zgui.sameLine(.{});
-                try self.drawBlockConfig();
+                try self.drawBlockEditor();
             }
         }
         zgui.end();
@@ -172,7 +172,7 @@ pub const BlockEditor = struct {
         zgui.endChild();
     }
 
-    fn drawBlockConfig(self: *BlockEditor) !void {
+    fn drawBlockEditor(self: *BlockEditor) !void {
         if (zgui.beginChild(
             "Configure Block",
             .{

@@ -40,10 +40,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     if (zgui.menuItem("Block Textures", .{})) {
                         screen_helpers.showBlockTextureGen();
                     }
-                    if (zgui.menuItem("Block", .{})) {
-                        screen_helpers.showBlockConfiguration();
+                    if (zgui.menuItem("Block Editor", .{})) {
+                        screen_helpers.showBlockEditoruration();
                     }
-                    if (zgui.menuItem("Chunk", .{})) {
+                    if (zgui.menuItem("Chunk Editor", .{})) {
                         screen_helpers.showSettingsScreen();
                     }
                     if (zgui.menuItem("Character", .{})) {

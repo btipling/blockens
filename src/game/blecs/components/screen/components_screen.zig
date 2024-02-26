@@ -64,7 +64,7 @@ pub const NeedsAnimation = struct {};
 
 // other screens
 pub const TextureGen = struct {};
-pub const BlockConfig = struct {};
+pub const BlockEditor = struct {};
 
 pub fn init() void {
     ecs.COMPONENT(game.state.world, Screen);
@@ -88,5 +88,5 @@ pub fn init() void {
     ecs.TAG(game.state.world, NeedsAnimation);
 
     ecs.TAG(game.state.world, TextureGen);
-    ecs.TAG(game.state.world, BlockConfig);
+    ecs.TAG(game.state.world, BlockEditor);
 }

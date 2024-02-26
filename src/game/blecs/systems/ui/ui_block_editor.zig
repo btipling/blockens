@@ -12,12 +12,12 @@ const screen_helpers = @import("../../../screen/screen.zig");
 
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "UIBlockConfigSystem", ecs.OnStore, @constCast(&s));
+    ecs.SYSTEM(game.state.world, "UIBlockEditorSystem", ecs.OnStore, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
-    desc.query.filter.terms[0] = .{ .id = ecs.id(components.screen.BlockConfig) };
+    desc.query.filter.terms[0] = .{ .id = ecs.id(components.screen.BlockEditor) };
     desc.run = run;
     return desc;
 }
