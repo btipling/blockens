@@ -99,7 +99,7 @@ pub const Game = struct {
         _ = window.setCursorPosCallback(cursorPosCallback);
 
         zgui.init(allocator);
-        const glsl_version: [*c]const u8 = "#version 450";
+        const glsl_version: [:0]const u8 = "#version 450";
         zgui.backend.initWithGlSlVersion(window, glsl_version);
         zmesh.init(allocator);
         zstbi.init(allocator);

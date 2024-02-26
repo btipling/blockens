@@ -2,17 +2,13 @@ const gui = @import("gui.zig");
 
 pub fn initWithGlSlVersion(
     window: *const anyopaque, // zglfw.Window
-    glsl_version: ?[*c]const u8, // e.g. "#version 130"
+    glsl_version: ?[:0]const u8, // e.g. "#version 130"
 ) void {
     if (!ImGui_ImplGlfw_InitForOpenGL(window, true)) {
         unreachable;
     }
 
-    if (glsl_version) |v| {
-        ImGui_ImplOpenGL3_Init(v);
-    } else {
-        ImGui_ImplOpenGL3_Init(null);
-    }
+    ImGui_ImplOpenGL3_Init(@ptrCast(glsl_version));
 }
 
 pub fn init(
