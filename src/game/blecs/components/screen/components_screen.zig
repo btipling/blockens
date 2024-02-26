@@ -2,7 +2,6 @@ const gl = @import("zopengl").bindings;
 const ecs = @import("zflecs");
 const game = @import("../../../game.zig");
 const math = @import("../../../math/math.zig");
-pub const texture_gen = @import("components_texture_gen.zig");
 
 pub const Screen = struct {
     current: u64 = 0,
@@ -63,6 +62,10 @@ pub const Settings = struct {};
 pub const Updated = struct {};
 pub const NeedsAnimation = struct {};
 
+// other screens
+pub const TextureGen = struct {};
+pub const BlockConfig = struct {};
+
 pub fn init() void {
     ecs.COMPONENT(game.state.world, Screen);
 
@@ -83,5 +86,7 @@ pub fn init() void {
     ecs.TAG(game.state.world, Settings);
     ecs.TAG(game.state.world, Updated);
     ecs.TAG(game.state.world, NeedsAnimation);
-    texture_gen.init();
+
+    ecs.TAG(game.state.world, TextureGen);
+    ecs.TAG(game.state.world, BlockConfig);
 }

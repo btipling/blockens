@@ -46,7 +46,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 }
             }
             const ubo = game.state.gfx.ubos.get(c[i].ubo) orelse {
-                std.debug.print("no ubo yet\n", .{});
                 continue;
             };
             var camera_position: @Vector(4, gl.Float) = undefined;

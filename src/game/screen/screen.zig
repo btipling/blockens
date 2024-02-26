@@ -12,7 +12,17 @@ pub fn showBlockTextureGen() void {
         game.state.entities.screen,
         blecs.components.screen.Screen,
     ) orelse unreachable;
-    blecs.ecs.add(game.state.world, screen.current, blecs.components.screen.texture_gen.TextureGen);
+    blecs.ecs.add(game.state.world, screen.current, blecs.components.screen.TextureGen);
+}
+
+pub fn showBlockConfiguration() void {
+    showSettingsScreen();
+    const screen: *const blecs.components.screen.Screen = blecs.ecs.get(
+        game.state.world,
+        game.state.entities.screen,
+        blecs.components.screen.Screen,
+    ) orelse unreachable;
+    blecs.ecs.add(game.state.world, screen.current, blecs.components.screen.BlockConfig);
 }
 
 pub fn showSettingsScreen() void {

@@ -17,7 +17,7 @@ pub fn init() void {
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
-    desc.query.filter.terms[0] = .{ .id = ecs.id(components.screen.texture_gen.TextureGen) };
+    desc.query.filter.terms[0] = .{ .id = ecs.id(components.screen.TextureGen) };
     desc.run = run;
     return desc;
 }
