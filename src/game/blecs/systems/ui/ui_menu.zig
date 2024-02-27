@@ -37,7 +37,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     if (zgui.menuItem("World", .{})) {
                         screen_helpers.showWorldEditor();
                     }
-                    if (zgui.menuItem("Block", .{})) {
+                    if (zgui.menuItem("Textures", .{})) {
                         screen_helpers.showBlockTextureGen();
                     }
                     if (zgui.menuItem("Block", .{})) {

@@ -83,7 +83,7 @@ pub const Script = struct {
         return rv;
     }
 
-    pub fn evalChunkFunc(self: *Script, buf: [maxLuaScriptSize]u8) ![chunk.chunkSize]i32 {
+    pub fn evalChunkFunc(self: *Script, buf: [maxLuaScriptSize]u8) ![]i32 {
         std.debug.print("evalChunkFunc from lua {d}\n", .{buf.len});
         self.luaInstance.setTop(0);
         var luaCode: [maxLuaScriptSize]u8 = [_]u8{0} ** maxLuaScriptSize;
@@ -118,21 +118,22 @@ pub const Script = struct {
         std.debug.print("evalChunkFunc: table size: {d}\n", .{ts});
         self.luaInstance.pop(1);
         if (self.luaInstance.isTable(-1) == false) {
-            std.log.err("evalChunkFunc: chunks is not back to a table", .{});
+            std.log.err("evalChunkFunc: chunks is not back to a table\n", .{});
             return ScriptError.ExpectedTable;
         }
         var c: [chunk.chunkSize]i32 = [_]i32{0} ** chunk.chunkSize;
         for (1..(ts + 1)) |i| {
             _ = self.luaInstance.rawGetIndex(-1, @intCast(i));
             const blockId = self.luaInstance.toInteger(-1) catch |err| {
-                std.log.err("evalChunkFunc: failed to get color", .{});
+                std.log.err("evalChunkFunc: failed to get color\n", .{});
                 return err;
             };
             c[i - 1] = @as(gl.Int, @intCast(blockId));
             self.luaInstance.pop(1);
         }
-        std.debug.print("\n", .{});
-        return c;
+        const rv: []i32 = try self.allocator.alloc(i32, c.len);
+        @memcpy(rv, &c);
+        return rv;
     }
 
     pub fn dataScriptToScript(scriptData: [360_001]u8) [maxLuaScriptSize]u8 {

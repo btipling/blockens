@@ -8,7 +8,6 @@ const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
 const script = @import("../../../script/script.zig");
-const screen_helpers = @import("../../../screen/screen.zig");
 
 pub fn init() void {
     const s = system();

@@ -8,7 +8,6 @@ const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
 const script = @import("../../../script/script.zig");
-const screen_helpers = @import("../../../screen/screen.zig");
 const menus = @import("../../../ui/menus.zig");
 
 pub fn init() void {
@@ -166,13 +165,13 @@ fn toggleWireframe() void {
 }
 
 fn evalChunkFunc() !void {
-    // TODO figure out how to clear chunk
-    const cData = game.state.script.evalChunkFunc(game.state.ui.data.chunk_buf) catch |err| {
+    const chunk_data = game.state.script.evalChunkFunc(game.state.ui.data.chunk_buf) catch |err| {
         std.debug.print("Error evaluating chunk function: {}\n", .{err});
         return;
     };
-    _ = cData;
-    // TODO figure out what to do with evaled chunk data
+    if (game.state.ui.data.chunk_demo_data) |d| game.state.allocator.free(d);
+    game.state.ui.data.chunk_demo_data = chunk_data;
+    entities.screen.initDemoChunk();
 }
 
 fn floatFromChunkBuf(buf: []u8) f32 {
@@ -185,14 +184,14 @@ fn floatFromChunkBuf(buf: []u8) f32 {
 }
 
 fn evalWorldChunkFunc() !void {
-    // TODO figure out how to clear chunks
-    const cData = try game.state.script.evalChunkFunc(game.state.ui.data.chunk_buf);
+    const chunk_data = try game.state.script.evalChunkFunc(game.state.ui.data.chunk_buf);
     const x = floatFromChunkBuf(&game.state.ui.data.chunk_x_buf);
     const y = floatFromChunkBuf(&game.state.ui.data.chunk_y_buf);
     const z = floatFromChunkBuf(&game.state.ui.data.chunk_z_buf);
     std.debug.print("Writing chunk to world at position: {}, {}, {}\n", .{ x, y, z });
-    _ = cData;
-    // TODO: figure out what to do with evaled chunk data
+    if (game.state.ui.data.chunk_demo_data) |d| game.state.allocator.free(d);
+    game.state.ui.data.chunk_demo_data = chunk_data;
+    // TODO: figure out what to do with evaled chunk data for world
 }
 
 fn listChunkScripts() !void {

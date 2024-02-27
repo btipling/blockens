@@ -263,3 +263,28 @@ pub fn initDemoCube() void {
     _ = ecs.set(world, c_t3, components.shape.DemoCubeTexture, .{ .beg = 16 * 16 * 2, .end = 16 * 16 * 3 });
     _ = ecs.add(world, c_t3, components.shape.NeedsSetup);
 }
+
+pub fn initDemoChunk() void {
+    if (game.state.ui.data.chunk_demo_data == null) {
+        return;
+    }
+    const world = game.state.world;
+    clearDemoObjects();
+    const c_dch = helpers.new_child(world, settings_data);
+    _ = ecs.set(world, c_dch, components.shape.Shape, .{ .shape_type = .cube });
+    const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
+    _ = ecs.set(world, c_dch, components.shape.Color, components.shape.Color.fromVec(cr_c));
+    _ = ecs.set(world, c_dch, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
+    _ = ecs.set(world, c_dch, components.shape.Rotation, .{
+        .rot = game.state.ui.data.demo_cube_rotation,
+    });
+    _ = ecs.set(world, c_dch, components.shape.Translation, .{
+        .translation = game.state.ui.data.demo_cube_translation,
+    });
+    _ = ecs.set(world, c_dch, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 * 3 });
+    _ = ecs.add(world, c_dch, components.shape.NeedsSetup);
+    _ = ecs.add(world, c_dch, components.Debug);
+    _ = ecs.set(world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
+        .translation = game.state.ui.data.demo_cube_pp_translation,
+    });
+}

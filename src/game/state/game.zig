@@ -51,6 +51,7 @@ pub const UIData = struct {
     chunk_script_options: std.ArrayList(data.chunkScriptOption) = undefined,
     chunk_loaded_script_id: i32 = 0,
     chunk_script_color: [3]f32 = [_]f32{0} ** 3,
+    chunk_demo_data: ?[]i32 = null,
     demo_cube_rotation: @Vector(4, gl.Float) = zm.matToQuat(zm.rotationY(0 * std.math.pi)),
     demo_cube_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 0, 0, 0, 0 },
     demo_cube_pp_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ -0.825, 0.650, 0, 0 },
@@ -63,6 +64,7 @@ pub const UIData = struct {
         self.block_options.deinit();
         self.chunk_script_options.deinit();
         if (self.texture_rgba_data) |d| allocator.free(d);
+        if (self.chunk_demo_data) |d| allocator.free(d);
     }
 };
 
