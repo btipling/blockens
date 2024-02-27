@@ -33,17 +33,17 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                     zgui.endMenu();
                 }
-                if (zgui.beginMenu("Build Tools", true)) {
-                    if (zgui.menuItem("World Editor", .{})) {
+                if (zgui.beginMenu("Editors", true)) {
+                    if (zgui.menuItem("World", .{})) {
                         screen_helpers.showWorldEditor();
                     }
-                    if (zgui.menuItem("Block Textures", .{})) {
+                    if (zgui.menuItem("Block", .{})) {
                         screen_helpers.showBlockTextureGen();
                     }
-                    if (zgui.menuItem("Block Editor", .{})) {
+                    if (zgui.menuItem("Block", .{})) {
                         screen_helpers.showBlockEditor();
                     }
-                    if (zgui.menuItem("Chunk Editor", .{})) {
+                    if (zgui.menuItem("Chunk", .{})) {
                         screen_helpers.showChunkEditor();
                     }
                     if (zgui.menuItem("Character", .{})) {

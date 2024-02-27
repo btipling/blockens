@@ -43,6 +43,14 @@ pub const UIData = struct {
     block_create_name_buf: [data.maxBlockSizeName]u8 = [_]u8{0} ** data.maxBlockSizeName,
     block_update_name_buf: [data.maxBlockSizeName]u8 = [_]u8{0} ** data.maxBlockSizeName,
     block_loaded_block_id: i32 = 0,
+    chunk_name_buf: [script.maxLuaScriptNameSize]u8 = [_]u8{0} ** script.maxLuaScriptNameSize,
+    chunk_buf: [script.maxLuaScriptSize]u8 = [_]u8{0} ** script.maxLuaScriptSize,
+    chunk_x_buf: [5]u8 = [_]u8{0} ** 5,
+    chunk_y_buf: [5]u8 = [_]u8{0} ** 5,
+    chunk_z_buf: [5]u8 = [_]u8{0} ** 5,
+    chunk_script_options: std.ArrayList(data.chunkScriptOption) = undefined,
+    chunk_loaded_script_id: i32 = 0,
+    chunk_script_color: [3]f32 = [_]f32{0} ** 3,
     demo_cube_rotation: @Vector(4, gl.Float) = zm.matToQuat(zm.rotationY(0 * std.math.pi)),
     demo_cube_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 0, 0, 0, 0 },
     demo_cube_pp_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ -0.825, 0.650, 0, 0 },
@@ -53,6 +61,7 @@ pub const UIData = struct {
     fn deinit(self: *UIData, allocator: std.mem.Allocator) void {
         self.texture_script_options.deinit();
         self.block_options.deinit();
+        self.chunk_script_options.deinit();
         if (self.texture_rgba_data) |d| allocator.free(d);
     }
 };
@@ -139,6 +148,7 @@ pub const Game = struct {
         self.ui.data.* = UIData{
             .texture_script_options = std.ArrayList(data.scriptOption).init(self.allocator),
             .block_options = std.ArrayList(data.blockOption).init(self.allocator),
+            .chunk_script_options = std.ArrayList(data.chunkScriptOption).init(self.allocator),
         };
     }
 
