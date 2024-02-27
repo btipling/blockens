@@ -62,9 +62,12 @@ pub const Settings = struct {};
 pub const Updated = struct {};
 pub const NeedsAnimation = struct {};
 
-// other screens
+// setting screens
 pub const TextureGen = struct {};
 pub const BlockEditor = struct {};
+pub const ChunkEditor = struct {};
+pub const CharacterEditor = struct {};
+pub const WorldEditor = struct {};
 
 pub fn init() void {
     ecs.COMPONENT(game.state.world, Screen);
@@ -89,4 +92,7 @@ pub fn init() void {
 
     ecs.TAG(game.state.world, TextureGen);
     ecs.TAG(game.state.world, BlockEditor);
+    ecs.TAG(game.state.world, ChunkEditor);
+    ecs.TAG(game.state.world, CharacterEditor);
+    ecs.TAG(game.state.world, WorldEditor);
 }

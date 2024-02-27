@@ -33,7 +33,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
             if (input.keys.pressedKey(.F1)) {
-                screen_helpers.showSettingsScreen();
+                screen_helpers.showChunkEditor();
             }
             if (input.keys.pressedKey(.F2)) {
                 screen_helpers.showGameScreen();
