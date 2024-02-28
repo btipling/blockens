@@ -101,6 +101,8 @@ pub const Gfx = struct {
     renderConfigs: std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig) = undefined,
 };
 
+pub const Block = struct { data: data.block, entity_id: blecs.ecs.entity_t };
+
 pub const Game = struct {
     allocator: std.mem.Allocator = undefined,
     window: *glfw.Window = undefined,
@@ -111,6 +113,7 @@ pub const Game = struct {
     input: Input = .{},
     ui: UI = .{},
     gfx: Gfx = .{},
+    blocks: std.AutoHashMap(u8, *Block) = undefined,
     quit: bool = false,
 
     pub fn initInternals(self: *Game) !void {
@@ -118,6 +121,7 @@ pub const Game = struct {
         try self.initScript();
         try self.initUIData();
         try self.initGfx();
+        try self.initBlock();
         try self.populateUIOptions();
     }
 
@@ -132,6 +136,11 @@ pub const Game = struct {
         self.script.deinit();
         self.db.deinit();
         self.ui.data.deinit(self.allocator);
+        var blocks = self.blocks.valueIterator();
+        while (blocks.next()) |b| {
+            self.allocator.destroy(b);
+        }
+        self.blocks.deinit();
         self.allocator.destroy(self.ui.data);
     }
 
@@ -162,6 +171,10 @@ pub const Game = struct {
             .ssbos = std.AutoHashMap(gl.Uint, gl.Uint).init(self.allocator),
             .renderConfigs = std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig).init(self.allocator),
         };
+    }
+
+    pub fn initBlock(self: *Game) !void {
+        self.blocks = std.AutoHashMap(u8, *Block).init(self.allocator);
     }
 
     pub fn initScript(self: *Game) !void {

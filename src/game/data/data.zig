@@ -115,7 +115,7 @@ pub const blockOption = struct {
 pub const block = struct {
     id: i32,
     name: [21]u8,
-    texture: [RGBAColorTextureSize]gl.Uint,
+    texture: []gl.Uint,
 };
 
 pub const chunkScriptOptionSQL = struct {
@@ -166,13 +166,13 @@ pub const chunkData = struct {
 
 pub const Data = struct {
     db: sqlite.Database,
-    alloc: std.mem.Allocator,
+    allocator: std.mem.Allocator,
 
-    pub fn init(alloc: std.mem.Allocator) !Data {
+    pub fn init(allocator: std.mem.Allocator) !Data {
         const db = try sqlite.Database.init(.{ .path = "./gamedata.db" });
         return Data{
             .db = db,
-            .alloc = alloc,
+            .allocator = allocator,
         };
     }
 
@@ -609,7 +609,7 @@ pub const Data = struct {
         return blob;
     }
 
-    fn blobToTexture(blob: sqlite.Blob) [RGBAColorTextureSize]gl.Uint {
+    fn blobToTexture(self: *Data, blob: sqlite.Blob) ![]gl.Uint {
         var texture: [RGBAColorTextureSize]gl.Uint = undefined;
         for (texture, 0..) |_, i| {
             const offset = i * 4;
@@ -619,7 +619,10 @@ pub const Data = struct {
             const r = @as(gl.Uint, @intCast(blob.data[offset + 3]));
             texture[i] = a << 24 | b << 16 | g << 8 | r;
         }
-        return texture;
+
+        const rv: []gl.Uint = try self.allocator.alloc(gl.Uint, texture.len);
+        @memcpy(rv, &texture);
+        return rv;
     }
 
     pub fn saveBlock(self: *Data, name: []const u8, texture: []gl.Uint) !void {
@@ -694,6 +697,7 @@ pub const Data = struct {
         }
     }
 
+    // caller owns texture data slice
     pub fn loadBlock(self: *Data, id: i32, data: *block) !void {
         var selectStmt = try self.db.prepare(
             struct {
@@ -715,7 +719,7 @@ pub const Data = struct {
             while (try selectStmt.step()) |r| {
                 data.id = r.id;
                 data.name = sqlNameToArray(r.name);
-                data.texture = blobToTexture(r.texture);
+                data.texture = try self.blobToTexture(r.texture);
                 return;
             }
         }

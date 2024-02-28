@@ -82,7 +82,9 @@ fn loadBlock(blockId: i32) !void {
         nameBuf[i] = c;
     }
     const texture_rgba_data: []gl.Uint = try game.state.allocator.alloc(gl.Uint, blockData.texture.len);
-    @memcpy(texture_rgba_data, &blockData.texture);
+    @memcpy(texture_rgba_data, blockData.texture);
+    game.state.allocator.free(blockData.texture);
+    // TODO: use blocks on state and update blocks state here
 
     game.state.ui.data.block_create_name_buf = nameBuf;
     game.state.ui.data.block_loaded_block_id = blockId;
