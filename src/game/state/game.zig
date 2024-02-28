@@ -101,7 +101,11 @@ pub const Gfx = struct {
     renderConfigs: std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig) = undefined,
 };
 
-pub const Block = struct { data: data.block, entity_id: blecs.ecs.entity_t };
+pub const Block = struct {
+    id: u8,
+    data: data.block,
+    entity_id: blecs.ecs.entity_t,
+};
 
 pub const Game = struct {
     allocator: std.mem.Allocator = undefined,
@@ -138,7 +142,8 @@ pub const Game = struct {
         self.ui.data.deinit(self.allocator);
         var blocks = self.blocks.valueIterator();
         while (blocks.next()) |b| {
-            self.allocator.destroy(b);
+            self.allocator.free(b.*.data.texture);
+            self.allocator.destroy(b.*);
         }
         self.blocks.deinit();
         self.allocator.destroy(self.ui.data);

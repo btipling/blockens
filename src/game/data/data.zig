@@ -113,9 +113,9 @@ pub const blockOption = struct {
 };
 
 pub const block = struct {
-    id: i32,
-    name: [21]u8,
-    texture: []gl.Uint,
+    id: i32 = 0,
+    name: [21]u8 = [_]u8{0} ** 21,
+    texture: []gl.Uint = undefined,
 };
 
 pub const chunkScriptOptionSQL = struct {
