@@ -41,12 +41,14 @@ pub fn initBlock(block_id: u8) void {
         game.state.allocator.destroy(b);
     }
     game.state.blocks.put(block_id, block) catch unreachable;
+    // TODO add block component
+    // TODO add block instance shape ya? I think so.
 }
 
 pub fn deinitBlock(block_id: u8) void {
     const world = game.state.world;
     if (game.state.blocks.get(block_id)) |b| {
-        // TODO clear out block entity shapes and instances
+        // TODO clear out block entity shapes and instances, delete with needs deletion
         ecs.delete(world, b.entity_id);
         game.state.allocator.free(b.data.texture);
         game.state.allocator.destroy(b);
