@@ -5,6 +5,7 @@ const game = @import("../../game.zig");
 pub const shape = @import("components_shape.zig");
 pub const gfx = @import("components_gfx.zig");
 pub const ui = @import("components_ui.zig");
+pub const block = @import("components_block.zig");
 pub const screen = @import("screen/components_screen.zig");
 
 pub const Time = struct {
@@ -31,4 +32,5 @@ pub fn init() void {
     gfx.init();
     ui.init();
     screen.init();
+    block.init();
 }

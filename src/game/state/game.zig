@@ -91,6 +91,8 @@ pub const ElementsRendererConfig = struct {
     demo_cube_texture: ?struct { usize, usize } = null,
     animation_binding_point: ?gl.Uint = null,
     keyframes: ?[]AnimationKeyFrame = null,
+    is_instanced: bool = false,
+    block_id: ?u8 = 0,
 };
 
 pub const Gfx = struct {

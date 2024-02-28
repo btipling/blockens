@@ -70,6 +70,10 @@ pub const Translation = struct {
     }
 };
 
+pub const Position = struct {
+    position: @Vector(4, gl.Float) = undefined,
+};
+
 pub const DemoCubeTexture = struct {
     beg: usize,
     end: usize,
@@ -82,12 +86,15 @@ pub const UBO = struct {
 pub const NeedsSetup = struct {};
 
 pub fn init() void {
-    ecs.COMPONENT(game.state.world, Shape);
-    ecs.COMPONENT(game.state.world, Color);
-    ecs.COMPONENT(game.state.world, Rotation);
-    ecs.COMPONENT(game.state.world, Scale);
-    ecs.COMPONENT(game.state.world, Translation);
-    ecs.COMPONENT(game.state.world, UBO);
-    ecs.COMPONENT(game.state.world, DemoCubeTexture);
-    ecs.TAG(game.state.world, NeedsSetup);
+    const world = game.state.world;
+    ecs.COMPONENT(world, Shape);
+    ecs.COMPONENT(world, Color);
+    ecs.COMPONENT(world, Rotation);
+    ecs.COMPONENT(world, Scale);
+    ecs.COMPONENT(world, Translation);
+    ecs.COMPONENT(world, UBO);
+    ecs.COMPONENT(world, DemoCubeTexture);
+    ecs.TAG(world, NeedsSetup);
+
+    ecs.COMPONENT(world, Position);
 }

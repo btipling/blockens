@@ -59,6 +59,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .normals = mesh_data.normals,
                 .keyframes = e.keyframes,
                 .animation_binding_point = e.animation_binding_point,
+                .is_instanced = e.is_instanced,
+                .block_id = e.block_id,
             };
             const erc_id = ecs.new_id(world);
             game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
@@ -86,11 +88,20 @@ const shaders = struct {
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
     }
     fn genFragmentShader(e: *const extractions, mesh_data: *const meshData) [:0]const u8 {
+        var has_texture = false;
+        if (mesh_data.texcoords != null) {
+            if (e.block_id != null) {
+                has_texture = true;
+            }
+            if (e.has_demo_cube_texture) {
+                has_texture = true;
+            }
+        }
         const f_cfg = gfx.shadergen.fragment.FragmentShaderGen.fragmentShaderConfig{
             .debug = e.debug,
             .color = e.color,
             .has_texture_coords = mesh_data.texcoords != null,
-            .has_texture = e.has_demo_cube_texture and mesh_data.texcoords != null,
+            .has_texture = has_texture,
             .has_normals = mesh_data.normals != null,
         };
         return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;
@@ -113,6 +124,18 @@ const extractions = struct {
     has_animation_block: bool = false,
     animation_binding_point: ?gl.Uint = null,
     keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = null,
+    is_instanced: bool = false,
+    block_id: ?u8 = null,
+
+    fn extractBlock(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
+        if (ecs.get_id(world, entity, ecs.id(components.block.Block))) |opaque_ptr| {
+            const b: *const components.block.Block = @ptrCast(@alignCast(opaque_ptr));
+            e.block_id = b.block_id;
+            if (ecs.has_id(world, entity, ecs.id(components.block.BlockInstance))) {
+                e.is_instanced = true;
+            }
+        }
+    }
 
     fn extractAnimation(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
         var it = ecs.children(world, entity);
@@ -198,6 +221,7 @@ const extractions = struct {
             e.uniform_mat = zm.translationV(u.toVec().value);
         }
         extractAnimation(&e, world, entity);
+        extractBlock(&e, world, entity);
         return e;
     }
 };
