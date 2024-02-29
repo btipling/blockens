@@ -153,6 +153,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .texture = texture,
                 .numIndices = @intCast(er.indices.len),
             });
+            if (er.is_instanced) {
+                // Just immediately delete instances for now.
+                _ = ecs.add(world, entity, components.gfx.NeedsDeletion);
+                return;
+            }
             _ = ecs.add(world, entity, components.gfx.CanDraw);
         }
     }

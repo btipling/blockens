@@ -7,6 +7,13 @@ pub const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
 const drawSize = chunkDim * chunkDim;
 const minVoxelsInMesh = 10;
 
+pub fn getPositionAtIndexV(i: usize) @Vector(4, gl.Float) {
+    const x = @as(gl.Float, @floatFromInt(@mod(i, chunkDim)));
+    const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim)));
+    const z = @as(gl.Float, @floatFromInt(i / (chunkDim * chunkDim)));
+    return @Vector(4, gl.Float){ x, y, z, 1.0 };
+}
+
 pub fn getPositionAtIndex(i: usize) state.position.Position {
     const x = @as(gl.Float, @floatFromInt(@mod(i, chunkDim)));
     const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim)));

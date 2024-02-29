@@ -5,19 +5,17 @@ const game = @import("../../game.zig");
 
 pub const Block = struct {
     block_id: u8 = 0,
-    instances_id: ecs.entity_t = 0,
 };
 
-pub const BlockInstances = struct {
-    block_id: u8 = 0,
-};
-pub const BlockInstance = struct {
-    block_id: u8 = 0,
-};
+// Blocks instances are attached to a shape and are instance draws, it does not get a position
+// each instance does
+pub const BlockInstances = struct {};
+// An instance of a block instances adds to the draw count of block instances and gets a position
+pub const BlockInstance = struct {};
 
 pub fn init() void {
     const world = game.state.world;
     ecs.COMPONENT(world, Block);
-    ecs.COMPONENT(world, BlockInstances);
-    ecs.COMPONENT(world, BlockInstance);
+    ecs.TAG(world, BlockInstances);
+    ecs.TAG(world, BlockInstance);
 }

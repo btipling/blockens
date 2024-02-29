@@ -7,13 +7,14 @@ const game = @import("../../game.zig");
 const config = @import("../../config.zig");
 const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
+const chunk = @import("../../chunk.zig");
 
 pub const GameUBOBindingPoint: gl.Uint = 0;
 pub const SettingsUBOBindingPoint: gl.Uint = 1;
 pub const DemoCubeAnimationBindingPoint: gl.Uint = 2;
 
-var game_data: ecs.entity_t = undefined;
-var settings_data: ecs.entity_t = undefined;
+pub var game_data: ecs.entity_t = undefined;
+pub var settings_data: ecs.entity_t = undefined;
 
 pub fn init() void {
     game.state.entities.screen = ecs.new_entity(game.state.world, "Screen");
@@ -268,6 +269,35 @@ pub fn initDemoChunk() void {
     if (game.state.ui.data.chunk_demo_data == null) {
         return;
     }
+    const world = game.state.world;
+    const allocator = game.state.allocator;
+    // TODO chunk data needs to be u32s...
+    const chunk_data: []i32 = game.state.ui.data.chunk_demo_data.?;
+    var block_instance_map = std.AutoArrayHashMapUnmanaged(u8, ecs.entity_t){};
+    defer block_instance_map.deinit(allocator);
     const chunk_demo_data = game.state.ui.data.chunk_demo_data.?;
     std.debug.print("chunk len: {d}\n", .{chunk_demo_data.len});
+
+    var block_id: u8 = 0;
+    for (0..chunk_data.len) |i| {
+        if (chunk_data[i] == 0) continue;
+        block_id = @intCast(chunk_data[i]);
+        if (!block_instance_map.contains(block_id)) {
+            const block_entity = helpers.new_child(world, settings_data);
+            ecs.add(world, block_entity, components.block.BlockInstances);
+            _ = ecs.set(world, block_entity, components.shape.Shape, .{ .shape_type = .cube });
+            _ = ecs.set(world, block_entity, components.block.Block, .{
+                .block_id = block_id,
+            });
+            block_instance_map.put(allocator, block_id, block_entity) catch unreachable;
+        }
+        const block_entity: ecs.entity_t = block_instance_map.get(block_id).?;
+        // We're going to make a lot of instances, if ecs is not performant, will need different strategy
+        const block_instance = helpers.new_child(world, block_entity);
+        // block instances are not shapes, their parent is.
+        ecs.add(world, block_instance, components.block.BlockInstance);
+        const pos = chunk.getPositionAtIndexV(i);
+        _ = ecs.set(world, block_instance, components.shape.Position, .{ .position = pos });
+        break; // Just do draw block for now.
+    }
 }
