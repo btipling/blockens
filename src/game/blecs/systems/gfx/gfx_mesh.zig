@@ -154,9 +154,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .numIndices = @intCast(er.indices.len),
             });
             if (er.is_instanced) {
-                // Just immediately delete instances for now.
+                // Just delete these for now.
                 _ = ecs.add(world, entity, components.gfx.NeedsDeletion);
-                return;
             }
             _ = ecs.add(world, entity, components.gfx.CanDraw);
         }

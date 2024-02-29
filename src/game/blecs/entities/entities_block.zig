@@ -7,8 +7,6 @@ const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
 const entities_screen = @import("entities_screen.zig");
 
-pub const InstancesOf = ecs.new_id(game.state.world);
-
 pub fn init() void {
     initBlocks();
 }
@@ -56,6 +54,7 @@ pub fn initBlock(block_id: u8) void {
     // The block is set up to draw instances
     ecs.add(world, block_entity, components.block.BlockInstances);
     _ = ecs.set(world, block_entity, components.shape.Shape, .{ .shape_type = .cube });
+    ecs.add(world, block_entity, components.shape.NeedsSetup);
 }
 
 pub fn deinitBlock(block_id: u8) void {

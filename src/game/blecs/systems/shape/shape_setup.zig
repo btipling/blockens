@@ -36,12 +36,13 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             const sh: []components.shape.Shape = ecs.field(it, components.shape.Shape, 1) orelse return;
+            const e = extractions.extract(world, entity);
+
             const mesh_data = switch (sh[i].shape_type) {
                 .plane => plane(),
                 else => cube(),
             };
 
-            const e = extractions.extract(world, entity);
             var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
             var dc: ?struct { usize, usize } = null;
             if (e.has_demo_cube_texture) {
@@ -130,8 +131,10 @@ const extractions = struct {
     fn extractBlock(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
         if (ecs.get_id(world, entity, ecs.id(components.block.Block))) |opaque_ptr| {
             const b: *const components.block.Block = @ptrCast(@alignCast(opaque_ptr));
+            std.debug.print("extractBlock: has block\n", .{});
             e.block_id = b.block_id;
-            if (ecs.has_id(world, entity, ecs.id(components.block.BlockInstance))) {
+            if (ecs.has_id(world, entity, ecs.id(components.block.BlockInstances))) {
+                std.debug.print("extractBlock: has instances\n", .{});
                 e.is_instanced = true;
             }
         }
@@ -185,6 +188,7 @@ const extractions = struct {
 
     fn extract(world: *ecs.world_t, entity: ecs.entity_t) extractions {
         var e = extractions{};
+        extractBlock(&e, world, entity);
         if (ecs.get_id(world, entity, ecs.id(components.shape.Rotation))) |opaque_ptr| {
             const r: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
             e.rotation = r.toVec();
@@ -221,7 +225,6 @@ const extractions = struct {
             e.uniform_mat = zm.translationV(u.toVec().value);
         }
         extractAnimation(&e, world, entity);
-        extractBlock(&e, world, entity);
         return e;
     }
 };

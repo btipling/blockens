@@ -289,6 +289,7 @@ pub fn initDemoChunk() void {
             _ = ecs.set(world, block_entity, components.block.Block, .{
                 .block_id = block_id,
             });
+            ecs.add(world, block_entity, components.shape.NeedsSetup);
             block_instance_map.put(allocator, block_id, block_entity) catch unreachable;
         }
         const block_entity: ecs.entity_t = block_instance_map.get(block_id).?;
