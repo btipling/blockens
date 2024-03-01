@@ -29,38 +29,26 @@ pub fn deinitBlocks() void {
 
 pub fn initBlock(block_id: u8) void {
     const legacy_block_id: i32 = @intCast(block_id);
-    const world = game.state.world;
     var block_data: data.block = .{};
     game.state.db.loadBlock(legacy_block_id, &block_data) catch unreachable;
     // Each block for the game gets an instances references to draw instanced versions of the block type in the world.
     // those are for blocks that weren't meshed, to avoid extra draw calls.
     // The settings views block instances aren't stored this way as they are view only and are cleared on every
     // render of the settings page.
-    const block_entity = helpers.new_child(world, entities_screen.game_data);
     const block: *game_state.Block = game.state.allocator.create(game_state.Block) catch unreachable;
     block.* = .{
         .id = block_id,
         .data = block_data,
-        .entity_id = block_entity,
     };
-    if (game.state.blocks.get(block_id)) |b| {
+    if (game.state.gfx.blocks.get(block_id)) |b| {
         game.state.allocator.free(b.data.texture);
         game.state.allocator.destroy(b);
     }
-    game.state.blocks.put(block_id, block) catch unreachable;
-    _ = ecs.set(world, block_entity, components.block.Block, .{
-        .block_id = block_id,
-    });
-    // The block is set up to draw instances
-    ecs.add(world, block_entity, components.block.BlockInstances);
-    _ = ecs.set(world, block_entity, components.shape.Shape, .{ .shape_type = .cube });
-    ecs.add(world, block_entity, components.shape.NeedsSetup);
+    game.state.gfx.blocks.put(block_id, block) catch unreachable;
 }
 
 pub fn deinitBlock(block_id: u8) void {
-    const world = game.state.world;
-    if (game.state.blocks.get(block_id)) |b| {
-        ecs.add(world, b.entity_id, components.gfx.NeedsDeletion);
+    if (game.state.gfx.blocks.get(block_id)) |b| {
         game.state.allocator.free(b.data.texture);
         game.state.allocator.destroy(b);
     }

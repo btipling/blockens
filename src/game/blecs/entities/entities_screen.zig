@@ -4,6 +4,7 @@ const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const math = @import("../../math/math.zig");
 const game = @import("../../game.zig");
+const game_state = @import("../../state/game.zig");
 const config = @import("../../config.zig");
 const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
@@ -270,11 +271,8 @@ pub fn initDemoChunk() void {
         return;
     }
     const world = game.state.world;
-    const allocator = game.state.allocator;
     // TODO chunk data needs to be u32s...
     const chunk_data: []i32 = game.state.ui.data.chunk_demo_data.?;
-    var block_instance_map = std.AutoArrayHashMapUnmanaged(u8, ecs.entity_t){};
-    defer block_instance_map.deinit(allocator);
     const chunk_demo_data = game.state.ui.data.chunk_demo_data.?;
     std.debug.print("chunk len: {d}\n", .{chunk_demo_data.len});
 
@@ -282,23 +280,22 @@ pub fn initDemoChunk() void {
     for (0..chunk_data.len) |i| {
         if (chunk_data[i] == 0) continue;
         block_id = @intCast(chunk_data[i]);
-        if (!block_instance_map.contains(block_id)) {
+        if (!game.state.gfx.settings_blocks.contains(block_id)) {
             const block_entity = helpers.new_child(world, settings_data);
-            ecs.add(world, block_entity, components.block.BlockInstances);
+            ecs.add(world, block_entity, components.block.BlockInstance);
             _ = ecs.set(world, block_entity, components.shape.Shape, .{ .shape_type = .cube });
             _ = ecs.set(world, block_entity, components.block.Block, .{
                 .block_id = block_id,
             });
             ecs.add(world, block_entity, components.shape.NeedsSetup);
-            block_instance_map.put(allocator, block_id, block_entity) catch unreachable;
+            const bi: *game_state.BlockInstance = game.state.allocator.create(game_state.BlockInstance) catch unreachable;
+            bi.* = .{
+                .entity_id = block_entity,
+                .transforms = std.ArrayList(zm.Mat).init(game.state.allocator),
+            };
+            game.state.gfx.settings_blocks.put(block_id, bi) catch unreachable;
         }
-        const block_entity: ecs.entity_t = block_instance_map.get(block_id).?;
-        // We're going to make a lot of instances, if ecs is not performant, will need different strategy
-        const block_instance = helpers.new_child(world, block_entity);
-        // block instances are not shapes, their parent is.
-        ecs.add(world, block_instance, components.block.BlockInstance);
-        const pos = chunk.getPositionAtIndexV(i);
-        _ = ecs.set(world, block_instance, components.shape.Position, .{ .position = pos });
-        break; // Just do draw block for now.
+        const bi: *game_state.BlockInstance = game.state.gfx.settings_blocks.get(block_id).?;
+        bi.transforms.append(zm.translationV(chunk.getPositionAtIndexV(i))) catch unreachable;
     }
 }

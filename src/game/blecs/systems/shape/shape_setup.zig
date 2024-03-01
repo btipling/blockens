@@ -133,7 +133,7 @@ const extractions = struct {
             const b: *const components.block.Block = @ptrCast(@alignCast(opaque_ptr));
             std.debug.print("extractBlock: has block\n", .{});
             e.block_id = b.block_id;
-            if (ecs.has_id(world, entity, ecs.id(components.block.BlockInstances))) {
+            if (ecs.has_id(world, entity, ecs.id(components.block.BlockInstance))) {
                 std.debug.print("extractBlock: has instances\n", .{});
                 e.is_instanced = true;
             }
