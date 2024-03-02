@@ -68,7 +68,7 @@ pub const AttributeBuilder = struct {
         };
     }
 
-    pub fn definFloatAttributeValue(self: *AttributeBuilder, size: gl.Int) gl.Uint {
+    pub fn defineFloatAttributeValue(self: *AttributeBuilder, size: gl.Int) gl.Uint {
         var offset: usize = 0;
         for (self.attr_vars.items) |av| {
             offset += @as(usize, @intCast(av.size)) * sizeFromType(av.type);

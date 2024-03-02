@@ -73,12 +73,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             var tc_loc: gl.Uint = 0;
             var nor_loc: gl.Uint = 0;
             // same order as defined in shader gen
-            pos_loc = builder.definFloatAttributeValue(3); // positions
+            pos_loc = builder.defineFloatAttributeValue(3); // positions
             if (texcoords) |_| {
-                tc_loc = builder.definFloatAttributeValue(2); // texture coords
+                tc_loc = builder.defineFloatAttributeValue(2); // texture coords
             }
             if (normals) |_| {
-                nor_loc = builder.definFloatAttributeValue(3); // normals
+                nor_loc = builder.defineFloatAttributeValue(3); // normals
             }
             builder.initBuffer();
             for (0..positions.len) |ii| {
@@ -118,10 +118,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         builder.get_location(),
                     );
                     defer instance_builder.deinit();
-                    const col1_loc = instance_builder.definFloatAttributeValue(4);
-                    const col2_loc = instance_builder.definFloatAttributeValue(4);
-                    const col3_loc = instance_builder.definFloatAttributeValue(4);
-                    const col4_loc = instance_builder.definFloatAttributeValue(4);
+                    const col1_loc = instance_builder.defineFloatAttributeValue(4);
+                    const col2_loc = instance_builder.defineFloatAttributeValue(4);
+                    const col3_loc = instance_builder.defineFloatAttributeValue(4);
+                    const col4_loc = instance_builder.defineFloatAttributeValue(4);
                     const r = zm.matToArr(zm.identity());
                     instance_builder.initBuffer();
                     instance_builder.addFloatAtLocation(col1_loc, @ptrCast(r[0..4]), 0);
