@@ -75,7 +75,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 er.numIndices,
                 gl.UNSIGNED_INT,
                 null,
-                1, // @intCast(block_instance.?.transforms.items.len),
+                @intCast(block_instance.?.transforms.items.len),
             );
         }
     }

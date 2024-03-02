@@ -280,7 +280,7 @@ pub fn initDemoChunk() void {
 
     // Demo chunks also needs a camera adjustment to keep perspective centered on it
     _ = ecs.set(world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
-        .translation = game.state.ui.data.demo_cube_pp_translation,
+        .translation = @Vector(4, gl.Float){ -0.825, -0.650, 0, 0 },
     });
 
     // TODO chunk data needs to be u32s...
@@ -308,6 +308,20 @@ pub fn initDemoChunk() void {
             _ = ecs.set(world, bi.entity_id, components.block.Block, .{
                 .block_id = block_id,
             });
+            const chunk_scale = 0.05;
+            _ = ecs.set(
+                world,
+                bi.entity_id,
+                components.shape.Scale,
+                .{ .scale = @Vector(4, gl.Float){ chunk_scale, chunk_scale, chunk_scale, 0 } },
+            );
+            const chunk_rot = zm.matToQuat(zm.rotationY(1.5 * std.math.pi));
+            _ = ecs.set(
+                game.state.world,
+                bi.entity_id,
+                components.shape.Rotation,
+                .{ .rot = chunk_rot },
+            );
             //ecs.add(game.state.world, bi.entity_id, components.Debug);
             ecs.add(world, bi.entity_id, components.shape.NeedsSetup);
         }
