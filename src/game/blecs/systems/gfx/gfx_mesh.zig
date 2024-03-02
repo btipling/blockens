@@ -143,6 +143,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     texture = gfx.Gfx.initTextureFromColors(d[dct[0]..dct[1]]);
                 }
             }
+            if (er.block_id != null and game.state.gfx.blocks.contains(er.block_id.?)) {
+                const block = game.state.gfx.blocks.get(er.block_id.?).?;
+                texture = gfx.Gfx.initTextureFromColors(block.data.texture);
+            }
 
             ecs.remove(it.world, entity, components.gfx.ElementsRendererConfig);
             _ = ecs.set(world, entity, components.gfx.ElementsRenderer, .{

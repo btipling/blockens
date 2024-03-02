@@ -302,6 +302,8 @@ pub fn initDemoChunk() void {
             game.state.gfx.settings_blocks.put(block_id, bi) catch unreachable;
             ecs.add(world, bi.entity_id, components.block.BlockInstance);
             _ = ecs.set(world, bi.entity_id, components.shape.Shape, .{ .shape_type = .cube });
+            const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
+            _ = ecs.set(world, bi.entity_id, components.shape.Color, components.shape.Color.fromVec(cr_c));
             _ = ecs.set(world, bi.entity_id, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
             _ = ecs.set(world, bi.entity_id, components.block.Block, .{
                 .block_id = block_id,
