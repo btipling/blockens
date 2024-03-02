@@ -178,7 +178,6 @@ const extractions = struct {
                     }
                 }
                 if (ar.items.len > 0) {
-                    std.debug.print("\n\n\nSETTING ANIMATION BINDING POINT\n\n\n", .{});
                     e.animation_binding_point = ssbo;
                     e.has_animation_block = true;
                     e.keyframes = ar.toOwnedSlice(game.state.allocator) catch unreachable;

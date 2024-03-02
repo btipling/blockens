@@ -56,7 +56,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         screen_helpers.toggleCameraOptions();
                     }
                     if (zgui.menuItem("Toggle Demo Cube Options", .{})) {
-                        screen_helpers.toggleDemoOptions();
+                        screen_helpers.toggleDemoCubeOptions();
+                    }
+                    if (zgui.menuItem("Toggle Demo Chunk Options", .{})) {
+                        screen_helpers.toggleDemoChunkOptions();
                     }
                     zgui.endMenu();
                 }

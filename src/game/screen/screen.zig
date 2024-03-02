@@ -66,8 +66,12 @@ pub fn toggleCameraOptions() void {
     toggleUI(blecs.components.ui.SettingsCamera);
 }
 
-pub fn toggleDemoOptions() void {
+pub fn toggleDemoCubeOptions() void {
     toggleUI(blecs.components.ui.DemoCube);
+}
+
+pub fn toggleDemoChunkOptions() void {
+    toggleUI(blecs.components.ui.DemoChunk);
 }
 
 fn toggleUI(comptime T: type) void {
