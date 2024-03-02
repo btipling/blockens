@@ -120,6 +120,18 @@ pub const Gfx = struct {
         return ubo;
     }
 
+    pub fn updateInstanceData(program: gl.Uint, vao: gl.Uint, vbo: gl.Uint, data: []gl.Float) void {
+        gl.useProgram(program);
+        const size = @as(isize, @intCast(data.len * @sizeOf(gl.Float)));
+        const dataptr: *const anyopaque = data.ptr;
+        gl.bindVertexArray(vao);
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+        gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, 0);
+        gl.bindVertexArray(0);
+        return;
+    }
+
     pub fn updateUniformBufferObject(updated: zm.Mat, time: gl.Float, ubo: gl.Uint) void {
         gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
         const uboStruct = struct {

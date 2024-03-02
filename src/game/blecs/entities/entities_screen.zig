@@ -22,7 +22,7 @@ pub fn init() void {
     game_data = ecs.new_entity(game.state.world, "ScreenGameData");
     settings_data = ecs.new_entity(game.state.world, "ScreenSettingsData");
     const initialScreen = helpers.new_child(game.state.world, game.state.entities.screen);
-    _ = ecs.add(game.state.world, initialScreen, components.screen.Game);
+    ecs.add(game.state.world, initialScreen, components.screen.Game);
     _ = ecs.set(game.state.world, game.state.entities.screen, components.screen.Screen, .{
         .current = initialScreen,
         .gameDataEntity = game_data,
@@ -64,7 +64,7 @@ fn initCrossHairs() void {
             0,
         },
     });
-    _ = ecs.add(game.state.world, c_hrz, components.shape.NeedsSetup);
+    ecs.add(game.state.world, c_hrz, components.shape.NeedsSetup);
     ecs.add_pair(game.state.world, c_hrz, ecs.ChildOf, game_data);
     const c_vrt = helpers.new_child(game.state.world, game.state.entities.crosshair);
     _ = ecs.set(game.state.world, c_vrt, components.shape.Shape, .{ .shape_type = .plane });
@@ -91,7 +91,7 @@ fn initCrossHairs() void {
             0,
         },
     });
-    _ = ecs.add(game.state.world, c_vrt, components.shape.NeedsSetup);
+    ecs.add(game.state.world, c_vrt, components.shape.NeedsSetup);
     ecs.add_pair(game.state.world, c_vrt, ecs.ChildOf, game_data);
 }
 
@@ -120,7 +120,7 @@ fn initFloor() void {
     _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{
         .loc = @Vector(4, gl.Float){ -25, -25, -25, 0 },
     });
-    _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
+    ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, game_data);
 }
 
@@ -141,12 +141,12 @@ fn initCamera() void {
         .near = config.near,
         .far = config.far,
     });
-    _ = ecs.add(game.state.world, camera, components.screen.Updated);
+    ecs.add(game.state.world, camera, components.screen.Updated);
     ecs.add_pair(game.state.world, camera, ecs.ChildOf, game_data);
 }
 
 fn initCursor() void {
-    _ = ecs.add(game.state.world, game_data, components.screen.Cursor);
+    ecs.add(game.state.world, game_data, components.screen.Cursor);
 }
 
 fn initSettingsCamera() void {
@@ -165,7 +165,7 @@ fn initSettingsCamera() void {
         .near = config.near,
         .far = config.far,
     });
-    _ = ecs.add(game.state.world, camera, components.screen.Updated);
+    ecs.add(game.state.world, camera, components.screen.Updated);
     ecs.add_pair(game.state.world, camera, ecs.ChildOf, settings_data);
 }
 
@@ -175,7 +175,7 @@ pub fn clearDemoObjects() void {
     while (ecs.iter_next(&it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            _ = ecs.add(world, entity, components.gfx.NeedsDeletion);
+            ecs.add(world, entity, components.gfx.NeedsDeletion);
         }
     }
     ecs.remove(world, game.state.entities.settings_camera, components.screen.PostPerspective);
@@ -206,7 +206,7 @@ pub fn initDemoCube() void {
         .translation = game.state.ui.data.demo_cube_translation,
     });
     _ = ecs.set(world, c_dc, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 * 3 });
-    _ = ecs.add(world, c_dc, components.shape.NeedsSetup);
+    ecs.add(world, c_dc, components.shape.NeedsSetup);
     // Add animation to cube:
     const animation = helpers.new_child(world, c_dc);
     _ = ecs.set(world, animation, components.gfx.AnimationSSBO, .{
@@ -246,7 +246,7 @@ pub fn initDemoCube() void {
     _ = ecs.set(world, c_t1, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
     _ = ecs.set(world, c_t1, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_tl });
     _ = ecs.set(world, c_t1, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 });
-    _ = ecs.add(world, c_t1, components.shape.NeedsSetup);
+    ecs.add(world, c_t1, components.shape.NeedsSetup);
 
     const c_t2 = helpers.new_child(world, settings_data);
     _ = ecs.set(world, c_t2, components.shape.Shape, .{ .shape_type = .plane });
@@ -257,7 +257,7 @@ pub fn initDemoCube() void {
     _ = ecs.set(world, c_t2, components.shape.Rotation, .{
         .rot = zm.matToQuat(zm.rotationZ(1 * std.math.pi)),
     });
-    _ = ecs.add(world, c_t2, components.shape.NeedsSetup);
+    ecs.add(world, c_t2, components.shape.NeedsSetup);
     ecs.add_pair(world, c_t2, ecs.ChildOf, settings_data);
 
     const c_t3 = helpers.new_child(world, settings_data);
@@ -266,7 +266,7 @@ pub fn initDemoCube() void {
     _ = ecs.set(world, c_t3, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
     _ = ecs.set(world, c_t3, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_t3 });
     _ = ecs.set(world, c_t3, components.shape.DemoCubeTexture, .{ .beg = 16 * 16 * 2, .end = 16 * 16 * 3 });
-    _ = ecs.add(world, c_t3, components.shape.NeedsSetup);
+    ecs.add(world, c_t3, components.shape.NeedsSetup);
 }
 
 pub fn initDemoChunk() void {
@@ -308,7 +308,7 @@ pub fn initDemoChunk() void {
             _ = ecs.set(world, bi.entity_id, components.block.Block, .{
                 .block_id = block_id,
             });
-            ecs.add(game.state.world, bi.entity_id, components.Debug);
+            //ecs.add(game.state.world, bi.entity_id, components.Debug);
             ecs.add(world, bi.entity_id, components.shape.NeedsSetup);
         }
         const bi: *game_state.BlockInstance = game.state.gfx.settings_blocks.get(block_id).?;

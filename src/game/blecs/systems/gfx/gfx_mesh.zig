@@ -131,7 +131,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     instance_builder.nextVertex();
                     instance_builder.write();
                     block_instance.?.vbo = instance_vbo;
-                    _ = ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
+                    ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
+                    std.debug.print("added needs update??\n", .{});
                 }
             }
 
@@ -195,7 +196,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .texture = texture,
                 .numIndices = @intCast(er.indices.len),
             });
-            _ = ecs.add(world, entity, components.gfx.CanDraw);
+            ecs.add(world, entity, components.gfx.CanDraw);
         }
     }
 }
