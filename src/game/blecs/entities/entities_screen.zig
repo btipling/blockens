@@ -175,7 +175,15 @@ pub fn clearDemoObjects() void {
     while (ecs.iter_next(&it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            ecs.add(world, entity, components.gfx.NeedsDeletion);
+            if (!ecs.has_id(world, entity, ecs.id(components.block.BlockInstance))) {
+                ecs.add(world, entity, components.gfx.NeedsDeletion);
+            }
+            const block: ?*const components.block.Block = ecs.get(world, entity, components.block.Block);
+            if (block == null) continue;
+            const bi: ?*game_state.BlockInstance = game.state.gfx.settings_blocks.get(block.?.block_id);
+            if (bi == null) continue;
+            bi.?.transforms.clearAndFree();
+            ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
         }
     }
     ecs.remove(world, game.state.entities.settings_camera, components.screen.PostPerspective);
@@ -275,8 +283,6 @@ pub fn initDemoChunk() void {
     }
     clearDemoObjects();
     const world = game.state.world;
-    var bm = std.AutoHashMap(u8, void).init(game.state.allocator);
-    defer bm.deinit();
 
     // Demo chunks also needs a camera adjustment to keep perspective centered on it
     _ = ecs.set(world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
@@ -326,14 +332,6 @@ pub fn initDemoChunk() void {
             ecs.add(world, bi.entity_id, components.shape.NeedsSetup);
         }
         const bi: *game_state.BlockInstance = game.state.gfx.settings_blocks.get(block_id).?;
-        if (!bm.contains(block_id)) {
-            // don't remove if marked for deletion by clearDemoObjects
-            ecs.remove(world, bi.entity_id, components.gfx.NeedsDeletion);
-            ecs.add(game.state.world, bi.entity_id, components.gfx.CanDraw);
-            // we do want to clear existing transforms
-            bi.transforms.clearAndFree();
-            bm.put(block_id, {}) catch unreachable;
-        }
         bi.transforms.append(zm.translationV(chunk.getPositionAtIndexV(i))) catch unreachable;
     }
 }

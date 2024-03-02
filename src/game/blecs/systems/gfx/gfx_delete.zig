@@ -9,7 +9,7 @@ const screen_entity = @import("../../entities/entities_screen.zig");
 
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "GfxDeleteSystem", ecs.OnStore, @constCast(&s));
+    ecs.SYSTEM(game.state.world, "GfxDeleteSystem", ecs.PreUpdate, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
