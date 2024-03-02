@@ -171,11 +171,17 @@ pub const VertexShaderGen = struct {
             }
         }
 
+        fn gen_instance_mat(r: *runner) !void {
+            if (!r.cfg.is_instanced) return;
+            r.a("    pos = attribTransform * pos;\n");
+        }
+
         fn gen_main(r: *runner) !void {
             r.a("void main()\n");
             r.a("{\n");
             r.a("    vec4 pos;\n");
             r.a("    pos = vec4(position.xyz, 1.0);\n");
+            try r.gen_instance_mat();
             try r.gen_inline_mat();
             if (r.cfg.animation_block_index != null) {
                 r.a("    frameIndices indices = get_frame_indices();\n");

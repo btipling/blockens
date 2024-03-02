@@ -58,6 +58,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 gl.drawElements(gl.TRIANGLES, er.numIndices, gl.UNSIGNED_INT, null);
                 continue;
             }
+            // draw instances
             const block: ?*const components.block.Block = ecs.get(world, entity, components.block.Block);
             if (block == null) continue;
             var block_instance: ?*game_state.BlockInstance = null;
@@ -68,6 +69,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 block_instance = game.state.gfx.settings_blocks.get(block.?.block_id);
             }
             if (block_instance == null) continue;
+            if (block_instance.?.transforms.items.len < 1) continue;
             gl.drawElementsInstanced(
                 gl.TRIANGLES,
                 er.numIndices,

@@ -35,14 +35,17 @@ pub const AnimationKeyFrame = struct {
 };
 
 pub const CanDraw = struct {};
+pub const NeedsInstanceDataUpdate = struct {};
 pub const NeedsDeletion = struct {};
 
 pub fn init() void {
-    ecs.COMPONENT(game.state.world, BaseRenderer);
-    ecs.COMPONENT(game.state.world, ElementsRendererConfig);
-    ecs.COMPONENT(game.state.world, ElementsRenderer);
-    ecs.COMPONENT(game.state.world, AnimationSSBO);
-    ecs.COMPONENT(game.state.world, AnimationKeyFrame);
-    ecs.TAG(game.state.world, CanDraw);
-    ecs.TAG(game.state.world, NeedsDeletion);
+    const world = game.state.world;
+    ecs.COMPONENT(world, BaseRenderer);
+    ecs.COMPONENT(world, ElementsRendererConfig);
+    ecs.COMPONENT(world, ElementsRenderer);
+    ecs.COMPONENT(world, AnimationSSBO);
+    ecs.COMPONENT(world, AnimationKeyFrame);
+    ecs.TAG(world, CanDraw);
+    ecs.TAG(world, NeedsInstanceDataUpdate);
+    ecs.TAG(world, NeedsDeletion);
 }
