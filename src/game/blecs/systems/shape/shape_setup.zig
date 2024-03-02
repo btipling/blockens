@@ -134,14 +134,14 @@ const extractions = struct {
     fn extractBlock(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
         if (ecs.get_id(world, entity, ecs.id(components.block.Block))) |opaque_ptr| {
             const b: *const components.block.Block = @ptrCast(@alignCast(opaque_ptr));
-            std.debug.print("extractBlock: has block\n", .{});
+            if (e.debug) std.debug.print("extractBlock: has block\n", .{});
             e.block_id = b.block_id;
             if (ecs.has_id(world, entity, ecs.id(components.block.Instance))) {
-                std.debug.print("extractBlock: has instances\n", .{});
+                if (e.debug) std.debug.print("extractBlock: has instances\n", .{});
                 e.is_instanced = true;
             }
             if (ecs.has_id(world, entity, ecs.id(components.block.Meshed))) {
-                std.debug.print("extractBlock: is meshed\n", .{});
+                if (e.debug) std.debug.print("extractBlock: is meshed\n", .{});
                 e.is_meshed = true;
             }
         }
@@ -194,6 +194,9 @@ const extractions = struct {
 
     fn extract(world: *ecs.world_t, entity: ecs.entity_t) extractions {
         var e = extractions{};
+        if (ecs.has_id(world, entity, ecs.id(components.Debug))) {
+            e.debug = true;
+        }
         extractBlock(&e, world, entity);
         if (ecs.get_id(world, entity, ecs.id(components.shape.Rotation))) |opaque_ptr| {
             const r: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
@@ -210,9 +213,6 @@ const extractions = struct {
         if (ecs.get_id(world, entity, ecs.id(components.shape.Color))) |opaque_ptr| {
             const c: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
             e.color = c.toVec();
-        }
-        if (ecs.has_id(world, entity, ecs.id(components.Debug))) {
-            e.debug = true;
         }
         if (ecs.get_id(world, entity, ecs.id(components.shape.DemoCubeTexture))) |opaque_ptr| {
             const dct: *const components.shape.DemoCubeTexture = @ptrCast(@alignCast(opaque_ptr));

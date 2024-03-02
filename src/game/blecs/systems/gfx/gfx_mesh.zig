@@ -132,7 +132,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     instance_builder.write();
                     block_instance.?.vbo = instance_vbo;
                     ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
-                    std.debug.print("added needs update??\n", .{});
                 }
             }
 
