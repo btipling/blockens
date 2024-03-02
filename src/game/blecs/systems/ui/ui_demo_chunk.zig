@@ -20,6 +20,17 @@ fn system() ecs.system_desc_t {
     return desc;
 }
 
+const preMaxChunk = struct {
+    rotation_x: gl.Float = 0,
+    rotation_y: gl.Float = 0.341,
+    rotation_z: gl.Float = 0.083,
+    scale: gl.Float = 0.042,
+    translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 2.55, 0.660, -0.264, 0 },
+    pp_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ -0.650, 0.100, 0, 0 },
+};
+
+var pre_max: preMaxChunk = .{};
+
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
@@ -97,6 +108,39 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     .min = -10,
                     .max = 10,
                 })) {
+                    entities.screen.initDemoChunk();
+                }
+                if (zgui.button("max", .{
+                    .h = 50,
+                    .w = 250,
+                })) {
+                    pre_max = .{
+                        .rotation_x = game.state.ui.data.demo_chunk_rotation_x,
+                        .rotation_y = game.state.ui.data.demo_chunk_rotation_y,
+                        .rotation_z = game.state.ui.data.demo_chunk_rotation_z,
+                        .scale = game.state.ui.data.demo_chunk_scale,
+                        .translation = game.state.ui.data.demo_chunk_translation,
+                        .pp_translation = game.state.ui.data.demo_chunk_pp_translation,
+                    };
+                    game.state.ui.data.demo_chunk_rotation_x = 0;
+                    game.state.ui.data.demo_chunk_rotation_y = pre_max.rotation_y;
+                    game.state.ui.data.demo_chunk_rotation_z = 1.085;
+                    game.state.ui.data.demo_chunk_scale = 0.09;
+                    game.state.ui.data.demo_chunk_translation = .{ 2.461, -1.631, 0.397, 0 };
+                    game.state.ui.data.demo_chunk_pp_translation = .{ 0, 0, 0, 0 };
+                    entities.screen.initDemoChunk();
+                }
+                zgui.sameLine(.{});
+                if (zgui.button("unmax", .{
+                    .h = 50,
+                    .w = 250,
+                })) {
+                    game.state.ui.data.demo_chunk_rotation_x = pre_max.rotation_x;
+                    game.state.ui.data.demo_chunk_rotation_y = pre_max.rotation_y;
+                    game.state.ui.data.demo_chunk_rotation_z = pre_max.rotation_z;
+                    game.state.ui.data.demo_chunk_scale = pre_max.scale;
+                    game.state.ui.data.demo_chunk_translation = pre_max.translation;
+                    game.state.ui.data.demo_chunk_pp_translation = pre_max.pp_translation;
                     entities.screen.initDemoChunk();
                 }
             }

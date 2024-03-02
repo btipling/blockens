@@ -3,6 +3,7 @@ const ecs = @import("zflecs");
 const zm = @import("zmath");
 const gl = @import("zopengl").bindings;
 const components = @import("../../../components/components.zig");
+const entities = @import("../../../entities/entities.zig");
 const game = @import("../../../../game.zig");
 const input = @import("../../../../input/input.zig");
 
@@ -41,9 +42,11 @@ fn handleChunkHotKeys() void {
             game.state.entities.settings_camera,
             components.screen.WorldRotation,
         ) orelse return;
-        const m = zm.quatToMat(world_rotation.rotation);
-        const r = zm.rotationY(0.0125 * std.math.pi * 2.0);
-        world_rotation.rotation = zm.matToQuat(zm.mul(m, r));
+        game.state.ui.data.demo_chunk_rotation_y += 0.012;
+        var chunk_rot = zm.rotationY(game.state.ui.data.demo_chunk_rotation_y * std.math.pi);
+        chunk_rot = zm.mul(chunk_rot, zm.rotationZ(game.state.ui.data.demo_chunk_rotation_z * std.math.pi * 2.0));
+        chunk_rot = zm.mul(chunk_rot, zm.rotationX(game.state.ui.data.demo_chunk_rotation_x * std.math.pi * 2.0));
+        world_rotation.rotation = zm.matToQuat(chunk_rot);
     }
     if (input.keys.holdKey(.right)) {
         var world_rotation: *components.screen.WorldRotation = ecs.get_mut(
@@ -51,8 +54,10 @@ fn handleChunkHotKeys() void {
             game.state.entities.settings_camera,
             components.screen.WorldRotation,
         ) orelse return;
-        const m = zm.quatToMat(world_rotation.rotation);
-        const r = zm.rotationY(-0.0125 * std.math.pi * 2.0);
-        world_rotation.rotation = zm.matToQuat(zm.mul(m, r));
+        game.state.ui.data.demo_chunk_rotation_y -= 0.012;
+        var chunk_rot = zm.rotationY(game.state.ui.data.demo_chunk_rotation_y * std.math.pi);
+        chunk_rot = zm.mul(chunk_rot, zm.rotationZ(game.state.ui.data.demo_chunk_rotation_z * std.math.pi * 2.0));
+        chunk_rot = zm.mul(chunk_rot, zm.rotationX(game.state.ui.data.demo_chunk_rotation_x * std.math.pi * 2.0));
+        world_rotation.rotation = zm.matToQuat(chunk_rot);
     }
 }
