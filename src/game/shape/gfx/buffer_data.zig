@@ -11,6 +11,8 @@ pub const AttributeBuilder = struct {
     attr_vars: std.ArrayListUnmanaged(AttributeVariable) = undefined,
     cur_vertex: usize = 0,
     debug: bool = false,
+    starting_location: gl.Uint = 0,
+    last_location: gl.Uint = 0,
 
     const AttributeVariable = struct {
         type: gl.Enum,
@@ -34,9 +36,29 @@ pub const AttributeBuilder = struct {
         };
     }
 
+    pub fn initWithLoc(
+        num_vertices: gl.Uint,
+        vbo: gl.Uint,
+        usage: gl.Enum,
+        location: gl.Uint,
+    ) AttributeBuilder {
+        return AttributeBuilder{
+            .vbo = vbo,
+            .usage = usage,
+            .num_vertices = num_vertices,
+            .attr_vars = std.ArrayListUnmanaged(AttributeVariable){},
+            .starting_location = location,
+            .last_location = location,
+        };
+    }
+
     pub fn deinit(self: *AttributeBuilder) void {
         self.attr_vars.deinit(game.state.allocator);
         game.state.allocator.free(self.buffer);
+    }
+
+    pub fn get_location(self: AttributeBuilder) gl.Uint {
+        return self.last_location;
     }
 
     fn sizeFromType(t: gl.Enum) usize {
@@ -54,10 +76,11 @@ pub const AttributeBuilder = struct {
         const av: AttributeVariable = .{
             .type = gl.FLOAT,
             .size = size,
-            .location = @intCast(self.attr_vars.items.len),
+            .location = self.last_location,
             .normalized = gl.FALSE,
             .offset = offset,
         };
+        self.last_location += 1;
         self.stride += @as(gl.Sizei, @intCast(av.size)) * @as(gl.Sizei, @intCast(sizeFromType(av.type)));
         self.attr_vars.append(game.state.allocator, av) catch unreachable;
         if (self.debug) std.debug.print("defined float attribute value: \n", .{});
@@ -84,8 +107,8 @@ pub const AttributeBuilder = struct {
         }
     }
 
-    pub fn addFloatAtLocation(self: *AttributeBuilder, location: gl.Uint, data: []gl.Float, vertex_index: usize) void {
-        const av = self.attr_vars.items[location];
+    pub fn addFloatAtLocation(self: *AttributeBuilder, location: gl.Uint, data: []const gl.Float, vertex_index: usize) void {
+        const av = self.attr_vars.items[location - self.starting_location];
         const dataptr: []const u8 = std.mem.sliceAsBytes(data);
         if (self.debug) std.debug.print("dataptr len: {d}\n", .{dataptr.len});
         for (dataptr) |b| {

@@ -38,6 +38,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 std.debug.print("couldn't find render config for {d}\n", .{erc.id});
                 continue;
             };
+            const parent = ecs.get_parent(world, entity);
             const vertexShader: [:0]const u8 = er.vertexShader;
             const fragmentShader: [:0]const u8 = er.fragmentShader;
             const positions: [][3]gl.Float = er.positions;
@@ -94,6 +95,44 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 builder.nextVertex();
             }
             builder.write();
+            if (er.is_instanced and er.block_id != null) {
+                var block_instance: ?*game_state.BlockInstance = null;
+                if (parent == screen.gameDataEntity) {
+                    if (game.state.gfx.game_blocks.get(er.block_id.?)) |b| {
+                        if (b.vbo == 0) block_instance = b;
+                    }
+                }
+                if (parent == screen.settingDataEntity) {
+                    if (game.state.gfx.settings_blocks.get(er.block_id.?)) |b| {
+                        if (b.vbo == 0) block_instance = b;
+                    }
+                }
+                if (block_instance != null) {
+                    const instance_vbo = gfx.Gfx.initVBO() catch unreachable;
+                    var instance_builder: *gfx.buffer_data.AttributeBuilder = game.state.allocator.create(gfx.buffer_data.AttributeBuilder) catch unreachable;
+                    defer game.state.allocator.destroy(instance_builder);
+                    instance_builder.* = gfx.buffer_data.AttributeBuilder.initWithLoc(
+                        @intCast(positions.len),
+                        instance_vbo,
+                        gl.STATIC_DRAW,
+                        builder.get_location(),
+                    );
+                    defer instance_builder.deinit();
+                    const col1_loc = instance_builder.definFloatAttributeValue(4);
+                    const col2_loc = instance_builder.definFloatAttributeValue(4);
+                    const col3_loc = instance_builder.definFloatAttributeValue(4);
+                    const col4_loc = instance_builder.definFloatAttributeValue(4);
+                    const r = zm.matToArr(zm.identity());
+                    instance_builder.initBuffer();
+                    instance_builder.addFloatAtLocation(col1_loc, @ptrCast(r[0..4]), 0);
+                    instance_builder.addFloatAtLocation(col2_loc, @ptrCast(r[4..8]), 0);
+                    instance_builder.addFloatAtLocation(col3_loc, @ptrCast(r[8..12]), 0);
+                    instance_builder.addFloatAtLocation(col4_loc, @ptrCast(r[12..16]), 0);
+                    instance_builder.nextVertex();
+                    instance_builder.write();
+                    block_instance.?.vbo = instance_vbo;
+                }
+            }
 
             if (er.transform) |t| {
                 gfx.Gfx.setUniformMat(shadergen.constants.TransformMatName, program, t);
@@ -110,8 +149,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 gfx.Gfx.setUniformBufferObject(shadergen.constants.UBOName, program, ubo, ubo_binding_point);
 
                 var camera: ecs.entity_t = 0;
-
-                const parent = ecs.get_parent(world, entity);
                 if (parent == screen.gameDataEntity) {
                     camera = game.state.entities.game_camera;
                 }

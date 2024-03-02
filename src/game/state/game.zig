@@ -102,6 +102,7 @@ pub const Block = struct {
 
 pub const BlockInstance = struct {
     entity_id: blecs.ecs.entity_t = 0,
+    vbo: gl.Uint = 0,
     transforms: std.ArrayList(zm.Mat) = undefined,
 };
 
