@@ -18,6 +18,7 @@ pub const AttributeBuilder = struct {
         location: gl.Uint = 0,
         offset: usize,
         normalized: gl.Boolean = gl.FALSE,
+        divisor: bool = false,
     };
 
     pub fn init(
@@ -127,6 +128,9 @@ pub const AttributeBuilder = struct {
             });
             gl.vertexAttribPointer(av.location, av.size, av.type, av.normalized, self.stride, pointer);
             gl.enableVertexAttribArray(av.location);
+            if (av.divisor) {
+                gl.vertexAttribDivisor(av.location, 1);
+            }
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
     }
