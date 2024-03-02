@@ -34,15 +34,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             ecs.remove(world, entity, components.gfx.NeedsInstanceDataUpdate);
-            const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse return;
+            const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse continue;
             const er = ers[i];
-            if (ecs.has_id(world, entity, ecs.id(components.block.BlockInstance))) continue;
+            if (!ecs.has_id(world, entity, ecs.id(components.block.BlockInstance))) continue;
             const block: *const components.block.Block = ecs.get(
                 game.state.world,
                 entity,
                 components.block.Block,
             ) orelse unreachable;
-            std.debug.print("gfx_instance_update_00\n", .{});
             const parent = ecs.get_parent(world, entity);
             var block_instance: ?*game_data.BlockInstance = null;
             if (parent == screen.gameDataEntity and game.state.gfx.game_blocks.contains(block.block_id)) {
@@ -51,20 +50,16 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (parent == screen.settingDataEntity and game.state.gfx.settings_blocks.contains(block.block_id)) {
                 block_instance = game.state.gfx.settings_blocks.get(block.block_id);
             }
-            std.debug.print("gfx_instance_update_01\n", .{});
             if (block_instance == null) continue;
-            std.debug.print("gfx_instance_update_02\n", .{});
             var data = std.ArrayList(gl.Float).initCapacity(
                 game.state.allocator,
                 block_instance.?.transforms.items.len * 16,
             ) catch unreachable;
-            std.debug.print("gfx_instance_update_03\n", .{});
             defer data.deinit();
             for (block_instance.?.transforms.items) |m| {
                 const r = zm.matToArr(m);
                 data.appendSliceAssumeCapacity(&r);
             }
-            std.debug.print("gfx_instance_update_04\n", .{});
             gfx.Gfx.updateInstanceData(
                 er.program,
                 er.vao,
