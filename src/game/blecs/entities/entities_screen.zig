@@ -175,7 +175,7 @@ pub fn clearDemoObjects() void {
     while (ecs.iter_next(&it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            if (!ecs.has_id(world, entity, ecs.id(components.block.BlockInstance))) {
+            if (!ecs.has_id(world, entity, ecs.id(components.block.Instance))) {
                 ecs.add(world, entity, components.gfx.NeedsDeletion);
             }
             const block: ?*const components.block.Block = ecs.get(world, entity, components.block.Block);
@@ -333,7 +333,7 @@ pub fn initDemoChunk() void {
                 .transforms = std.ArrayList(zm.Mat).init(game.state.allocator),
             };
             game.state.gfx.settings_blocks.put(block_id, bi) catch unreachable;
-            ecs.add(world, bi.entity_id, components.block.BlockInstance);
+            ecs.add(world, bi.entity_id, components.block.Instance);
             _ = ecs.set(world, bi.entity_id, components.shape.Shape, .{ .shape_type = .cube });
             const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
             _ = ecs.set(world, bi.entity_id, components.shape.Color, components.shape.Color.fromVec(cr_c));

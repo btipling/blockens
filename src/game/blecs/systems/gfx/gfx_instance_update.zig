@@ -36,7 +36,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             ecs.remove(world, entity, components.gfx.NeedsInstanceDataUpdate);
             const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse continue;
             const er = ers[i];
-            if (!ecs.has_id(world, entity, ecs.id(components.block.BlockInstance))) continue;
+            if (!ecs.has_id(world, entity, ecs.id(components.block.Instance))) continue;
             const block: *const components.block.Block = ecs.get(
                 game.state.world,
                 entity,

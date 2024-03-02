@@ -12,6 +12,7 @@ pub const FragmentShaderGen = struct {
         has_texture_coords: bool = false,
         has_normals: bool = false,
         color: ?math.vecs.Vflx4 = null,
+        is_meshed: bool = false,
     };
 
     // genFragmentShader - call ower owns the returned slice
@@ -41,35 +42,47 @@ pub const FragmentShaderGen = struct {
             defer r.buf.deinit(r.allocator);
         }
 
+        fn a(r: *runner, line: []const u8) void {
+            r.buf.appendSlice(r.allocator, line) catch unreachable;
+        }
+
         fn run(r: *runner) ![:0]const u8 {
-            try r.buf.appendSlice(r.allocator, "#version 330 core\n");
-            try r.buf.appendSlice(r.allocator, "out vec4 FragColor;\n");
+            r.a("#version 330 core\n");
+            r.a("out vec4 FragColor;\n");
             if (r.cfg.has_texture_coords) {
-                try r.buf.appendSlice(r.allocator, "\nin vec2 TexCoord;\n");
+                r.a("\nin vec2 TexCoord;\n");
             }
             if (r.cfg.has_normals) {
-                try r.buf.appendSlice(r.allocator, "\nflat in vec3 fragNormal;\n");
+                r.a("\nflat in vec3 fragNormal;\n");
             }
             if (r.cfg.has_texture) {
-                try r.buf.appendSlice(r.allocator, "\nuniform sampler2D texture1;\n");
+                r.a("\nuniform sampler2D texture1;\n");
             }
-            try r.buf.appendSlice(r.allocator, "\nvoid main()\n");
-            try r.buf.appendSlice(r.allocator, "{\n");
+            r.a("\nvoid main()\n");
+            r.a("{\n");
             // magenta to highlight shader without materials
             if (r.cfg.color) |c| {
                 const line = try shader_helpers.vec4_to_buf("    vec4 Color = vec4({d}, {d}, {d}, {d});\n", c.value[0], c.value[1], c.value[2], c.value[3]);
-                try r.buf.appendSlice(r.allocator, std.mem.sliceTo(&line, 0));
+                r.a(std.mem.sliceTo(&line, 0));
             } else {
-                try r.buf.appendSlice(r.allocator, "    vec4 Color = vec4(1.0, 0.0, 1.0, 1.0);\n");
+                r.a("    vec4 Color = vec4(1.0, 0.0, 1.0, 1.0);\n");
             }
             if (r.cfg.has_texture) {
-                try r.buf.appendSlice(r.allocator, "    vec4 textureColor = texture(texture1, TexCoord);\n");
-                try r.buf.appendSlice(r.allocator, "    vec4 finalColor = mix(Color, textureColor, textureColor.a);\n");
-                try r.buf.appendSlice(r.allocator, "    FragColor = finalColor;\n");
-            } else {
-                try r.buf.appendSlice(r.allocator, "    FragColor = Color;\n");
+                r.a("    vec4 textColor;\n");
+                if (r.cfg.is_meshed and r.cfg.has_normals) {
+                    r.a(@embedFile("fragments/meshed_texture.fs.txt"));
+                } else if (r.cfg.has_texture_coords) {
+                    r.a("    textColor = texture(texture1, TexCoord);\n");
+                } else {
+                    r.a("    textColor = vec4(1.0, 0.0, 1.0, 1.0);\n");
+                }
+                r.a("    Color = mix(Color, textColor, textColor.a);\n");
             }
-            try r.buf.appendSlice(r.allocator, "}\n");
+            r.a("    if (Color.a < 0.5) {\n");
+            r.a("        discard;\n");
+            r.a("    }\n");
+            r.a("    FragColor = Color;\n");
+            r.a("}\n");
             const ownedSentinelSlice: [:0]const u8 = try r.buf.toOwnedSliceSentinel(r.allocator, 0);
             if (r.cfg.debug) std.debug.print("generated fragment shader: \n {s}\n", .{ownedSentinelSlice});
             return ownedSentinelSlice;

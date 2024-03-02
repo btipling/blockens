@@ -105,6 +105,7 @@ const shaders = struct {
             .has_texture_coords = mesh_data.texcoords != null,
             .has_texture = has_texture,
             .has_normals = mesh_data.normals != null,
+            .is_meshed = e.is_meshed,
         };
         return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;
     }
@@ -128,15 +129,20 @@ const extractions = struct {
     keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = null,
     is_instanced: bool = false,
     block_id: ?u8 = null,
+    is_meshed: bool = false,
 
     fn extractBlock(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
         if (ecs.get_id(world, entity, ecs.id(components.block.Block))) |opaque_ptr| {
             const b: *const components.block.Block = @ptrCast(@alignCast(opaque_ptr));
             std.debug.print("extractBlock: has block\n", .{});
             e.block_id = b.block_id;
-            if (ecs.has_id(world, entity, ecs.id(components.block.BlockInstance))) {
+            if (ecs.has_id(world, entity, ecs.id(components.block.Instance))) {
                 std.debug.print("extractBlock: has instances\n", .{});
                 e.is_instanced = true;
+            }
+            if (ecs.has_id(world, entity, ecs.id(components.block.Meshed))) {
+                std.debug.print("extractBlock: is meshed\n", .{});
+                e.is_meshed = true;
             }
         }
     }

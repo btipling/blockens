@@ -57,7 +57,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 gl.bindTexture(gl.TEXTURE_2D, er.texture);
             }
             gl.bindVertexArray(er.vao);
-            if (!ecs.has_id(world, entity, ecs.id(components.block.BlockInstance))) {
+            if (!ecs.has_id(world, entity, ecs.id(components.block.Instance))) {
                 gl.drawElements(gl.TRIANGLES, er.numIndices, gl.UNSIGNED_INT, null);
                 continue;
             }
