@@ -5,6 +5,7 @@ const gl = @import("zopengl").bindings;
 const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
+const game_state = @import("../../../state/game.zig");
 
 pub fn init() void {
     const s = system();
@@ -22,7 +23,7 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     const world = it.world;
     const screen: *const components.screen.Screen = ecs.get(
-        game.state.world,
+        world,
         game.state.entities.screen,
         components.screen.Screen,
     ) orelse unreachable;
@@ -53,7 +54,27 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 gl.bindTexture(gl.TEXTURE_2D, er.texture);
             }
             gl.bindVertexArray(er.vao);
-            gl.drawElements(gl.TRIANGLES, er.numIndices, gl.UNSIGNED_INT, null);
+            if (!ecs.has_id(world, entity, ecs.id(components.block.BlockInstance))) {
+                gl.drawElements(gl.TRIANGLES, er.numIndices, gl.UNSIGNED_INT, null);
+                continue;
+            }
+            const block: ?*const components.block.Block = ecs.get(world, entity, components.block.Block);
+            if (block == null) continue;
+            var block_instance: ?*game_state.BlockInstance = null;
+            if (parent == screen.gameDataEntity) {
+                block_instance = game.state.gfx.game_blocks.get(block.?.block_id);
+            }
+            if (parent == screen.settingDataEntity) {
+                block_instance = game.state.gfx.settings_blocks.get(block.?.block_id);
+            }
+            if (block_instance == null) continue;
+            gl.drawElementsInstanced(
+                gl.TRIANGLES,
+                er.numIndices,
+                gl.UNSIGNED_INT,
+                null,
+                1, // @intCast(block_instance.?.transforms.items.len),
+            );
         }
     }
 }
