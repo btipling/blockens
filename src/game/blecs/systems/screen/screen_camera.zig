@@ -57,6 +57,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             var aspect: gl.Float = 0;
             var near: gl.Float = 0;
             var far: gl.Float = 0;
+            var world_scale: ?@Vector(4, gl.Float) = null;
+            var world_rotation: ?@Vector(4, gl.Float) = null;
+            var world_translation: ?@Vector(4, gl.Float) = null;
             var post_perspective: ?@Vector(4, gl.Float) = null;
             if (ecs.get_id(world, entity, ecs.id(components.screen.CameraPosition))) |opaque_ptr| {
                 const cp: *const components.screen.CameraPosition = @ptrCast(@alignCast(opaque_ptr));
@@ -82,19 +85,47 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 near = p.near;
                 far = p.far;
             } else unreachable;
+            if (ecs.has_id(world, entity, ecs.id(components.screen.WorldScale))) {
+                if (ecs.get_id(world, entity, ecs.id(components.screen.WorldScale))) |opaque_ptr| {
+                    const ws: *const components.screen.WorldScale = @ptrCast(@alignCast(opaque_ptr));
+                    world_scale = ws.scale;
+                } else unreachable;
+            }
+            if (ecs.has_id(world, entity, ecs.id(components.screen.WorldRotation))) {
+                if (ecs.get_id(world, entity, ecs.id(components.screen.WorldRotation))) |opaque_ptr| {
+                    const wr: *const components.screen.WorldRotation = @ptrCast(@alignCast(opaque_ptr));
+                    world_rotation = wr.rotation;
+                } else unreachable;
+            }
+            if (ecs.has_id(world, entity, ecs.id(components.screen.WorldTranslation))) {
+                if (ecs.get_id(world, entity, ecs.id(components.screen.WorldTranslation))) |opaque_ptr| {
+                    const wt: *const components.screen.WorldTranslation = @ptrCast(@alignCast(opaque_ptr));
+                    world_translation = wt.translation;
+                } else unreachable;
+            }
             if (ecs.has_id(world, entity, ecs.id(components.screen.PostPerspective))) {
                 if (ecs.get_id(world, entity, ecs.id(components.screen.PostPerspective))) |opaque_ptr| {
                     const pp: *const components.screen.PostPerspective = @ptrCast(@alignCast(opaque_ptr));
                     post_perspective = pp.translation;
                 } else unreachable;
             }
+            var m = zm.identity();
+            if (world_scale) |s| {
+                m = zm.mul(m, zm.scalingV(s));
+            }
+            if (world_rotation) |r| {
+                m = zm.mul(m, zm.quatToMat(r));
+            }
+            if (world_translation) |t| {
+                m = zm.mul(m, zm.translationV(t));
+            }
             const lookAt = zm.lookAtRh(
                 camera_position,
                 camera_position + camera_front,
                 up_direction,
             );
-            const ps = zm.perspectiveFovRh(fovy, aspect, near, far);
-            var m = zm.mul(lookAt, ps);
+            m = zm.mul(m, lookAt);
+            m = zm.mul(m, zm.perspectiveFovRh(fovy, aspect, near, far));
             if (post_perspective) |pp| {
                 m = zm.mul(m, zm.translationV(pp));
             }

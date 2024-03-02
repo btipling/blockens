@@ -186,6 +186,9 @@ pub fn clearDemoObjects() void {
             ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
         }
     }
+    ecs.remove(world, game.state.entities.settings_camera, components.screen.WorldTranslation);
+    ecs.remove(world, game.state.entities.settings_camera, components.screen.WorldRotation);
+    ecs.remove(world, game.state.entities.settings_camera, components.screen.WorldScale);
     ecs.remove(world, game.state.entities.settings_camera, components.screen.PostPerspective);
 }
 
@@ -285,9 +288,33 @@ pub fn initDemoChunk() void {
     const world = game.state.world;
 
     // Demo chunks also needs a camera adjustment to keep perspective centered on it
-    _ = ecs.set(world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
-        .translation = @Vector(4, gl.Float){ -0.825, -0.650, 0, 0 },
+    const camera = game.state.entities.settings_camera;
+    _ = ecs.set(world, camera, components.screen.PostPerspective, .{
+        .translation = game.state.ui.data.demo_chunk_pp_translation,
     });
+    const chunk_scale = game.state.ui.data.demo_chunk_scale;
+    std.debug.print("scaling chunk to {d}\n", .{chunk_scale});
+    _ = ecs.set(
+        world,
+        camera,
+        components.screen.WorldScale,
+        .{ .scale = @Vector(4, gl.Float){ chunk_scale, chunk_scale, chunk_scale, 0 } },
+    );
+    var chunk_rot = zm.rotationY(game.state.ui.data.demo_chunk_rotation_y * std.math.pi);
+    chunk_rot = zm.mul(chunk_rot, zm.rotationZ(game.state.ui.data.demo_chunk_rotation_z * std.math.pi * 2.0));
+    chunk_rot = zm.mul(chunk_rot, zm.rotationX(game.state.ui.data.demo_chunk_rotation_x * std.math.pi * 2.0));
+    _ = ecs.set(
+        game.state.world,
+        camera,
+        components.screen.WorldRotation,
+        .{ .rotation = zm.matToQuat(chunk_rot) },
+    );
+    _ = ecs.set(
+        world,
+        camera,
+        components.screen.WorldTranslation,
+        .{ .translation = game.state.ui.data.demo_chunk_translation },
+    );
 
     // TODO chunk data needs to be u32s...
     const chunk_data: []i32 = game.state.ui.data.chunk_demo_data.?;
@@ -314,23 +341,9 @@ pub fn initDemoChunk() void {
             _ = ecs.set(world, bi.entity_id, components.block.Block, .{
                 .block_id = block_id,
             });
-            const chunk_scale = 0.05;
-            _ = ecs.set(
-                world,
-                bi.entity_id,
-                components.shape.Scale,
-                .{ .scale = @Vector(4, gl.Float){ chunk_scale, chunk_scale, chunk_scale, 0 } },
-            );
-            var chunk_rot = zm.rotationY(0.25 * std.math.pi);
-            // _ = &chunk_rot;
-            chunk_rot = zm.mul(chunk_rot, zm.rotationZ(1.01 * std.math.pi * 2.0));
-            chunk_rot = zm.mul(chunk_rot, zm.rotationX(1 * std.math.pi * 2.0));
-            _ = ecs.set(
-                game.state.world,
-                bi.entity_id,
-                components.shape.Rotation,
-                .{ .rot = zm.matToQuat(chunk_rot) },
-            );
+            _ = ecs.set(world, bi.entity_id, components.screen.WorldLocation, .{
+                .loc = @Vector(4, gl.Float){ -32, 0, -32, 0 },
+            });
             //ecs.add(game.state.world, bi.entity_id, components.Debug);
             ecs.add(world, bi.entity_id, components.shape.NeedsSetup);
         }

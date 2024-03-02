@@ -38,6 +38,18 @@ pub const Perspective = struct {
     far: gl.Float,
 };
 
+pub const WorldTranslation = struct {
+    translation: @Vector(4, gl.Float) = undefined,
+};
+
+pub const WorldRotation = struct {
+    rotation: @Vector(4, gl.Float) = undefined,
+};
+
+pub const WorldScale = struct {
+    scale: @Vector(4, gl.Float) = undefined,
+};
+
 pub const PostPerspective = struct {
     translation: @Vector(4, gl.Float) = undefined,
 };
@@ -79,7 +91,13 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, UpDirection);
 
     ecs.COMPONENT(game.state.world, Perspective);
+    // After perspective is applied translation:
     ecs.COMPONENT(game.state.world, PostPerspective);
+    // Complete world changes:
+    ecs.COMPONENT(game.state.world, WorldTranslation);
+    ecs.COMPONENT(game.state.world, WorldRotation);
+    ecs.COMPONENT(game.state.world, WorldScale);
+    // Where a specific entity is in the world:
     ecs.COMPONENT(game.state.world, WorldLocation);
 
     ecs.TAG(game.state.world, Data);

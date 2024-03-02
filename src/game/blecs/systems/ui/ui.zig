@@ -6,6 +6,7 @@ const chunk_editor = @import("ui_chunk_editor.zig");
 const character_editor = @import("ui_character_editor.zig");
 const world_editor = @import("ui_world_editor.zig");
 const demo_cube = @import("ui_demo_cube.zig");
+const demo_chunk = @import("ui_demo_chunk.zig");
 const settings_camera = @import("ui_settings_camera.zig");
 const cursor = @import("ui_cursor.zig");
 
@@ -18,6 +19,7 @@ pub fn init() void {
     character_editor.init();
     world_editor.init();
     demo_cube.init();
+    demo_chunk.init();
     settings_camera.init();
     cursor.init();
 }

@@ -33,67 +33,67 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     entities.screen.initDemoChunk();
                 }
                 if (zgui.sliderFloat4("translation slider", .{
-                    .v = &game.state.ui.data.demo_cube_translation,
+                    .v = &game.state.ui.data.demo_chunk_translation,
                     .min = -10,
                     .max = 10,
                 })) {
                     entities.screen.initDemoChunk();
                 }
-                if (zgui.inputFloat4("rotation input", .{
-                    .v = &game.state.ui.data.demo_cube_rotation,
+                if (zgui.inputFloat("scale input", .{
+                    .v = &game.state.ui.data.demo_chunk_scale,
                 })) {
                     entities.screen.initDemoChunk();
                 }
-                if (zgui.sliderFloat4("rotation slider", .{
-                    .v = &game.state.ui.data.demo_cube_rotation,
-                    .min = -1,
-                    .max = 1,
+                if (zgui.sliderFloat("scale slider", .{
+                    .v = &game.state.ui.data.demo_chunk_scale,
+                    .min = 0,
+                    .max = 0.09,
+                })) {
+                    entities.screen.initDemoChunk();
+                }
+                if (zgui.inputFloat("rotation input x", .{
+                    .v = &game.state.ui.data.demo_chunk_rotation_x,
+                })) {
+                    entities.screen.initDemoChunk();
+                }
+                if (zgui.sliderFloat("rotation slider x", .{
+                    .v = &game.state.ui.data.demo_chunk_rotation_x,
+                    .min = 0,
+                    .max = 2,
+                })) {
+                    entities.screen.initDemoChunk();
+                }
+                if (zgui.inputFloat("rotation input y", .{
+                    .v = &game.state.ui.data.demo_chunk_rotation_y,
+                })) {
+                    entities.screen.initDemoChunk();
+                }
+                if (zgui.sliderFloat("rotation slider y", .{
+                    .v = &game.state.ui.data.demo_chunk_rotation_y,
+                    .min = 0,
+                    .max = 2,
+                })) {
+                    entities.screen.initDemoChunk();
+                }
+                if (zgui.inputFloat("rotation input z", .{
+                    .v = &game.state.ui.data.demo_chunk_rotation_z,
+                })) {
+                    entities.screen.initDemoChunk();
+                }
+                if (zgui.sliderFloat("rotation slider z", .{
+                    .v = &game.state.ui.data.demo_chunk_rotation_z,
+                    .min = 0,
+                    .max = 2,
                 })) {
                     entities.screen.initDemoChunk();
                 }
                 if (zgui.inputFloat4("perspective translate input", .{
-                    .v = &game.state.ui.data.demo_cube_pp_translation,
+                    .v = &game.state.ui.data.demo_chunk_pp_translation,
                 })) {
                     entities.screen.initDemoChunk();
                 }
                 if (zgui.sliderFloat4("perspective translate slider", .{
-                    .v = &game.state.ui.data.demo_cube_pp_translation,
-                    .min = -10,
-                    .max = 10,
-                })) {
-                    entities.screen.initDemoChunk();
-                }
-                if (zgui.inputFloat4("p1 pos input", .{
-                    .v = &game.state.ui.data.demo_cube_plane_1_tl,
-                })) {
-                    entities.screen.initDemoChunk();
-                }
-                if (zgui.sliderFloat4("p1 pos slider", .{
-                    .v = &game.state.ui.data.demo_cube_plane_1_tl,
-                    .min = -10,
-                    .max = 10,
-                })) {
-                    entities.screen.initDemoChunk();
-                }
-                if (zgui.inputFloat4("p2 pos input", .{
-                    .v = &game.state.ui.data.demo_cube_plane_1_t2,
-                })) {
-                    entities.screen.initDemoChunk();
-                }
-                if (zgui.sliderFloat4("p2 pos slider", .{
-                    .v = &game.state.ui.data.demo_cube_plane_1_t2,
-                    .min = -10,
-                    .max = 10,
-                })) {
-                    entities.screen.initDemoChunk();
-                }
-                if (zgui.inputFloat4("p3 pos input", .{
-                    .v = &game.state.ui.data.demo_cube_plane_1_t3,
-                })) {
-                    entities.screen.initDemoChunk();
-                }
-                if (zgui.sliderFloat4("p3 pos slider", .{
-                    .v = &game.state.ui.data.demo_cube_plane_1_t3,
+                    .v = &game.state.ui.data.demo_chunk_pp_translation,
                     .min = -10,
                     .max = 10,
                 })) {
