@@ -1,5 +1,4 @@
 const std = @import("std");
-const state = @import("./state/state.zig");
 const gl = @import("zopengl").bindings;
 
 pub const chunkDim = 64;
@@ -14,17 +13,10 @@ pub fn getPositionAtIndexV(i: usize) @Vector(4, gl.Float) {
     return @Vector(4, gl.Float){ x, y, z, 1.0 };
 }
 
-pub fn getPositionAtIndex(i: usize) state.position.Position {
-    const x = @as(gl.Float, @floatFromInt(@mod(i, chunkDim)));
-    const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim)));
-    const z = @as(gl.Float, @floatFromInt(i / (chunkDim * chunkDim)));
-    return state.position.Position{ .x = x, .y = y, .z = z };
-}
-
-pub fn getIndexFromPosition(p: state.position.Position) usize {
-    const x = @as(i32, @intFromFloat(p.x));
-    const y = @as(i32, @intFromFloat(p.y));
-    const z = @as(i32, @intFromFloat(p.z));
+pub fn getIndexFromPositionV(p: @Vector(4, gl.Float)) usize {
+    const x = @as(i32, @intFromFloat(p[0]));
+    const y = @as(i32, @intFromFloat(p[1]));
+    const z = @as(i32, @intFromFloat(p[2]));
     return @as(
         usize,
         @intCast(@mod(x, chunkDim) + @mod(y, chunkDim) * chunkDim + @mod(z, chunkDim) * chunkDim * chunkDim),
@@ -32,19 +24,20 @@ pub fn getIndexFromPosition(p: state.position.Position) usize {
 }
 
 pub const Chunk = struct {
-    data: [chunkSize]i32,
-    meshes: std.AutoHashMap(usize, state.position.Position),
+    data: []i32 = undefined,
+    meshes: std.AutoHashMap(usize, @Vector(4, gl.Float)),
     meshed: std.AutoHashMap(usize, void),
     instanced: std.AutoHashMap(usize, void),
-    alloc: std.mem.Allocator,
-    pub fn init(alloc: std.mem.Allocator) !Chunk {
-        return Chunk{
-            .data = [_]i32{0} ** chunkSize,
-            .meshes = std.AutoHashMap(usize, state.position.Position).init(alloc),
-            .meshed = std.AutoHashMap(usize, void).init(alloc),
-            .instanced = std.AutoHashMap(usize, void).init(alloc),
-            .alloc = alloc,
+    allocator: std.mem.Allocator,
+    pub fn init(allocator: std.mem.Allocator) !*Chunk {
+        const c: *Chunk = try allocator.create(Chunk);
+        c.* = Chunk{
+            .meshes = std.AutoHashMap(usize, @Vector(4, gl.Float)).init(allocator),
+            .meshed = std.AutoHashMap(usize, void).init(allocator),
+            .instanced = std.AutoHashMap(usize, void).init(allocator),
+            .allocator = allocator,
         };
+        return c;
     }
 
     pub fn deinit(self: *Chunk) void {
@@ -71,7 +64,7 @@ pub const Chunker = struct {
     chunk: *Chunk,
     numVoxelsInMesh: usize,
     currentVoxel: usize,
-    currentScale: state.position.Position,
+    currentScale: @Vector(4, gl.Float),
     toBeMeshed: [minVoxelsInMesh]usize,
     cachingMeshed: bool,
 
@@ -80,7 +73,7 @@ pub const Chunker = struct {
             .chunk = chunk,
             .numVoxelsInMesh = 0,
             .currentVoxel = 0,
-            .currentScale = state.position.Position{ .x = 1.0, .y = 1.0, .z = 1.0 },
+            .currentScale = .{ 1, 1, 1, 0 },
             .toBeMeshed = [_]usize{0} ** minVoxelsInMesh,
             .cachingMeshed = true,
         };
@@ -120,13 +113,13 @@ pub const Chunker = struct {
     }
 
     fn initScale(self: *Chunker) void {
-        self.currentScale = state.position.Position{ .x = 1.0, .y = 1.0, .z = 1.0 };
+        self.currentScale = .{ 1, 1, 1, 0 };
     }
 
     pub fn run(self: *Chunker) !void {
-        var op = state.position.Position{ .x = 0.0, .y = 0.0, .z = 0.0 };
+        var op: @Vector(4, gl.Float) = .{ 0, 0, 0, 0 };
         var p = op;
-        p.x += 1.0;
+        p[0] += 1;
         var i: usize = 0;
         var firstLoop = true;
         outer: while (true) {
@@ -140,18 +133,18 @@ pub const Chunker = struct {
                 if (i >= chunkSize) {
                     break :outer;
                 }
-                op = getPositionAtIndex(i);
+                op = getPositionAtIndexV(i);
                 p = op;
-                if (p.x + 1 < chunkDim) {
-                    p.x += 1.0;
+                if (p[0] + 1 < chunkDim) {
+                    p[0] += 1;
                     break;
                 }
-                if (p.y + 1 < chunkDim) {
-                    p.y += 1.0;
+                if (p[1] + 1 < chunkDim) {
+                    p[1] += 1;
                     break;
                 }
-                if (p.z + 1 < chunkDim) {
-                    p.z += 1.0;
+                if (p[2] + 1 < chunkDim) {
+                    p[2] += 1;
                     break;
                 }
                 continue;
@@ -165,17 +158,17 @@ pub const Chunker = struct {
             }
             self.currentVoxel = i;
             var numDimsTravelled: u8 = 1;
-            var endX: gl.Float = op.x;
-            var endY: gl.Float = op.y;
+            var endX: gl.Float = op[0];
+            var endY: gl.Float = op[1];
             var numXAdded: gl.Float = 0;
             var numYAdded: gl.Float = 0;
             inner: while (true) {
-                const ii = getIndexFromPosition(p);
+                const ii = getIndexFromPositionV(p);
                 if (numDimsTravelled == 1) {
                     if (blockId != self.chunk.data[ii] or self.chunk.meshed.contains(ii)) {
                         numDimsTravelled += 1;
-                        p.y += 1.0;
-                        p.x = op.x;
+                        p[1] += 1;
+                        p[0] = op[0];
                         continue :inner;
                     }
                     if (numXAdded == 0) {
@@ -183,48 +176,48 @@ pub const Chunker = struct {
                         try self.updateMeshed(i);
                     }
                     try self.updateMeshed(ii);
-                    endX = p.x;
-                    self.currentScale.x = endX - op.x + 1;
-                    p.x += 1.0;
-                    if (p.x >= chunkDim) {
+                    endX = p[0];
+                    self.currentScale[0] = endX - op[0] + 1;
+                    p[0] += 1;
+                    if (p[0] >= chunkDim) {
                         numDimsTravelled += 1;
-                        p.y += 1.0;
-                        p.x = op.x;
+                        p[1] += 1;
+                        p[0] = op[0];
                         continue :inner;
                     }
                     numXAdded += 1;
                 } else if (numDimsTravelled == 2) {
                     // doing y here, only add if all x along the y are the same
                     if (blockId != self.chunk.data[ii] or self.chunk.meshed.contains(ii)) {
-                        p.y = op.y;
-                        p.z += 1.0;
+                        p[1] = op[1];
+                        p[2] += 1;
                         numDimsTravelled += 1;
                         continue :inner;
                     }
                     if (numYAdded == 0) {
                         try self.updateMeshed(i);
                     }
-                    if (p.x != endX) {
-                        p.x += 1.0;
+                    if (p[0] != endX) {
+                        p[0] += 1;
                         continue :inner;
                     }
                     // need to add all x's along the y to meshed map
-                    const _beg = @as(usize, @intFromFloat(op.x));
+                    const _beg = @as(usize, @intFromFloat(op[0]));
                     const _end = @as(usize, @intFromFloat(endX)) + 1;
                     for (_beg.._end) |xToAdd| {
                         const _xToAdd = @as(gl.Float, @floatFromInt(xToAdd));
-                        const np = state.position.Position{ .x = _xToAdd, .y = p.y, .z = p.z };
-                        const iii = getIndexFromPosition(np);
+                        const np: @Vector(4, gl.Float) = .{ _xToAdd, p[1], p[2], 0 };
+                        const iii = getIndexFromPositionV(np);
                         try self.updateMeshed(iii);
                     }
                     numYAdded += 1;
-                    endY = p.y;
-                    self.currentScale.y = endY - op.y + 1;
-                    p.y += 1.0;
-                    p.x = op.x;
-                    if (p.y >= chunkDim) {
-                        p.y = op.y;
-                        p.z += 1.0;
+                    endY = p[1];
+                    self.currentScale[1] = endY - op[1] + 1;
+                    p[1] += 1;
+                    p[0] = op[0];
+                    if (p[1] >= chunkDim) {
+                        p[1] = op[1];
+                        p[2] += 1;
                         numDimsTravelled += 1;
                         continue :inner;
                     }
@@ -235,33 +228,33 @@ pub const Chunker = struct {
                     if (self.chunk.meshed.contains(ii)) {
                         break :inner;
                     }
-                    if (p.x != endX) {
-                        p.x += 1.0;
+                    if (p[0] != endX) {
+                        p[0] += 1;
                         continue :inner;
                     }
-                    if (p.y != endY) {
-                        p.y += 1.0;
-                        p.x = op.x;
+                    if (p[1] != endY) {
+                        p[1] += 1;
+                        p[0] = op[0];
                         continue :inner;
                     }
                     // need to add all x's along the y to meshed map
-                    const _begX = @as(usize, @intFromFloat(op.x));
+                    const _begX = @as(usize, @intFromFloat(op[0]));
                     const _endX = @as(usize, @intFromFloat(endX)) + 1;
                     for (_begX.._endX) |xToAdd| {
                         const _xToAdd = @as(gl.Float, @floatFromInt(xToAdd));
-                        const _begY = @as(usize, @intFromFloat(op.y));
+                        const _begY = @as(usize, @intFromFloat(op[1]));
                         const _endY = @as(usize, @intFromFloat(endY)) + 1;
                         for (_begY.._endY) |yToAdd| {
                             const _yToAdd = @as(gl.Float, @floatFromInt(yToAdd));
-                            const iii = getIndexFromPosition(state.position.Position{ .x = _xToAdd, .y = _yToAdd, .z = p.z });
+                            const iii = getIndexFromPositionV(.{ _xToAdd, _yToAdd, p[2], 0 });
                             try self.updateMeshed(iii);
                         }
                     }
-                    self.currentScale.z = p.z - op.z + 1;
-                    p.z += 1.0;
-                    p.x = op.x;
-                    p.y = op.y;
-                    if (p.z >= chunkDim) {
+                    self.currentScale[2] = p[2] - op[2] + 1;
+                    p[2] += 1;
+                    p[0] = op[0];
+                    p[1] = op[1];
+                    if (p[2] >= chunkDim) {
                         break :inner;
                     }
                     continue :inner;

@@ -321,10 +321,35 @@ pub fn initDemoChunk() void {
     const chunk_demo_data = game.state.ui.data.chunk_demo_data.?;
     std.debug.print("chunk len: {d}\n", .{chunk_demo_data.len});
 
-    var block_id: u8 = 0;
-    for (0..chunk_data.len) |i| {
-        if (chunk_data[i] == 0) continue;
-        block_id = @intCast(chunk_data[i]);
+    var c: *chunk.Chunk = chunk.Chunk.init(game.state.allocator) catch unreachable;
+    defer game.state.allocator.destroy(c);
+    defer c.deinit();
+    c.data = chunk_data;
+    c.findMeshes() catch unreachable;
+
+    var keys = c.meshes.keyIterator();
+    while (keys.next()) |_k| {
+        const i: usize = _k.*;
+        if (c.meshes.get(i)) |s| {
+            const block_id = c.data[i];
+            const p = chunk.getPositionAtIndexV(i);
+            std.debug.print("mesh for block id {d} at ({d},{d}, {d}) with scale ({d}, {d}, {d})\n", .{
+                block_id,
+                p[0],
+                p[1],
+                p[2],
+                s[0],
+                s[1],
+                s[2],
+            });
+        }
+    }
+
+    var instancedKeys = c.instanced.keyIterator();
+    while (instancedKeys.next()) |_k| {
+        const i: usize = _k.*;
+        var block_id: u8 = 0;
+        block_id = @intCast(c.data[i]);
         if (!game.state.gfx.settings_blocks.contains(block_id)) {
             const block_entity = helpers.new_child(world, settings_data);
             const bi: *game_state.BlockInstance = game.state.allocator.create(game_state.BlockInstance) catch unreachable;
@@ -344,7 +369,7 @@ pub fn initDemoChunk() void {
             _ = ecs.set(world, bi.entity_id, components.screen.WorldLocation, .{
                 .loc = @Vector(4, gl.Float){ -32, 0, -32, 0 },
             });
-            //ecs.add(game.state.world, bi.entity_id, components.Debug);
+            ecs.add(game.state.world, bi.entity_id, components.Debug);
             ecs.add(world, bi.entity_id, components.shape.NeedsSetup);
         }
         const bi: *game_state.BlockInstance = game.state.gfx.settings_blocks.get(block_id).?;

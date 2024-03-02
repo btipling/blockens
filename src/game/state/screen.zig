@@ -204,10 +204,10 @@ pub const Screen = struct {
     fn initChunk(self: *Screen, wpData: position.worldPosition) !void {
         const chunkPosition = wpData.positionFromWorldPosition();
         std.debug.print("initChunk: {d}, {d}, {d}\n", .{ chunkPosition.x, chunkPosition.y, chunkPosition.z });
-        var chu = try chunk.Chunk.init(self.alloc);
-        var c = &chu;
+        var c: *chunk.Chunk = try chunk.Chunk.init(self.alloc);
         defer c.deinit();
-        chu.data = self.chunks.get(wpData).?;
+        defer self.alloc.destroy(c);
+        c.data = self.chunks.get(wpData).?;
         self.shapeview.bind();
         try c.findMeshes();
 
