@@ -55,11 +55,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             defer _ = game.state.gfx.renderConfigs.remove(erc.id);
             defer game.state.allocator.destroy(er);
             defer ecs.delete(world, erc.id);
-            if (er.is_instanced) {
-                // Just don't do anything with these now.
-                ecs.remove(it.world, entity, components.gfx.ElementsRendererConfig);
-                continue;
-            }
 
             const vao = gfx.Gfx.initVAO() catch unreachable;
             const vbo = gfx.Gfx.initVBO() catch unreachable;

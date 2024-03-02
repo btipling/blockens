@@ -195,6 +195,8 @@ pub const Game = struct {
             .ubos = std.AutoHashMap(gl.Uint, gl.Uint).init(self.allocator),
             .ssbos = std.AutoHashMap(gl.Uint, gl.Uint).init(self.allocator),
             .renderConfigs = std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig).init(self.allocator),
+            .game_blocks = std.AutoHashMap(u8, *BlockInstance).init(self.allocator),
+            .settings_blocks = std.AutoHashMap(u8, *BlockInstance).init(self.allocator),
         };
         self.gfx.blocks = std.AutoHashMap(u8, *Block).init(self.allocator);
     }

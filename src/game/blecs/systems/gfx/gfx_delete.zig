@@ -5,6 +5,7 @@ const gl = @import("zopengl").bindings;
 const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
+const screen_entity = @import("../../entities/entities_screen.zig");
 
 pub fn init() void {
     const s = system();
@@ -20,12 +21,35 @@ fn system() ecs.system_desc_t {
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
+    const world = it.world;
+    const screen: *const components.screen.Screen = ecs.get(
+        game.state.world,
+        game.state.entities.screen,
+        components.screen.Screen,
+    ) orelse unreachable;
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
+            ecs.remove(world, entity, components.gfx.NeedsDeletion);
             const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse return;
             const er = ers[i];
-            if (er.enableDepthTest) gl.enable(gl.DEPTH_TEST);
+            if (ecs.has_id(world, entity, ecs.id(components.block.BlockInstance))) {
+                const block: *const components.block.Block = ecs.get(
+                    game.state.world,
+                    entity,
+                    components.block.Block,
+                ) orelse unreachable;
+                // Instances aren't deleted, we just drop drawing them and delete their transforms.
+                ecs.remove(world, entity, components.gfx.CanDraw);
+                const parent = ecs.get_parent(world, entity);
+                if (parent == screen.gameDataEntity and game.state.gfx.game_blocks.contains(block.block_id)) {
+                    game.state.gfx.game_blocks.get(block.block_id).?.transforms.clearAndFree();
+                }
+                if (parent == screen.settingDataEntity and game.state.gfx.settings_blocks.contains(block.block_id)) {
+                    game.state.gfx.settings_blocks.get(block.block_id).?.transforms.clearAndFree();
+                }
+                continue;
+            }
             gl.deleteProgram(er.program);
             gl.deleteVertexArrays(1, &er.vao);
             gl.deleteBuffers(1, &er.vbo);

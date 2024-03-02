@@ -179,6 +179,7 @@ pub fn clearDemoObjects() void {
             _ = ecs.add(world, entity, components.gfx.NeedsDeletion);
         }
     }
+    ecs.remove(world, game.state.entities.settings_camera, components.screen.PostPerspective);
 }
 
 pub fn initDemoCube() void {
@@ -187,6 +188,13 @@ pub fn initDemoCube() void {
     }
     const world = game.state.world;
     clearDemoObjects();
+
+    // Demo cube needs a little camera adjustment to be on the left side of the screen while keeping
+    // the perspective centered at it.
+    _ = ecs.set(world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
+        .translation = game.state.ui.data.demo_cube_pp_translation,
+    });
+
     const c_dc = helpers.new_child(world, settings_data);
     _ = ecs.set(world, c_dc, components.shape.Shape, .{ .shape_type = .cube });
     const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
@@ -201,9 +209,6 @@ pub fn initDemoCube() void {
     _ = ecs.set(world, c_dc, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 * 3 });
     _ = ecs.add(world, c_dc, components.shape.NeedsSetup);
     _ = ecs.add(world, c_dc, components.Debug);
-    _ = ecs.set(world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
-        .translation = game.state.ui.data.demo_cube_pp_translation,
-    });
     // Add animation to cube:
     const animation = helpers.new_child(world, c_dc);
     _ = ecs.set(world, animation, components.gfx.AnimationSSBO, .{
@@ -270,7 +275,14 @@ pub fn initDemoChunk() void {
     if (game.state.ui.data.chunk_demo_data == null) {
         return;
     }
+    clearDemoObjects();
     const world = game.state.world;
+
+    // Demo chunks also needs a camera adjustment to keep perspective centered on it
+    _ = ecs.set(world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
+        .translation = game.state.ui.data.demo_cube_pp_translation,
+    });
+
     // TODO chunk data needs to be u32s...
     const chunk_data: []i32 = game.state.ui.data.chunk_demo_data.?;
     const chunk_demo_data = game.state.ui.data.chunk_demo_data.?;
@@ -282,20 +294,25 @@ pub fn initDemoChunk() void {
         block_id = @intCast(chunk_data[i]);
         if (!game.state.gfx.settings_blocks.contains(block_id)) {
             const block_entity = helpers.new_child(world, settings_data);
-            ecs.add(world, block_entity, components.block.BlockInstance);
-            _ = ecs.set(world, block_entity, components.shape.Shape, .{ .shape_type = .cube });
-            _ = ecs.set(world, block_entity, components.block.Block, .{
-                .block_id = block_id,
-            });
-            ecs.add(world, block_entity, components.shape.NeedsSetup);
             const bi: *game_state.BlockInstance = game.state.allocator.create(game_state.BlockInstance) catch unreachable;
             bi.* = .{
                 .entity_id = block_entity,
                 .transforms = std.ArrayList(zm.Mat).init(game.state.allocator),
             };
             game.state.gfx.settings_blocks.put(block_id, bi) catch unreachable;
+            ecs.add(world, bi.entity_id, components.block.BlockInstance);
+            _ = ecs.set(world, bi.entity_id, components.shape.Shape, .{ .shape_type = .cube });
+            _ = ecs.set(world, bi.entity_id, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
+            _ = ecs.set(world, bi.entity_id, components.block.Block, .{
+                .block_id = block_id,
+            });
+            ecs.add(world, bi.entity_id, components.shape.NeedsSetup);
         }
         const bi: *game_state.BlockInstance = game.state.gfx.settings_blocks.get(block_id).?;
+        ecs.remove(world, bi.entity_id, components.gfx.NeedsDeletion); // was just added by clear demo object
+        // we do want to clear existing transforms
+        bi.transforms.clearAndFree();
         bi.transforms.append(zm.translationV(chunk.getPositionAtIndexV(i))) catch unreachable;
+        ecs.add(world, bi.entity_id, components.gfx.CanDraw);
     }
 }
