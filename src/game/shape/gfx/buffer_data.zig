@@ -69,6 +69,10 @@ pub const AttributeBuilder = struct {
     }
 
     pub fn defineFloatAttributeValue(self: *AttributeBuilder, size: gl.Int) gl.Uint {
+        return self.defineFloatAttributeValueWithDivisor(size, false);
+    }
+
+    pub fn defineFloatAttributeValueWithDivisor(self: *AttributeBuilder, size: gl.Int, divisor: bool) gl.Uint {
         var offset: usize = 0;
         for (self.attr_vars.items) |av| {
             offset += @as(usize, @intCast(av.size)) * sizeFromType(av.type);
@@ -79,6 +83,7 @@ pub const AttributeBuilder = struct {
             .location = self.last_location,
             .normalized = gl.FALSE,
             .offset = offset,
+            .divisor = divisor,
         };
         self.last_location += 1;
         self.stride += @as(gl.Sizei, @intCast(av.size)) * @as(gl.Sizei, @intCast(sizeFromType(av.type)));

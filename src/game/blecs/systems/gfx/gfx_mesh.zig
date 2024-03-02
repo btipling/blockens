@@ -118,10 +118,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         builder.get_location(),
                     );
                     defer instance_builder.deinit();
-                    const col1_loc = instance_builder.defineFloatAttributeValue(4);
-                    const col2_loc = instance_builder.defineFloatAttributeValue(4);
-                    const col3_loc = instance_builder.defineFloatAttributeValue(4);
-                    const col4_loc = instance_builder.defineFloatAttributeValue(4);
+                    const col1_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
+                    const col2_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
+                    const col3_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
+                    const col4_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
                     const r = zm.matToArr(zm.identity());
                     instance_builder.initBuffer();
                     instance_builder.addFloatAtLocation(col1_loc, @ptrCast(r[0..4]), 0);
