@@ -58,6 +58,10 @@ pub const UIData = struct {
     demo_cube_plane_1_tl: @Vector(4, gl.Float) = @Vector(4, gl.Float){ -0.926, 0.12, 0, 0 },
     demo_cube_plane_1_t2: @Vector(4, gl.Float) = @Vector(4, gl.Float){ -0.727, 0.090, 0, 0 },
     demo_cube_plane_1_t3: @Vector(4, gl.Float) = @Vector(4, gl.Float){ -0.926, -0.54, 0, 0 },
+    demo_chunk_rotation: @Vector(4, gl.Float) = zm.matToQuat(zm.rotationY(0 * std.math.pi)),
+    demo_chunk_scale: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 0, 0, 0, 0 },
+    demo_chunk_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 0, 0, 0, 0 },
+    demo_chunk_pp_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ -0.825, 0.650, 0, 0 },
 
     fn deinit(self: *UIData, allocator: std.mem.Allocator) void {
         self.texture_script_options.deinit();

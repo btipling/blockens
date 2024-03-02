@@ -321,12 +321,15 @@ pub fn initDemoChunk() void {
                 components.shape.Scale,
                 .{ .scale = @Vector(4, gl.Float){ chunk_scale, chunk_scale, chunk_scale, 0 } },
             );
-            const chunk_rot = zm.matToQuat(zm.rotationY(1.5 * std.math.pi));
+            var chunk_rot = zm.rotationY(0.25 * std.math.pi);
+            // _ = &chunk_rot;
+            chunk_rot = zm.mul(chunk_rot, zm.rotationZ(1.01 * std.math.pi * 2.0));
+            chunk_rot = zm.mul(chunk_rot, zm.rotationX(1 * std.math.pi * 2.0));
             _ = ecs.set(
                 game.state.world,
                 bi.entity_id,
                 components.shape.Rotation,
-                .{ .rot = chunk_rot },
+                .{ .rot = zm.matToQuat(chunk_rot) },
             );
             //ecs.add(game.state.world, bi.entity_id, components.Debug);
             ecs.add(world, bi.entity_id, components.shape.NeedsSetup);

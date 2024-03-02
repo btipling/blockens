@@ -34,6 +34,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
+            if (!ecs.is_alive(world, entity)) continue;
             const parent = ecs.get_parent(world, entity);
             if (parent == screen.gameDataEntity) {
                 if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Game))) {
