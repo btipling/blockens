@@ -55,4 +55,7 @@ fn handleChunkHotKeys() void {
         const r = zm.rotationY(-0.0125 * std.math.pi * 2.0);
         world_rotation.rotation = zm.matToQuat(zm.mul(m, r));
     }
+    if (input.keys.pressedKey(.F3)) {
+        // show wireframe
+    }
 }
