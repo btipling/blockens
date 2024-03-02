@@ -81,3 +81,11 @@ fn toggleUI(comptime T: type) void {
     }
     blecs.ecs.add(game.state.world, game.state.entities.ui, T);
 }
+
+pub fn toggleWireframe(entity: blecs.ecs.entity_t) void {
+    if (blecs.ecs.has_id(game.state.world, entity, blecs.ecs.id(blecs.components.gfx.Wireframe))) {
+        blecs.ecs.remove(game.state.world, entity, blecs.components.gfx.Wireframe);
+        return;
+    }
+    blecs.ecs.add(game.state.world, entity, blecs.components.gfx.Wireframe);
+}

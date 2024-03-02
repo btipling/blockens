@@ -9,6 +9,7 @@ const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
 const script = @import("../../../script/script.zig");
 const menus = @import("../../../ui/menus.zig");
+const screen_helpers = @import("../../../screen/screen.zig");
 
 pub fn init() void {
     const s = system();
@@ -161,7 +162,12 @@ fn drawInput() !void {
 }
 
 fn toggleWireframe() void {
-    // TODO toggle wireframe support
+    const screen: *const components.screen.Screen = ecs.get(
+        game.state.world,
+        game.state.entities.screen,
+        components.screen.Screen,
+    ) orelse unreachable;
+    screen_helpers.toggleWireframe(screen.current);
 }
 
 fn evalChunkFunc() !void {

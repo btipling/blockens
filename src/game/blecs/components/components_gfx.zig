@@ -38,6 +38,8 @@ pub const CanDraw = struct {};
 pub const NeedsInstanceDataUpdate = struct {};
 pub const NeedsDeletion = struct {};
 
+pub const Wireframe = struct {};
+
 pub fn init() void {
     const world = game.state.world;
     ecs.COMPONENT(world, BaseRenderer);
@@ -48,4 +50,5 @@ pub fn init() void {
     ecs.TAG(world, CanDraw);
     ecs.TAG(world, NeedsInstanceDataUpdate);
     ecs.TAG(world, NeedsDeletion);
+    ecs.TAG(world, Wireframe);
 }

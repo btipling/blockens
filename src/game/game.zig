@@ -18,23 +18,53 @@ fn cursorPosCallback(_: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) void {
     input.cursor.cursorPosCallback(xpos, ypos);
 }
 
+const glError = struct {
+    source: gl.Enum = 0,
+    error_type: gl.Enum = 0,
+    id: gl.Uint = 0,
+    severity: gl.Enum = 0,
+    fn equal(a: glError, b: glError) bool {
+        if (a.source != b.source) return false;
+        if (a.error_type != b.error_type) return false;
+        if (a.id != b.id) return false;
+        if (a.severity != b.severity) return false;
+        return true;
+    }
+};
+
+var prev_error: glError = .{};
+
 fn glErrorCallbackfn(
     source: gl.Enum,
-    errorType: gl.Enum,
+    error_type: gl.Enum,
     id: gl.Uint,
     severity: gl.Enum,
     _: gl.Sizei,
     message: [*c]const gl.Char,
     _: *const anyopaque,
 ) callconv(.C) void {
+    const err: glError = .{
+        .source = source,
+        .error_type = error_type,
+        .id = id,
+        .severity = severity,
+    };
+    if (prev_error.equal(err)) return;
+    prev_error = err;
     const errorMessage: [:0]const u8 = std.mem.sliceTo(message, 0);
     std.debug.print("\n:::GL Error:::\n", .{});
     std.debug.print("\n\t - source: {d}\n", .{source});
-    std.debug.print("\n\t - type: {d}\n", .{errorType});
+    std.debug.print("\n\t - type: {d}\n", .{error_type});
     std.debug.print("\n\t - id: {d}\n", .{id});
     std.debug.print("\n\t - severity: {d}\n", .{severity});
     std.debug.print("\n\t - message: `{s}`\n", .{errorMessage});
-    @panic("\nExiting due to OpenGL Error\n");
+    switch (severity) {
+        gl.DEBUG_SEVERITY_HIGH => @panic("\nExiting due to HIGH OpenGL Error\n"),
+        gl.DEBUG_SEVERITY_MEDIUM => std.debug.print("medium severity error\n", .{}),
+        gl.DEBUG_SEVERITY_LOW => std.debug.print("low severity error\n", .{}),
+        gl.DEBUG_SEVERITY_NOTIFICATION => std.debug.print("notification error\n", .{}),
+        else => std.debug.print("unknown error", .{}),
+    }
 }
 // from https://registry.khronos.org/OpenGL/api/GL/glext.h
 const GL_DEBUG_OUTPUT_SYNCHRONOUS = 0x8242;
