@@ -85,6 +85,7 @@ const shaders = struct {
             .has_texture_coords = mesh_data.texcoords != null,
             .has_normals = mesh_data.normals != null,
             .animation_block_index = e.animation_binding_point,
+            .is_instanced = e.is_instanced,
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
     }

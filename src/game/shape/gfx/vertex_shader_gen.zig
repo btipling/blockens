@@ -17,6 +17,7 @@ pub const VertexShaderGen = struct {
         scale: ?math.vecs.Vflx4 = null,
         rotation: ?math.vecs.Vflx4 = null,
         translation: ?math.vecs.Vflx4 = null,
+        is_instanced: bool = false,
     };
 
     // genVertexShader - call ower owns the returned slice and must free it
@@ -30,6 +31,7 @@ pub const VertexShaderGen = struct {
         allocator: std.mem.Allocator,
         buf: std.ArrayListUnmanaged(u8),
         cfg: vertexShaderConfig,
+        location: u8 = 0,
 
         fn init(
             allocator: std.mem.Allocator,
@@ -53,6 +55,7 @@ pub const VertexShaderGen = struct {
         fn run(r: *runner) ![:0]const u8 {
             r.a("#version 450 core\n");
             try r.gen_attribute_vars();
+            try r.gen_instanced_vars();
             try r.gen_out_vars();
             try r.gen_uniforms();
             try r.gen_ubo();
@@ -66,20 +69,26 @@ pub const VertexShaderGen = struct {
         }
 
         fn gen_attribute_vars(r: *runner) !void {
-            var location: u8 = 0;
-            var line = try shader_helpers.attribute_location(location, "position", .vec3);
+            var line = try shader_helpers.attribute_location(r.location, "position", .vec3);
             r.a(std.mem.sliceTo(&line, 0));
-            location += 1;
+            r.location += 1;
             if (r.cfg.has_texture_coords) {
-                line = try shader_helpers.attribute_location(location, "eTexCoord", .vec2);
+                line = try shader_helpers.attribute_location(r.location, "eTexCoord", .vec2);
                 r.a(std.mem.sliceTo(&line, 0));
-                location += 1;
+                r.location += 1;
             }
             if (r.cfg.has_normals) {
-                line = try shader_helpers.attribute_location(location, "normal", .vec3);
+                line = try shader_helpers.attribute_location(r.location, "normal", .vec3);
                 r.a(std.mem.sliceTo(&line, 0));
-                location += 1;
+                r.location += 1;
             }
+        }
+
+        fn gen_instanced_vars(r: *runner) !void {
+            if (!r.cfg.is_instanced) return;
+            var line = try shader_helpers.attribute_location(r.location, "attribTransform", .mat4);
+            r.a(std.mem.sliceTo(&line, 0));
+            r.location += 1;
         }
 
         fn gen_out_vars(r: *runner) !void {

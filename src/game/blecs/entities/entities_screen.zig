@@ -121,7 +121,6 @@ fn initFloor() void {
         .loc = @Vector(4, gl.Float){ -25, -25, -25, 0 },
     });
     _ = ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
-    _ = ecs.add(game.state.world, c_f, components.Debug);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, game_data);
 }
 
@@ -208,7 +207,6 @@ pub fn initDemoCube() void {
     });
     _ = ecs.set(world, c_dc, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 * 3 });
     _ = ecs.add(world, c_dc, components.shape.NeedsSetup);
-    _ = ecs.add(world, c_dc, components.Debug);
     // Add animation to cube:
     const animation = helpers.new_child(world, c_dc);
     _ = ecs.set(world, animation, components.gfx.AnimationSSBO, .{
@@ -277,6 +275,8 @@ pub fn initDemoChunk() void {
     }
     clearDemoObjects();
     const world = game.state.world;
+    var bm = std.AutoHashMap(u8, void).init(game.state.allocator);
+    defer bm.deinit();
 
     // Demo chunks also needs a camera adjustment to keep perspective centered on it
     _ = ecs.set(world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
@@ -308,13 +308,18 @@ pub fn initDemoChunk() void {
             _ = ecs.set(world, bi.entity_id, components.block.Block, .{
                 .block_id = block_id,
             });
+            ecs.add(game.state.world, bi.entity_id, components.Debug);
             ecs.add(world, bi.entity_id, components.shape.NeedsSetup);
         }
         const bi: *game_state.BlockInstance = game.state.gfx.settings_blocks.get(block_id).?;
-        ecs.remove(world, bi.entity_id, components.gfx.NeedsDeletion); // was just added by clear demo object
-        // we do want to clear existing transforms
-        bi.transforms.clearAndFree();
+        if (!bm.contains(block_id)) {
+            // don't remove if marked for deletion by clearDemoObjects
+            ecs.remove(world, bi.entity_id, components.gfx.NeedsDeletion);
+            ecs.add(game.state.world, bi.entity_id, components.gfx.CanDraw);
+            // we do want to clear existing transforms
+            bi.transforms.clearAndFree();
+            bm.put(block_id, {}) catch unreachable;
+        }
         bi.transforms.append(zm.translationV(chunk.getPositionAtIndexV(i))) catch unreachable;
-        ecs.add(world, bi.entity_id, components.gfx.CanDraw);
     }
 }
