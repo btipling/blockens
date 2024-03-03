@@ -41,74 +41,74 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 if (zgui.inputFloat4("translation input", .{
                     .v = &game.state.ui.data.demo_chunk_translation,
                 })) {
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.sliderFloat4("translation slider", .{
                     .v = &game.state.ui.data.demo_chunk_translation,
                     .min = -10,
                     .max = 10,
                 })) {
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.inputFloat("scale input", .{
                     .v = &game.state.ui.data.demo_chunk_scale,
                 })) {
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.sliderFloat("scale slider", .{
                     .v = &game.state.ui.data.demo_chunk_scale,
                     .min = 0,
                     .max = 0.09,
                 })) {
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.inputFloat("rotation input x", .{
                     .v = &game.state.ui.data.demo_chunk_rotation_x,
                 })) {
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.sliderFloat("rotation slider x", .{
                     .v = &game.state.ui.data.demo_chunk_rotation_x,
                     .min = 0,
                     .max = 2,
                 })) {
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.inputFloat("rotation input y", .{
                     .v = &game.state.ui.data.demo_chunk_rotation_y,
                 })) {
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.sliderFloat("rotation slider y", .{
                     .v = &game.state.ui.data.demo_chunk_rotation_y,
                     .min = 0,
                     .max = 2,
                 })) {
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.inputFloat("rotation input z", .{
                     .v = &game.state.ui.data.demo_chunk_rotation_z,
                 })) {
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.sliderFloat("rotation slider z", .{
                     .v = &game.state.ui.data.demo_chunk_rotation_z,
                     .min = 0,
                     .max = 2,
                 })) {
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.inputFloat4("perspective translate input", .{
                     .v = &game.state.ui.data.demo_chunk_pp_translation,
                 })) {
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.sliderFloat4("perspective translate slider", .{
                     .v = &game.state.ui.data.demo_chunk_pp_translation,
                     .min = -10,
                     .max = 10,
                 })) {
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.button("max", .{
                     .h = 50,
@@ -128,7 +128,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     game.state.ui.data.demo_chunk_scale = 0.09;
                     game.state.ui.data.demo_chunk_translation = .{ 2.461, -1.631, 0.397, 0 };
                     game.state.ui.data.demo_chunk_pp_translation = .{ 0, 0, 0, 0 };
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
                 zgui.sameLine(.{});
                 if (zgui.button("unmax", .{
@@ -141,7 +141,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     game.state.ui.data.demo_chunk_scale = pre_max.scale;
                     game.state.ui.data.demo_chunk_translation = pre_max.translation;
                     game.state.ui.data.demo_chunk_pp_translation = pre_max.pp_translation;
-                    entities.screen.initDemoChunk();
+                    entities.screen.initDemoChunkCamera();
                 }
             }
             zgui.end();

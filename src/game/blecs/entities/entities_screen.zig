@@ -280,11 +280,7 @@ pub fn initDemoCube() void {
     ecs.add(world, c_t3, components.shape.NeedsSetup);
 }
 
-pub fn initDemoChunk() void {
-    if (game.state.ui.data.chunk_demo_data == null) {
-        return;
-    }
-    clearDemoObjects();
+pub fn initDemoChunkCamera() void {
     const world = game.state.world;
 
     // Demo chunks also needs a camera adjustment to keep perspective centered on it
@@ -315,7 +311,16 @@ pub fn initDemoChunk() void {
         components.screen.WorldTranslation,
         .{ .translation = game.state.ui.data.demo_chunk_translation },
     );
+}
 
+pub fn initDemoChunk() void {
+    if (game.state.ui.data.chunk_demo_data == null) {
+        return;
+    }
+    clearDemoObjects();
+    const world = game.state.world;
+
+    initDemoChunkCamera();
     // TODO chunk data needs to be u32s...
     const chunk_data: []i32 = game.state.ui.data.chunk_demo_data.?;
     const chunk_demo_data = game.state.ui.data.chunk_demo_data.?;
@@ -382,13 +387,11 @@ pub fn initDemoChunk() void {
             _ = ecs.set(world, bi.entity_id, components.block.Block, .{
                 .block_id = block_id,
             });
-            _ = ecs.set(world, bi.entity_id, components.screen.WorldLocation, .{
-                .loc = @Vector(4, gl.Float){ -32, 0, -32, 0 },
-            });
             ecs.add(game.state.world, bi.entity_id, components.Debug);
             ecs.add(world, bi.entity_id, components.shape.NeedsSetup);
         }
         const bi: *game_state.BlockInstance = game.state.gfx.settings_blocks.get(block_id).?;
-        bi.transforms.append(zm.translationV(chunk.getPositionAtIndexV(i))) catch unreachable;
+        const p: @Vector(4, gl.Float) = chunk.getPositionAtIndexV(i);
+        bi.transforms.append(zm.translationV(.{ p[0] - 32, p[1], p[2] - 32, p[3] })) catch unreachable;
     }
 }
