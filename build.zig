@@ -5,6 +5,7 @@ const opengl = @import("libs/opengl/build.zig");
 const stbi = @import("libs/stbi/build.zig");
 const math = @import("libs/math/build.zig");
 const mesh = @import("libs/mesh/build.zig");
+const jobs = @import("libs/jobs/build.zig");
 const flecs = @import("libs/flecs/build.zig");
 const lua = @import("libs/lua/build.zig");
 const sqlite = @import("libs/sqlite/build.zig");
@@ -43,6 +44,7 @@ pub fn build(b: *std.Build) !void {
     const math_pkg = math.package(b, target, optimize, .{});
     const mesh_pkg = mesh.package(b, target, optimize, .{});
     const flecs_pkg = flecs.package(b, target, optimize, .{});
+    const jobs_pkg = jobs.package(b, target, optimize, .{});
 
     glfw_pkg.link(exe);
     opengl_pkg.link(exe);
@@ -51,6 +53,7 @@ pub fn build(b: *std.Build) !void {
     ui_pkg.link(exe);
     mesh_pkg.link(exe);
     flecs_pkg.link(exe);
+    jobs_pkg.link(exe);
 
     const lua_module = lua.buildLibrary(
         b,

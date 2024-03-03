@@ -7,6 +7,7 @@ const zgui = @import("zgui");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
 const chunk = @import("../chunk.zig");
+const jobs = @import("../jobs.zig");
 const state = @import("state.zig");
 
 pub const max_world_name = 20;
@@ -187,6 +188,7 @@ pub const Gfx = struct {
         self.mesh_data.deinit();
     }
 };
+
 pub const Game = struct {
     allocator: std.mem.Allocator = undefined,
     window: *glfw.Window = undefined,
@@ -197,6 +199,7 @@ pub const Game = struct {
     input: Input = .{},
     ui: UI = .{},
     gfx: Gfx = .{},
+    jobs: jobs.Jobs = .{},
     quit: bool = false,
 
     pub fn initInternals(self: *Game) !void {
@@ -229,7 +232,7 @@ pub const Game = struct {
 
     pub fn initUIData(self: *Game) !void {
         self.ui.data = try self.allocator.create(UIData);
-        self.ui.data.* = UIData{
+        self.ui.data.* = .{
             .texture_script_options = std.ArrayList(data.scriptOption).init(self.allocator),
             .block_options = std.ArrayList(data.blockOption).init(self.allocator),
             .chunk_script_options = std.ArrayList(data.chunkScriptOption).init(self.allocator),
@@ -239,7 +242,7 @@ pub const Game = struct {
     }
 
     pub fn initGfx(self: *Game) !void {
-        self.gfx = Gfx{
+        self.gfx = .{
             .ubos = std.AutoHashMap(gl.Uint, gl.Uint).init(self.allocator),
             .ssbos = std.AutoHashMap(gl.Uint, gl.Uint).init(self.allocator),
             .renderConfigs = std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig).init(self.allocator),
@@ -248,6 +251,10 @@ pub const Game = struct {
             .mesh_data = std.AutoHashMap(blecs.ecs.entity_t, *chunk.Chunk).init(self.allocator),
         };
         self.gfx.blocks = std.AutoHashMap(u8, *Block).init(self.allocator);
+    }
+
+    pub fn initJobs(self: *Game) !void {
+        self.jobs.start();
     }
 
     pub fn initScript(self: *Game) !void {
