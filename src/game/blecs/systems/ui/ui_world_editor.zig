@@ -441,6 +441,10 @@ fn saveChunkDatas() !void {
 }
 
 fn loadChunkDatas() !void {
+    var td = game.state.ui.data.world_chunk_table_data.valueIterator();
+    while (td.next()) |cc| {
+        game.state.allocator.free(cc.*.chunkData);
+    }
     game.state.ui.data.world_chunk_table_data.clearAndFree();
     for (0..2) |_i| {
         const y: i32 = @as(i32, @intCast(_i));
