@@ -105,11 +105,9 @@ fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, gl.Flo
         ecs.add(world, bi.entity_id, components.gfx.NeedsInstanceDataUpdate);
         const p: @Vector(4, gl.Float) = chunk.getPositionAtIndexV(i);
         const fp: @Vector(4, gl.Float) = .{ p[0] - 32, p[1], p[2] - 32, p[3] };
-        std.debug.print("hrm?\n", .{});
         bi.transforms.append(zm.translationV(fp)) catch |e| {
             std.debug.print("got an error appending transforms? {}\n", .{e});
         };
-        std.debug.print("bi length is: {d}\n", .{bi.transforms.items.len});
     }
     c.deinit();
     game.state.allocator.destroy(c);
