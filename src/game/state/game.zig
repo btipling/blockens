@@ -6,6 +6,7 @@ const zm = @import("zmath");
 const zgui = @import("zgui");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
+const chunk = @import("../chunk.zig");
 
 pub const Entities = struct {
     screen: usize = 0,
@@ -129,6 +130,7 @@ pub const Gfx = struct {
     blocks: std.AutoHashMap(u8, *Block) = undefined,
     game_blocks: std.AutoHashMap(u8, *BlockInstance) = undefined,
     settings_blocks: std.AutoHashMap(u8, *BlockInstance) = undefined,
+    mesh_data: std.AutoHashMap(blecs.ecs.entity_t, *chunk.Chunk) = undefined,
 
     fn deinit(self: *Gfx, allocator: std.mem.Allocator) void {
         self.ubos.deinit();
@@ -155,6 +157,12 @@ pub const Gfx = struct {
             allocator.destroy(b.*);
         }
         self.settings_blocks.deinit();
+        var md_i = self.mesh_data.valueIterator();
+        while (md_i.next()) |c| {
+            c.*.deinit();
+            allocator.destroy(c.*);
+        }
+        self.mesh_data.deinit();
         self.renderConfigs.deinit();
     }
 };
@@ -214,6 +222,7 @@ pub const Game = struct {
             .renderConfigs = std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig).init(self.allocator),
             .game_blocks = std.AutoHashMap(u8, *BlockInstance).init(self.allocator),
             .settings_blocks = std.AutoHashMap(u8, *BlockInstance).init(self.allocator),
+            .mesh_data = std.AutoHashMap(blecs.ecs.entity_t, *chunk.Chunk).init(self.allocator),
         };
         self.gfx.blocks = std.AutoHashMap(u8, *Block).init(self.allocator);
     }

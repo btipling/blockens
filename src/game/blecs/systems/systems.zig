@@ -4,6 +4,7 @@ const tick = @import("tick.zig");
 const shape = @import("shape/shape.zig");
 const ui = @import("ui/ui.zig");
 const screen = @import("screen/screen.zig");
+const block = @import("block/block.zig");
 
 pub fn init() void {
     gfx.init();
@@ -12,4 +13,5 @@ pub fn init() void {
     shape.init();
     ui.init();
     screen.init();
+    block.init();
 }

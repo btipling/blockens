@@ -9,10 +9,7 @@ const config = @import("../../config.zig");
 const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
 const chunk = @import("../../chunk.zig");
-
-pub const GameUBOBindingPoint: gl.Uint = 0;
-pub const SettingsUBOBindingPoint: gl.Uint = 1;
-pub const DemoCubeAnimationBindingPoint: gl.Uint = 2;
+const gfx = @import("../../shape/gfx/gfx.zig");
 
 pub var game_data: ecs.entity_t = undefined;
 pub var settings_data: ecs.entity_t = undefined;
@@ -116,7 +113,7 @@ fn initFloor() void {
     _ = ecs.set(game.state.world, c_f, components.shape.Rotation, .{
         .rot = floor_rot,
     });
-    _ = ecs.set(game.state.world, c_f, components.shape.UBO, .{ .binding_point = GameUBOBindingPoint });
+    _ = ecs.set(game.state.world, c_f, components.shape.UBO, .{ .binding_point = gfx.bindings.GameUBOBindingPoint });
     _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{
         .loc = @Vector(4, gl.Float){ -25, -25, -25, 0 },
     });
@@ -127,7 +124,7 @@ fn initFloor() void {
 fn initCamera() void {
     const camera = ecs.new_entity(game.state.world, "GameCamera");
     game.state.entities.game_camera = camera;
-    _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = GameUBOBindingPoint });
+    _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = gfx.bindings.GameUBOBindingPoint });
     _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ 1.0, 1.0, 1.0, 1.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 0.03, -0.155, -0.7, 0.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = -90, .pitch = -19.4 });
@@ -152,7 +149,7 @@ fn initCursor() void {
 fn initSettingsCamera() void {
     const camera = ecs.new_entity(game.state.world, "SettingsCamera");
     game.state.entities.settings_camera = camera;
-    _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = SettingsUBOBindingPoint });
+    _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = gfx.bindings.SettingsUBOBindingPoint });
     _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ -8, 0, 0.0, 0.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 1, 0, 0, 0.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 0, .pitch = 0 });
@@ -209,7 +206,7 @@ pub fn initDemoCube() void {
     _ = ecs.set(world, c_dc, components.shape.Shape, .{ .shape_type = .cube });
     const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
     _ = ecs.set(world, c_dc, components.shape.Color, components.shape.Color.fromVec(cr_c));
-    _ = ecs.set(world, c_dc, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
+    _ = ecs.set(world, c_dc, components.shape.UBO, .{ .binding_point = gfx.bindings.SettingsUBOBindingPoint });
     _ = ecs.set(world, c_dc, components.shape.Rotation, .{
         .rot = game.state.ui.data.demo_cube_rotation,
     });
@@ -221,7 +218,7 @@ pub fn initDemoCube() void {
     // Add animation to cube:
     const animation = helpers.new_child(world, c_dc);
     _ = ecs.set(world, animation, components.gfx.AnimationSSBO, .{
-        .ssbo = DemoCubeAnimationBindingPoint,
+        .ssbo = gfx.bindings.DemoCubeAnimationBindingPoint,
     });
 
     const kf0 = ecs.new_id(world);
@@ -327,75 +324,12 @@ pub fn initDemoChunk() void {
     std.debug.print("chunk len: {d}\n", .{chunk_demo_data.len});
 
     var c: *chunk.Chunk = chunk.Chunk.init(game.state.allocator) catch unreachable;
-    defer game.state.allocator.destroy(c);
-    defer c.deinit();
     c.data = chunk_data;
-    c.findMeshes() catch unreachable;
-
-    var keys = c.meshes.keyIterator();
-    while (keys.next()) |_k| {
-        const i: usize = _k.*;
-        if (c.meshes.get(i)) |s| {
-            const block_id: u8 = @intCast(c.data[i]);
-            const p = chunk.getPositionAtIndexV(i);
-            const mb_e = helpers.new_child(world, settings_data);
-            _ = ecs.set(world, mb_e, components.shape.Shape, .{ .shape_type = .meshed_voxel });
-            const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
-            _ = ecs.set(world, mb_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
-            _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
-            _ = ecs.set(world, mb_e, components.block.Block, .{
-                .block_id = block_id,
-            });
-            _ = ecs.set(world, mb_e, components.shape.Translation, .{
-                .translation = .{ -0.5, -0.5, -0.5, 0 },
-            });
-            _ = ecs.set(world, mb_e, components.screen.WorldLocation, .{
-                .loc = .{ p[0] - 32, p[1], p[2] - 32, p[3] },
-            });
-            _ = ecs.set(world, mb_e, components.block.Meshscale, .{
-                .scale = s,
-            });
-            // ecs.add(world, mb_e, components.Debug);
-            ecs.add(world, mb_e, components.shape.NeedsSetup);
-        }
-    }
-
-    var instancedKeys = c.instanced.keyIterator();
-    var cx = std.AutoHashMap(u32, u8).init(game.state.allocator);
-    defer cx.deinit();
-    var cy = std.AutoHashMap(u32, u8).init(game.state.allocator);
-    defer cy.deinit();
-    var cz = std.AutoHashMap(u32, u8).init(game.state.allocator);
-    defer cz.deinit();
-    var bc = std.AutoHashMap(u8, u8).init(game.state.allocator);
-    defer bc.deinit();
-    while (instancedKeys.next()) |_k| {
-        const i: usize = _k.*;
-        var block_id: u8 = 0;
-        block_id = @intCast(c.data[i]);
-        if (block_id == 0) continue; // Some kind of one off bug somewhere?
-        if (!game.state.gfx.settings_blocks.contains(block_id)) {
-            const block_entity = helpers.new_child(world, settings_data);
-            const bi: *game_state.BlockInstance = game.state.allocator.create(game_state.BlockInstance) catch unreachable;
-            bi.* = .{
-                .entity_id = block_entity,
-                .transforms = std.ArrayList(zm.Mat).init(game.state.allocator),
-            };
-            game.state.gfx.settings_blocks.put(block_id, bi) catch unreachable;
-            ecs.add(world, bi.entity_id, components.block.Instance);
-            _ = ecs.set(world, bi.entity_id, components.shape.Shape, .{ .shape_type = .cube });
-            const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
-            _ = ecs.set(world, bi.entity_id, components.shape.Color, components.shape.Color.fromVec(cr_c));
-            _ = ecs.set(world, bi.entity_id, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
-            _ = ecs.set(world, bi.entity_id, components.block.Block, .{
-                .block_id = block_id,
-            });
-            // ecs.add(game.state.world, bi.entity_id, components.Debug);
-            ecs.add(world, bi.entity_id, components.shape.NeedsSetup);
-        }
-        const bi: *game_state.BlockInstance = game.state.gfx.settings_blocks.get(block_id).?;
-        const p: @Vector(4, gl.Float) = chunk.getPositionAtIndexV(i);
-        const fp: @Vector(4, gl.Float) = .{ p[0] - 32, p[1], p[2] - 32, p[3] };
-        bi.transforms.append(zm.translationV(fp)) catch unreachable;
-    }
+    const chunk_entity = helpers.new_child(world, settings_data);
+    _ = ecs.set(world, chunk_entity, components.block.Chunk, .{
+        .loc = .{ -32, 0, -32, 0 },
+    });
+    ecs.add(world, chunk_entity, components.block.NeedsMeshing);
+    game.state.gfx.mesh_data.put(chunk_entity, c) catch unreachable;
+    return;
 }
