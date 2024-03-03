@@ -58,7 +58,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 if (zgui.sliderFloat("scale slider", .{
                     .v = &game.state.ui.data.demo_chunk_scale,
                     .min = 0,
-                    .max = 0.09,
+                    .max = 1,
                 })) {
                     entities.screen.initDemoChunkCamera();
                 }
@@ -105,8 +105,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 }
                 if (zgui.sliderFloat4("perspective translate slider", .{
                     .v = &game.state.ui.data.demo_chunk_pp_translation,
-                    .min = -10,
-                    .max = 10,
+                    .min = -1,
+                    .max = 2,
                 })) {
                     entities.screen.initDemoChunkCamera();
                 }
@@ -125,7 +125,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     game.state.ui.data.demo_chunk_rotation_x = 0;
                     game.state.ui.data.demo_chunk_rotation_y = pre_max.rotation_y;
                     game.state.ui.data.demo_chunk_rotation_z = 1.085;
-                    game.state.ui.data.demo_chunk_scale = 0.09;
+                    game.state.ui.data.demo_chunk_scale = 0.107;
                     game.state.ui.data.demo_chunk_translation = .{ 2.461, -1.631, 0.397, 0 };
                     game.state.ui.data.demo_chunk_pp_translation = .{ 0, 0, 0, 0 };
                     entities.screen.initDemoChunkCamera();
@@ -141,6 +141,19 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     game.state.ui.data.demo_chunk_scale = pre_max.scale;
                     game.state.ui.data.demo_chunk_translation = pre_max.translation;
                     game.state.ui.data.demo_chunk_pp_translation = pre_max.pp_translation;
+                    entities.screen.initDemoChunkCamera();
+                }
+                zgui.sameLine(.{});
+                if (zgui.button("debug", .{
+                    .h = 50,
+                    .w = 250,
+                })) {
+                    game.state.ui.data.demo_chunk_rotation_x = 0;
+                    game.state.ui.data.demo_chunk_rotation_y = 1.239;
+                    game.state.ui.data.demo_chunk_rotation_z = 0.904;
+                    game.state.ui.data.demo_chunk_scale = 0.09;
+                    game.state.ui.data.demo_chunk_translation = .{ -3.531, -2.953, 0.397, 0 };
+                    game.state.ui.data.demo_chunk_pp_translation = .{ 0, 1.410, -0.439, 0 };
                     entities.screen.initDemoChunkCamera();
                 }
             }
