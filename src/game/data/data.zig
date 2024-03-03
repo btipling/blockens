@@ -161,7 +161,7 @@ pub const chunkData = struct {
     y: i32 = 0,
     z: i32 = 0,
     scriptId: i32 = 0,
-    voxels: [chunkSize]i32 = [_]i32{0} ** chunkSize,
+    voxels: []i32 = undefined,
 };
 
 pub const Data = struct {
@@ -745,7 +745,7 @@ pub const Data = struct {
     }
 
     // chunk crud:
-    fn chunkToBlob(chunk: [chunkSize]i32) [ChunkBlobArrayStoreSize]u8 {
+    fn chunkToBlob(chunk: []i32) [ChunkBlobArrayStoreSize]u8 {
         var blob: [ChunkBlobArrayStoreSize]u8 = undefined;
         for (chunk, 0..) |t, i| {
             const u = @as(u32, @bitCast(t));
@@ -762,7 +762,7 @@ pub const Data = struct {
         return blob;
     }
 
-    fn blobToChunk(blob: sqlite.Blob) [chunkSize]i32 {
+    fn blobToChunk(self: *Data, blob: sqlite.Blob) []i32 {
         var chunk: [chunkSize]i32 = undefined;
         for (chunk, 0..) |_, i| {
             const offset = i * 4;
@@ -773,7 +773,9 @@ pub const Data = struct {
             const cd: u32 = a << 24 | b << 16 | c << 8 | d;
             chunk[i] = @as(i32, @bitCast(cd));
         }
-        return chunk;
+        const rv: []i32 = self.allocator.alloc(i32, chunk.len) catch unreachable;
+        @memcpy(rv, &chunk);
+        return rv;
     }
 
     pub fn saveChunkData(
@@ -783,7 +785,7 @@ pub const Data = struct {
         y: i32,
         z: i32,
         scriptId: i32,
-        voxels: [chunkSize]i32,
+        voxels: []i32,
     ) !void {
         var insertStmt = try self.db.prepare(
             struct {
@@ -815,7 +817,7 @@ pub const Data = struct {
         };
     }
 
-    pub fn updateChunkData(self: *Data, id: i32, script_id: i32, voxels: [chunkSize]i32) !void {
+    pub fn updateChunkData(self: *Data, id: i32, script_id: i32, voxels: []i32) !void {
         var updateStmt = try self.db.prepare(
             struct {
                 id: i32,
@@ -877,7 +879,7 @@ pub const Data = struct {
                 data.y = r.y;
                 data.z = r.z;
                 data.scriptId = r.script_id;
-                data.voxels = blobToChunk(r.voxels);
+                data.voxels = self.blobToChunk(r.voxels);
                 return;
             }
         }

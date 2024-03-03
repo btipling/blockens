@@ -7,6 +7,9 @@ const zgui = @import("zgui");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
 const chunk = @import("../chunk.zig");
+const state = @import("state.zig");
+
+pub const max_world_name = 20;
 
 pub const Entities = struct {
     screen: usize = 0,
@@ -34,6 +37,12 @@ pub const Input = struct {
     delta_time: gl.Float = 0,
 };
 
+pub const chunkConfig = struct {
+    id: i32 = 0, // from sqlite
+    scriptId: i32,
+    chunkData: []i32 = undefined,
+};
+
 pub const UIData = struct {
     texture_script_options: std.ArrayList(data.scriptOption) = undefined,
     texture_loaded_script_id: i32 = 0,
@@ -53,6 +62,12 @@ pub const UIData = struct {
     chunk_loaded_script_id: i32 = 0,
     chunk_script_color: [3]f32 = [_]f32{0} ** 3,
     chunk_demo_data: ?[]i32 = null,
+    world_name_buf: [max_world_name]u8 = [_]u8{0} ** max_world_name,
+    world_options: std.ArrayList(data.worldOption) = undefined,
+    world_chunk_table_data: std.AutoHashMap(state.position.worldPosition, chunkConfig) = undefined,
+    world_loaded_id: i32 = 0,
+    world_chunk_y: i32 = 0,
+    world_current_chunk: @Vector(4, gl.Float) = undefined,
     demo_cube_rotation: @Vector(4, gl.Float) = zm.matToQuat(zm.rotationY(0 * std.math.pi)),
     demo_cube_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 0, 0, 0, 0 },
     demo_cube_pp_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ -0.825, 0.650, 0, 0 },
@@ -80,6 +95,12 @@ pub const UIData = struct {
         self.texture_script_options.deinit();
         self.block_options.deinit();
         self.chunk_script_options.deinit();
+        self.world_options.deinit();
+        var td = self.world_chunk_table_data.valueIterator();
+        while (td.next()) |cc| {
+            allocator.free(cc.*.chunkData);
+        }
+        self.world_chunk_table_data.deinit();
         if (self.texture_rgba_data) |d| allocator.free(d);
         if (self.chunk_demo_data) |d| allocator.free(d);
     }
@@ -139,6 +160,7 @@ pub const Gfx = struct {
         while (cfgs.next()) |rcfg| {
             allocator.destroy(rcfg);
         }
+        self.renderConfigs.deinit();
         var blocks = self.blocks.valueIterator();
         while (blocks.next()) |b| {
             allocator.free(b.*.data.texture);
@@ -163,7 +185,6 @@ pub const Gfx = struct {
             allocator.destroy(c.*);
         }
         self.mesh_data.deinit();
-        self.renderConfigs.deinit();
     }
 };
 pub const Game = struct {
@@ -212,6 +233,8 @@ pub const Game = struct {
             .texture_script_options = std.ArrayList(data.scriptOption).init(self.allocator),
             .block_options = std.ArrayList(data.blockOption).init(self.allocator),
             .chunk_script_options = std.ArrayList(data.chunkScriptOption).init(self.allocator),
+            .world_options = std.ArrayList(data.worldOption).init(self.allocator),
+            .world_chunk_table_data = std.AutoHashMap(state.position.worldPosition, chunkConfig).init(self.allocator),
         };
     }
 
@@ -235,6 +258,19 @@ pub const Game = struct {
         try self.db.listBlocks(&self.ui.data.block_options);
         try self.db.listTextureScripts(&self.ui.data.texture_script_options);
         try self.db.listChunkScripts(&self.ui.data.chunk_script_options);
+        try self.db.listWorlds(&self.ui.data.world_options);
+
+        var world_data: data.world = undefined;
+        try self.db.loadWorld(1, &world_data);
+        var world_name_buf = [_]u8{0} ** max_world_name;
+        for (world_data.name, 0..) |c, i| {
+            if (i >= max_world_name) {
+                break;
+            }
+            world_name_buf[i] = c;
+        }
+        self.ui.data.world_name_buf = world_name_buf;
+        self.ui.data.world_loaded_id = 1;
 
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
         const defaultLuaScript = @embedFile("../script/lua/gen_wood_texture.lua");
