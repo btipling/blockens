@@ -56,15 +56,6 @@ pub const PostPerspective = struct {
 
 pub const WorldLocation = struct {
     loc: @Vector(4, gl.Float) = undefined,
-
-    pub fn toVec(self: WorldLocation) math.vecs.Vflx4 {
-        return math.vecs.Vflx4.initFloats(
-            self.loc[0],
-            self.loc[1],
-            self.loc[2],
-            0,
-        );
-    }
 };
 
 pub const Data = struct {};

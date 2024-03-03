@@ -343,7 +343,7 @@ pub fn initDemoChunk() void {
                 s[2],
             });
             const mb_e = helpers.new_child(world, settings_data);
-            _ = ecs.set(world, mb_e, components.shape.Shape, .{ .shape_type = .cube });
+            _ = ecs.set(world, mb_e, components.shape.Shape, .{ .shape_type = .meshed_voxel });
             const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
             _ = ecs.set(world, mb_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
             _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
@@ -351,7 +351,7 @@ pub fn initDemoChunk() void {
                 .block_id = block_id,
             });
             _ = ecs.set(world, mb_e, components.screen.WorldLocation, .{
-                .loc = p,
+                .loc = .{ p[0] - 32, p[1], p[2] - 32, p[3] },
             });
             _ = ecs.set(world, mb_e, components.block.Meshscale, .{
                 .scale = s,

@@ -41,7 +41,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const mesh_data = switch (sh[i].shape_type) {
                 .plane => plane(),
                 .cube => cube(),
-                .meshed_voxel => voxel(world, entity),
+                .meshed_voxel => voxel(world, entity) catch unreachable,
             };
 
             var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
@@ -230,7 +230,7 @@ const extractions = struct {
         if (ecs.get_id(world, entity, ecs.id(components.screen.WorldLocation))) |opaque_ptr| {
             const u: *const components.screen.WorldLocation = @ptrCast(@alignCast(opaque_ptr));
             e.has_uniform_mat = true;
-            e.uniform_mat = zm.translationV(u.toVec().value);
+            e.uniform_mat = zm.translationV(u.loc);
         }
         extractAnimation(&e, world, entity);
         return e;
@@ -418,7 +418,45 @@ fn cube() meshData {
     return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
 }
 
-fn voxel(world: *ecs.world_t, entity: ecs.entity_t) meshData {
+fn voxel(world: *ecs.world_t, entity: ecs.entity_t) !meshData {
     if (!ecs.has_id(world, entity, ecs.id(components.block.Meshscale))) return cube();
-    return cube();
+    const scale: @Vector(4, gl.Float) = ecs.get(world, entity, components.block.Meshscale).?.scale;
+    const allocator = game.state.allocator;
+    var indicesAL = std.ArrayList(u32).init(allocator);
+
+    defer indicesAL.deinit();
+    var _i = cube_indices;
+    try indicesAL.appendSlice(&_i);
+
+    var positionsAL = std.ArrayList([3]gl.Float).init(allocator);
+    defer positionsAL.deinit();
+    var _p = cube_positions;
+    try positionsAL.appendSlice(&_p);
+
+    var normalsAL = std.ArrayList([3]gl.Float).init(allocator);
+    defer normalsAL.deinit();
+    var _n = cube_normals;
+    try normalsAL.appendSlice(&_n);
+
+    var texcoordsAL = std.ArrayList([2]gl.Float).init(allocator);
+    defer texcoordsAL.deinit();
+    var _t = cube_texcoords;
+    try texcoordsAL.appendSlice(&_t);
+
+    var v = zmesh.Shape.init(indicesAL, positionsAL, normalsAL, texcoordsAL);
+    defer v.deinit();
+
+    // voxel meshes are centered around origin and range fro -0.5 to 0.5 so need a translation
+    v.translate(0.5, 0.5, 0.5);
+    v.scale(scale[0], scale[1], scale[2]);
+
+    const positions: [][3]f32 = game.state.allocator.alloc([3]gl.Float, v.positions.len) catch unreachable;
+    @memcpy(positions, v.positions);
+    const indices: []u32 = game.state.allocator.alloc(u32, v.indices.len) catch unreachable;
+    @memcpy(indices, v.indices);
+    const texcoords: [][2]gl.Float = game.state.allocator.alloc([2]gl.Float, v.texcoords.?.len) catch unreachable;
+    @memcpy(texcoords, v.texcoords.?);
+    const normals: [][3]gl.Float = game.state.allocator.alloc([3]gl.Float, v.normals.?.len) catch unreachable;
+    @memcpy(normals, v.normals.?);
+    return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
 }
