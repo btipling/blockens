@@ -7,6 +7,7 @@ const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
+const game_state = @import("../../../state/game.zig");
 const script = @import("../../../script/script.zig");
 
 pub fn init() void {
@@ -51,6 +52,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
 fn listBlocks() !void {
     try game.state.db.listBlocks(&game.state.ui.data.block_options);
+    for (game.state.ui.data.block_options.items) |bo| {
+        if (!game.state.gfx.blocks.contains(bo.id)) {
+            // detected a new block to load:
+            entities.block.initBlock(bo.id);
+        }
+    }
     try listTextureScripts();
 }
 
@@ -71,23 +78,24 @@ fn saveBlock() !void {
     try listBlocks();
 }
 
-fn loadBlock(blockId: i32) !void {
-    var blockData: data.block = undefined;
-    try game.state.db.loadBlock(blockId, &blockData);
+fn loadBlock(block_id: u8) !void {
+    const block: *game_state.Block = game.state.gfx.blocks.get(block_id) orelse {
+        std.debug.print("block with id {d} was not found\n", .{block_id});
+        return;
+    };
     var nameBuf = [_]u8{0} ** data.maxBlockSizeName;
-    for (blockData.name, 0..) |c, i| {
+    for (block.data.name, 0..) |c, i| {
         if (i >= data.maxBlockSizeName) {
             break;
         }
         nameBuf[i] = c;
     }
-    const texture_rgba_data: []gl.Uint = try game.state.allocator.alloc(gl.Uint, blockData.texture.len);
-    @memcpy(texture_rgba_data, blockData.texture);
-    game.state.allocator.free(blockData.texture);
-    // TODO: use blocks on state and update blocks state here
+    // Settings texture data needs to be copied as it's owned separately
+    const texture_rgba_data: []gl.Uint = try game.state.allocator.alloc(gl.Uint, block.data.texture.len);
+    @memcpy(texture_rgba_data, block.data.texture);
 
     game.state.ui.data.block_create_name_buf = nameBuf;
-    game.state.ui.data.block_loaded_block_id = blockId;
+    game.state.ui.data.block_loaded_block_id = block_id;
     if (game.state.ui.data.texture_rgba_data) |d| game.state.allocator.free(d);
     game.state.ui.data.texture_rgba_data = texture_rgba_data;
     entities.screen.initDemoCube();
@@ -125,12 +133,15 @@ fn updateBlock() !void {
 
     const texture_colors = game.state.ui.data.texture_rgba_data orelse return;
     try game.state.db.updateBlock(game.state.ui.data.block_loaded_block_id, &game.state.ui.data.block_create_name_buf, texture_colors);
+    // Need to update the game state blocks:
+    entities.block.initBlock(game.state.ui.data.block_loaded_block_id);
     try listBlocks();
     try loadBlock(game.state.ui.data.block_loaded_block_id);
 }
 
 fn deleteBlock() !void {
     try game.state.db.deleteBlock(game.state.ui.data.block_loaded_block_id);
+    entities.block.deinitBlock(game.state.ui.data.block_loaded_block_id);
     try listBlocks();
     game.state.ui.data.block_loaded_block_id = 0;
 }

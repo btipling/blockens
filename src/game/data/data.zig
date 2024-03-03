@@ -108,12 +108,12 @@ pub const blockSQL = struct {
 };
 
 pub const blockOption = struct {
-    id: i32,
+    id: u8,
     name: [21]u8,
 };
 
 pub const block = struct {
-    id: i32 = 0,
+    id: u8 = 0,
     name: [21]u8 = [_]u8{0} ** 21,
     texture: []gl.Uint = undefined,
 };
@@ -689,7 +689,7 @@ pub const Data = struct {
             while (try listStmt.step()) |row| {
                 try data.append(
                     blockOption{
-                        .id = row.id,
+                        .id = @intCast(row.id),
                         .name = sqlNameToArray(row.name),
                     },
                 );
@@ -717,7 +717,7 @@ pub const Data = struct {
             defer selectStmt.reset();
 
             while (try selectStmt.step()) |r| {
-                data.id = r.id;
+                data.id = @intCast(r.id);
                 data.name = sqlNameToArray(r.name);
                 data.texture = try self.blobToTexture(r.texture);
                 return;

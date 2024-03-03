@@ -197,7 +197,6 @@ fn evalWorldChunkFunc() !void {
     std.debug.print("Writing chunk to world at position: {}, {}, {}\n", .{ x, y, z });
     if (game.state.ui.data.chunk_demo_data) |d| game.state.allocator.free(d);
     game.state.ui.data.chunk_demo_data = chunk_data;
-    // TODO: figure out what to do with evaled chunk data for world
 }
 
 fn listChunkScripts() !void {
