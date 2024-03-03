@@ -41,12 +41,13 @@ fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, gl.Flo
     var c: *chunk.Chunk = game.state.gfx.mesh_data.get(entity) orelse return;
     _ = game.state.gfx.mesh_data.remove(entity);
     var keys = c.meshes.keyIterator();
+    const parent: ecs.entity_t = ecs.get_parent(world, entity);
     while (keys.next()) |_k| {
         const i: usize = _k.*;
         if (c.meshes.get(i)) |s| {
             const block_id: u8 = @intCast(c.data[i]);
             const p = chunk.getPositionAtIndexV(i);
-            const mb_e = helpers.new_child(world, entities.screen.settings_data);
+            const mb_e = helpers.new_child(world, parent);
             _ = ecs.set(world, mb_e, components.shape.Shape, .{ .shape_type = .meshed_voxel });
             const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
             _ = ecs.set(world, mb_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
@@ -83,7 +84,7 @@ fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, gl.Flo
         block_id = @intCast(c.data[i]);
         if (block_id == 0) continue; // Some kind of one off bug somewhere?
         if (!game.state.gfx.settings_blocks.contains(block_id)) {
-            const block_entity = helpers.new_child(world, entities.screen.settings_data);
+            const block_entity = helpers.new_child(world, parent);
             const bi: *game_state.BlockInstance = game.state.allocator.create(game_state.BlockInstance) catch unreachable;
             bi.* = .{
                 .entity_id = block_entity,
@@ -109,6 +110,7 @@ fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, gl.Flo
             std.debug.print("got an error appending transforms? {}\n", .{e});
         };
     }
+    if (parent == entities.screen.game_data) game.state.allocator.free(c.data);
     c.deinit();
     game.state.allocator.destroy(c);
 }

@@ -58,6 +58,7 @@ pub const UBO = struct {
 };
 
 pub const NeedsSetup = struct {};
+pub const Permanent = struct {};
 
 pub fn init() void {
     const world = game.state.world;
@@ -69,6 +70,7 @@ pub fn init() void {
     ecs.COMPONENT(world, UBO);
     ecs.COMPONENT(world, DemoCubeTexture);
     ecs.TAG(world, NeedsSetup);
+    ecs.TAG(world, Permanent);
 
     ecs.COMPONENT(world, Position);
 }

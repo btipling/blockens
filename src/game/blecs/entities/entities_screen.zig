@@ -62,6 +62,7 @@ fn initCrossHairs() void {
         },
     });
     ecs.add(game.state.world, c_hrz, components.shape.NeedsSetup);
+    ecs.add(game.state.world, c_hrz, components.shape.Permanent);
     ecs.add_pair(game.state.world, c_hrz, ecs.ChildOf, game_data);
     const c_vrt = helpers.new_child(game.state.world, game.state.entities.crosshair);
     _ = ecs.set(game.state.world, c_vrt, components.shape.Shape, .{ .shape_type = .plane });
@@ -89,6 +90,7 @@ fn initCrossHairs() void {
         },
     });
     ecs.add(game.state.world, c_vrt, components.shape.NeedsSetup);
+    ecs.add(game.state.world, c_vrt, components.shape.Permanent);
     ecs.add_pair(game.state.world, c_vrt, ecs.ChildOf, game_data);
 }
 
@@ -118,6 +120,7 @@ fn initFloor() void {
         .loc = @Vector(4, gl.Float){ -25, -25, -25, 0 },
     });
     ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
+    ecs.add(game.state.world, c_f, components.shape.Permanent);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, game_data);
 }
 
@@ -164,6 +167,32 @@ fn initSettingsCamera() void {
     });
     ecs.add(game.state.world, camera, components.screen.Updated);
     ecs.add_pair(game.state.world, camera, ecs.ChildOf, settings_data);
+}
+
+pub fn clearWorld() void {
+    const world = game.state.world;
+    var it = ecs.children(world, game_data);
+    while (ecs.iter_next(&it)) {
+        for (0..it.count()) |i| {
+            const entity = it.entities()[i];
+            if (!ecs.has_id(world, entity, ecs.id(components.shape.Permanent))) {
+                continue;
+            }
+            if (!ecs.has_id(world, entity, ecs.id(components.block.Instance))) {
+                ecs.add(world, entity, components.gfx.NeedsDeletion);
+            }
+            const block: ?*const components.block.Block = ecs.get(world, entity, components.block.Block);
+            if (block == null) continue;
+            const bi: ?*game_state.BlockInstance = game.state.gfx.game_blocks.get(block.?.block_id);
+            if (bi == null) continue;
+            bi.?.transforms.clearAndFree();
+            ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
+        }
+    }
+    ecs.remove(world, game.state.entities.game_camera, components.screen.WorldTranslation);
+    ecs.remove(world, game.state.entities.game_camera, components.screen.WorldRotation);
+    ecs.remove(world, game.state.entities.game_camera, components.screen.WorldScale);
+    ecs.remove(world, game.state.entities.game_camera, components.screen.PostPerspective);
 }
 
 pub fn clearDemoObjects() void {

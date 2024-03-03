@@ -37,6 +37,12 @@ pub const worldPosition = struct {
             .z = z,
         };
     }
+    pub fn vecFromWorldPosition(self: worldPosition) @Vector(4, gl.Float) {
+        const x = @as(f32, @bitCast(self.x));
+        const y = @as(f32, @bitCast(self.y));
+        const z = @as(f32, @bitCast(self.z));
+        return .{ x, y, z, 0 };
+    }
     pub fn positionFromWorldPosition(self: worldPosition) Position {
         const x = @as(f32, @bitCast(self.x));
         const y = @as(f32, @bitCast(self.y));
