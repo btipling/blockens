@@ -14,10 +14,11 @@ pub const VertexShaderGen = struct {
         has_texture_coords: bool = false,
         animation_block_index: ?gl.Uint = null,
         has_normals: bool = false,
-        scale: ?math.vecs.Vflx4 = null,
-        rotation: ?math.vecs.Vflx4 = null,
-        translation: ?math.vecs.Vflx4 = null,
+        scale: ?@Vector(4, gl.Float) = null,
+        rotation: ?@Vector(4, gl.Float) = null,
+        translation: ?@Vector(4, gl.Float) = null,
         is_instanced: bool = false,
+        is_meshed: bool = false,
     };
 
     // genVertexShader - call ower owns the returned slice and must free it
@@ -96,6 +97,9 @@ pub const VertexShaderGen = struct {
             if (r.cfg.has_texture_coords) {
                 r.a("\nout vec2 TexCoord;\n");
             }
+            if (r.cfg.is_meshed) {
+                r.a("\nout vec3 fragPos;\n");
+            }
             if (r.cfg.has_normals) {
                 r.a("\nflat out vec3 fragNormal;\n");
             }
@@ -144,15 +148,15 @@ pub const VertexShaderGen = struct {
             {
                 var m = zm.identity();
                 if (r.cfg.scale) |s| {
-                    m = zm.mul(m, zm.scalingV(s.value));
+                    m = zm.mul(m, zm.scalingV(s));
                     inline_mat = m;
                 }
                 if (r.cfg.rotation) |_r| {
-                    m = zm.mul(m, zm.quatToMat(_r.value));
+                    m = zm.mul(m, zm.quatToMat(_r));
                     inline_mat = m;
                 }
                 if (r.cfg.translation) |t| {
-                    m = zm.mul(m, zm.translationV(t.value));
+                    m = zm.mul(m, zm.translationV(t));
                     inline_mat = m;
                 }
             }
@@ -210,6 +214,9 @@ pub const VertexShaderGen = struct {
             r.a("    gl_Position = pos;\n");
             if (r.cfg.has_texture_coords) {
                 r.a("    TexCoord = eTexCoord;\n");
+            }
+            if (r.cfg.is_meshed) {
+                r.a("    fragPos = position;\n");
             }
             if (r.cfg.has_normals) {
                 r.a("    fragNormal = normal;\n");

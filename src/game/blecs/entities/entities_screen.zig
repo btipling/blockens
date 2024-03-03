@@ -331,7 +331,7 @@ pub fn initDemoChunk() void {
     while (keys.next()) |_k| {
         const i: usize = _k.*;
         if (c.meshes.get(i)) |s| {
-            const block_id = c.data[i];
+            const block_id: u8 = @intCast(c.data[i]);
             const p = chunk.getPositionAtIndexV(i);
             std.debug.print("mesh for block id {d} at ({d},{d}, {d}) with scale ({d}, {d}, {d})\n", .{
                 block_id,
@@ -342,6 +342,22 @@ pub fn initDemoChunk() void {
                 s[1],
                 s[2],
             });
+            const mb_e = helpers.new_child(world, settings_data);
+            _ = ecs.set(world, mb_e, components.shape.Shape, .{ .shape_type = .cube });
+            const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
+            _ = ecs.set(world, mb_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
+            _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = SettingsUBOBindingPoint });
+            _ = ecs.set(world, mb_e, components.block.Block, .{
+                .block_id = block_id,
+            });
+            _ = ecs.set(world, mb_e, components.screen.WorldLocation, .{
+                .loc = p,
+            });
+            _ = ecs.set(world, mb_e, components.block.Meshscale, .{
+                .scale = s,
+            });
+            ecs.add(world, mb_e, components.Debug);
+            ecs.add(world, mb_e, components.shape.NeedsSetup);
         }
     }
 

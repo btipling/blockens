@@ -40,7 +40,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
             const mesh_data = switch (sh[i].shape_type) {
                 .plane => plane(),
-                else => cube(),
+                .cube => cube(),
+                .meshed_voxel => voxel(world, entity),
             };
 
             var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
@@ -86,6 +87,7 @@ const shaders = struct {
             .has_normals = mesh_data.normals != null,
             .animation_block_index = e.animation_binding_point,
             .is_instanced = e.is_instanced,
+            .is_meshed = e.is_meshed,
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
     }
@@ -112,10 +114,10 @@ const shaders = struct {
 };
 
 const extractions = struct {
-    rotation: ?math.vecs.Vflx4 = null,
-    scale: ?math.vecs.Vflx4 = null,
-    translation: ?math.vecs.Vflx4 = null,
-    color: ?math.vecs.Vflx4 = null,
+    rotation: ?@Vector(4, gl.Float) = null,
+    scale: ?@Vector(4, gl.Float) = null,
+    translation: ?@Vector(4, gl.Float) = null,
+    color: ?@Vector(4, gl.Float) = null,
     debug: bool = false,
     has_ubo: bool = false,
     ubo_binding_point: gl.Uint = 0,
@@ -140,7 +142,7 @@ const extractions = struct {
                 if (e.debug) std.debug.print("extractBlock: has instances\n", .{});
                 e.is_instanced = true;
             }
-            if (ecs.has_id(world, entity, ecs.id(components.block.Meshed))) {
+            if (ecs.has_id(world, entity, ecs.id(components.block.Meshscale))) {
                 if (e.debug) std.debug.print("extractBlock: is meshed\n", .{});
                 e.is_meshed = true;
             }
@@ -200,19 +202,19 @@ const extractions = struct {
         extractBlock(&e, world, entity);
         if (ecs.get_id(world, entity, ecs.id(components.shape.Rotation))) |opaque_ptr| {
             const r: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
-            e.rotation = r.toVec();
+            e.rotation = r.rot;
         }
         if (ecs.get_id(world, entity, ecs.id(components.shape.Scale))) |opaque_ptr| {
-            const s: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
-            e.scale = s.toVec();
+            const r: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
+            e.scale = r.rot;
         }
         if (ecs.get_id(world, entity, ecs.id(components.shape.Translation))) |opaque_ptr| {
-            const t: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
-            e.translation = t.toVec();
+            const t: *const components.shape.Translation = @ptrCast(@alignCast(opaque_ptr));
+            e.translation = t.translation;
         }
         if (ecs.get_id(world, entity, ecs.id(components.shape.Color))) |opaque_ptr| {
-            const c: *const components.shape.Rotation = @ptrCast(@alignCast(opaque_ptr));
-            e.color = c.toVec();
+            const c: *const components.shape.Color = @ptrCast(@alignCast(opaque_ptr));
+            e.color = c.color;
         }
         if (ecs.get_id(world, entity, ecs.id(components.shape.DemoCubeTexture))) |opaque_ptr| {
             const dct: *const components.shape.DemoCubeTexture = @ptrCast(@alignCast(opaque_ptr));
@@ -414,4 +416,9 @@ fn cube() meshData {
     const normals: [][3]gl.Float = game.state.allocator.alloc([3]gl.Float, cube_normals.len) catch unreachable;
     @memcpy(normals, &cube_normals);
     return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
+}
+
+fn voxel(world: *ecs.world_t, entity: ecs.entity_t) meshData {
+    if (!ecs.has_id(world, entity, ecs.id(components.block.Meshscale))) return cube();
+    return cube();
 }

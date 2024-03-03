@@ -9,6 +9,7 @@ pub const Shape = struct {
     pub const ShapeType = enum {
         plane,
         cube,
+        meshed_voxel,
     };
 };
 
@@ -33,41 +34,14 @@ pub const Color = struct {
 
 pub const Rotation = struct {
     rot: @Vector(4, gl.Float) = undefined,
-
-    pub fn toVec(self: Rotation) math.vecs.Vflx4 {
-        return math.vecs.Vflx4.initFloats(
-            self.rot[0],
-            self.rot[1],
-            self.rot[2],
-            self.rot[3],
-        );
-    }
 };
 
 pub const Scale = struct {
     scale: @Vector(4, gl.Float) = undefined,
-
-    pub fn toVec(self: Scale) math.vecs.Vflx4 {
-        return math.vecs.Vflx4.initFloats(
-            self.scale[0],
-            self.scale[1],
-            self.scale[2],
-            0,
-        );
-    }
 };
 
 pub const Translation = struct {
     translation: @Vector(4, gl.Float) = undefined,
-
-    pub fn toVec(self: Translation) math.vecs.Vflx4 {
-        return math.vecs.Vflx4.initFloats(
-            self.translation[0],
-            self.translation[1],
-            self.translation[2],
-            0,
-        );
-    }
 };
 
 pub const Position = struct {

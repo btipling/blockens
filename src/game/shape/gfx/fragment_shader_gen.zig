@@ -11,7 +11,7 @@ pub const FragmentShaderGen = struct {
         has_texture: bool = false,
         has_texture_coords: bool = false,
         has_normals: bool = false,
-        color: ?math.vecs.Vflx4 = null,
+        color: ?@Vector(4, gl.Float) = null,
         is_meshed: bool = false,
     };
 
@@ -49,6 +49,9 @@ pub const FragmentShaderGen = struct {
         fn run(r: *runner) ![:0]const u8 {
             r.a("#version 330 core\n");
             r.a("out vec4 FragColor;\n");
+            if (r.cfg.is_meshed) {
+                r.a("\nin vec3 fragPos;\n");
+            }
             if (r.cfg.has_texture_coords) {
                 r.a("\nin vec2 TexCoord;\n");
             }
@@ -62,7 +65,7 @@ pub const FragmentShaderGen = struct {
             r.a("{\n");
             // magenta to highlight shader without materials
             if (r.cfg.color) |c| {
-                const line = try shader_helpers.vec4_to_buf("    vec4 Color = vec4({d}, {d}, {d}, {d});\n", c.value[0], c.value[1], c.value[2], c.value[3]);
+                const line = try shader_helpers.vec4_to_buf("    vec4 Color = vec4({d}, {d}, {d}, {d});\n", c[0], c[1], c[2], c[3]);
                 r.a(std.mem.sliceTo(&line, 0));
             } else {
                 r.a("    vec4 Color = vec4(1.0, 0.0, 1.0, 1.0);\n");
