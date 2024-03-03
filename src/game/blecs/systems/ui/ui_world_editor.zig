@@ -392,7 +392,12 @@ fn loadChunksInWorld() !void {
             @memcpy(c.data, ch_cfg.chunkData);
             const chunk_entity = helpers.new_child(world, entities.screen.game_data);
             _ = ecs.set(world, chunk_entity, components.block.Chunk, .{
-                .loc = p,
+                .loc = .{
+                    p[0] * chunk.chunkDim,
+                    p[1] * chunk.chunkDim,
+                    p[2] * chunk.chunkDim,
+                    0,
+                },
             });
             ecs.add(world, chunk_entity, components.block.NeedsMeshing);
             game.state.gfx.mesh_data.put(chunk_entity, c) catch unreachable;
