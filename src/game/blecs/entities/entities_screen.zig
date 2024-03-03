@@ -175,7 +175,10 @@ pub fn clearWorld() void {
     while (ecs.iter_next(&it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            if (!ecs.has_id(world, entity, ecs.id(components.shape.Permanent))) {
+            if (ecs.has_id(world, entity, ecs.id(components.shape.Permanent))) {
+                continue;
+            }
+            if (ecs.has_id(world, entity, ecs.id(components.shape.Shape))) {
                 continue;
             }
             if (!ecs.has_id(world, entity, ecs.id(components.block.Instance))) {

@@ -95,7 +95,11 @@ fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, gl.Flo
             _ = ecs.set(world, bi.entity_id, components.shape.Shape, .{ .shape_type = .cube });
             const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
             _ = ecs.set(world, bi.entity_id, components.shape.Color, components.shape.Color.fromVec(cr_c));
-            _ = ecs.set(world, bi.entity_id, components.shape.UBO, .{ .binding_point = gfx.bindings.SettingsUBOBindingPoint });
+            if (parent == entities.screen.game_data) {
+                _ = ecs.set(world, bi.entity_id, components.shape.UBO, .{ .binding_point = gfx.bindings.GameUBOBindingPoint });
+            } else {
+                _ = ecs.set(world, bi.entity_id, components.shape.UBO, .{ .binding_point = gfx.bindings.SettingsUBOBindingPoint });
+            }
             _ = ecs.set(world, bi.entity_id, components.block.Block, .{
                 .block_id = block_id,
             });
