@@ -10,7 +10,7 @@ pub fn getPositionAtIndexV(i: usize) @Vector(4, gl.Float) {
     const x = @as(gl.Float, @floatFromInt(@mod(i, chunkDim)));
     const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim)));
     const z = @as(gl.Float, @floatFromInt(i / (chunkDim * chunkDim)));
-    return @Vector(4, gl.Float){ x, y, z, 1.0 };
+    return @Vector(4, gl.Float){ x, y, z, 0 };
 }
 
 pub fn getIndexFromPositionV(p: @Vector(4, gl.Float)) usize {

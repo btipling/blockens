@@ -355,13 +355,16 @@ pub fn initDemoChunk() void {
             _ = ecs.set(world, mb_e, components.block.Block, .{
                 .block_id = block_id,
             });
+            _ = ecs.set(world, mb_e, components.shape.Translation, .{
+                .translation = .{ -0.5, -0.5, -0.5, 0 },
+            });
             _ = ecs.set(world, mb_e, components.screen.WorldLocation, .{
                 .loc = .{ p[0] - 32, p[1], p[2] - 32, p[3] },
             });
             _ = ecs.set(world, mb_e, components.block.Meshscale, .{
                 .scale = s,
             });
-            ecs.add(world, mb_e, components.Debug);
+            // ecs.add(world, mb_e, components.Debug);
             ecs.add(world, mb_e, components.shape.NeedsSetup);
         }
     }
@@ -392,6 +395,19 @@ pub fn initDemoChunk() void {
         }
         const bi: *game_state.BlockInstance = game.state.gfx.settings_blocks.get(block_id).?;
         const p: @Vector(4, gl.Float) = chunk.getPositionAtIndexV(i);
-        bi.transforms.append(zm.translationV(.{ p[0] - 32, p[1], p[2] - 32, p[3] })) catch unreachable;
+        std.debug.print("p: ({d}, {d}, {d}, {d})\n", .{
+            p[0],
+            p[1],
+            p[2],
+            p[3],
+        });
+        const fp: @Vector(4, gl.Float) = .{ p[0] - 32, p[1], p[2] - 32, p[3] };
+        std.debug.print("fp: ({d}, {d}, {d}, {d})\n", .{
+            fp[0],
+            fp[1],
+            fp[2],
+            fp[3],
+        });
+        bi.transforms.append(zm.translationV(fp)) catch unreachable;
     }
 }
