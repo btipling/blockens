@@ -338,15 +338,6 @@ pub fn initDemoChunk() void {
         if (c.meshes.get(i)) |s| {
             const block_id: u8 = @intCast(c.data[i]);
             const p = chunk.getPositionAtIndexV(i);
-            std.debug.print("mesh for block id {d} at ({d},{d}, {d}) with scale ({d}, {d}, {d})\n", .{
-                block_id,
-                p[0],
-                p[1],
-                p[2],
-                s[0],
-                s[1],
-                s[2],
-            });
             const mb_e = helpers.new_child(world, settings_data);
             _ = ecs.set(world, mb_e, components.shape.Shape, .{ .shape_type = .meshed_voxel });
             const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
@@ -370,10 +361,19 @@ pub fn initDemoChunk() void {
     }
 
     var instancedKeys = c.instanced.keyIterator();
+    var cx = std.AutoHashMap(u32, u8).init(game.state.allocator);
+    defer cx.deinit();
+    var cy = std.AutoHashMap(u32, u8).init(game.state.allocator);
+    defer cy.deinit();
+    var cz = std.AutoHashMap(u32, u8).init(game.state.allocator);
+    defer cz.deinit();
+    var bc = std.AutoHashMap(u8, u8).init(game.state.allocator);
+    defer bc.deinit();
     while (instancedKeys.next()) |_k| {
         const i: usize = _k.*;
         var block_id: u8 = 0;
         block_id = @intCast(c.data[i]);
+        if (block_id == 0) continue; // Some kind of one off bug somewhere?
         if (!game.state.gfx.settings_blocks.contains(block_id)) {
             const block_entity = helpers.new_child(world, settings_data);
             const bi: *game_state.BlockInstance = game.state.allocator.create(game_state.BlockInstance) catch unreachable;
@@ -390,24 +390,12 @@ pub fn initDemoChunk() void {
             _ = ecs.set(world, bi.entity_id, components.block.Block, .{
                 .block_id = block_id,
             });
-            ecs.add(game.state.world, bi.entity_id, components.Debug);
+            // ecs.add(game.state.world, bi.entity_id, components.Debug);
             ecs.add(world, bi.entity_id, components.shape.NeedsSetup);
         }
         const bi: *game_state.BlockInstance = game.state.gfx.settings_blocks.get(block_id).?;
         const p: @Vector(4, gl.Float) = chunk.getPositionAtIndexV(i);
-        std.debug.print("p: ({d}, {d}, {d}, {d})\n", .{
-            p[0],
-            p[1],
-            p[2],
-            p[3],
-        });
         const fp: @Vector(4, gl.Float) = .{ p[0] - 32, p[1], p[2] - 32, p[3] };
-        std.debug.print("fp: ({d}, {d}, {d}, {d})\n", .{
-            fp[0],
-            fp[1],
-            fp[2],
-            fp[3],
-        });
         bi.transforms.append(zm.translationV(fp)) catch unreachable;
     }
 }

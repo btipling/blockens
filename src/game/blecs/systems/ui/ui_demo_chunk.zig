@@ -126,7 +126,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     game.state.ui.data.demo_chunk_rotation_y = pre_max.rotation_y;
                     game.state.ui.data.demo_chunk_rotation_z = 1.085;
                     game.state.ui.data.demo_chunk_scale = 0.107;
-                    game.state.ui.data.demo_chunk_translation = .{ 2.461, -1.631, 0.397, 0 };
+                    game.state.ui.data.demo_chunk_translation = .{ 4.449, -1.631, -0.264, 0 };
                     game.state.ui.data.demo_chunk_pp_translation = .{ 0, 0, 0, 0 };
                     entities.screen.initDemoChunkCamera();
                 }

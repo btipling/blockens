@@ -208,7 +208,7 @@ pub const Chunker = struct {
                         const _xToAdd = @as(gl.Float, @floatFromInt(xToAdd));
                         const np: @Vector(4, gl.Float) = .{ _xToAdd, p[1], p[2], 0 };
                         const iii = getIndexFromPositionV(np);
-                        try self.updateMeshed(iii);
+                        if (self.chunk.data[iii] != 0) try self.updateMeshed(iii);
                     }
                     numYAdded += 1;
                     endY = p[1];
@@ -247,7 +247,8 @@ pub const Chunker = struct {
                         for (_begY.._endY) |yToAdd| {
                             const _yToAdd = @as(gl.Float, @floatFromInt(yToAdd));
                             const iii = getIndexFromPositionV(.{ _xToAdd, _yToAdd, p[2], 0 });
-                            try self.updateMeshed(iii);
+                            // a one off bug I think?
+                            if (self.chunk.data[iii] != 0) try self.updateMeshed(iii);
                         }
                     }
                     self.currentScale[2] = p[2] - op[2] + 1;

@@ -66,7 +66,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 block_instance.?.vbo,
                 data.items,
             );
-            std.debug.print("updated {d} num instance items\n", .{data.items.len});
+
+            std.debug.print("block_id: {d} updated {d} num instance items\n", .{ block.block_id, data.items.len });
         }
     }
 }
