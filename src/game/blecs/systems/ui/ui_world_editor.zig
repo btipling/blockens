@@ -256,12 +256,17 @@ fn drawChunkConfigPopup() !void {
             const wp = state.position.worldPosition.initFromPositionV(game.state.ui.data.world_current_chunk);
 
             var id: i32 = 0;
+            var cd: []i32 = undefined;
             if (game.state.ui.data.world_chunk_table_data.get(wp)) |ch_cfg| {
                 id = ch_cfg.id;
+                cd = ch_cfg.chunkData;
+            } else {
+                return;
             }
             const ch_cfg: game_state.chunkConfig = .{
                 .id = id,
                 .scriptId = scriptOptionId,
+                .chunkData = cd,
             };
             try game.state.ui.data.world_chunk_table_data.put(wp, ch_cfg);
         }

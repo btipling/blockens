@@ -113,7 +113,7 @@ fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, gl.Flo
         const bi: *game_state.BlockInstance = game.state.gfx.settings_blocks.get(block_id).?;
         ecs.add(world, bi.entity_id, components.gfx.NeedsInstanceDataUpdate);
         const p: @Vector(4, gl.Float) = chunk.getPositionAtIndexV(i);
-        const fp: @Vector(4, gl.Float) = .{ p[0] - 32, p[1], p[2] - 32, p[3] };
+        const fp: @Vector(4, gl.Float) = .{ p[0] + loc[0], p[1] + loc[1], p[2] + loc[2], p[3] + loc[3] };
         bi.transforms.append(zm.translationV(fp)) catch |e| {
             std.debug.print("got an error appending transforms? {}\n", .{e});
         };

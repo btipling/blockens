@@ -178,7 +178,7 @@ pub fn clearWorld() void {
             if (ecs.has_id(world, entity, ecs.id(components.shape.Permanent))) {
                 continue;
             }
-            if (ecs.has_id(world, entity, ecs.id(components.shape.Shape))) {
+            if (!ecs.has_id(world, entity, ecs.id(components.shape.Shape))) {
                 continue;
             }
             if (!ecs.has_id(world, entity, ecs.id(components.block.Instance))) {
