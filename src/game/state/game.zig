@@ -7,6 +7,7 @@ const zgui = @import("zgui");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
 const chunk = @import("../chunk.zig");
+const jobs = @import("../jobs/jobs.zig");
 const state = @import("state.zig");
 
 pub const max_world_name = 20;
@@ -62,6 +63,7 @@ pub const UIData = struct {
     chunk_loaded_script_id: i32 = 0,
     chunk_script_color: [3]f32 = [_]f32{0} ** 3,
     chunk_demo_data: ?[]i32 = null,
+    world_load_disabled: bool = false,
     world_name_buf: [max_world_name]u8 = [_]u8{0} ** max_world_name,
     world_options: std.ArrayList(data.worldOption) = undefined,
     world_chunk_table_data: std.AutoHashMap(state.position.worldPosition, chunkConfig) = undefined,
@@ -187,6 +189,7 @@ pub const Gfx = struct {
         self.mesh_data.deinit();
     }
 };
+
 pub const Game = struct {
     allocator: std.mem.Allocator = undefined,
     window: *glfw.Window = undefined,
@@ -197,6 +200,7 @@ pub const Game = struct {
     input: Input = .{},
     ui: UI = .{},
     gfx: Gfx = .{},
+    jobs: jobs.Jobs = .{},
     quit: bool = false,
 
     pub fn initInternals(self: *Game) !void {
@@ -205,9 +209,12 @@ pub const Game = struct {
         try self.initUIData();
         try self.initGfx();
         try self.populateUIOptions();
+        self.jobs = jobs.Jobs.init();
+        self.jobs.start();
     }
 
     pub fn deinit(self: *Game) void {
+        self.jobs.deinit();
         self.script.deinit();
         self.db.deinit();
         self.ui.data.deinit(self.allocator);
@@ -229,7 +236,7 @@ pub const Game = struct {
 
     pub fn initUIData(self: *Game) !void {
         self.ui.data = try self.allocator.create(UIData);
-        self.ui.data.* = UIData{
+        self.ui.data.* = .{
             .texture_script_options = std.ArrayList(data.scriptOption).init(self.allocator),
             .block_options = std.ArrayList(data.blockOption).init(self.allocator),
             .chunk_script_options = std.ArrayList(data.chunkScriptOption).init(self.allocator),
@@ -239,7 +246,7 @@ pub const Game = struct {
     }
 
     pub fn initGfx(self: *Game) !void {
-        self.gfx = Gfx{
+        self.gfx = .{
             .ubos = std.AutoHashMap(gl.Uint, gl.Uint).init(self.allocator),
             .ssbos = std.AutoHashMap(gl.Uint, gl.Uint).init(self.allocator),
             .renderConfigs = std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig).init(self.allocator),

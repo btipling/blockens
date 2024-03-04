@@ -13,13 +13,13 @@ const chunk = @import("../../../chunk.zig");
 
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "BlockRenderingSystem", ecs.PreUpdate, @constCast(&s));
+    ecs.SYSTEM(game.state.world, "BlockInstanceRenderingSystem", ecs.OnStore, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
     desc.query.filter.terms[0] = .{ .id = ecs.id(components.block.Chunk) };
-    desc.query.filter.terms[1] = .{ .id = ecs.id(components.block.NeedsRendering) };
+    desc.query.filter.terms[1] = .{ .id = ecs.id(components.block.NeedsInstanceRendering) };
     desc.run = run;
     return desc;
 }
@@ -30,58 +30,19 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             const c: []components.block.Chunk = ecs.field(it, components.block.Chunk, 1) orelse return;
-            ecs.remove(world, entity, components.block.NeedsRendering);
-            render_mesh(world, entity, c[i].loc);
+            ecs.remove(world, entity, components.block.NeedsInstanceRendering);
+            render_instances(world, entity, c[i].loc);
             ecs.delete(world, entity);
         }
     }
 }
 
-fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, gl.Float)) void {
+fn render_instances(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, gl.Float)) void {
     var c: *chunk.Chunk = game.state.gfx.mesh_data.get(entity) orelse return;
     _ = game.state.gfx.mesh_data.remove(entity);
-    var keys = c.meshes.keyIterator();
     const parent: ecs.entity_t = ecs.get_parent(world, entity);
-    while (keys.next()) |_k| {
-        const i: usize = _k.*;
-        if (c.meshes.get(i)) |s| {
-            const block_id: u8 = @intCast(c.data[i]);
-            const p = chunk.getPositionAtIndexV(i);
-            const mb_e = helpers.new_child(world, parent);
-            _ = ecs.set(world, mb_e, components.shape.Shape, .{ .shape_type = .meshed_voxel });
-            const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
-            _ = ecs.set(world, mb_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
-            if (parent == entities.screen.game_data) {
-                _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = gfx.bindings.GameUBOBindingPoint });
-            } else {
-                _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = gfx.bindings.SettingsUBOBindingPoint });
-            }
-            _ = ecs.set(world, mb_e, components.block.Block, .{
-                .block_id = block_id,
-            });
-            _ = ecs.set(world, mb_e, components.shape.Translation, .{
-                .translation = .{ -0.5, -0.5, -0.5, 0 },
-            });
-            _ = ecs.set(world, mb_e, components.screen.WorldLocation, .{
-                .loc = .{ p[0] + loc[0], p[1] + loc[1], p[2] + loc[2], p[3] + loc[3] },
-            });
-            _ = ecs.set(world, mb_e, components.block.Meshscale, .{
-                .scale = s,
-            });
-            // ecs.add(world, mb_e, components.Debug);
-            ecs.add(world, mb_e, components.shape.NeedsSetup);
-        }
-    }
 
     var instancedKeys = c.instanced.keyIterator();
-    var cx = std.AutoHashMap(u32, u8).init(game.state.allocator);
-    defer cx.deinit();
-    var cy = std.AutoHashMap(u32, u8).init(game.state.allocator);
-    defer cy.deinit();
-    var cz = std.AutoHashMap(u32, u8).init(game.state.allocator);
-    defer cz.deinit();
-    var bc = std.AutoHashMap(u8, u8).init(game.state.allocator);
-    defer bc.deinit();
     while (instancedKeys.next()) |_k| {
         const i: usize = _k.*;
         var block_id: u8 = 0;
