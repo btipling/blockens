@@ -120,6 +120,10 @@ pub const ElementsRendererConfig = struct {
         rotation: @Vector(4, gl.Float),
         translation: @Vector(4, gl.Float),
     };
+    pub const MobRef = struct {
+        mob_id: i32,
+        mesh_id: u32,
+    };
     vertexShader: [:0]const u8 = undefined,
     fragmentShader: [:0]const u8 = undefined,
     positions: [][3]gl.Float = undefined,
@@ -133,6 +137,7 @@ pub const ElementsRendererConfig = struct {
     keyframes: ?[]AnimationKeyFrame = null,
     is_instanced: bool = false,
     block_id: ?u8 = 0,
+    mob: ?MobRef = null,
 };
 
 pub const Block = struct {
@@ -146,6 +151,38 @@ pub const BlockInstance = struct {
     transforms: std.ArrayList(zm.Mat) = undefined,
 };
 
+pub const MobMesh = struct {
+    pub fn init(allocator: std.mem.Allocator) *MobMesh {
+        var m: *MobMesh = allocator.create(MobMesh) catch unreachable;
+        _ = &m;
+        m.* = .{};
+        return m;
+    }
+    fn deinit(_: MobMesh, _: std.mem.Allocator) void {}
+};
+
+pub const Mob = struct {
+    meshes: std.AutoHashMap(u32, *MobMesh) = undefined,
+
+    pub fn init(allocator: std.mem.Allocator) *Mob {
+        var m: *Mob = allocator.create(Mob) catch unreachable;
+        _ = &m;
+        m.* = .{
+            .meshes = std.AutoArrayHashMap(u32, *MobMesh).init(allocator),
+        };
+        return m;
+    }
+
+    fn deinit(self: *Mob, allocator: std.mem.Allocator) void {
+        var m_i = self.meshes.valueIterator();
+        while (m_i.next()) |m| {
+            m.*.deinit(allocator);
+            allocator.destroy(m.*);
+        }
+        self.meshes.deinit();
+    }
+};
+
 pub const Gfx = struct {
     ubos: std.AutoHashMap(gl.Uint, gl.Uint) = undefined,
     ssbos: std.AutoHashMap(gl.Uint, gl.Uint) = undefined,
@@ -154,6 +191,7 @@ pub const Gfx = struct {
     game_blocks: std.AutoHashMap(u8, *BlockInstance) = undefined,
     settings_blocks: std.AutoHashMap(u8, *BlockInstance) = undefined,
     mesh_data: std.AutoHashMap(blecs.ecs.entity_t, *chunk.Chunk) = undefined,
+    mob_data: std.AutoHashMap(i32, *Mob) = undefined,
 
     fn deinit(self: *Gfx, allocator: std.mem.Allocator) void {
         self.ubos.deinit();
@@ -187,6 +225,12 @@ pub const Gfx = struct {
             allocator.destroy(c.*);
         }
         self.mesh_data.deinit();
+        var mb_i = self.mob_data.valueIterator();
+        while (mb_i.next()) |m| {
+            m.*.deinit(allocator);
+            allocator.destroy(m.*);
+        }
+        self.mob_data.deinit();
     }
 };
 
@@ -253,6 +297,7 @@ pub const Game = struct {
             .game_blocks = std.AutoHashMap(u8, *BlockInstance).init(self.allocator),
             .settings_blocks = std.AutoHashMap(u8, *BlockInstance).init(self.allocator),
             .mesh_data = std.AutoHashMap(blecs.ecs.entity_t, *chunk.Chunk).init(self.allocator),
+            .mob_data = std.AutoHashMap(i32, *Mob).init(self.allocator),
         };
         self.gfx.blocks = std.AutoHashMap(u8, *Block).init(self.allocator);
     }
