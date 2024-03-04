@@ -6,6 +6,7 @@ const game = @import("../game.zig");
 const blecs = @import("../blecs/blecs.zig");
 const chunk_meshing = @import("jobs_chunk_meshing.zig");
 const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
+const generate_world = @import("jobs_generate_world.zig");
 
 const AllJobs = zjobs.JobQueue(.{});
 
@@ -44,7 +45,17 @@ pub const Jobs = struct {
             zjobs.JobId.none,
             generate_demo_chunk.GenerateDemoChunkJob{},
         ) catch |e| {
-            std.debug.print("error scheduling chunk mesh job: {}\n", .{e});
+            std.debug.print("error scheduling demo chunk job: {}\n", .{e});
+            return zjobs.JobId.none;
+        };
+    }
+
+    pub fn generateWorld(self: *Jobs) zjobs.JobId {
+        return self.jobs.schedule(
+            zjobs.JobId.none,
+            generate_world.GenerateWorldJob{},
+        ) catch |e| {
+            std.debug.print("error scheduling gen world job: {}\n", .{e});
             return zjobs.JobId.none;
         };
     }

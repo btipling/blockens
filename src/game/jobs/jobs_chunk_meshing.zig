@@ -10,6 +10,15 @@ pub const ChunkMeshJob = struct {
     pub fn exec(self: *@This()) void {
         std.debug.print("ChunkMeshJob: meshing chunk of length {d}\n", .{self.chunk.data.len});
         self.chunk.findMeshes() catch unreachable;
-        blecs.ecs.add(self.world, self.entity, blecs.components.block.NeedsMeshRendering);
+        var i: usize = 0;
+        while (true) {
+            i += 1;
+            if (i > 1000) return;
+            if (blecs.ecs.is_deferred(self.world)) {
+                std.time.sleep(10000);
+            }
+            blecs.ecs.add(self.world, self.entity, blecs.components.block.NeedsMeshRendering);
+            return;
+        }
     }
 };

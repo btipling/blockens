@@ -188,18 +188,25 @@ fn drawWorldOptions() !void {
                 try saveChunkDatas();
             }
 
-            if (zgui.button("Generate chunks", .{
-                .w = 500,
-                .h = 100,
-            })) {
-                try evalChunksFunc();
+            if (game.state.ui.data.world_load_disabled) {
+                zgui.text("Generate disabled", .{});
+            } else {
+                if (zgui.button("Generate chunks", .{
+                    .w = 500,
+                    .h = 100,
+                })) {
+                    try evalChunksFunc();
+                }
             }
-
-            if (zgui.button("Load world", .{
-                .w = 500,
-                .h = 100,
-            })) {
-                try loadChunksInWorld();
+            if (game.state.ui.data.world_load_disabled) {
+                zgui.text("Load disabled", .{});
+            } else {
+                if (zgui.button("Load world", .{
+                    .w = 500,
+                    .h = 100,
+                })) {
+                    try loadChunksInWorld();
+                }
             }
         }
         zgui.popStyleVar(.{ .count = 1 });
@@ -411,32 +418,7 @@ fn loadChunksInWorld() !void {
 }
 
 fn evalChunksFunc() !void {
-    var scriptCache = std.AutoHashMap(i32, [script.maxLuaScriptSize]u8).init(game.state.allocator);
-    defer scriptCache.deinit();
-
-    var instancedKeys = game.state.ui.data.world_chunk_table_data.keyIterator();
-    while (instancedKeys.next()) |_k| {
-        const wp: state.position.worldPosition = _k.*;
-        var ch_cfg = game.state.ui.data.world_chunk_table_data.get(wp).?;
-        var ch_script: [script.maxLuaScriptSize]u8 = undefined;
-        if (scriptCache.get(ch_cfg.scriptId)) |sc| {
-            ch_script = sc;
-        } else {
-            var scriptData: data.chunkScript = undefined;
-            try game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData);
-            ch_script = script.Script.dataScriptToScript(scriptData.script);
-            try scriptCache.put(ch_cfg.scriptId, ch_script);
-        }
-        const c_data = game.state.script.evalChunkFunc(ch_script) catch |err| {
-            std.debug.print("Error evaluating chunk in eval chunks function: {}\n", .{err});
-            return;
-        };
-        ch_cfg.chunkData = c_data;
-        if (game.state.ui.data.world_chunk_table_data.get(wp)) |cd| {
-            game.state.allocator.free(cd.chunkData);
-        }
-        try game.state.ui.data.world_chunk_table_data.put(wp, ch_cfg);
-    }
+    _ = game.state.jobs.generateWorld();
 }
 
 fn saveChunkDatas() !void {
