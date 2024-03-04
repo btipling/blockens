@@ -8,6 +8,9 @@ const chunk_meshing = @import("jobs_chunk_meshing.zig");
 const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
 const generate_world = @import("jobs_generate_world.zig");
 
+// TODO: none of these jobs should be talking to ecs or changing global state
+// need to do a command buffer with locks and progress UI
+
 const AllJobs = zjobs.JobQueue(.{});
 
 pub const Jobs = struct {
