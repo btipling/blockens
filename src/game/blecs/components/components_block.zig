@@ -15,7 +15,8 @@ pub const Meshscale = struct {
 };
 pub const Instance = struct {};
 pub const NeedsMeshing = struct {};
-pub const NeedsRendering = struct {};
+pub const NeedsMeshRendering = struct {};
+pub const NeedsInstanceRendering = struct {};
 
 pub fn init() void {
     const world = game.state.world;
@@ -24,5 +25,6 @@ pub fn init() void {
     ecs.COMPONENT(world, Meshscale);
     ecs.TAG(world, Instance);
     ecs.TAG(world, NeedsMeshing);
-    ecs.TAG(world, NeedsRendering);
+    ecs.TAG(world, NeedsMeshRendering);
+    ecs.TAG(world, NeedsInstanceRendering);
 }

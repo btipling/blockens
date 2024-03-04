@@ -357,6 +357,7 @@ pub fn initDemoChunk() void {
 
     var c: *chunk.Chunk = chunk.Chunk.init(game.state.allocator) catch unreachable;
     c.data = chunk_data;
+
     const chunk_entity = helpers.new_child(world, settings_data);
     _ = ecs.set(world, chunk_entity, components.block.Chunk, .{
         .loc = .{ -32, 0, -32, 0 },

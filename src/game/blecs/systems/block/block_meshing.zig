@@ -25,8 +25,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             ecs.remove(world, entity, components.block.NeedsMeshing);
             var c: *chunk.Chunk = game.state.gfx.mesh_data.get(entity) orelse continue;
-            c.findMeshes() catch unreachable;
-            ecs.add(world, entity, components.block.NeedsRendering);
+            _ = &c;
+            _ = game.state.jobs.meshChunk(world, entity, c);
         }
     }
 }

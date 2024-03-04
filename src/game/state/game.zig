@@ -7,7 +7,7 @@ const zgui = @import("zgui");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
 const chunk = @import("../chunk.zig");
-const jobs = @import("../jobs.zig");
+const jobs = @import("../jobs/jobs.zig");
 const state = @import("state.zig");
 
 pub const max_world_name = 20;
@@ -208,9 +208,12 @@ pub const Game = struct {
         try self.initUIData();
         try self.initGfx();
         try self.populateUIOptions();
+        self.jobs = jobs.Jobs.init();
+        self.jobs.start();
     }
 
     pub fn deinit(self: *Game) void {
+        self.jobs.deinit();
         self.script.deinit();
         self.db.deinit();
         self.ui.data.deinit(self.allocator);
@@ -251,10 +254,6 @@ pub const Game = struct {
             .mesh_data = std.AutoHashMap(blecs.ecs.entity_t, *chunk.Chunk).init(self.allocator),
         };
         self.gfx.blocks = std.AutoHashMap(u8, *Block).init(self.allocator);
-    }
-
-    pub fn initJobs(self: *Game) !void {
-        self.jobs.start();
     }
 
     pub fn initScript(self: *Game) !void {
