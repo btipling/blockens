@@ -171,13 +171,7 @@ fn toggleWireframe() void {
 }
 
 fn evalChunkFunc() !void {
-    const chunk_data = game.state.script.evalChunkFunc(game.state.ui.data.chunk_buf) catch |err| {
-        std.debug.print("Error evaluating chunk function: {}\n", .{err});
-        return;
-    };
-    if (game.state.ui.data.chunk_demo_data) |d| game.state.allocator.free(d);
-    game.state.ui.data.chunk_demo_data = chunk_data;
-    entities.screen.initDemoChunk();
+    _ = game.state.jobs.generateDemoChunk();
 }
 
 fn floatFromChunkBuf(buf: []u8) f32 {
