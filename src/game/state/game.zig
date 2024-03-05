@@ -4,11 +4,13 @@ const blecs = @import("../blecs/blecs.zig");
 const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const zgui = @import("zgui");
+const zmesh = @import("zmesh");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
 const chunk = @import("../chunk.zig");
 const jobs = @import("../jobs/jobs.zig");
 const state = @import("state.zig");
+const gltf = zmesh.io.zcgltf;
 
 pub const max_world_name = 20;
 
@@ -151,35 +153,67 @@ pub const BlockInstance = struct {
     transforms: std.ArrayList(zm.Mat) = undefined,
 };
 
+pub const MobCamera = struct {
+    // TODO: add camera name and deinit
+    aspectRatio: f32 = 1,
+    yfov: f32 = 1,
+    znear: f32 = 1,
+    zfar: f32 = 500,
+};
+
+pub const MobAnimation = struct {
+    frame: gl.Float = 0,
+    scale: @Vector(4, gl.Float) = undefined,
+    rotation: @Vector(4, gl.Float) = undefined,
+    translation: @Vector(4, gl.Float) = undefined,
+};
+
 pub const MobMesh = struct {
+    id: usize,
+    parent: ?usize,
+    animations: ?std.ArrayList(MobAnimation) = null,
+    scale: @Vector(4, gl.Float) = undefined,
+    rotation: @Vector(4, gl.Float) = undefined,
+    translation: @Vector(4, gl.Float) = undefined,
+    color: @Vector(4, gl.Float) = undefined,
+    texture: ?[]u8 = null,
+
     pub fn init(allocator: std.mem.Allocator) *MobMesh {
         var m: *MobMesh = allocator.create(MobMesh) catch unreachable;
         _ = &m;
         m.* = .{};
         return m;
     }
-    fn deinit(_: MobMesh, _: std.mem.Allocator) void {}
+
+    fn deinit(self: MobMesh, allocator: std.mem.Allocator) void {
+        if (self.animations) |a| a.deinit();
+        if (self.texture) |t| allocator.free(t);
+    }
 };
 
 pub const Mob = struct {
-    meshes: std.AutoHashMap(u32, *MobMesh) = undefined,
-
-    pub fn init(allocator: std.mem.Allocator) *Mob {
+    id: i32,
+    meshes: std.ArrayList(*MobMesh) = undefined,
+    file_data: *gltf.Data = undefined,
+    cameras: ?std.ArrayList(MobCamera) = null,
+    pub fn init(allocator: std.mem.Allocator, id: i32, file_data: *gltf.Data) *Mob {
         var m: *Mob = allocator.create(Mob) catch unreachable;
         _ = &m;
         m.* = .{
-            .meshes = std.AutoArrayHashMap(u32, *MobMesh).init(allocator),
+            .id = id,
+            .file_data = file_data,
+            .meshes = std.ArrayList(*MobMesh).initCapacity(allocator, file_data.meshes_count),
         };
         return m;
     }
 
     fn deinit(self: *Mob, allocator: std.mem.Allocator) void {
-        var m_i = self.meshes.valueIterator();
-        while (m_i.next()) |m| {
-            m.*.deinit(allocator);
-            allocator.destroy(m.*);
+        for (self.meshes.items) |m| {
+            m.deinit(allocator);
+            allocator.destroy(m);
         }
         self.meshes.deinit();
+        zmesh.io.freeData(self.file_data);
     }
 };
 
