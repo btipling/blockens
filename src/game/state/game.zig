@@ -169,8 +169,9 @@ pub const MobAnimation = struct {
 };
 
 pub const MobMesh = struct {
-    id: usize,
-    parent: ?usize,
+    id: usize = 0,
+    parent: ?usize = null,
+    transform: ?zm.Mat = null,
     animations: ?std.ArrayList(MobAnimation) = null,
     scale: @Vector(4, gl.Float) = undefined,
     rotation: @Vector(4, gl.Float) = undefined,
@@ -202,7 +203,7 @@ pub const Mob = struct {
         m.* = .{
             .id = id,
             .file_data = file_data,
-            .meshes = std.ArrayList(*MobMesh).initCapacity(allocator, file_data.meshes_count),
+            .meshes = std.ArrayList(*MobMesh).initCapacity(allocator, file_data.meshes_count) catch unreachable,
         };
         return m;
     }

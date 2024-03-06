@@ -75,7 +75,7 @@ fn drawControls() !void {
 }
 
 fn generateCharacter() !void {
-    // try appState.character.generate();
+    entities.screen.initDemoCharacter();
 }
 
 fn toggleWalking() !void {

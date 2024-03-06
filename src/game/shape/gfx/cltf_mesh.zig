@@ -35,25 +35,30 @@ pub const Mesh = struct {
     }
 
     pub fn meshIdForMesh(self: *Mesh, m: *gltf.Mesh) usize {
-        for (0..self.file_data.meshes_count) |i| {
-            if (m == self.file_data.meshes[i]) return i;
+        for (0..self.mob.file_data.meshes_count) |i| {
+            if (std.mem.eql(
+                u8,
+                std.mem.sliceTo(m.name.?, 0),
+                std.mem.sliceTo(self.mob.file_data.meshes.?[i].name.?, 0),
+            )) return i;
         }
+        std.debug.print("pointer arithmatic is hard lol\n", .{});
         unreachable;
     }
 
     pub fn build(self: *Mesh) !void {
-        const default_scene = self.file_data.scene orelse {
+        const default_scene = self.mob.file_data.scene orelse {
             std.debug.print("no default scene\n", .{});
             return MeshErr.NoScenes;
         };
-        try self.buildAnimations(self.file_data.animations, self.file_data.animations_count);
+        try self.buildAnimations(self.mob.file_data.animations, self.mob.file_data.animations_count);
         try self.buildScene(default_scene);
-        if (self.file_data.cameras_count > 0) {
-            if (self.file_data.cameras) |c| {
+        if (self.mob.file_data.cameras_count > 0) {
+            if (self.mob.file_data.cameras) |c| {
                 try self.addCamera(c[0]);
             }
         }
-        game.state.gfx.mob_data.put(self.mob.id, self.mob);
+        try game.state.gfx.mob_data.put(self.mob.id, self.mob);
     }
 
     fn addCamera(_: *Mesh, camera: gltf.Camera) !void {
@@ -143,16 +148,15 @@ pub const Mesh = struct {
 
     pub fn buildNode(self: *Mesh, node: *gltf.Node, parent: ?usize) !void {
         const mesh = node.mesh orelse return;
-        const mob_mesh: *game_state.MobMesh = game.state.allocator.create(game_state.MobMesh);
+        const mob_mesh: *game_state.MobMesh = try game.state.allocator.create(game_state.MobMesh);
         mob_mesh.* = .{
             .id = self.meshIdForMesh(mesh),
             .parent = parent,
             .color = materialBaseColorFromMesh(mesh),
             .texture = self.materialTextureFromMesh(mesh) catch null,
         };
-        self.mob.meshes.insert(mob_mesh.id, mob_mesh);
+        try self.mob.meshes.insert(mob_mesh.id, mob_mesh);
         try self.transformFromNode(node, mob_mesh);
-        try self.buildMesh(mob_mesh, mesh);
 
         var nodes: [*]*gltf.Node = undefined;
         const T = @TypeOf(node.children);
@@ -168,16 +172,18 @@ pub const Mesh = struct {
 
     pub fn transformFromNode(_: *Mesh, node: *gltf.Node, mob_mesh: *game_state.MobMesh) !void {
         if (node.has_matrix == 1) {
-            mob_mesh.transform = node.matrix;
+            mob_mesh.transform = zm.matFromArr(node.matrix);
         }
         if (node.has_scale == 1) {
-            mob_mesh.scale = node.scale;
+            const s = node.scale;
+            mob_mesh.scale = .{ s[0], s[1], s[2], 0 };
         }
         if (node.has_rotation == 1) {
             mob_mesh.rotation = node.rotation;
         }
         if (node.has_translation == 1) {
-            mob_mesh.translation = node.translation;
+            const t = node.translation;
+            mob_mesh.translation = .{ t[0], t[1], t[2], 0 };
         }
     }
 

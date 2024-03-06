@@ -318,7 +318,6 @@ pub fn initDemoChunkCamera() void {
         .translation = game.state.ui.data.demo_chunk_pp_translation,
     });
     const chunk_scale = game.state.ui.data.demo_chunk_scale;
-    std.debug.print("scaling chunk to {d}\n", .{chunk_scale});
     _ = ecs.set(
         world,
         camera,
@@ -352,8 +351,6 @@ pub fn initDemoChunk() void {
     initDemoChunkCamera();
     // TODO chunk data needs to be u32s...
     const chunk_data: []i32 = game.state.ui.data.chunk_demo_data.?;
-    const chunk_demo_data = game.state.ui.data.chunk_demo_data.?;
-    std.debug.print("chunk len: {d}\n", .{chunk_demo_data.len});
 
     var c: *chunk.Chunk = chunk.Chunk.init(game.state.allocator) catch unreachable;
     c.data = chunk_data;
@@ -365,4 +362,16 @@ pub fn initDemoChunk() void {
     ecs.add(world, chunk_entity, components.block.NeedsMeshing);
     game.state.gfx.mesh_data.put(chunk_entity, c) catch unreachable;
     return;
+}
+
+pub fn initDemoCharacter() void {
+    std.debug.print("init demo character\n", .{});
+    clearDemoObjects();
+    const world = game.state.world;
+    const demo_player = helpers.new_child(world, settings_data);
+    // _ = ecs.set(world, demo_player, components.screen.Mob, .{ .mob_id = 1 });
+    _ = ecs.set(world, demo_player, components.mob.Mob, .{ .mob_id = 1 });
+    // ecs.add(world, demo_player, components.mob.Player);
+    ecs.add(world, demo_player, components.mob.NeedsSetup);
+    std.debug.print("done init demo characther\n", .{});
 }

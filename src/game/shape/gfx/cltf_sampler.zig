@@ -3,6 +3,7 @@ const zmesh = @import("zmesh");
 const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const gltf = zmesh.io.zcgltf;
+const game = @import("../../game.zig");
 
 pub const SamplerErr = error{
     MissingDataErr,
@@ -16,9 +17,9 @@ pub const Sampler = struct {
     target_path: gltf.AnimationPathType,
     sampler: *gltf.AnimationSampler,
     num_frames: usize = 0,
-    rotations: ?[]const [4]gl.Float = null,
-    translations: ?[]const [3]gl.Float = null,
-    frames: ?[]const gl.Float = null,
+    rotations: ?[]@Vector(4, gl.Float) = null,
+    translations: ?[]@Vector(4, gl.Float) = null,
+    frames: ?[]gl.Float = null,
 
     pub fn init(
         node: *gltf.Node,
@@ -34,7 +35,11 @@ pub const Sampler = struct {
         };
     }
 
-    pub fn deinit(_: Sampler) void {}
+    pub fn deinit(self: *Sampler) void {
+        if (self.rotations) |r| game.state.allocator.free(r);
+        if (self.translations) |t| game.state.allocator.free(t);
+        if (self.frames) |f| game.state.allocator.free(f);
+    }
 
     pub fn build(self: *Sampler) !void {
         const nodeName = self.node.name orelse "no node name";
@@ -93,7 +98,8 @@ pub const Sampler = struct {
         };
         const dataAddr = @as([*]const u8, @ptrCast(bufferData)) + accessorOffset + bufferView.offset;
         const frames_data = @as([*]const f32, @ptrCast(@alignCast(dataAddr)));
-        self.frames = frames_data[0..self.num_frames];
+        self.frames = try game.state.allocator.alloc(gl.Float, self.num_frames);
+        @memcpy(self.frames.?, frames_data[0..self.num_frames]);
     }
 
     pub fn buildRotation(self: *Sampler) !void {
@@ -127,7 +133,10 @@ pub const Sampler = struct {
 
         const dataAddr = @as([*]const u8, @ptrCast(bufferData)) + accessorOffset + bufferView.offset;
         const frames_data = @as([*]const [4]f32, @ptrCast(@alignCast(dataAddr)));
-        self.rotations = frames_data[0..self.num_frames];
+        self.rotations = try game.state.allocator.alloc(@Vector(4, gl.Float), self.num_frames);
+        for (0..self.num_frames) |i| {
+            self.rotations.?[i] = frames_data[i];
+        }
     }
 
     pub fn buildTranslation(self: *Sampler) !void {
@@ -159,6 +168,10 @@ pub const Sampler = struct {
         };
         const dataAddr = @as([*]const u8, @ptrCast(bufferData)) + accessorOffset + bufferView.offset;
         const frames_data = @as([*]const [3]f32, @ptrCast(@alignCast(dataAddr)));
-        self.translations = frames_data[0..self.num_frames];
+        self.translations = try game.state.allocator.alloc(@Vector(4, gl.Float), self.num_frames);
+        for (0..self.num_frames) |i| {
+            const f = frames_data[i];
+            self.translations.?[i] = .{ f[0], f[1], f[2], 0 };
+        }
     }
 };

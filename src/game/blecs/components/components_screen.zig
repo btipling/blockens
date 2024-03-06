@@ -1,8 +1,11 @@
 const gl = @import("zopengl").bindings;
 const ecs = @import("zflecs");
-const game = @import("../../../game.zig");
-const math = @import("../../../math/math.zig");
+const game = @import("../../game.zig");
+const math = @import("../../math/math.zig");
 
+pub const Mob = struct {
+    mob_id: i32 = 0,
+};
 pub const Screen = struct {
     current: u64 = 0,
     gameDataEntity: u64 = 0,
@@ -74,6 +77,7 @@ pub const CharacterEditor = struct {};
 pub const WorldEditor = struct {};
 
 pub fn init() void {
+    ecs.COMPONENT(game.state.world, Mob);
     ecs.COMPONENT(game.state.world, Screen);
 
     ecs.COMPONENT(game.state.world, Camera);
