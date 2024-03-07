@@ -152,15 +152,25 @@ pub const Mesh = struct {
 
     pub fn buildNode(self: *Mesh, node: *gltf.Node, parent: ?usize) !void {
         const mesh = node.mesh orelse return;
-        const mob_mesh: *game_state.MobMesh = try game.state.allocator.create(game_state.MobMesh);
         const id = self.meshIdForMesh(mesh);
-        mob_mesh.* = .{
-            .id = id,
-            .parent = parent,
-            .color = materialBaseColorFromMesh(mesh),
-            .texture = self.materialTextureFromMesh(mesh) catch null,
-            .animations = self.animation_map.get(id),
-        };
+        const mob_mesh: *game_state.MobMesh = game_state.MobMesh.init(
+            game.state.allocator,
+            id,
+            parent,
+            materialBaseColorFromMesh(mesh),
+            self.materialTextureFromMesh(mesh) catch null,
+            self.animation_map.get(id),
+        );
+        try zmesh.io.appendMeshPrimitive(
+            self.file_data,
+            @intCast(id),
+            0, // gltf primitive index (submesh index)
+            &mob_mesh.indices,
+            &mob_mesh.positions,
+            &mob_mesh.normals,
+            &mob_mesh.textcoords,
+            &mob_mesh.tangents,
+        );
         std.debug.print("meshes capacity? {d} inserting at {d}\n", .{ self.mob.meshes.capacity, mob_mesh.id });
         self.mob.meshes.items[mob_mesh.id] = mob_mesh;
         try self.transformFromNode(node, mob_mesh);

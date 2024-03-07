@@ -172,6 +172,11 @@ pub const MobMesh = struct {
     id: usize = 0,
     parent: ?usize = null,
     transform: ?zm.Mat = null,
+    indices: std.ArrayList(u32),
+    positions: std.ArrayList([3]gl.Float),
+    normals: std.ArrayList([3]gl.Float),
+    textcoords: std.ArrayList([2]gl.Float),
+    tangents: std.ArrayList([4]gl.Float),
     animations: ?std.ArrayList(MobAnimation) = null,
     scale: @Vector(4, gl.Float) = undefined,
     rotation: @Vector(4, gl.Float) = undefined,
@@ -179,14 +184,37 @@ pub const MobMesh = struct {
     color: @Vector(4, gl.Float) = undefined,
     texture: ?[]u8 = null,
 
-    pub fn init(allocator: std.mem.Allocator) *MobMesh {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        id: usize,
+        parent: ?usize,
+        color: @Vector(4, gl.Float),
+        texture: ?[]u8,
+        animations: ?std.ArrayList(MobAnimation),
+    ) *MobMesh {
         var m: *MobMesh = allocator.create(MobMesh) catch unreachable;
         _ = &m;
-        m.* = .{};
+        m.* = .{
+            .indices = std.ArrayList(u32).init(allocator),
+            .positions = std.ArrayList([3]gl.Float).init(allocator),
+            .normals = std.ArrayList([3]gl.Float).init(allocator),
+            .textcoords = std.ArrayList([2]gl.Float).init(allocator),
+            .tangents = std.ArrayList([4]gl.Float).init(allocator),
+            .id = id,
+            .parent = parent,
+            .color = color,
+            .texture = texture,
+            .animations = animations,
+        };
         return m;
     }
 
     fn deinit(self: MobMesh, allocator: std.mem.Allocator) void {
+        self.indices.deinit();
+        self.positions.deinit();
+        self.normals.deinit();
+        self.textcoords.deinit();
+        self.tangents.deinit();
         if (self.animations) |a| a.deinit();
         if (self.texture) |t| allocator.free(t);
     }
