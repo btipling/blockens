@@ -16,6 +16,7 @@ pub const MeshErr = error{
 
 pub const Mesh = struct {
     mob: *game_state.Mob,
+    file_data: *gltf.Data, // managed by zmesh.io
     animation_map: std.AutoHashMap(usize, std.ArrayList(game_state.MobAnimation)),
 
     pub fn init(
@@ -23,7 +24,8 @@ pub const Mesh = struct {
     ) !Mesh {
         const file_data = try zmesh.io.parseAndLoadFile("./src/game/shape/mob/cgltf/char.glb");
         return .{
-            .mob = game_state.Mob.init(game.state.allocator, mob_id, file_data),
+            .mob = game_state.Mob.init(game.state.allocator, mob_id, file_data.meshes_count),
+            .file_data = file_data,
             .animation_map = std.AutoHashMap(usize, std.ArrayList(game_state.MobAnimation)).init(
                 game.state.allocator,
             ),
@@ -31,15 +33,17 @@ pub const Mesh = struct {
     }
 
     pub fn deinit(self: *Mesh) void {
+        const fd = self.file_data;
+        zmesh.io.freeData(fd);
         self.animation_map.deinit();
     }
 
     pub fn meshIdForMesh(self: *Mesh, m: *gltf.Mesh) usize {
-        for (0..self.mob.file_data.meshes_count) |i| {
+        for (0..self.file_data.meshes_count) |i| {
             if (std.mem.eql(
                 u8,
                 std.mem.sliceTo(m.name.?, 0),
-                std.mem.sliceTo(self.mob.file_data.meshes.?[i].name.?, 0),
+                std.mem.sliceTo(self.file_data.meshes.?[i].name.?, 0),
             )) return i;
         }
         std.debug.print("pointer arithmatic is hard lol\n", .{});
@@ -47,14 +51,14 @@ pub const Mesh = struct {
     }
 
     pub fn build(self: *Mesh) !void {
-        const default_scene = self.mob.file_data.scene orelse {
+        const default_scene = self.file_data.scene orelse {
             std.debug.print("no default scene\n", .{});
             return MeshErr.NoScenes;
         };
-        try self.buildAnimations(self.mob.file_data.animations, self.mob.file_data.animations_count);
+        try self.buildAnimations(self.file_data.animations, self.file_data.animations_count);
         try self.buildScene(default_scene);
-        if (self.mob.file_data.cameras_count > 0) {
-            if (self.mob.file_data.cameras) |c| {
+        if (self.file_data.cameras_count > 0) {
+            if (self.file_data.cameras) |c| {
                 try self.addCamera(c[0]);
             }
         }
@@ -149,13 +153,16 @@ pub const Mesh = struct {
     pub fn buildNode(self: *Mesh, node: *gltf.Node, parent: ?usize) !void {
         const mesh = node.mesh orelse return;
         const mob_mesh: *game_state.MobMesh = try game.state.allocator.create(game_state.MobMesh);
+        const id = self.meshIdForMesh(mesh);
         mob_mesh.* = .{
-            .id = self.meshIdForMesh(mesh),
+            .id = id,
             .parent = parent,
             .color = materialBaseColorFromMesh(mesh),
             .texture = self.materialTextureFromMesh(mesh) catch null,
+            .animations = self.animation_map.get(id),
         };
-        try self.mob.meshes.insert(mob_mesh.id, mob_mesh);
+        std.debug.print("meshes capacity? {d} inserting at {d}\n", .{ self.mob.meshes.capacity, mob_mesh.id });
+        self.mob.meshes.items[mob_mesh.id] = mob_mesh;
         try self.transformFromNode(node, mob_mesh);
 
         var nodes: [*]*gltf.Node = undefined;

@@ -195,15 +195,19 @@ pub const MobMesh = struct {
 pub const Mob = struct {
     id: i32,
     meshes: std.ArrayList(*MobMesh) = undefined,
-    file_data: *gltf.Data = undefined,
     cameras: ?std.ArrayList(MobCamera) = null,
-    pub fn init(allocator: std.mem.Allocator, id: i32, file_data: *gltf.Data) *Mob {
+    pub fn init(allocator: std.mem.Allocator, id: i32, num_meshes: usize) *Mob {
         var m: *Mob = allocator.create(Mob) catch unreachable;
         _ = &m;
+        std.debug.print("mob init: assuming meshes count {d}\n", .{num_meshes});
+        var meshes = std.ArrayList(*MobMesh).initCapacity(
+            allocator,
+            num_meshes,
+        ) catch unreachable;
+        meshes.expandToCapacity();
         m.* = .{
             .id = id,
-            .file_data = file_data,
-            .meshes = std.ArrayList(*MobMesh).initCapacity(allocator, file_data.meshes_count) catch unreachable,
+            .meshes = meshes,
         };
         return m;
     }
@@ -214,7 +218,6 @@ pub const Mob = struct {
             allocator.destroy(m);
         }
         self.meshes.deinit();
-        zmesh.io.freeData(self.file_data);
     }
 };
 
