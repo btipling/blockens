@@ -69,7 +69,7 @@ pub const VertexShaderGen = struct {
             try r.gen_attribute_vars();
             try r.gen_instanced_vars();
             try r.gen_out_vars();
-            try r.gen_mesh_transforms();
+            try r.gen_mesh_transforms_decls();
             try r.gen_uniforms();
             try r.gen_ubo();
             try r.gen_animation_block();
@@ -155,17 +155,31 @@ pub const VertexShaderGen = struct {
             }
         }
 
-        fn gen_mesh_transforms(r: *runner) !void {
-            if (r.cfg.mesh_transforms == null) {
-                std.debug.print("\n\n has no mesh transforms\n", .{});
-                return;
+        fn gen_mesh_transforms_decls(r: *runner) !void {
+            if (r.cfg.mesh_transforms == null) return;
+            r.a("\n\n");
+            const mts = r.cfg.mesh_transforms.?;
+            {
+                const line = try shader_helpers.scalar(usize, "uint num_mesh_transforms = {d}u;\n", mts.len);
+                r.l(&line);
             }
-            std.debug.print("\n\n has mesh transforms\n", .{});
+            {
+                const line = try shader_helpers.scalar(usize, "mat4 mesh_transforms[{d}];\n", mts.len);
+                r.l(&line);
+            }
+            r.a("\n");
+        }
+
+        fn gen_mesh_transforms(r: *runner) !void {
+            if (r.cfg.mesh_transforms == null) return;
             r.a("\n\n");
-            const mt = r.cfg.mesh_transforms.?;
-            const line = try shader_helpers.scalar(usize, "uint num_mesh_transforms = {d}u;\n", mt.len);
-            r.l(&line);
-            r.a("\n\n");
+            const mts = r.cfg.mesh_transforms.?;
+            for (mts, 0..) |_, i| {
+                // TODO: gen mats here and use them
+                const line = try shader_helpers.scalar(usize, "    mesh_transforms[{d}] = mat4(1.0);\n", i);
+                r.l(&line);
+            }
+            r.a("\n");
         }
 
         fn gen_inline_mat(r: *runner) !void {
@@ -212,6 +226,7 @@ pub const VertexShaderGen = struct {
             r.a("    pos = vec4(position.xyz, 1.0);\n");
             try r.gen_instance_mat();
             try r.gen_inline_mat();
+            try r.gen_mesh_transforms();
             if (r.cfg.animation_block_index != null) {
                 r.a("    frameIndices indices = get_frame_indices();\n");
                 r.a("    key_frame kf = frames[indices.index1];\n");
