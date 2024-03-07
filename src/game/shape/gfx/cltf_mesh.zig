@@ -22,6 +22,9 @@ pub const Mesh = struct {
     pub fn init(
         mob_id: i32,
     ) !Mesh {
+        if (game.state.gfx.mob_data.get(mob_id)) |m| {
+            m.deinit(game.state.allocator);
+        }
         const file_data = try zmesh.io.parseAndLoadFile("./src/game/shape/mob/cgltf/char.glb");
         return .{
             .mob = game_state.Mob.init(game.state.allocator, mob_id, file_data.meshes_count),

@@ -400,11 +400,13 @@ pub fn initDemoCharacter() void {
     clearDemoObjects();
     initDemoCharacterCamera();
     const world = game.state.world;
-    game.state.entities.demo_player = ecs.new_entity(game.state.world, "DemoPlayer");
-    _ = ecs.set(world, game.state.entities.demo_player, components.mob.Mob, .{
-        .mob_id = 1,
-        .data_entity = settings_data,
-    });
+    if (game.state.entities.demo_player == 0) {
+        game.state.entities.demo_player = ecs.new_entity(game.state.world, "DemoPlayer");
+        _ = ecs.set(world, game.state.entities.demo_player, components.mob.Mob, .{
+            .mob_id = 1,
+            .data_entity = settings_data,
+        });
+    }
     ecs.add(world, game.state.entities.demo_player, components.mob.NeedsSetup);
     std.debug.print("done init demo characther\n", .{});
 }

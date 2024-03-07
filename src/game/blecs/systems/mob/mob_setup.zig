@@ -35,9 +35,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
 fn setupMob(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, data_entity: ecs.entity_t) !void {
     std.debug.print("creating mob {d}\n", .{mob_id});
-    var cm = cltf_mesh.Mesh.init(mob_id) catch unreachable;
-    defer cm.deinit();
-    cm.build() catch unreachable;
+    if (game.state.gfx.mob_data.get(mob_id) == null) {
+        var cm = cltf_mesh.Mesh.init(mob_id) catch unreachable;
+        defer cm.deinit();
+        cm.build() catch unreachable;
+    }
 
     const mob = game.state.gfx.mob_data.get(mob_id).?;
     for (mob.meshes.items, 0..) |mesh, mesh_id| {
