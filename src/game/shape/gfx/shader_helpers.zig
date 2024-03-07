@@ -44,3 +44,13 @@ pub fn vec4_to_buf(
     _ = try std.fmt.bufPrint(&buffer, fmt, .{ v0, v1, v2, v3 });
     return buffer;
 }
+
+pub fn scalar(
+    comptime T: type,
+    comptime fmt: []const u8,
+    v: T,
+) ![250:0]u8 {
+    var buffer: [250:0]u8 = [_:0]u8{0} ** 250;
+    _ = try std.fmt.bufPrint(&buffer, fmt, .{v});
+    return buffer;
+}

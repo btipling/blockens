@@ -36,7 +36,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             const sh: []components.shape.Shape = ecs.field(it, components.shape.Shape, 1) orelse return;
-            const e = extractions.extract(world, entity);
+            var e = extractions.extract(world, entity) catch unreachable;
+            defer e.deinit();
 
             const mesh_data = switch (sh[i].shape_type) {
                 .plane => plane(),
@@ -90,6 +91,10 @@ const shaders = struct {
             .animation_block_index = e.animation_binding_point,
             .is_instanced = e.is_instanced,
             .is_meshed = e.is_meshed,
+            .mesh_transforms = blk: {
+                if (e.mesh_transforms) |mt| break :blk mt.items;
+                break :blk null;
+            },
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
     }
@@ -138,6 +143,11 @@ const extractions = struct {
     block_id: ?u8 = null,
     is_meshed: bool = false,
     has_mob_texture: bool = false,
+    mesh_transforms: ?std.ArrayList(gfx.shadergen.vertex.MeshTransforms) = null,
+
+    fn deinit(self: *extractions) void {
+        if (self.mesh_transforms) |mt| mt.deinit();
+    }
 
     fn extractBlock(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
         if (ecs.get_id(world, entity, ecs.id(components.block.Block))) |opaque_ptr| {
@@ -155,16 +165,30 @@ const extractions = struct {
         }
     }
 
-    fn extraMobTexture(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
+    fn extractMesh(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) !void {
         if (!ecs.has_id(world, entity, ecs.id(components.mob.Mesh))) return;
         const mesh_c: *const components.mob.Mesh = ecs.get(world, entity, components.mob.Mesh).?;
         if (!ecs.has_id(world, mesh_c.mob_entity, ecs.id(components.mob.Mob))) return;
-        const mob_c: *const components.mob.Mob = ecs.get(world, entity, components.mob.Mob).?;
+        const mob_c: *const components.mob.Mob = ecs.get(world, mesh_c.mob_entity, components.mob.Mob).?;
         if (!game.state.gfx.mob_data.contains(mob_c.mob_id)) return;
         const mob_data: *game_state.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
-        if (mob.meshes.len >= mesh_c.mesh_id) return;
+        if (mob_data.meshes.items.len <= mesh_c.mesh_id) return;
         const mesh: *game_state.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
         e.has_mob_texture = mesh.texture != null;
+        e.color = mesh.color;
+        var cm = mesh;
+        while (true) {
+            if (e.mesh_transforms == null) {
+                e.mesh_transforms = std.ArrayList(gfx.shadergen.vertex.MeshTransforms).init(game.state.allocator);
+            }
+            try e.mesh_transforms.?.append(.{
+                .scale = cm.scale,
+                .rotation = cm.rotation,
+                .translation = cm.translation,
+            });
+            if (cm.parent == null) break;
+            cm = mob_data.meshes.items[cm.parent.?];
+        }
     }
 
     fn extractAnimation(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
@@ -212,7 +236,7 @@ const extractions = struct {
         }
     }
 
-    fn extract(world: *ecs.world_t, entity: ecs.entity_t) extractions {
+    fn extract(world: *ecs.world_t, entity: ecs.entity_t) !extractions {
         var e = extractions{};
         if (ecs.has_id(world, entity, ecs.id(components.Debug))) {
             e.debug = true;
@@ -250,6 +274,7 @@ const extractions = struct {
             e.has_uniform_mat = true;
             e.uniform_mat = zm.translationV(u.loc);
         }
+        try extractMesh(&e, world, entity);
         extractAnimation(&e, world, entity);
         return e;
     }

@@ -187,7 +187,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             }
             if (er.has_mob_texture) {
                 const mesh_c: *const components.mob.Mesh = ecs.get(world, entity, components.mob.Mesh).?;
-                const mob_c: *const components.mob.Mob = ecs.get(world, entity, components.mob.Mob).?;
+                const mob_c: *const components.mob.Mob = ecs.get(world, mesh_c.mob_entity, components.mob.Mob).?;
                 const mob_data: *game_state.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
                 const mesh: *game_state.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
                 texture = gfx.Gfx.initTextureFromImage(mesh.texture.?) catch unreachable;

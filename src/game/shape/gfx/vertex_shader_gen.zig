@@ -6,6 +6,12 @@ const shader_constants = @import("shader_constants.zig");
 const shader_helpers = @import("shader_helpers.zig");
 const game = @import("../../game.zig");
 
+pub const MeshTransforms = struct {
+    scale: ?@Vector(4, gl.Float),
+    rotation: ?@Vector(4, gl.Float),
+    translation: ?@Vector(4, gl.Float),
+};
+
 pub const VertexShaderGen = struct {
     pub const vertexShaderConfig = struct {
         debug: bool = false,
@@ -19,6 +25,7 @@ pub const VertexShaderGen = struct {
         translation: ?@Vector(4, gl.Float) = null,
         is_instanced: bool = false,
         is_meshed: bool = false,
+        mesh_transforms: ?[]MeshTransforms,
     };
 
     // genVertexShader - call ower owns the returned slice and must free it
@@ -53,11 +60,16 @@ pub const VertexShaderGen = struct {
             r.buf.appendSlice(r.allocator, line) catch unreachable;
         }
 
+        fn l(r: *runner, line: [:0]const u8) void {
+            r.a(std.mem.sliceTo(line, 0));
+        }
+
         fn run(r: *runner) ![:0]const u8 {
             r.a("#version 450 core\n");
             try r.gen_attribute_vars();
             try r.gen_instanced_vars();
             try r.gen_out_vars();
+            try r.gen_mesh_transforms();
             try r.gen_uniforms();
             try r.gen_ubo();
             try r.gen_animation_block();
@@ -71,16 +83,16 @@ pub const VertexShaderGen = struct {
 
         fn gen_attribute_vars(r: *runner) !void {
             var line = try shader_helpers.attribute_location(r.location, "position", .vec3);
-            r.a(std.mem.sliceTo(&line, 0));
+            r.l(&line);
             r.location += 1;
             if (r.cfg.has_texture_coords) {
                 line = try shader_helpers.attribute_location(r.location, "eTexCoord", .vec2);
-                r.a(std.mem.sliceTo(&line, 0));
+                r.l(&line);
                 r.location += 1;
             }
             if (r.cfg.has_normals) {
                 line = try shader_helpers.attribute_location(r.location, "normal", .vec3);
-                r.a(std.mem.sliceTo(&line, 0));
+                r.l(&line);
                 r.location += 1;
             }
         }
@@ -88,7 +100,7 @@ pub const VertexShaderGen = struct {
         fn gen_instanced_vars(r: *runner) !void {
             if (!r.cfg.is_instanced) return;
             var line = try shader_helpers.attribute_location(r.location, "attribTransform", .mat4);
-            r.a(std.mem.sliceTo(&line, 0));
+            r.l(&line);
             r.location += 1;
         }
 
@@ -136,11 +148,24 @@ pub const VertexShaderGen = struct {
                 r.a("};\n\n");
                 r.a("\n");
                 var line = try shader_helpers.ssbo_binding(bi, shader_constants.AnimationBlockName);
-                r.a(std.mem.sliceTo(&line, 0));
+                r.l(&line);
                 r.a("{\n");
                 r.a("    key_frame frames[];\n");
                 r.a("};\n\n");
             }
+        }
+
+        fn gen_mesh_transforms(r: *runner) !void {
+            if (r.cfg.mesh_transforms == null) {
+                std.debug.print("\n\n has no mesh transforms\n", .{});
+                return;
+            }
+            std.debug.print("\n\n has mesh transforms\n", .{});
+            r.a("\n\n");
+            const mt = r.cfg.mesh_transforms.?;
+            const line = try shader_helpers.scalar(usize, "uint num_mesh_transforms = {d}u;\n", mt.len);
+            r.l(&line);
+            r.a("\n\n");
         }
 
         fn gen_inline_mat(r: *runner) !void {
@@ -163,13 +188,13 @@ pub const VertexShaderGen = struct {
             if (inline_mat) |m| {
                 const mr = zm.matToArr(m);
                 var line = try shader_helpers.vec4_to_buf("    vec4 c0 = vec4({d}, {d}, {d}, {d});\n", mr[0], mr[1], mr[2], mr[3]);
-                r.a(std.mem.sliceTo(&line, 0));
+                r.l(&line);
                 line = try shader_helpers.vec4_to_buf("    vec4 c1 = vec4({d}, {d}, {d}, {d});\n", mr[4], mr[5], mr[6], mr[7]);
-                r.a(std.mem.sliceTo(&line, 0));
+                r.l(&line);
                 line = try shader_helpers.vec4_to_buf("    vec4 c2 = vec4({d}, {d}, {d}, {d});\n", mr[8], mr[9], mr[10], mr[11]);
-                r.a(std.mem.sliceTo(&line, 0));
+                r.l(&line);
                 line = try shader_helpers.vec4_to_buf("    vec4 c3 = vec4({d}, {d}, {d}, {d});\n", mr[12], mr[13], mr[14], mr[15]);
-                r.a(std.mem.sliceTo(&line, 0));
+                r.l(&line);
                 r.a("    mat4 inline_transform = mat4(c0, c1, c2, c3);\n");
                 r.a("    pos = inline_transform * pos;\n");
             }

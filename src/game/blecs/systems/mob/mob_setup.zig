@@ -4,6 +4,7 @@ const gl = @import("zopengl").bindings;
 const components = @import("../../components/components.zig");
 const helpers = @import("../../helpers.zig");
 const game = @import("../../../game.zig");
+const game_state = @import("../../../state/game.zig");
 const cltf_mesh = @import("../../../shape/gfx/cltf_mesh.zig");
 const gfx = @import("../../../shape/gfx/gfx.zig");
 
@@ -42,7 +43,7 @@ fn setupMob(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, data_entity:
     }
 
     const mob = game.state.gfx.mob_data.get(mob_id).?;
-    for (mob.meshes.items, 0..) |mesh, mesh_id| {
+    for (mob.meshes.items, 0..) |_, mesh_id| {
         std.debug.print("done creating mob {d}\n", .{mob_id});
         const c_m = helpers.new_child(world, data_entity);
         _ = ecs.set(world, c_m, components.shape.Shape, .{ .shape_type = .mob });
@@ -50,15 +51,12 @@ fn setupMob(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, data_entity:
             .mesh_id = mesh_id,
             .mob_entity = entity,
         });
-        _ = ecs.set(game.state.world, c_m, components.shape.Color, .{ .color = mesh.color });
-        if (mesh.scale) |s| _ = ecs.set(game.state.world, c_m, components.shape.Scale, .{ .scale = s });
-        if (mesh.rotation) |r| _ = ecs.set(game.state.world, c_m, components.shape.Rotation, .{ .rot = r });
-        if (mesh.translation) |t| _ = ecs.set(game.state.world, c_m, components.shape.Translation, .{ .translation = t });
         {
             // TODO: add position
             _ = ecs.set(world, c_m, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_translation });
             _ = ecs.set(world, c_m, components.shape.UBO, .{ .binding_point = gfx.bindings.SettingsUBOBindingPoint });
         }
+        ecs.add(world, c_m, components.Debug);
         ecs.add(world, c_m, components.shape.NeedsSetup);
     }
 }
