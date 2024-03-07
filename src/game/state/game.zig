@@ -96,6 +96,22 @@ pub const UIData = struct {
         0,
         0,
     },
+    demo_character_rotation_x: gl.Float = 0.0,
+    demo_character_rotation_y: gl.Float = 0.496,
+    demo_character_rotation_z: gl.Float = 0.247,
+    demo_character_scale: gl.Float = 0.243,
+    demo_character_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){
+        -6.286,
+        -0.123,
+        -0.228,
+        0,
+    },
+    demo_character_pp_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){
+        -0.259,
+        0.217,
+        0,
+        0,
+    },
 
     fn deinit(self: *UIData, allocator: std.mem.Allocator) void {
         self.texture_script_options.deinit();

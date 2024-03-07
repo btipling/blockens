@@ -7,6 +7,7 @@ pub const GameInfo = struct {};
 pub const SettingsCamera = struct {};
 pub const DemoCube = struct {};
 pub const DemoChunk = struct {};
+pub const DemoCharacter = struct {};
 
 pub fn init() void {
     ecs.TAG(game.state.world, UI);
@@ -15,4 +16,5 @@ pub fn init() void {
     ecs.TAG(game.state.world, SettingsCamera);
     ecs.TAG(game.state.world, DemoCube);
     ecs.TAG(game.state.world, DemoChunk);
+    ecs.TAG(game.state.world, DemoCharacter);
 }

@@ -74,6 +74,10 @@ pub fn toggleDemoChunkOptions() void {
     toggleUI(blecs.components.ui.DemoChunk);
 }
 
+pub fn toggleDemoCharacterOptions() void {
+    toggleUI(blecs.components.ui.DemoCharacter);
+}
+
 fn toggleUI(comptime T: type) void {
     if (blecs.ecs.has_id(game.state.world, game.state.entities.ui, blecs.ecs.id(T))) {
         blecs.ecs.remove(game.state.world, game.state.entities.ui, T);

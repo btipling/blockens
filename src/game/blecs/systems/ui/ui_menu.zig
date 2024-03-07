@@ -61,6 +61,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     if (zgui.menuItem("Toggle Demo Chunk Options", .{})) {
                         screen_helpers.toggleDemoChunkOptions();
                     }
+                    if (zgui.menuItem("Toggle Demo Character Options", .{})) {
+                        screen_helpers.toggleDemoCharacterOptions();
+                    }
                     zgui.endMenu();
                 }
                 const ww = zgui.getWindowWidth();

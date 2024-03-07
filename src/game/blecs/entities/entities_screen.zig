@@ -364,9 +364,41 @@ pub fn initDemoChunk() void {
     return;
 }
 
+pub fn initDemoCharacterCamera() void {
+    const world = game.state.world;
+    // Demo characters also needs a camera adjustment to keep perspective centered on it
+    const camera = game.state.entities.settings_camera;
+    _ = ecs.set(world, camera, components.screen.PostPerspective, .{
+        .translation = game.state.ui.data.demo_character_pp_translation,
+    });
+    const character_scale = game.state.ui.data.demo_character_scale;
+    _ = ecs.set(
+        world,
+        camera,
+        components.screen.WorldScale,
+        .{ .scale = @Vector(4, gl.Float){ character_scale, character_scale, character_scale, 0 } },
+    );
+    var character_rot = zm.rotationY(game.state.ui.data.demo_character_rotation_y * std.math.pi);
+    character_rot = zm.mul(character_rot, zm.rotationZ(game.state.ui.data.demo_character_rotation_z * std.math.pi * 2.0));
+    character_rot = zm.mul(character_rot, zm.rotationX(game.state.ui.data.demo_character_rotation_x * std.math.pi * 2.0));
+    _ = ecs.set(
+        game.state.world,
+        camera,
+        components.screen.WorldRotation,
+        .{ .rotation = zm.matToQuat(character_rot) },
+    );
+    _ = ecs.set(
+        world,
+        camera,
+        components.screen.WorldTranslation,
+        .{ .translation = game.state.ui.data.demo_character_translation },
+    );
+}
+
 pub fn initDemoCharacter() void {
     std.debug.print("init demo character\n", .{});
     clearDemoObjects();
+    initDemoCharacterCamera();
     const world = game.state.world;
     game.state.entities.demo_player = ecs.new_entity(game.state.world, "DemoPlayer");
     _ = ecs.set(world, game.state.entities.demo_player, components.mob.Mob, .{
