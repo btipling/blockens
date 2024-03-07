@@ -62,6 +62,9 @@ pub const Mesh = struct {
                 try self.addCamera(c[0]);
             }
         }
+        if (game.state.gfx.mob_data.get(self.mob.id)) |m| {
+            m.deinit(game.state.allocator);
+        }
         try game.state.gfx.mob_data.put(self.mob.id, self.mob);
     }
 

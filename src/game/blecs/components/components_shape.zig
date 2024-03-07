@@ -10,6 +10,7 @@ pub const Shape = struct {
         plane,
         cube,
         meshed_voxel,
+        mob,
     };
 };
 

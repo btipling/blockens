@@ -368,10 +368,11 @@ pub fn initDemoCharacter() void {
     std.debug.print("init demo character\n", .{});
     clearDemoObjects();
     const world = game.state.world;
-    const demo_player = helpers.new_child(world, settings_data);
-    // _ = ecs.set(world, demo_player, components.screen.Mob, .{ .mob_id = 1 });
-    _ = ecs.set(world, demo_player, components.mob.Mob, .{ .mob_id = 1 });
-    // ecs.add(world, demo_player, components.mob.Player);
-    ecs.add(world, demo_player, components.mob.NeedsSetup);
+    game.state.entities.demo_player = ecs.new_entity(game.state.world, "DemoPlayer");
+    _ = ecs.set(world, game.state.entities.demo_player, components.mob.Mob, .{
+        .mob_id = 1,
+        .data_entity = settings_data,
+    });
+    ecs.add(world, game.state.entities.demo_player, components.mob.NeedsSetup);
     std.debug.print("done init demo characther\n", .{});
 }

@@ -15,17 +15,19 @@ const gltf = zmesh.io.zcgltf;
 pub const max_world_name = 20;
 
 pub const Entities = struct {
-    screen: usize = 0,
-    clock: usize = 0,
-    gfx: usize = 0,
-    sky: usize = 0,
-    floor: usize = 0,
-    crosshair: usize = 0,
-    menu: usize = 0,
-    game_camera: usize = 0,
-    settings_camera: usize = 0,
-    wall: usize = 0,
-    ui: usize = 0,
+    screen: blecs.ecs.entity_t = 0,
+    clock: blecs.ecs.entity_t = 0,
+    gfx: blecs.ecs.entity_t = 0,
+    sky: blecs.ecs.entity_t = 0,
+    floor: blecs.ecs.entity_t = 0,
+    crosshair: blecs.ecs.entity_t = 0,
+    menu: blecs.ecs.entity_t = 0,
+    game_camera: blecs.ecs.entity_t = 0,
+    settings_camera: blecs.ecs.entity_t = 0,
+    wall: blecs.ecs.entity_t = 0,
+    ui: blecs.ecs.entity_t = 0,
+    player: blecs.ecs.entity_t = 0,
+    demo_player: blecs.ecs.entity_t = 0,
 };
 
 pub const Cursor = struct {
@@ -139,6 +141,7 @@ pub const ElementsRendererConfig = struct {
     keyframes: ?[]AnimationKeyFrame = null,
     is_instanced: bool = false,
     block_id: ?u8 = 0,
+    has_mob_texture: bool = false,
     mob: ?MobRef = null,
 };
 
@@ -178,9 +181,9 @@ pub const MobMesh = struct {
     textcoords: std.ArrayList([2]gl.Float),
     tangents: std.ArrayList([4]gl.Float),
     animations: ?std.ArrayList(MobAnimation) = null,
-    scale: @Vector(4, gl.Float) = undefined,
-    rotation: @Vector(4, gl.Float) = undefined,
-    translation: @Vector(4, gl.Float) = undefined,
+    scale: ?@Vector(4, gl.Float) = undefined,
+    rotation: ?@Vector(4, gl.Float) = undefined,
+    translation: ?@Vector(4, gl.Float) = undefined,
     color: @Vector(4, gl.Float) = undefined,
     texture: ?[]u8 = null,
 
@@ -240,7 +243,7 @@ pub const Mob = struct {
         return m;
     }
 
-    fn deinit(self: *Mob, allocator: std.mem.Allocator) void {
+    pub fn deinit(self: *Mob, allocator: std.mem.Allocator) void {
         for (self.meshes.items) |m| {
             m.deinit(allocator);
             allocator.destroy(m);

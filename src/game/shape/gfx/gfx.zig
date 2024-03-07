@@ -1,6 +1,7 @@
 const std = @import("std");
 const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
+const zstbi = @import("zstbi");
 const game_state = @import("../../state/game.zig");
 const game = @import("../../game.zig");
 
@@ -193,6 +194,27 @@ pub const Gfx = struct {
         const width: gl.Int = 16;
         const height: gl.Int = @divFloor(@as(gl.Int, @intCast(texture_data.len)), width);
         const imageData: *const anyopaque = texture_data.ptr;
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        return texture;
+    }
+
+    pub fn initTextureFromImage(img: []u8) !gl.Uint {
+        var texture: gl.Uint = undefined;
+        gl.genTextures(1, &texture);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+        var image = try zstbi.Image.loadFromMemory(img, 4);
+        defer image.deinit();
+
+        const width: gl.Int = @as(gl.Int, @intCast(image.width));
+        const height: gl.Int = @as(gl.Int, @intCast(image.height));
+        const imageData: *const anyopaque = image.data.ptr;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
         gl.generateMipmap(gl.TEXTURE_2D);
         return texture;

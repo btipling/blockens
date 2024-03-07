@@ -42,6 +42,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .plane => plane(),
                 .cube => cube(),
                 .meshed_voxel => voxel(world, entity) catch unreachable,
+                .mob => mob(world, entity),
             };
 
             var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
@@ -63,6 +64,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .animation_binding_point = e.animation_binding_point,
                 .is_instanced = e.is_instanced,
                 .block_id = e.block_id,
+                .has_mob_texture = e.has_mob_texture,
             };
             const erc_id = ecs.new_id(world);
             game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
@@ -100,6 +102,9 @@ const shaders = struct {
             if (e.has_demo_cube_texture) {
                 has_texture = true;
             }
+            if (e.has_mob_texture) {
+                has_texture = true;
+            }
         }
         const f_cfg = gfx.shadergen.fragment.FragmentShaderGen.fragmentShaderConfig{
             .debug = e.debug,
@@ -132,6 +137,7 @@ const extractions = struct {
     is_instanced: bool = false,
     block_id: ?u8 = null,
     is_meshed: bool = false,
+    has_mob_texture: bool = false,
 
     fn extractBlock(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
         if (ecs.get_id(world, entity, ecs.id(components.block.Block))) |opaque_ptr| {
@@ -147,6 +153,18 @@ const extractions = struct {
                 e.is_meshed = true;
             }
         }
+    }
+
+    fn extraMobTexture(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
+        if (!ecs.has_id(world, entity, ecs.id(components.mob.Mesh))) return;
+        const mesh_c: *const components.mob.Mesh = ecs.get(world, entity, components.mob.Mesh).?;
+        if (!ecs.has_id(world, mesh_c.mob_entity, ecs.id(components.mob.Mob))) return;
+        const mob_c: *const components.mob.Mob = ecs.get(world, entity, components.mob.Mob).?;
+        if (!game.state.gfx.mob_data.contains(mob_c.mob_id)) return;
+        const mob_data: *game_state.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
+        if (mob.meshes.len >= mesh_c.mesh_id) return;
+        const mesh: *game_state.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
+        e.has_mob_texture = mesh.texture != null;
     }
 
     fn extractAnimation(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
@@ -458,5 +476,30 @@ fn voxel(world: *ecs.world_t, entity: ecs.entity_t) !meshData {
     @memcpy(texcoords, v.texcoords.?);
     const normals: [][3]gl.Float = game.state.allocator.alloc([3]gl.Float, v.normals.?.len) catch unreachable;
     @memcpy(normals, v.normals.?);
+    return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
+}
+
+fn mob(world: *ecs.world_t, entity: ecs.entity_t) meshData {
+    if (!ecs.has_id(world, entity, ecs.id(components.mob.Mesh))) return cube();
+    const mesh_c: *const components.mob.Mesh = ecs.get(world, entity, components.mob.Mesh).?;
+    if (!ecs.has_id(world, mesh_c.mob_entity, ecs.id(components.mob.Mob))) return cube();
+    const mob_c: *const components.mob.Mob = ecs.get(world, mesh_c.mob_entity, components.mob.Mob).?;
+    if (!game.state.gfx.mob_data.contains(mob_c.mob_id)) return cube();
+    const mob_data: *game_state.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
+    if (mob_data.meshes.items.len >= mesh_c.mesh_id) return cube();
+    const mesh: *game_state.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
+    const positions: [][3]f32 = game.state.allocator.alloc([3]gl.Float, mesh.positions.items.len) catch unreachable;
+    @memcpy(positions, mesh.positions.items);
+    const indices: []u32 = game.state.allocator.alloc(u32, mesh.indices.items.len) catch unreachable;
+    @memcpy(indices, mesh.indices.items);
+    var texcoords: ?[][2]gl.Float = null;
+    if (mesh.texture != null) {
+        var tc = game.state.allocator.alloc([2]gl.Float, mesh.textcoords.items.len) catch unreachable;
+        _ = &tc;
+        @memcpy(tc, mesh.textcoords.items);
+        texcoords = tc;
+    }
+    const normals: [][3]gl.Float = game.state.allocator.alloc([3]gl.Float, mesh.normals.items.len) catch unreachable;
+    @memcpy(normals, mesh.normals.items);
     return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
 }
