@@ -277,10 +277,17 @@ pub fn initDemoCube() void {
         .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
         .rotation = @Vector(4, gl.Float){ 0.056235, -0.646945, 0.46856, -0.598959 },
     });
+    const kf4 = ecs.new_id(world);
+    _ = ecs.set(world, kf4, components.gfx.AnimationKeyFrame, .{
+        .frame = 4,
+        .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
+        .rotation = @Vector(4, gl.Float){ 0.17867, 0.899888, 0.240292, -0.317079 },
+    });
     ecs.add_pair(world, kf0, ecs.ChildOf, animation);
     ecs.add_pair(world, kf1, ecs.ChildOf, animation);
     ecs.add_pair(world, kf2, ecs.ChildOf, animation);
     ecs.add_pair(world, kf3, ecs.ChildOf, animation);
+    ecs.add_pair(world, kf4, ecs.ChildOf, animation);
 
     const p_x_ratio: gl.Float = 0.6666;
     const p_scale: gl.Float = 0.3;

@@ -218,7 +218,6 @@ const extractions = struct {
             game_state.ElementsRendererConfig.AnimationKeyFrame,
         ){};
         defer ar.deinit(game.state.allocator);
-        std.debug.print("num frames: {d}\n", .{cm.animations.?.items.len});
         for (0..cm.animations.?.items.len) |i| {
             const akf = cm.animations.?.items[i];
             ar.append(

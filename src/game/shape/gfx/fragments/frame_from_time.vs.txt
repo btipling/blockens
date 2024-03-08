@@ -31,7 +31,7 @@ AnimationFrameIndices get_frame_indices() {
     if (frame_duration > 0.0) {
         indices.t = (current_t - frame1_time) / frame_duration;
     } else {
-        indices.t = mod(time, 1.0);
+        indices.t = 0.0;
     }
 
     return indices;
