@@ -67,11 +67,11 @@ fn setupMob(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, data_entity:
                 // TODO: build a better ssbo so I don't add the mesh_id to the character binding point:
                 .{
                     .ssbo = gfx.constants.CharacterAnimationBindingPoint + @as(gl.Uint, @intCast(mesh_id)),
-                    .animation_id = gfx.constants.CharacterWalkingAnimationID,
+                    .animation_id = gfx.constants.DemoCharacterWalkingAnimationID,
                 },
             );
         }
-        // ecs.add(world, c_m, components.Debug);
+        ecs.add(world, c_m, components.Debug);
         ecs.add(world, c_m, components.shape.NeedsSetup);
     }
 }

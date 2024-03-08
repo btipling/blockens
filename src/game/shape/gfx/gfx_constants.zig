@@ -7,4 +7,4 @@ pub const DemoCubeAnimationBindingPoint: gl.Uint = 2;
 pub const CharacterAnimationBindingPoint: gl.Uint = 3;
 
 // Animations
-pub const CharacterWalkingAnimationID: gl.Uint = 0x01;
+pub const DemoCharacterWalkingAnimationID: gl.Uint = 0x01;

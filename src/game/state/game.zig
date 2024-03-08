@@ -277,6 +277,7 @@ pub const Gfx = struct {
     settings_blocks: std.AutoHashMap(u8, *BlockInstance) = undefined,
     mesh_data: std.AutoHashMap(blecs.ecs.entity_t, *chunk.Chunk) = undefined,
     mob_data: std.AutoHashMap(i32, *Mob) = undefined,
+    animations_running: gl.Uint = 0,
 
     fn deinit(self: *Gfx, allocator: std.mem.Allocator) void {
         self.ubos.deinit();

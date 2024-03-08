@@ -19,6 +19,7 @@ pub const VertexShaderGen = struct {
         has_ubo: bool = false,
         has_texture_coords: bool = false,
         animation_block_index: ?gl.Uint = null,
+        animation_id: ?gl.Uint = 0,
         num_animation_frames: gl.Uint = 0,
         has_normals: bool = false,
         scale: ?@Vector(4, gl.Float) = null,
@@ -182,6 +183,39 @@ pub const VertexShaderGen = struct {
             r.a("\n");
         }
 
+        fn gen_animation_frames(r: *runner) !void {
+            if (r.cfg.animation_block_index == null) return;
+            if (r.cfg.animation_id) |ai| {
+                if (ai != 0) {
+                    r.a("   bool isAnimationRunning = (");
+                    r.a(shader_constants.UBOGFXDataName);
+                    const line = try shader_helpers.scalar(usize, "[0] & 0x{X}u) != 0u;\n", ai);
+                    r.l(&line);
+                    r.a("   if(isAnimationRunning) {\n");
+                }
+            }
+            r.a("    AnimationFrameIndices indices = get_frame_indices();\n");
+            r.a("    key_frame kf = frames[indices.index1];\n");
+            r.a("    key_frame sf = frames[indices.index2];\n");
+            r.a("    vec4 traq = linear_interpolate(kf.translation, sf.translation, indices.t);\n");
+            r.a("    vec4 kft0 = vec4(1, 0, 0, 0);\n");
+            r.a("    vec4 kft1 = vec4(0, 1, 0, 0);\n");
+            r.a("    vec4 kft2 = vec4(0, 0, 1, 0);\n");
+            r.a("    vec4 kft3 =  vec4(traq.x, traq.y, traq.z, 1);\n");
+            r.a("    mat4 trans = mat4(kft0, kft1, kft2, kft3);\n");
+            r.a("    vec4 rotq = slerp(kf.rotation, sf.rotation, indices.t);\n");
+            r.a("    mat4 rot = quat_to_mat(rotq);\n");
+
+            r.a("    pos = scam * pos;\n");
+            r.a("    pos = rot * pos;\n");
+            r.a("    pos = trans * pos;\n");
+            if (r.cfg.animation_id) |ai| {
+                if (ai != 0) {
+                    r.a("   }\n");
+                }
+            }
+        }
+
         fn gen_mesh_transforms(r: *runner) !void {
             if (r.cfg.mesh_transforms == null) return;
             r.a("\n");
@@ -211,7 +245,15 @@ pub const VertexShaderGen = struct {
                 r.a("    );\n");
             }
             for (0..mts.len) |i| {
-                if (r.cfg.animation_block_index != null and i == 0) continue;
+                if (r.cfg.animation_block_index != null and i == 0) {
+                    if (r.cfg.animation_id != null and r.cfg.animation_id != 0) {
+                        r.a("   if(!isAnimationRunning) {\n");
+                        var line = try shader_helpers.scalar(usize, "       pos = mesh_transforms[{d}] * pos;\n", i);
+                        r.l(&line);
+                        r.a("   }\n");
+                    }
+                    continue;
+                }
                 var line = try shader_helpers.scalar(usize, "    pos = mesh_transforms[{d}] * pos;\n", i);
                 r.l(&line);
             }
@@ -280,23 +322,7 @@ pub const VertexShaderGen = struct {
             r.a("    mat4 scam = mat4(sc0, sc1, sc2, sc3);\n");
             try r.gen_instance_mat();
             try r.gen_inline_mat();
-            if (r.cfg.animation_block_index != null) {
-                r.a("    AnimationFrameIndices indices = get_frame_indices();\n");
-                r.a("    key_frame kf = frames[indices.index1];\n");
-                r.a("    key_frame sf = frames[indices.index2];\n");
-                r.a("    vec4 traq = linear_interpolate(kf.translation, sf.translation, indices.t);\n");
-                r.a("    vec4 kft0 = vec4(1, 0, 0, 0);\n");
-                r.a("    vec4 kft1 = vec4(0, 1, 0, 0);\n");
-                r.a("    vec4 kft2 = vec4(0, 0, 1, 0);\n");
-                r.a("    vec4 kft3 =  vec4(traq.x, traq.y, traq.z, 1);\n");
-                r.a("    mat4 trans = mat4(kft0, kft1, kft2, kft3);\n");
-                r.a("    vec4 rotq = slerp(kf.rotation, sf.rotation, indices.t);\n");
-                r.a("    mat4 rot = quat_to_mat(rotq);\n");
-
-                r.a("    pos = scam * pos;\n");
-                r.a("    pos = rot * pos;\n");
-                r.a("    pos = trans * pos;\n");
-            }
+            try r.gen_animation_frames();
             try r.gen_mesh_transforms();
             if (r.cfg.has_uniform_mat) {
                 r.a("    pos = ");

@@ -135,7 +135,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 components.screen.Camera,
             ) orelse continue;
             mut_camera.elapsedTime += it.delta_time;
-            gfx.Gfx.updateUniformBufferObject(m, mut_camera.elapsedTime, ubo);
+            gfx.Gfx.updateUniformBufferObject(
+                m,
+                mut_camera.elapsedTime,
+                game.state.gfx.animations_running,
+                ubo,
+            );
             ecs.remove(world, entity, components.screen.Updated);
         }
     }

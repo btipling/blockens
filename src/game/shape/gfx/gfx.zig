@@ -135,7 +135,12 @@ pub const Gfx = struct {
         return;
     }
 
-    pub fn updateUniformBufferObject(updated: zm.Mat, time: gl.Float, ubo: gl.Uint) void {
+    pub fn updateUniformBufferObject(
+        updated: zm.Mat,
+        time: gl.Float,
+        animations_running: gl.Uint,
+        ubo: gl.Uint,
+    ) void {
         gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
         const uboStruct = struct {
             transform: [16]gl.Float = [_]gl.Float{undefined} ** 16,
@@ -145,6 +150,7 @@ pub const Gfx = struct {
         var ubo_data = uboStruct{};
         zm.storeMat(&ubo_data.transform, updated);
         ubo_data.time_data[0] = time;
+        ubo_data.gfx_data[0] = animations_running;
 
         const size: isize = @intCast(@sizeOf(uboStruct));
         gl.bufferSubData(gl.UNIFORM_BUFFER, 0, size, &ubo_data);

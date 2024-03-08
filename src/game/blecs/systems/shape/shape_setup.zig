@@ -89,6 +89,7 @@ const shaders = struct {
             .has_texture_coords = mesh_data.texcoords != null,
             .has_normals = mesh_data.normals != null,
             .animation_block_index = e.animation_binding_point,
+            .animation_id = e.animation_id,
             .is_instanced = e.is_instanced,
             .is_meshed = e.is_meshed,
             .mesh_transforms = blk: {
@@ -142,6 +143,7 @@ const extractions = struct {
     dc_t_end: usize = 0,
     has_animation_block: bool = false,
     animation_binding_point: ?gl.Uint = null,
+    animation_id: ?gl.Uint = null,
     keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = null,
     is_instanced: bool = false,
     block_id: ?u8 = null,
@@ -210,9 +212,11 @@ const extractions = struct {
             return;
         }
         var ssbo: gl.Uint = 0;
+        var animation_id: gl.Uint = 0;
         if (ecs.get_id(world, entity, ecs.id(components.gfx.AnimationSSBO))) |opaque_ptr| {
             const a: *const components.gfx.AnimationSSBO = @ptrCast(@alignCast(opaque_ptr));
             ssbo = a.ssbo;
+            animation_id = a.animation_id;
         }
         var ar = std.ArrayListUnmanaged(
             game_state.ElementsRendererConfig.AnimationKeyFrame,
@@ -232,6 +236,7 @@ const extractions = struct {
         }
         if (ar.items.len > 0) {
             e.animation_binding_point = ssbo;
+            e.animation_id = animation_id;
             e.has_animation_block = true;
             e.keyframes = ar.toOwnedSlice(game.state.allocator) catch unreachable;
         }
