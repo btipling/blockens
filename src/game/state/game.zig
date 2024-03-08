@@ -182,9 +182,9 @@ pub const MobCamera = struct {
 
 pub const MobAnimation = struct {
     frame: gl.Float = 0,
-    scale: @Vector(4, gl.Float) = undefined,
-    rotation: @Vector(4, gl.Float) = undefined,
-    translation: @Vector(4, gl.Float) = undefined,
+    scale: ?@Vector(4, gl.Float) = null,
+    rotation: ?@Vector(4, gl.Float) = null,
+    translation: ?@Vector(4, gl.Float) = null,
 };
 
 pub const MobMesh = struct {
@@ -197,10 +197,10 @@ pub const MobMesh = struct {
     textcoords: std.ArrayList([2]gl.Float),
     tangents: std.ArrayList([4]gl.Float),
     animations: ?std.ArrayList(MobAnimation) = null,
-    scale: ?@Vector(4, gl.Float) = undefined,
-    rotation: ?@Vector(4, gl.Float) = undefined,
-    translation: ?@Vector(4, gl.Float) = undefined,
-    color: @Vector(4, gl.Float) = undefined,
+    scale: ?@Vector(4, gl.Float) = null,
+    rotation: ?@Vector(4, gl.Float) = null,
+    translation: ?@Vector(4, gl.Float) = null,
+    color: @Vector(4, gl.Float) = .{ 1.0, 0.0, 1.0, 1.0 },
     texture: ?[]u8 = null,
 
     pub fn init(
@@ -246,7 +246,6 @@ pub const Mob = struct {
     pub fn init(allocator: std.mem.Allocator, id: i32, num_meshes: usize) *Mob {
         var m: *Mob = allocator.create(Mob) catch unreachable;
         _ = &m;
-        std.debug.print("mob init: assuming meshes count {d}\n", .{num_meshes});
         var meshes = std.ArrayList(*MobMesh).initCapacity(
             allocator,
             num_meshes,

@@ -408,5 +408,4 @@ pub fn initDemoCharacter() void {
         });
     }
     ecs.add(world, game.state.entities.demo_player, components.mob.NeedsSetup);
-    std.debug.print("done init demo characther\n", .{});
 }

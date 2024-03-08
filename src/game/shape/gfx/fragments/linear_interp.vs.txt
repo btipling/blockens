@@ -1,0 +1,3 @@
+vec4 linear_interpolate(vec4 p, vec4 q, float t) {
+    return p + t * (q - p);
+}

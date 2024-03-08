@@ -134,8 +134,9 @@ pub const Sampler = struct {
         const dataAddr = @as([*]const u8, @ptrCast(bufferData)) + accessorOffset + bufferView.offset;
         const frames_data = @as([*]const [4]f32, @ptrCast(@alignCast(dataAddr)));
         self.rotations = try game.state.allocator.alloc(@Vector(4, gl.Float), self.num_frames);
+        const rotations = frames_data[0..self.num_frames];
         for (0..self.num_frames) |i| {
-            self.rotations.?[i] = frames_data[i];
+            self.rotations.?[i] = rotations[i];
         }
     }
 

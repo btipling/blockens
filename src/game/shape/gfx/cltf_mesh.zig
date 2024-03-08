@@ -25,7 +25,7 @@ pub const Mesh = struct {
         if (game.state.gfx.mob_data.get(mob_id)) |m| {
             m.deinit(game.state.allocator);
         }
-        const file_data = try zmesh.io.parseAndLoadFile("./src/game/shape/mob/cgltf/char.glb");
+        const file_data = try zmesh.io.parseAndLoadFile("./src/game/assets/blender/char.glb");
         return .{
             .mob = game_state.Mob.init(game.state.allocator, mob_id, file_data.meshes_count),
             .file_data = file_data,
@@ -94,9 +94,11 @@ pub const Mesh = struct {
 
     pub fn buildAnimations(self: *Mesh, animations: ?[*]gltf.Animation, animationCount: usize) !void {
         if (animationCount == 0) {
+            std.debug.print("buildAnimations: no animations count\n", .{});
             return;
         }
         if (animations == null) {
+            std.debug.print("buildAnimations: animations are null\n", .{});
             return;
         }
         var ptr = animations.?;
@@ -112,9 +114,6 @@ pub const Mesh = struct {
                     continue;
                 }
                 const mesh_id = self.meshIdForMesh(node.mesh.?);
-                var al = self.animation_map.get(mesh_id) orelse std.ArrayList(game_state.MobAnimation).init(
-                    game.state.allocator,
-                );
                 var s = sampler.Sampler.init(
                     node,
                     animationName,
@@ -123,18 +122,28 @@ pub const Mesh = struct {
                 );
                 defer s.deinit();
                 try s.build();
+                var al = self.animation_map.get(mesh_id) orelse blk: {
+                    var al = try std.ArrayList(game_state.MobAnimation).initCapacity(
+                        game.state.allocator,
+                        s.num_frames,
+                    );
+                    al.expandToCapacity();
+                    for (0..s.num_frames) |ii| {
+                        al.items[ii] = .{};
+                    }
+                    break :blk al;
+                };
                 if (s.frames) |frames| {
                     for (frames, 0..) |frame, ii| {
-                        var ma: game_state.MobAnimation = .{
-                            .frame = frame,
-                        };
+                        var ma = al.items[ii];
+                        ma.frame = frame;
                         if (s.rotations) |rotations| {
                             ma.rotation = rotations[ii];
                         }
                         if (s.translations) |translations| {
                             ma.translation = translations[ii];
                         }
-                        try al.append(ma);
+                        al.items[ii] = ma;
                     }
                 }
                 try self.animation_map.put(mesh_id, al);
@@ -177,7 +186,6 @@ pub const Mesh = struct {
             &mob_mesh.textcoords,
             &mob_mesh.tangents,
         );
-        std.debug.print("meshes capacity? {d} inserting at {d}\n", .{ self.mob.meshes.capacity, mob_mesh.id });
         self.mob.meshes.items[mob_mesh.id] = mob_mesh;
         try self.transformFromNode(node, mob_mesh);
 

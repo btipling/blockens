@@ -189,6 +189,47 @@ const extractions = struct {
             if (cm.parent == null) break;
             cm = mob_data.meshes.items[cm.parent.?];
         }
+
+        extractMeshAnimation(e, world, entity, mesh);
+    }
+
+    fn extractMeshAnimation(
+        e: *extractions,
+        world: *ecs.world_t,
+        entity: ecs.entity_t,
+        cm: *game_state.MobMesh,
+    ) void {
+        if (!ecs.has_id(world, entity, ecs.id(components.gfx.AnimationSSBO))) {
+            return;
+        }
+        if (cm.animations == null or cm.animations.?.items.len < 1) {
+            return;
+        }
+        var ssbo: gl.Uint = 0;
+        if (ecs.get_id(world, entity, ecs.id(components.gfx.AnimationSSBO))) |opaque_ptr| {
+            const a: *const components.gfx.AnimationSSBO = @ptrCast(@alignCast(opaque_ptr));
+            ssbo = a.ssbo;
+        }
+        var ar = std.ArrayListUnmanaged(
+            game_state.ElementsRendererConfig.AnimationKeyFrame,
+        ){};
+        defer ar.deinit(game.state.allocator);
+        for (0..cm.animations.?.items.len) |i| {
+            const akf = cm.animations.?.items[i];
+            ar.append(
+                game.state.allocator,
+                game_state.ElementsRendererConfig.AnimationKeyFrame{
+                    .scale = akf.scale orelse @Vector(4, gl.Float){ 1, 1, 1, 1 },
+                    .rotation = akf.rotation orelse @Vector(4, gl.Float){ 0, 0, 0, 1 },
+                    .translation = akf.translation orelse @Vector(4, gl.Float){ 0, 0, 0, 0 },
+                },
+            ) catch unreachable;
+        }
+        if (ar.items.len > 0) {
+            e.animation_binding_point = ssbo;
+            e.has_animation_block = true;
+            e.keyframes = ar.toOwnedSlice(game.state.allocator) catch unreachable;
+        }
     }
 
     fn extractAnimation(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {

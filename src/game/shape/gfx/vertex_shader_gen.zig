@@ -198,11 +198,12 @@ pub const VertexShaderGen = struct {
                 r.l(&line);
                 r.a("    );\n");
             }
-            // This is separate to handle animation.
             for (0..mts.len) |i| {
+                if (r.cfg.animation_block_index != null and i == 0) continue;
                 var line = try shader_helpers.scalar(usize, "    pos = mesh_transforms[{d}] * pos;\n", i);
                 r.l(&line);
             }
+
             r.a("\n");
         }
 
@@ -248,23 +249,43 @@ pub const VertexShaderGen = struct {
             r.a("{\n");
             r.a("    vec4 pos;\n");
             r.a("    pos = vec4(position.xyz, 1.0);\n");
+            var m = zm.identity();
+            if (r.cfg.mesh_transforms) |mts| {
+                const mt = mts[0];
+                if (mt.scale) |s| {
+                    m = zm.mul(m, zm.scalingV(s));
+                }
+            }
+            const mr = zm.matToArr(m);
+            var line = try shader_helpers.vec4_to_buf("    vec4 sc0 = vec4({d}, {d}, {d}, {d});\n", mr[0], mr[1], mr[2], mr[3]);
+            r.l(&line);
+            line = try shader_helpers.vec4_to_buf("    vec4 sc1 = vec4({d}, {d}, {d}, {d});\n", mr[4], mr[5], mr[6], mr[7]);
+            r.l(&line);
+            line = try shader_helpers.vec4_to_buf("    vec4 sc2 = vec4({d}, {d}, {d}, {d});\n", mr[8], mr[9], mr[10], mr[11]);
+            r.l(&line);
+            line = try shader_helpers.vec4_to_buf("    vec4 sc3 = vec4({d}, {d}, {d}, {d});\n", mr[12], mr[13], mr[14], mr[15]);
+            r.l(&line);
+            r.a("    mat4 scam = mat4(sc0, sc1, sc2, sc3);\n");
             try r.gen_instance_mat();
             try r.gen_inline_mat();
-            try r.gen_mesh_transforms();
             if (r.cfg.animation_block_index != null) {
                 r.a("    frameIndices indices = get_frame_indices();\n");
                 r.a("    key_frame kf = frames[indices.index1];\n");
                 r.a("    key_frame sf = frames[indices.index2];\n");
-                r.a("    vec4 rotq = slerp(kf.rotation, sf.rotation, indices.t);\n");
-                r.a("    mat4 rot = quat_to_mat(rotq);\n");
-                r.a("    pos = rot * pos;\n");
+                r.a("    vec4 traq = linear_interpolate(kf.translation, sf.translation, indices.t);\n");
                 r.a("    vec4 kft0 = vec4(1, 0, 0, 0);\n");
                 r.a("    vec4 kft1 = vec4(0, 1, 0, 0);\n");
                 r.a("    vec4 kft2 = vec4(0, 0, 1, 0);\n");
-                r.a("    vec4 kft3 =  vec4(kf.translation.x, kf.translation.y, kf.translation.z, 1);\n");
+                r.a("    vec4 kft3 =  vec4(traq.x, traq.y, traq.z, 1);\n");
                 r.a("    mat4 trans = mat4(kft0, kft1, kft2, kft3);\n");
+                r.a("    vec4 rotq = slerp(kf.rotation, sf.rotation, indices.t);\n");
+                r.a("    mat4 rot = quat_to_mat(rotq);\n");
+
+                r.a("    pos = scam * pos;\n");
+                r.a("    pos = rot * pos;\n");
                 r.a("    pos = trans * pos;\n");
             }
+            try r.gen_mesh_transforms();
             if (r.cfg.has_uniform_mat) {
                 r.a("    pos = ");
                 r.a(shader_constants.TransformMatName);
@@ -294,6 +315,8 @@ pub const VertexShaderGen = struct {
                 r.a(@embedFile("fragments/q_to_mat.vs.txt"));
                 r.a("\n\n");
                 r.a(@embedFile("fragments/slerp.vs.txt"));
+                r.a("\n\n");
+                r.a(@embedFile("fragments/linear_interp.vs.txt"));
                 r.a("\n\n");
             }
         }
