@@ -278,7 +278,7 @@ pub const VertexShaderGen = struct {
             try r.gen_instance_mat();
             try r.gen_inline_mat();
             if (r.cfg.animation_block_index != null) {
-                r.a("    frameIndices indices = get_frame_indices();\n");
+                r.a("    AnimationFrameIndices indices = get_frame_indices();\n");
                 r.a("    key_frame kf = frames[indices.index1];\n");
                 r.a("    key_frame sf = frames[indices.index2];\n");
                 r.a("    vec4 traq = linear_interpolate(kf.translation, sf.translation, indices.t);\n");

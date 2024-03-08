@@ -1,28 +1,33 @@
-struct frameIndices {
+struct AnimationFrameIndices {
     int index1;
     int index2;
     float t;
 };
 
 // num_animation_frames must be set
-frameIndices get_frame_indices() {
+AnimationFrameIndices get_frame_indices() {
     float time = animation_data.x;
-    frameIndices indices;
+    AnimationFrameIndices indices = AnimationFrameIndices(-1, -1, 0.0);
 
     float max = frames[num_animation_frames - 1].data[0];
     float current_t = mod(time, max); 
-    for (int i = 0; i < num_animation_frames - 1; i++) {
+    for (int i = 0; i < num_animation_frames; i++) {
         if (frames[i].data[0] > current_t) {
-            indices.index1 = i;
+            indices.index1 = max(0, i - 1);
+            indices.index2 = i;
             break;
         }
     }
-    indices.index2 = indices.index1 + 1;
+  
+    float frame1_time = frames[indices.index1].data[0];
+    float frame2_time = frames[indices.index2].data[0];
+    float frame_duration = frame2_time - frame1_time;
 
-    if (indices.index2 >= num_animation_frames) {
-        indices.index2 = 0;
+    if (frame_duration > 0.0) {
+        indices.t = (current_t - frame1_time) / frame_duration;
+    } else {
+        indices.t = 0.0;
     }
-    indices.t = mod(time, 1.0);
 
     return indices;
 }
