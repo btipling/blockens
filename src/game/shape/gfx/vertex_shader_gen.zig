@@ -174,12 +174,36 @@ pub const VertexShaderGen = struct {
             if (r.cfg.mesh_transforms == null) return;
             r.a("\n\n");
             const mts = r.cfg.mesh_transforms.?;
-            for (mts, 0..) |_, i| {
-                // TODO: gen mats here and use them
-                const line = try shader_helpers.scalar(usize, "    mesh_transforms[{d}] = mat4(1.0);\n", i);
+            for (mts, 0..) |mt, i| {
+                var line = try shader_helpers.scalar(usize, "    mesh_transforms[{d}] = mat4(\n", i);
                 r.l(&line);
+                var m = zm.identity();
+                if (mt.scale) |s| {
+                    m = zm.mul(m, zm.scalingV(s));
+                }
+                if (mt.rotation) |_r| {
+                    m = zm.mul(m, zm.quatToMat(_r));
+                }
+                if (mt.translation) |t| {
+                    m = zm.mul(m, zm.translationV(t));
+                }
+                const mr = zm.matToArr(m);
+                line = try shader_helpers.vec4_to_buf("         vec4({d}, {d}, {d}, {d}),\n", mr[0], mr[1], mr[2], mr[3]);
+                r.l(&line);
+                line = try shader_helpers.vec4_to_buf("         vec4({d}, {d}, {d}, {d}),\n", mr[4], mr[5], mr[6], mr[7]);
+                r.l(&line);
+                line = try shader_helpers.vec4_to_buf("         vec4({d}, {d}, {d}, {d}),\n", mr[8], mr[9], mr[10], mr[11]);
+                r.l(&line);
+                line = try shader_helpers.vec4_to_buf("         vec4({d}, {d}, {d}, {d})\n", mr[12], mr[13], mr[14], mr[15]);
+                r.l(&line);
+                r.a("    );\n");
             }
             r.a("\n");
+            // This is separate to handle animation.
+            for (0..mts.len) |i| {
+                var line = try shader_helpers.scalar(usize, "    pos = mesh_transforms[{d}] * pos;\n\n", i);
+                r.l(&line);
+            }
         }
 
         fn gen_inline_mat(r: *runner) !void {
