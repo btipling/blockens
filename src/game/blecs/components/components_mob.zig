@@ -16,6 +16,7 @@ pub const Health = struct {
 };
 pub const NeedsSetup = struct {};
 pub const Texture = struct {};
+pub const Walking = struct {};
 
 pub fn init() void {
     ecs.COMPONENT(game.state.world, Mob);
@@ -23,4 +24,5 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, Health);
     ecs.TAG(game.state.world, NeedsSetup);
     ecs.TAG(game.state.world, Texture);
+    ecs.TAG(game.state.world, Walking);
 }

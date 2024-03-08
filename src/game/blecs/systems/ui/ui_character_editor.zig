@@ -79,5 +79,9 @@ fn generateCharacter() !void {
 }
 
 fn toggleWalking() !void {
-    // try appState.character.toggleWalking();
+    if (ecs.has_id(game.state.world, game.state.entities.demo_player, ecs.id(components.mob.Walking))) {
+        ecs.remove(game.state.world, game.state.entities.demo_player, components.mob.Walking);
+        return;
+    }
+    ecs.add(game.state.world, game.state.entities.demo_player, components.mob.Walking);
 }
