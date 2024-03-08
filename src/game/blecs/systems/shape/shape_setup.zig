@@ -95,6 +95,10 @@ const shaders = struct {
                 if (e.mesh_transforms) |mt| break :blk mt.items;
                 break :blk null;
             },
+            .num_animation_frames = blk: {
+                if (e.keyframes) |akf| break :blk @intCast(akf.len);
+                break :blk 0;
+            },
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
     }

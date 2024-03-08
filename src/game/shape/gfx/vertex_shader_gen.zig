@@ -19,6 +19,7 @@ pub const VertexShaderGen = struct {
         has_ubo: bool = false,
         has_texture_coords: bool = false,
         animation_block_index: ?gl.Uint = null,
+        num_animation_frames: gl.Uint = 0,
         has_normals: bool = false,
         scale: ?@Vector(4, gl.Float) = null,
         rotation: ?@Vector(4, gl.Float) = null,
@@ -133,24 +134,31 @@ pub const VertexShaderGen = struct {
                 r.a(shader_constants.UBOMatName);
                 r.a(";\n");
                 r.a("    vec4 ");
-                r.a(shader_constants.UBOTimeName);
+                r.a(shader_constants.UBOAnimationDataName);
                 r.a(";\n");
                 r.a("};\n\n");
             }
         }
 
         fn gen_animation_block(r: *runner) !void {
+            var line = try shader_helpers.scalar(
+                usize,
+                "\nuint num_animation_frames = {d};\n",
+                r.cfg.num_animation_frames,
+            );
+            r.l(&line);
             if (r.cfg.animation_block_index) |bi| {
-                r.a("\n\nstruct key_frame {\n");
+                r.a("struct key_frame {\n");
                 r.a("    vec4 scale;\n");
                 r.a("    vec4 rotation;\n");
                 r.a("    vec4 translation;\n");
                 r.a("};\n\n");
                 r.a("\n");
-                var line = try shader_helpers.ssbo_binding(bi, shader_constants.AnimationBlockName);
+                line = try shader_helpers.ssbo_binding(bi, shader_constants.AnimationBlockName);
                 r.l(&line);
                 r.a("{\n");
-                r.a("    key_frame frames[];\n");
+                line = try shader_helpers.scalar(usize, "    key_frame frames[{d}];\n", r.cfg.num_animation_frames);
+                r.l(&line);
                 r.a("};\n\n");
             }
         }

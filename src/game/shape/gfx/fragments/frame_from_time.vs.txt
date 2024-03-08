@@ -4,14 +4,15 @@ struct frameIndices {
     float t;
 };
 
+// num_animation_frames must be set
 frameIndices get_frame_indices() {
-    float time = timeData.x;
+    float time = animation_data.x;
     frameIndices indices;
 
-    indices.index1 = int(mod(time, 4.0)); 
+    indices.index1 = int(mod(time, float(num_animation_frames))); 
     indices.index2 = indices.index1 + 1;
 
-    if (indices.index2 >= 4) {
+    if (indices.index2 >= num_animation_frames) {
         indices.index2 = 0;
     }
     indices.t = mod(time, 1.0);
