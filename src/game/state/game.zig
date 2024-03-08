@@ -97,13 +97,13 @@ pub const UIData = struct {
         0,
     },
     demo_character_rotation_x: gl.Float = 0.0,
-    demo_character_rotation_y: gl.Float = 0.502,
-    demo_character_rotation_z: gl.Float = 0.507,
+    demo_character_rotation_y: gl.Float = 1.450,
+    demo_character_rotation_z: gl.Float = 0.501,
     demo_character_scale: gl.Float = 0.243,
     demo_character_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){
-        -4.071,
-        -2.573,
-        -0.228,
+        -3.029,
+        -1.987,
+        -0.684,
         0,
     },
     demo_character_pp_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){

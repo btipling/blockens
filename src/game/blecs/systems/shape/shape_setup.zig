@@ -511,7 +511,7 @@ fn mob(world: *ecs.world_t, entity: ecs.entity_t) meshData {
     const mob_c: *const components.mob.Mob = ecs.get(world, mesh_c.mob_entity, components.mob.Mob).?;
     if (!game.state.gfx.mob_data.contains(mob_c.mob_id)) return cube();
     const mob_data: *game_state.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
-    if (mob_data.meshes.items.len >= mesh_c.mesh_id) return cube();
+    if (mob_data.meshes.items.len <= mesh_c.mesh_id) return cube();
     const mesh: *game_state.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
     const positions: [][3]f32 = game.state.allocator.alloc([3]gl.Float, mesh.positions.items.len) catch unreachable;
     @memcpy(positions, mesh.positions.items);

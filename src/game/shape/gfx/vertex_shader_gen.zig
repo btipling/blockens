@@ -172,7 +172,7 @@ pub const VertexShaderGen = struct {
 
         fn gen_mesh_transforms(r: *runner) !void {
             if (r.cfg.mesh_transforms == null) return;
-            r.a("\n\n");
+            r.a("\n");
             const mts = r.cfg.mesh_transforms.?;
             for (mts, 0..) |mt, i| {
                 var line = try shader_helpers.scalar(usize, "    mesh_transforms[{d}] = mat4(\n", i);
@@ -198,12 +198,12 @@ pub const VertexShaderGen = struct {
                 r.l(&line);
                 r.a("    );\n");
             }
-            r.a("\n");
             // This is separate to handle animation.
             for (0..mts.len) |i| {
-                var line = try shader_helpers.scalar(usize, "    pos = mesh_transforms[{d}] * pos;\n\n", i);
+                var line = try shader_helpers.scalar(usize, "    pos = mesh_transforms[{d}] * pos;\n", i);
                 r.l(&line);
             }
+            r.a("\n");
         }
 
         fn gen_inline_mat(r: *runner) !void {
