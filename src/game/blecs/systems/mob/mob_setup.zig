@@ -56,7 +56,7 @@ fn setupMob(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, data_entity:
                 components.shape.Translation,
                 .{ .translation = game.state.ui.data.demo_cube_translation },
             );
-            _ = ecs.set(world, c_m, components.shape.UBO, .{ .binding_point = gfx.bindings.SettingsUBOBindingPoint });
+            _ = ecs.set(world, c_m, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
         }
 
         if (mesh.animations != null and mesh.animations.?.items.len > 0) {
@@ -65,7 +65,10 @@ fn setupMob(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, data_entity:
                 c_m,
                 components.gfx.AnimationSSBO,
                 // TODO: build a better ssbo so I don't add the mesh_id to the character binding point:
-                .{ .ssbo = gfx.bindings.CharacterAnimationBindingPoint + @as(gl.Uint, @intCast(mesh_id)) },
+                .{
+                    .ssbo = gfx.constants.CharacterAnimationBindingPoint + @as(gl.Uint, @intCast(mesh_id)),
+                    .animation_id = gfx.constants.CharacterWalkingAnimationID,
+                },
             );
         }
         // ecs.add(world, c_m, components.Debug);

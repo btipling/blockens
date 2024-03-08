@@ -51,9 +51,9 @@ fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, gl.Flo
             const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
             _ = ecs.set(world, mb_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
             if (parent == entities.screen.game_data) {
-                _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = gfx.bindings.GameUBOBindingPoint });
+                _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
             } else {
-                _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = gfx.bindings.SettingsUBOBindingPoint });
+                _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
             }
             _ = ecs.set(world, mb_e, components.block.Block, .{
                 .block_id = block_id,

@@ -115,7 +115,7 @@ fn initFloor() void {
     _ = ecs.set(game.state.world, c_f, components.shape.Rotation, .{
         .rot = floor_rot,
     });
-    _ = ecs.set(game.state.world, c_f, components.shape.UBO, .{ .binding_point = gfx.bindings.GameUBOBindingPoint });
+    _ = ecs.set(game.state.world, c_f, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
     _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{
         .loc = @Vector(4, gl.Float){ -25, -25, -25, 0 },
     });
@@ -127,7 +127,7 @@ fn initFloor() void {
 fn initCamera() void {
     const camera = ecs.new_entity(game.state.world, "GameCamera");
     game.state.entities.game_camera = camera;
-    _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = gfx.bindings.GameUBOBindingPoint });
+    _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = gfx.constants.GameUBOBindingPoint });
     _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ 1.0, 1.0, 1.0, 1.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 0.03, -0.155, -0.7, 0.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = -90, .pitch = -19.4 });
@@ -152,7 +152,7 @@ fn initCursor() void {
 fn initSettingsCamera() void {
     const camera = ecs.new_entity(game.state.world, "SettingsCamera");
     game.state.entities.settings_camera = camera;
-    _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = gfx.bindings.SettingsUBOBindingPoint });
+    _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = gfx.constants.SettingsUBOBindingPoint });
     _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ -8, 0, 0.0, 0.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 1, 0, 0, 0.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 0, .pitch = 0 });
@@ -238,7 +238,7 @@ pub fn initDemoCube() void {
     _ = ecs.set(world, c_dc, components.shape.Shape, .{ .shape_type = .cube });
     const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
     _ = ecs.set(world, c_dc, components.shape.Color, components.shape.Color.fromVec(cr_c));
-    _ = ecs.set(world, c_dc, components.shape.UBO, .{ .binding_point = gfx.bindings.SettingsUBOBindingPoint });
+    _ = ecs.set(world, c_dc, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
     _ = ecs.set(world, c_dc, components.shape.Rotation, .{
         .rot = game.state.ui.data.demo_cube_rotation,
     });
@@ -250,7 +250,7 @@ pub fn initDemoCube() void {
     // Add animation to cube:
     const animation = helpers.new_child(world, c_dc);
     _ = ecs.set(world, animation, components.gfx.AnimationSSBO, .{
-        .ssbo = gfx.bindings.DemoCubeAnimationBindingPoint,
+        .ssbo = gfx.constants.DemoCubeAnimationBindingPoint,
     });
 
     const kf0 = ecs.new_id(world);
