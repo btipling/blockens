@@ -155,6 +155,7 @@ pub const Gfx = struct {
     ) gl.Uint {
         // _ = data;
         const kf = struct {
+            data: [4]gl.Float,
             scale: [4]gl.Float,
             rotation: [4]gl.Float,
             translation: [4]gl.Float,
@@ -163,6 +164,7 @@ pub const Gfx = struct {
         defer ar.deinit(game.state.allocator);
         for (data) |d| {
             ar.append(game.state.allocator, kf{
+                .data = [4]gl.Float{ d.frame, 0, 0, 0 },
                 .scale = d.scale,
                 .rotation = d.rotation,
                 .translation = d.translation,

@@ -9,7 +9,14 @@ frameIndices get_frame_indices() {
     float time = animation_data.x;
     frameIndices indices;
 
-    indices.index1 = int(mod(time, float(num_animation_frames))); 
+    float max = frames[num_animation_frames - 1].data[0];
+    float current_t = mod(time, max); 
+    for (int i = 0; i < num_animation_frames - 1; i++) {
+        if (frames[i].data[0] > current_t) {
+            indices.index1 = i;
+            break;
+        }
+    }
     indices.index2 = indices.index1 + 1;
 
     if (indices.index2 >= num_animation_frames) {

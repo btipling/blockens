@@ -149,6 +149,7 @@ pub const VertexShaderGen = struct {
             r.l(&line);
             if (r.cfg.animation_block_index) |bi| {
                 r.a("struct key_frame {\n");
+                r.a("    vec4 data;\n");
                 r.a("    vec4 scale;\n");
                 r.a("    vec4 rotation;\n");
                 r.a("    vec4 translation;\n");

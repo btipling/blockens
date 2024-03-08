@@ -29,6 +29,7 @@ pub const AnimationSSBO = struct {
 };
 
 pub const AnimationKeyFrame = struct {
+    frame: gl.Float = 0,
     scale: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 1, 1, 1, 1 },
     rotation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 1, 0, 0, 0 },
     translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 0, 0, 0, 0 },

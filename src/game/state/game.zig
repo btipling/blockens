@@ -136,6 +136,7 @@ pub const UI = struct {
 
 pub const ElementsRendererConfig = struct {
     pub const AnimationKeyFrame = struct {
+        frame: gl.Float,
         scale: @Vector(4, gl.Float),
         rotation: @Vector(4, gl.Float),
         translation: @Vector(4, gl.Float),

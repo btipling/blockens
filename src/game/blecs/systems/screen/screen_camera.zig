@@ -135,7 +135,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 components.screen.Camera,
             ) orelse continue;
             mut_camera.elapsedTime += it.delta_time;
-            std.debug.print("delta: {d} elapsed time: {d}\n", .{ it.delta_time, mut_camera.elapsedTime });
             gfx.Gfx.updateUniformBufferObject(m, mut_camera.elapsedTime, ubo);
             ecs.remove(world, entity, components.screen.Updated);
         }

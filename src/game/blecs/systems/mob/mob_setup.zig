@@ -68,7 +68,7 @@ fn setupMob(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, data_entity:
                 .{ .ssbo = gfx.bindings.CharacterAnimationBindingPoint + @as(gl.Uint, @intCast(mesh_id)) },
             );
         }
-        ecs.add(world, c_m, components.Debug);
+        // ecs.add(world, c_m, components.Debug);
         ecs.add(world, c_m, components.shape.NeedsSetup);
     }
 }

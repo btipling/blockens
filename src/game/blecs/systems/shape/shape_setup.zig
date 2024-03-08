@@ -218,11 +218,13 @@ const extractions = struct {
             game_state.ElementsRendererConfig.AnimationKeyFrame,
         ){};
         defer ar.deinit(game.state.allocator);
+        std.debug.print("num frames: {d}\n", .{cm.animations.?.items.len});
         for (0..cm.animations.?.items.len) |i| {
             const akf = cm.animations.?.items[i];
             ar.append(
                 game.state.allocator,
                 game_state.ElementsRendererConfig.AnimationKeyFrame{
+                    .frame = akf.frame,
                     .scale = akf.scale orelse @Vector(4, gl.Float){ 1, 1, 1, 1 },
                     .rotation = akf.rotation orelse @Vector(4, gl.Float){ 0, 0, 0, 1 },
                     .translation = akf.translation orelse @Vector(4, gl.Float){ 0, 0, 0, 0 },
@@ -263,6 +265,7 @@ const extractions = struct {
                                 ar.append(
                                     game.state.allocator,
                                     game_state.ElementsRendererConfig.AnimationKeyFrame{
+                                        .frame = akf.frame,
                                         .scale = akf.scale,
                                         .rotation = akf.rotation,
                                         .translation = akf.translation,

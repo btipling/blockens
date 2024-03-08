@@ -73,7 +73,7 @@ pub const Mesh = struct {
 
     fn addCamera(_: *Mesh, camera: gltf.Camera) !void {
         const cameraName = camera.name orelse "::camera has no name::";
-        std.debug.print("adding camera {s}", .{cameraName});
+        std.debug.print("adding camera {s}\n", .{cameraName});
         switch (camera.type) {
             .perspective => {},
             else => return, // unsupported

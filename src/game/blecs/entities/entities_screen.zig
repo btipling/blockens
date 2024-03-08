@@ -255,21 +255,25 @@ pub fn initDemoCube() void {
 
     const kf0 = ecs.new_id(world);
     _ = ecs.set(world, kf0, components.gfx.AnimationKeyFrame, .{
+        .frame = 0,
         .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
         .rotation = @Vector(4, gl.Float){ 0.17867, 0.899888, 0.240292, -0.317079 },
     });
     const kf1 = ecs.new_id(world);
     _ = ecs.set(world, kf1, components.gfx.AnimationKeyFrame, .{
+        .frame = 1,
         .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
         .rotation = @Vector(4, gl.Float){ -0.461112, -0.353858, -0.100431, 0.808 },
     });
     const kf2 = ecs.new_id(world);
     _ = ecs.set(world, kf2, components.gfx.AnimationKeyFrame, .{
+        .frame = 2,
         .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
         .rotation = @Vector(4, gl.Float){ -0.264643, -0.450094, 0.140096, -0.84128 },
     });
     const kf3 = ecs.new_id(world);
     _ = ecs.set(world, kf3, components.gfx.AnimationKeyFrame, .{
+        .frame = 3,
         .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
         .rotation = @Vector(4, gl.Float){ 0.056235, -0.646945, 0.46856, -0.598959 },
     });
