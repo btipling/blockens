@@ -19,6 +19,11 @@ AnimationFrameIndices get_frame_indices() {
         }
     }
   
+    if (indices.index1 == -1) {
+        indices.index1 = int(num_animation_frames) - 1;
+        indices.index2 = 0;
+    }
+
     float frame1_time = frames[indices.index1].data[0];
     float frame2_time = frames[indices.index2].data[0];
     float frame_duration = frame2_time - frame1_time;
@@ -26,7 +31,7 @@ AnimationFrameIndices get_frame_indices() {
     if (frame_duration > 0.0) {
         indices.t = (current_t - frame1_time) / frame_duration;
     } else {
-        indices.t = 0.0;
+        indices.t = mod(time, 1.0);
     }
 
     return indices;
