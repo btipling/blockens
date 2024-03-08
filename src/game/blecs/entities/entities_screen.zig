@@ -119,6 +119,7 @@ fn initFloor() void {
     _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{
         .loc = @Vector(4, gl.Float){ -25, -25, -25, 0 },
     });
+    ecs.add(game.state.world, c_f, components.Debug);
     ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
     ecs.add(game.state.world, c_f, components.shape.Permanent);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, game_data);

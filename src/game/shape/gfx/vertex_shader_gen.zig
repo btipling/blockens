@@ -136,6 +136,9 @@ pub const VertexShaderGen = struct {
                 r.a("    vec4 ");
                 r.a(shader_constants.UBOAnimationDataName);
                 r.a(";\n");
+                r.a("    uint ");
+                r.a(shader_constants.UBOGFXDataName);
+                r.a("[4];\n");
                 r.a("};\n\n");
             }
         }

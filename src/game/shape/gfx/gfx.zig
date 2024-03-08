@@ -113,6 +113,7 @@ pub const Gfx = struct {
         const uboStruct = struct {
             transform: [16]gl.Float = [_]gl.Float{undefined} ** 16,
             time_data: [4]gl.Float = [_]gl.Float{0} ** 4,
+            gfx_data: [4]gl.Uint = [_]gl.Uint{0} ** 4,
         };
         var ubo_data = uboStruct{};
         zm.storeMat(&ubo_data.transform, data);
@@ -139,6 +140,7 @@ pub const Gfx = struct {
         const uboStruct = struct {
             transform: [16]gl.Float = [_]gl.Float{undefined} ** 16,
             time_data: [4]gl.Float = [_]gl.Float{0} ** 4,
+            gfx_data: [4]gl.Uint = [_]gl.Uint{0} ** 4,
         };
         var ubo_data = uboStruct{};
         zm.storeMat(&ubo_data.transform, updated);

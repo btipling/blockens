@@ -26,7 +26,7 @@ pub const ElementsRenderer = struct {
 
 pub const AnimationSSBO = struct {
     ssbo: gl.Uint = 0,
-    animation_id: gl.Float = 0,
+    animation_id: gl.Uint = 0,
 };
 
 pub const AnimationKeyFrame = struct {
