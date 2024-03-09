@@ -16,12 +16,14 @@ pub const maxLuaScriptNameSize = 20;
 pub const Script = struct {
     luaInstance: Lua,
     allocator: std.mem.Allocator,
+    mutex: std.Thread.Mutex,
     pub fn init(allocator: std.mem.Allocator) !Script {
         var lua: Lua = try Lua.init(allocator);
         lua.openLibs();
         return Script{
             .luaInstance = lua,
             .allocator = allocator,
+            .mutex = .{},
         };
     }
 
@@ -83,6 +85,9 @@ pub const Script = struct {
     }
 
     pub fn evalChunkFunc(self: *Script, buf: [maxLuaScriptSize]u8) ![]i32 {
+        self.mutex.lock();
+        defer self.mutex.unlock();
+
         std.debug.print("evalChunkFunc from lua {d}\n", .{buf.len});
         self.luaInstance.setTop(0);
         var luaCode: [maxLuaScriptSize]u8 = [_]u8{0} ** maxLuaScriptSize;

@@ -1,7 +1,6 @@
 const std = @import("std");
 const game = @import("../../game.zig");
 const script = @import("../../script/script.zig");
-const blecs = @import("../../blecs/blecs.zig");
 const buffer = @import("../buffer.zig");
 
 pub const GenerateDemoChunkJob = struct {
@@ -13,7 +12,9 @@ pub const GenerateDemoChunkJob = struct {
         };
         var msg: buffer.buffer_message = buffer.new_message(.chunk_gen);
         buffer.set_progress(&msg, true, 1);
-        buffer.put_chunk_gen_data(msg, chunk_data) catch unreachable;
+        buffer.put_chunk_gen_data(msg, .{
+            .chunk_data = chunk_data,
+        }) catch unreachable;
         buffer.write_message(msg) catch unreachable;
     }
 };

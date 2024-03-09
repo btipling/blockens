@@ -1,5 +1,7 @@
 const std = @import("std");
 const chunk = @import("../chunk.zig");
+const state = @import("../state/state.zig");
+const blecs = @import("../blecs/blecs.zig");
 
 var buffer: *Buffer = undefined;
 
@@ -19,15 +21,26 @@ pub const buffer_message = packed struct {
     data: u16 = 0,
 };
 
+pub const chunk_gen_data = struct {
+    wp: ?state.position.worldPosition = null,
+    chunk_data: []i32,
+};
+
+pub const chunk_mesh_data = struct {
+    world: ?*blecs.ecs.world_t = null,
+    entity: ?blecs.ecs.entity_t = null,
+    chunk: *chunk.Chunk,
+};
+
 const Buffer = struct {
     ta: std.heap.ThreadSafeAllocator,
     allocator: std.mem.Allocator,
     msg_mutex: std.Thread.Mutex,
     messages: std.ArrayList(buffer_message),
     chunk_gen_mutex: std.Thread.Mutex,
-    chunk_gens: std.AutoHashMap(buffer_message, []i32),
+    chunk_gens: std.AutoHashMap(buffer_message, chunk_gen_data),
     chunk_mesh_mutex: std.Thread.Mutex,
-    chunk_meshes: std.AutoHashMap(buffer_message, *chunk.Chunk),
+    chunk_meshes: std.AutoHashMap(buffer_message, chunk_mesh_data),
 };
 
 pub fn init(allocator: std.mem.Allocator) void {
@@ -42,9 +55,9 @@ pub fn init(allocator: std.mem.Allocator) void {
         .msg_mutex = .{},
         .messages = std.ArrayList(buffer_message).init(a),
         .chunk_gen_mutex = .{},
-        .chunk_gens = std.AutoHashMap(buffer_message, []i32).init(a),
+        .chunk_gens = std.AutoHashMap(buffer_message, chunk_gen_data).init(a),
         .chunk_mesh_mutex = .{},
-        .chunk_meshes = std.AutoHashMap(buffer_message, *chunk.Chunk).init(a),
+        .chunk_meshes = std.AutoHashMap(buffer_message, chunk_mesh_data).init(a),
     };
 }
 
@@ -90,28 +103,28 @@ pub fn next_message() ?buffer_message {
     return buffer.messages.orderedRemove(0);
 }
 
-pub fn put_chunk_gen_data(msg: buffer_message, chunk_data: []i32) !void {
+pub fn put_chunk_gen_data(msg: buffer_message, chunk_data: chunk_gen_data) !void {
     buffer.chunk_gen_mutex.lock();
     defer buffer.chunk_gen_mutex.unlock();
     if (msg.type != .chunk_gen) return BufferErr.Invalid;
     try buffer.chunk_gens.put(msg, chunk_data);
 }
 
-pub fn get_chunk_gen_data(msg: buffer_message) ?[]i32 {
+pub fn get_chunk_gen_data(msg: buffer_message) ?chunk_gen_data {
     buffer.chunk_gen_mutex.lock();
     defer buffer.chunk_gen_mutex.unlock();
     if (msg.type != .chunk_gen) return null;
     return buffer.chunk_gens.fetchRemove(msg);
 }
 
-pub fn put_chunk_mesh_data(msg: buffer_message, chunk_val: *chunk.Chunk) !void {
+pub fn put_chunk_mesh_data(msg: buffer_message, chunk_val: chunk_mesh_data) !void {
     buffer.chunk_mesh_mutex.lock();
     defer buffer.chunk_mesh_mutex.unlock();
     if (msg.type != .chunk_mesh) return BufferErr.Invalid;
     try buffer.chunk_meshes.put(msg, chunk_val);
 }
 
-pub fn get_chunk_mesh_data(msg: buffer_message) ?*chunk.Chunk {
+pub fn get_chunk_mesh_data(msg: buffer_message) ?chunk_mesh_data {
     buffer.chunk_mesh_mutex.lock();
     defer buffer.chunk_mesh_mutex.unlock();
     if (msg.type != .chunk_mesh) return null;
