@@ -3,6 +3,7 @@ const chunk = @import("../chunk.zig");
 const state = @import("../state/state.zig");
 const blecs = @import("../blecs/blecs.zig");
 
+var ta: std.heap.ThreadSafeAllocator = undefined;
 var buffer: *Buffer = undefined;
 
 pub const BufferErr = error{
@@ -44,7 +45,7 @@ const Buffer = struct {
 };
 
 pub fn init(allocator: std.mem.Allocator) !void {
-    var ta: std.heap.ThreadSafeAllocator = .{
+    ta = .{
         .child_allocator = allocator,
     };
     var a = ta.allocator();
