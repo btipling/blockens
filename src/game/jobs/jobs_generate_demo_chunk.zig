@@ -2,6 +2,7 @@ const std = @import("std");
 const game = @import("../game.zig");
 const script = @import("../script/script.zig");
 const blecs = @import("../blecs/blecs.zig");
+const buffer = @import("../thread/buffer.zig");
 
 pub const GenerateDemoChunkJob = struct {
     pub fn exec(_: *@This()) void {
@@ -10,8 +11,8 @@ pub const GenerateDemoChunkJob = struct {
             std.debug.print("Error evaluating chunk function: {}\n", .{err});
             return;
         };
-        if (game.state.ui.data.chunk_demo_data) |d| game.state.allocator.free(d);
-        game.state.ui.data.chunk_demo_data = chunk_data;
-        blecs.ecs.add(game.state.world, game.state.entities.screen, blecs.components.screen.NeedsDemoChunk);
+        buffer.
+        var msg: buffer.buffer_message = buffer.new_message( .chunk_gen);
+        buffer.set_progress(&msg, true, 1);
     }
 };
