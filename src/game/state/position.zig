@@ -1,11 +1,5 @@
 const std = @import("std");
 
-pub const Rotation = struct {
-    x: f32,
-    y: f32,
-    z: f32,
-};
-
 pub const worldPosition = struct {
     x: u32,
     y: u32,
