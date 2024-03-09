@@ -1,17 +1,16 @@
 const std = @import("std");
 const ecs = @import("zflecs");
-const gl = @import("zopengl").bindings;
 const game = @import("../../game.zig");
 
 pub const Chunk = struct {
-    loc: @Vector(4, gl.Float) = undefined,
+    loc: @Vector(4, f32) = undefined,
 };
 
 pub const Block = struct {
     block_id: u8 = 0,
 };
 pub const Meshscale = struct {
-    scale: @Vector(4, gl.Float) = undefined,
+    scale: @Vector(4, f32) = undefined,
 };
 pub const Instance = struct {};
 pub const NeedsMeshing = struct {};

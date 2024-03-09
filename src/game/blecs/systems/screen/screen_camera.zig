@@ -1,12 +1,11 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const zm = @import("zmath");
-const gl = @import("zopengl").bindings;
 const math = @import("../../../math/math.zig");
 const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities_screen.zig");
 const game = @import("../../../game.zig");
-const gfx = @import("../../../shape/gfx/gfx.zig");
+const gfx = @import("../../../gfx/gfx.zig");
 
 pub fn init() void {
     const s = system();
@@ -48,19 +47,19 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const ubo = game.state.gfx.ubos.get(c[i].ubo) orelse {
                 continue;
             };
-            var camera_position: @Vector(4, gl.Float) = undefined;
-            var camera_front: @Vector(4, gl.Float) = undefined;
-            var up_direction: @Vector(4, gl.Float) = undefined;
-            var pitch: gl.Float = 0;
-            var yaw: gl.Float = 0;
-            var fovy: gl.Float = 0;
-            var aspect: gl.Float = 0;
-            var near: gl.Float = 0;
-            var far: gl.Float = 0;
-            var world_scale: ?@Vector(4, gl.Float) = null;
-            var world_rotation: ?@Vector(4, gl.Float) = null;
-            var world_translation: ?@Vector(4, gl.Float) = null;
-            var post_perspective: ?@Vector(4, gl.Float) = null;
+            var camera_position: @Vector(4, f32) = undefined;
+            var camera_front: @Vector(4, f32) = undefined;
+            var up_direction: @Vector(4, f32) = undefined;
+            var pitch: f32 = 0;
+            var yaw: f32 = 0;
+            var fovy: f32 = 0;
+            var aspect: f32 = 0;
+            var near: f32 = 0;
+            var far: f32 = 0;
+            var world_scale: ?@Vector(4, f32) = null;
+            var world_rotation: ?@Vector(4, f32) = null;
+            var world_translation: ?@Vector(4, f32) = null;
+            var post_perspective: ?@Vector(4, f32) = null;
             if (ecs.get_id(world, entity, ecs.id(components.screen.CameraPosition))) |opaque_ptr| {
                 const cp: *const components.screen.CameraPosition = @ptrCast(@alignCast(opaque_ptr));
                 camera_position = cp.pos;

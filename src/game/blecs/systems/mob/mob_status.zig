@@ -1,12 +1,11 @@
 const std = @import("std");
 const ecs = @import("zflecs");
-const gl = @import("zopengl").bindings;
 const components = @import("../../components/components.zig");
 const helpers = @import("../../helpers.zig");
 const game = @import("../../../game.zig");
-const game_state = @import("../../../state/game.zig");
-const cltf_mesh = @import("../../../shape/gfx/cltf_mesh.zig");
-const gfx = @import("../../../shape/gfx/gfx.zig");
+const game_state = @import("../../../state/state.zig");
+const cltf_mesh = @import("../../../gfx/cltf_mesh.zig");
+const gfx = @import("../../../gfx/gfx.zig");
 
 pub fn init() void {
     const s = system();

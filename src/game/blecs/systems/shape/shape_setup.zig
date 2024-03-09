@@ -1,13 +1,12 @@
 const std = @import("std");
 const ecs = @import("zflecs");
-const gl = @import("zopengl").bindings;
 const zmesh = @import("zmesh");
 const zm = @import("zmath");
 const tags = @import("../../tags.zig");
 const game = @import("../../../game.zig");
-const game_state = @import("../../../state/game.zig");
+const game_state = @import("../../../state/state.zig");
 const math = @import("../../../math/math.zig");
-const gfx = @import("../../../shape/gfx/gfx.zig");
+const gfx = @import("../../../gfx/gfx.zig");
 const components = @import("../../components/components.zig");
 
 pub fn init() void {
@@ -24,10 +23,10 @@ fn system() ecs.system_desc_t {
 }
 
 const meshData = struct {
-    positions: [][3]gl.Float,
-    indices: []gl.Uint,
-    texcoords: ?[][2]gl.Float = null,
-    normals: ?[][3]gl.Float = null,
+    positions: [][3]f32,
+    indices: []u32,
+    texcoords: ?[][2]f32 = null,
+    normals: ?[][3]f32 = null,
 };
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
@@ -129,21 +128,21 @@ const shaders = struct {
 };
 
 const extractions = struct {
-    rotation: ?@Vector(4, gl.Float) = null,
-    scale: ?@Vector(4, gl.Float) = null,
-    translation: ?@Vector(4, gl.Float) = null,
-    color: ?@Vector(4, gl.Float) = null,
+    rotation: ?@Vector(4, f32) = null,
+    scale: ?@Vector(4, f32) = null,
+    translation: ?@Vector(4, f32) = null,
+    color: ?@Vector(4, f32) = null,
     debug: bool = false,
     has_ubo: bool = false,
-    ubo_binding_point: gl.Uint = 0,
+    ubo_binding_point: u32 = 0,
     has_uniform_mat: bool = false,
     uniform_mat: zm.Mat = zm.identity(),
     has_demo_cube_texture: bool = false,
     dc_t_beg: usize = 0,
     dc_t_end: usize = 0,
     has_animation_block: bool = false,
-    animation_binding_point: ?gl.Uint = null,
-    animation_id: ?gl.Uint = null,
+    animation_binding_point: ?u32 = null,
+    animation_id: ?u32 = null,
     keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = null,
     is_instanced: bool = false,
     block_id: ?u8 = null,
@@ -211,8 +210,8 @@ const extractions = struct {
         if (cm.animations == null or cm.animations.?.items.len < 1) {
             return;
         }
-        var ssbo: gl.Uint = 0;
-        var animation_id: gl.Uint = 0;
+        var ssbo: u32 = 0;
+        var animation_id: u32 = 0;
         if (ecs.get_id(world, entity, ecs.id(components.gfx.AnimationSSBO))) |opaque_ptr| {
             const a: *const components.gfx.AnimationSSBO = @ptrCast(@alignCast(opaque_ptr));
             ssbo = a.ssbo;
@@ -228,9 +227,9 @@ const extractions = struct {
                 game.state.allocator,
                 game_state.ElementsRendererConfig.AnimationKeyFrame{
                     .frame = akf.frame,
-                    .scale = akf.scale orelse @Vector(4, gl.Float){ 1, 1, 1, 1 },
-                    .rotation = akf.rotation orelse @Vector(4, gl.Float){ 0, 0, 0, 1 },
-                    .translation = akf.translation orelse @Vector(4, gl.Float){ 0, 0, 0, 0 },
+                    .scale = akf.scale orelse @Vector(4, f32){ 1, 1, 1, 1 },
+                    .rotation = akf.rotation orelse @Vector(4, f32){ 0, 0, 0, 1 },
+                    .translation = akf.translation orelse @Vector(4, f32){ 0, 0, 0, 0 },
                 },
             ) catch unreachable;
         }
@@ -253,7 +252,7 @@ const extractions = struct {
                 var ar = std.ArrayListUnmanaged(
                     game_state.ElementsRendererConfig.AnimationKeyFrame,
                 ){};
-                var ssbo: gl.Uint = 0;
+                var ssbo: u32 = 0;
                 if (ecs.get_id(world, child_entity, ecs.id(components.gfx.AnimationSSBO))) |opaque_ptr| {
                     const a: *const components.gfx.AnimationSSBO = @ptrCast(@alignCast(opaque_ptr));
                     ssbo = a.ssbo;
@@ -340,15 +339,15 @@ fn plane() meshData {
     @memcpy(positions, p.positions);
     const indices: []u32 = game.state.allocator.alloc(u32, p.indices.len) catch unreachable;
     @memcpy(indices, p.indices);
-    var texcoords: ?[][2]gl.Float = null;
+    var texcoords: ?[][2]f32 = null;
     if (p.texcoords) |_| {
-        const tc: [][2]gl.Float = game.state.allocator.alloc([2]gl.Float, p.texcoords.?.len) catch unreachable;
+        const tc: [][2]f32 = game.state.allocator.alloc([2]f32, p.texcoords.?.len) catch unreachable;
         @memcpy(tc, p.texcoords.?);
         texcoords = tc;
     }
-    var normals: ?[][3]gl.Float = null;
+    var normals: ?[][3]f32 = null;
     if (p.normals) |_| {
-        const ns: [][3]gl.Float = game.state.allocator.alloc([3]gl.Float, p.normals.?.len) catch unreachable;
+        const ns: [][3]f32 = game.state.allocator.alloc([3]f32, p.normals.?.len) catch unreachable;
         @memcpy(ns, p.normals.?);
         normals = ns;
     }
@@ -356,7 +355,7 @@ fn plane() meshData {
 }
 
 // :: Cube
-const cube_positions: [36][3]gl.Float = .{
+const cube_positions: [36][3]f32 = .{
     // front
     .{ -0.5, -0.5, 0.5 },
     .{ 0.5, -0.5, 0.5 },
@@ -411,7 +410,7 @@ const cube_indices: [36]u32 = .{
     30, 31, 32, 33, 34, 35, // top
 };
 
-const cube_texcoords: [36][2]gl.Float = .{
+const cube_texcoords: [36][2]f32 = .{
     // front
     .{ 0.0, 0.666 },
     .{ 1.0, 0.666 },
@@ -456,7 +455,7 @@ const cube_texcoords: [36][2]gl.Float = .{
     .{ 0.0, 0.333 },
 };
 
-const cube_normals: [36][3]gl.Float = .{
+const cube_normals: [36][3]f32 = .{
     // front
     .{ 0.0, 0.0, 1.0 },
     .{ 0.0, 0.0, 1.0 },
@@ -502,20 +501,20 @@ const cube_normals: [36][3]gl.Float = .{
 };
 
 fn cube() meshData {
-    const positions: [][3]f32 = game.state.allocator.alloc([3]gl.Float, cube_positions.len) catch unreachable;
+    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, cube_positions.len) catch unreachable;
     @memcpy(positions, &cube_positions);
     const indices: []u32 = game.state.allocator.alloc(u32, cube_indices.len) catch unreachable;
     @memcpy(indices, &cube_indices);
-    const texcoords: [][2]gl.Float = game.state.allocator.alloc([2]gl.Float, cube_texcoords.len) catch unreachable;
+    const texcoords: [][2]f32 = game.state.allocator.alloc([2]f32, cube_texcoords.len) catch unreachable;
     @memcpy(texcoords, &cube_texcoords);
-    const normals: [][3]gl.Float = game.state.allocator.alloc([3]gl.Float, cube_normals.len) catch unreachable;
+    const normals: [][3]f32 = game.state.allocator.alloc([3]f32, cube_normals.len) catch unreachable;
     @memcpy(normals, &cube_normals);
     return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
 }
 
 fn voxel(world: *ecs.world_t, entity: ecs.entity_t) !meshData {
     if (!ecs.has_id(world, entity, ecs.id(components.block.Meshscale))) return cube();
-    const scale: @Vector(4, gl.Float) = ecs.get(world, entity, components.block.Meshscale).?.scale;
+    const scale: @Vector(4, f32) = ecs.get(world, entity, components.block.Meshscale).?.scale;
     const allocator = game.state.allocator;
     var indicesAL = std.ArrayList(u32).init(allocator);
 
@@ -523,17 +522,17 @@ fn voxel(world: *ecs.world_t, entity: ecs.entity_t) !meshData {
     var _i = cube_indices;
     try indicesAL.appendSlice(&_i);
 
-    var positionsAL = std.ArrayList([3]gl.Float).init(allocator);
+    var positionsAL = std.ArrayList([3]f32).init(allocator);
     defer positionsAL.deinit();
     var _p = cube_positions;
     try positionsAL.appendSlice(&_p);
 
-    var normalsAL = std.ArrayList([3]gl.Float).init(allocator);
+    var normalsAL = std.ArrayList([3]f32).init(allocator);
     defer normalsAL.deinit();
     var _n = cube_normals;
     try normalsAL.appendSlice(&_n);
 
-    var texcoordsAL = std.ArrayList([2]gl.Float).init(allocator);
+    var texcoordsAL = std.ArrayList([2]f32).init(allocator);
     defer texcoordsAL.deinit();
     var _t = cube_texcoords;
     try texcoordsAL.appendSlice(&_t);
@@ -545,13 +544,13 @@ fn voxel(world: *ecs.world_t, entity: ecs.entity_t) !meshData {
     v.translate(0.5, 0.5, 0.5);
     v.scale(scale[0], scale[1], scale[2]);
 
-    const positions: [][3]f32 = game.state.allocator.alloc([3]gl.Float, v.positions.len) catch unreachable;
+    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, v.positions.len) catch unreachable;
     @memcpy(positions, v.positions);
     const indices: []u32 = game.state.allocator.alloc(u32, v.indices.len) catch unreachable;
     @memcpy(indices, v.indices);
-    const texcoords: [][2]gl.Float = game.state.allocator.alloc([2]gl.Float, v.texcoords.?.len) catch unreachable;
+    const texcoords: [][2]f32 = game.state.allocator.alloc([2]f32, v.texcoords.?.len) catch unreachable;
     @memcpy(texcoords, v.texcoords.?);
-    const normals: [][3]gl.Float = game.state.allocator.alloc([3]gl.Float, v.normals.?.len) catch unreachable;
+    const normals: [][3]f32 = game.state.allocator.alloc([3]f32, v.normals.?.len) catch unreachable;
     @memcpy(normals, v.normals.?);
     return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
 }
@@ -565,18 +564,18 @@ fn mob(world: *ecs.world_t, entity: ecs.entity_t) meshData {
     const mob_data: *game_state.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
     if (mob_data.meshes.items.len <= mesh_c.mesh_id) return cube();
     const mesh: *game_state.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
-    const positions: [][3]f32 = game.state.allocator.alloc([3]gl.Float, mesh.positions.items.len) catch unreachable;
+    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, mesh.positions.items.len) catch unreachable;
     @memcpy(positions, mesh.positions.items);
     const indices: []u32 = game.state.allocator.alloc(u32, mesh.indices.items.len) catch unreachable;
     @memcpy(indices, mesh.indices.items);
-    var texcoords: ?[][2]gl.Float = null;
+    var texcoords: ?[][2]f32 = null;
     if (mesh.texture != null) {
-        var tc = game.state.allocator.alloc([2]gl.Float, mesh.textcoords.items.len) catch unreachable;
+        var tc = game.state.allocator.alloc([2]f32, mesh.textcoords.items.len) catch unreachable;
         _ = &tc;
         @memcpy(tc, mesh.textcoords.items);
         texcoords = tc;
     }
-    const normals: [][3]gl.Float = game.state.allocator.alloc([3]gl.Float, mesh.normals.items.len) catch unreachable;
+    const normals: [][3]f32 = game.state.allocator.alloc([3]f32, mesh.normals.items.len) catch unreachable;
     @memcpy(normals, mesh.normals.items);
     return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
 }

@@ -7,8 +7,8 @@ const helpers = @import("../../helpers.zig");
 const game = @import("../../../game.zig");
 const math = @import("../../../math/math.zig");
 const entities = @import("../../entities/entities.zig");
-const gfx = @import("../../../shape/gfx/gfx.zig");
-const game_state = @import("../../../state/game.zig");
+const gfx = @import("../../../gfx/gfx.zig");
+const game_state = @import("../../../state/state.zig");
 const chunk = @import("../../../chunk.zig");
 
 pub fn init() void {

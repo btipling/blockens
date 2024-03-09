@@ -1,19 +1,18 @@
 const std = @import("std");
-const gl = @import("zopengl").bindings;
 
 pub const chunkDim = 64;
 pub const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
 const drawSize = chunkDim * chunkDim;
 const minVoxelsInMesh = 10;
 
-pub fn getPositionAtIndexV(i: usize) @Vector(4, gl.Float) {
-    const x = @as(gl.Float, @floatFromInt(@mod(i, chunkDim)));
-    const y = @as(gl.Float, @floatFromInt(@mod(i / chunkDim, chunkDim)));
-    const z = @as(gl.Float, @floatFromInt(i / (chunkDim * chunkDim)));
-    return @Vector(4, gl.Float){ x, y, z, 0 };
+pub fn getPositionAtIndexV(i: usize) @Vector(4, f32) {
+    const x = @as(f32, @floatFromInt(@mod(i, chunkDim)));
+    const y = @as(f32, @floatFromInt(@mod(i / chunkDim, chunkDim)));
+    const z = @as(f32, @floatFromInt(i / (chunkDim * chunkDim)));
+    return @Vector(4, f32){ x, y, z, 0 };
 }
 
-pub fn getIndexFromPositionV(p: @Vector(4, gl.Float)) usize {
+pub fn getIndexFromPositionV(p: @Vector(4, f32)) usize {
     const x = @as(i32, @intFromFloat(p[0]));
     const y = @as(i32, @intFromFloat(p[1]));
     const z = @as(i32, @intFromFloat(p[2]));
@@ -25,14 +24,14 @@ pub fn getIndexFromPositionV(p: @Vector(4, gl.Float)) usize {
 
 pub const Chunk = struct {
     data: []i32 = undefined,
-    meshes: std.AutoHashMap(usize, @Vector(4, gl.Float)),
+    meshes: std.AutoHashMap(usize, @Vector(4, f32)),
     meshed: std.AutoHashMap(usize, void),
     instanced: std.AutoHashMap(usize, void),
     allocator: std.mem.Allocator,
     pub fn init(allocator: std.mem.Allocator) !*Chunk {
         const c: *Chunk = try allocator.create(Chunk);
         c.* = Chunk{
-            .meshes = std.AutoHashMap(usize, @Vector(4, gl.Float)).init(allocator),
+            .meshes = std.AutoHashMap(usize, @Vector(4, f32)).init(allocator),
             .meshed = std.AutoHashMap(usize, void).init(allocator),
             .instanced = std.AutoHashMap(usize, void).init(allocator),
             .allocator = allocator,
@@ -64,7 +63,7 @@ pub const Chunker = struct {
     chunk: *Chunk,
     numVoxelsInMesh: usize,
     currentVoxel: usize,
-    currentScale: @Vector(4, gl.Float),
+    currentScale: @Vector(4, f32),
     toBeMeshed: [minVoxelsInMesh]usize,
     cachingMeshed: bool,
 
@@ -117,7 +116,7 @@ pub const Chunker = struct {
     }
 
     pub fn run(self: *Chunker) !void {
-        var op: @Vector(4, gl.Float) = .{ 0, 0, 0, 0 };
+        var op: @Vector(4, f32) = .{ 0, 0, 0, 0 };
         var p = op;
         p[0] += 1;
         var i: usize = 0;
@@ -158,10 +157,10 @@ pub const Chunker = struct {
             }
             self.currentVoxel = i;
             var numDimsTravelled: u8 = 1;
-            var endX: gl.Float = op[0];
-            var endY: gl.Float = op[1];
-            var numXAdded: gl.Float = 0;
-            var numYAdded: gl.Float = 0;
+            var endX: f32 = op[0];
+            var endY: f32 = op[1];
+            var numXAdded: f32 = 0;
+            var numYAdded: f32 = 0;
             inner: while (true) {
                 const ii = getIndexFromPositionV(p);
                 if (numDimsTravelled == 1) {
@@ -205,8 +204,8 @@ pub const Chunker = struct {
                     const _beg = @as(usize, @intFromFloat(op[0]));
                     const _end = @as(usize, @intFromFloat(endX)) + 1;
                     for (_beg.._end) |xToAdd| {
-                        const _xToAdd = @as(gl.Float, @floatFromInt(xToAdd));
-                        const np: @Vector(4, gl.Float) = .{ _xToAdd, p[1], p[2], 0 };
+                        const _xToAdd = @as(f32, @floatFromInt(xToAdd));
+                        const np: @Vector(4, f32) = .{ _xToAdd, p[1], p[2], 0 };
                         const iii = getIndexFromPositionV(np);
                         if (self.chunk.data[iii] != 0) try self.updateMeshed(iii);
                     }
@@ -241,11 +240,11 @@ pub const Chunker = struct {
                     const _begX = @as(usize, @intFromFloat(op[0]));
                     const _endX = @as(usize, @intFromFloat(endX)) + 1;
                     for (_begX.._endX) |xToAdd| {
-                        const _xToAdd = @as(gl.Float, @floatFromInt(xToAdd));
+                        const _xToAdd = @as(f32, @floatFromInt(xToAdd));
                         const _begY = @as(usize, @intFromFloat(op[1]));
                         const _endY = @as(usize, @intFromFloat(endY)) + 1;
                         for (_begY.._endY) |yToAdd| {
-                            const _yToAdd = @as(gl.Float, @floatFromInt(yToAdd));
+                            const _yToAdd = @as(f32, @floatFromInt(yToAdd));
                             const iii = getIndexFromPositionV(.{ _xToAdd, _yToAdd, p[2], 0 });
                             // a one off bug I think?
                             if (self.chunk.data[iii] != 0) try self.updateMeshed(iii);

@@ -1,9 +1,5 @@
-const blecs = @import("../blecs/blecs.zig");
-const game = @import("../game.zig");
-
-pub const character = @import("character.zig");
-pub const texture_gen = @import("texture_gen.zig");
-pub const world = @import("world.zig");
+const blecs = @import("../blecs.zig");
+const game = @import("../../game.zig");
 
 pub fn showBlockTextureGen() void {
     showSettingsScreen(blecs.components.screen.TextureGen);

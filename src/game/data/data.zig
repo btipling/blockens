@@ -1,6 +1,5 @@
 const std = @import("std");
 const sqlite = @import("sqlite");
-const gl = @import("zopengl").bindings;
 
 const createWorldTable = @embedFile("./sql/world/create.sql");
 const insertWorldStmt = @embedFile("./sql/world/insert.sql");
@@ -115,7 +114,7 @@ pub const blockOption = struct {
 pub const block = struct {
     id: u8 = 0,
     name: [21]u8 = [_]u8{0} ** 21,
-    texture: []gl.Uint = undefined,
+    texture: []u32 = undefined,
 };
 
 pub const chunkScriptOptionSQL = struct {
@@ -593,7 +592,7 @@ pub const Data = struct {
     }
 
     // block crud:
-    fn textureToBlob(texture: []gl.Uint) [TextureBlobArrayStoreSize]u8 {
+    fn textureToBlob(texture: []u32) [TextureBlobArrayStoreSize]u8 {
         var blob: [TextureBlobArrayStoreSize]u8 = undefined;
         for (texture, 0..RGBAColorTextureSize) |t, i| {
             const offset = i * 4;
@@ -609,23 +608,23 @@ pub const Data = struct {
         return blob;
     }
 
-    fn blobToTexture(self: *Data, blob: sqlite.Blob) ![]gl.Uint {
-        var texture: [RGBAColorTextureSize]gl.Uint = undefined;
+    fn blobToTexture(self: *Data, blob: sqlite.Blob) ![]u32 {
+        var texture: [RGBAColorTextureSize]u32 = undefined;
         for (texture, 0..) |_, i| {
             const offset = i * 4;
-            const a = @as(gl.Uint, @intCast(blob.data[offset]));
-            const b = @as(gl.Uint, @intCast(blob.data[offset + 1]));
-            const g = @as(gl.Uint, @intCast(blob.data[offset + 2]));
-            const r = @as(gl.Uint, @intCast(blob.data[offset + 3]));
+            const a = @as(u32, @intCast(blob.data[offset]));
+            const b = @as(u32, @intCast(blob.data[offset + 1]));
+            const g = @as(u32, @intCast(blob.data[offset + 2]));
+            const r = @as(u32, @intCast(blob.data[offset + 3]));
             texture[i] = a << 24 | b << 16 | g << 8 | r;
         }
 
-        const rv: []gl.Uint = try self.allocator.alloc(gl.Uint, texture.len);
+        const rv: []u32 = try self.allocator.alloc(u32, texture.len);
         @memcpy(rv, &texture);
         return rv;
     }
 
-    pub fn saveBlock(self: *Data, name: []const u8, texture: []gl.Uint) !void {
+    pub fn saveBlock(self: *Data, name: []const u8, texture: []u32) !void {
         var insertStmt = try self.db.prepare(
             struct {
                 name: sqlite.Text,
@@ -648,7 +647,7 @@ pub const Data = struct {
         };
     }
 
-    pub fn updateBlock(self: *Data, id: i32, name: []const u8, texture: []gl.Uint) !void {
+    pub fn updateBlock(self: *Data, id: i32, name: []const u8, texture: []u32) !void {
         var updateStmt = try self.db.prepare(
             struct {
                 id: i32,

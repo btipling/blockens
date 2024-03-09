@@ -1,4 +1,3 @@
-const gl = @import("zopengl").bindings;
 const ecs = @import("zflecs");
 const game = @import("../../game.zig");
 const math = @import("../../math/math.zig");
@@ -10,55 +9,55 @@ pub const Screen = struct {
     current: u64 = 0,
     gameDataEntity: u64 = 0,
     settingDataEntity: u64 = 0,
-    ubo: gl.Uint = 0,
-    uboBindingPoint: gl.Uint = 0,
+    ubo: u32 = 0,
+    uboBindingPoint: u32 = 0,
 };
 
 pub const Camera = struct {
-    ubo: gl.Uint = 0,
-    elapsedTime: gl.Float = 0,
+    ubo: u32 = 0,
+    elapsedTime: f32 = 0,
 };
 pub const CameraPosition = struct {
-    pos: @Vector(4, gl.Float) = undefined,
+    pos: @Vector(4, f32) = undefined,
 };
 pub const CameraFront = struct {
-    front: @Vector(4, gl.Float) = undefined,
+    front: @Vector(4, f32) = undefined,
 };
 
 pub const CameraRotation = struct {
-    yaw: gl.Float = 0,
-    pitch: gl.Float = 0,
+    yaw: f32 = 0,
+    pitch: f32 = 0,
 };
 
 pub const UpDirection = struct {
-    up: @Vector(4, gl.Float) = undefined,
+    up: @Vector(4, f32) = undefined,
 };
 
 pub const Perspective = struct {
-    fovy: gl.Float,
-    aspect: gl.Float,
-    near: gl.Float,
-    far: gl.Float,
+    fovy: f32,
+    aspect: f32,
+    near: f32,
+    far: f32,
 };
 
 pub const WorldTranslation = struct {
-    translation: @Vector(4, gl.Float) = undefined,
+    translation: @Vector(4, f32) = undefined,
 };
 
 pub const WorldRotation = struct {
-    rotation: @Vector(4, gl.Float) = undefined,
+    rotation: @Vector(4, f32) = undefined,
 };
 
 pub const WorldScale = struct {
-    scale: @Vector(4, gl.Float) = undefined,
+    scale: @Vector(4, f32) = undefined,
 };
 
 pub const PostPerspective = struct {
-    translation: @Vector(4, gl.Float) = undefined,
+    translation: @Vector(4, f32) = undefined,
 };
 
 pub const WorldLocation = struct {
-    loc: @Vector(4, gl.Float) = undefined,
+    loc: @Vector(4, f32) = undefined,
 };
 
 pub const Data = struct {};

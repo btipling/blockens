@@ -6,9 +6,9 @@ const gl = @import("zopengl").bindings;
 const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
-const game_state = @import("../../../state/game.zig");
-const gfx = @import("../../../shape/gfx/gfx.zig");
-const shadergen = @import("../../../shape/gfx/shadergen.zig");
+const game_state = @import("../../../state/state.zig");
+const gfx = @import("../../../gfx/gfx.zig");
+const shadergen = @import("../../../gfx/shadergen.zig");
 
 pub fn init() void {
     const s = system();

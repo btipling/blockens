@@ -10,7 +10,7 @@ const game = @import("../../../game.zig");
 const config = @import("../../../config.zig");
 const chunk = @import("../../../chunk.zig");
 const data = @import("../../../data/data.zig");
-const game_state = @import("../../../state/game.zig");
+const game_state = @import("../../../state/state.zig");
 const state = @import("../../../state/state.zig");
 const menus = @import("../../../ui/menus.zig");
 const script = @import("../../../script/script.zig");
@@ -427,12 +427,13 @@ fn saveChunkDatas() !void {
         inner: for (0..config.worldChunkDims) |ii| {
             const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
             const y = game.state.ui.data.world_chunk_y;
-            const p = state.position.Position{
-                .x = @as(f32, @floatFromInt(x)),
-                .y = @as(f32, @floatFromInt(y)),
-                .z = @as(f32, @floatFromInt(z)),
+            const p = @Vector(4, gl.Float){
+                @as(f32, @floatFromInt(x)),
+                @as(f32, @floatFromInt(y)),
+                @as(f32, @floatFromInt(z)),
+                0,
             };
-            const wp = state.position.worldPosition.initFromPosition(p);
+            const wp = state.position.worldPosition.initFromPositionV(p);
             if (game.state.ui.data.world_chunk_table_data.get(wp)) |ch_cfg| {
                 if (ch_cfg.id != 0) {
                     // update
@@ -477,12 +478,13 @@ fn loadChunkDatas() !void {
                     }
                     return err;
                 };
-                const p = state.position.Position{
-                    .x = @as(gl.Float, @floatFromInt(x)),
-                    .y = @as(gl.Float, @floatFromInt(y)),
-                    .z = @as(gl.Float, @floatFromInt(z)),
+                const p = @Vector(4, gl.Float){
+                    @as(gl.Float, @floatFromInt(x)),
+                    @as(gl.Float, @floatFromInt(y)),
+                    @as(gl.Float, @floatFromInt(z)),
+                    0,
                 };
-                const wp = state.position.worldPosition.initFromPosition(p);
+                const wp = state.position.worldPosition.initFromPositionV(p);
                 const cfg = game_state.chunkConfig{
                     .id = chunkData.id,
                     .scriptId = chunkData.scriptId,

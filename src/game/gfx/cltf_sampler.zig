@@ -1,9 +1,8 @@
 const std = @import("std");
 const zmesh = @import("zmesh");
-const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const gltf = zmesh.io.zcgltf;
-const game = @import("../../game.zig");
+const game = @import("../game.zig");
 
 pub const SamplerErr = error{
     MissingDataErr,
@@ -17,9 +16,9 @@ pub const Sampler = struct {
     target_path: gltf.AnimationPathType,
     sampler: *gltf.AnimationSampler,
     num_frames: usize = 0,
-    rotations: ?[]@Vector(4, gl.Float) = null,
-    translations: ?[]@Vector(4, gl.Float) = null,
-    frames: ?[]gl.Float = null,
+    rotations: ?[]@Vector(4, f32) = null,
+    translations: ?[]@Vector(4, f32) = null,
+    frames: ?[]f32 = null,
 
     pub fn init(
         node: *gltf.Node,
@@ -98,7 +97,7 @@ pub const Sampler = struct {
         };
         const dataAddr = @as([*]const u8, @ptrCast(bufferData)) + accessorOffset + bufferView.offset;
         const frames_data = @as([*]const f32, @ptrCast(@alignCast(dataAddr)));
-        self.frames = try game.state.allocator.alloc(gl.Float, self.num_frames);
+        self.frames = try game.state.allocator.alloc(f32, self.num_frames);
         @memcpy(self.frames.?, frames_data[0..self.num_frames]);
     }
 
@@ -133,7 +132,7 @@ pub const Sampler = struct {
 
         const dataAddr = @as([*]const u8, @ptrCast(bufferData)) + accessorOffset + bufferView.offset;
         const frames_data = @as([*]const [4]f32, @ptrCast(@alignCast(dataAddr)));
-        self.rotations = try game.state.allocator.alloc(@Vector(4, gl.Float), self.num_frames);
+        self.rotations = try game.state.allocator.alloc(@Vector(4, f32), self.num_frames);
         const rotations = frames_data[0..self.num_frames];
         for (0..self.num_frames) |i| {
             self.rotations.?[i] = rotations[i];
@@ -169,7 +168,7 @@ pub const Sampler = struct {
         };
         const dataAddr = @as([*]const u8, @ptrCast(bufferData)) + accessorOffset + bufferView.offset;
         const frames_data = @as([*]const [3]f32, @ptrCast(@alignCast(dataAddr)));
-        self.translations = try game.state.allocator.alloc(@Vector(4, gl.Float), self.num_frames);
+        self.translations = try game.state.allocator.alloc(@Vector(4, f32), self.num_frames);
         for (0..self.num_frames) |i| {
             const f = frames_data[i];
             self.translations.?[i] = .{ f[0], f[1], f[2], 0 };

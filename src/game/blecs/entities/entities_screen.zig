@@ -1,15 +1,14 @@
 const std = @import("std");
 const ecs = @import("zflecs");
-const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const math = @import("../../math/math.zig");
 const game = @import("../../game.zig");
-const game_state = @import("../../state/game.zig");
+const game_state = @import("../../state/state.zig");
 const config = @import("../../config.zig");
 const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
 const chunk = @import("../../chunk.zig");
-const gfx = @import("../../shape/gfx/gfx.zig");
+const gfx = @import("../../gfx/gfx.zig");
 
 pub var game_data: ecs.entity_t = undefined;
 pub var settings_data: ecs.entity_t = undefined;
@@ -44,9 +43,9 @@ fn initCrossHairs() void {
         components.shape.Color,
         components.shape.Color.fromVec(cr_c),
     );
-    const p_x_ratio: gl.Float = 0.6666;
+    const p_x_ratio: f32 = 0.6666;
     _ = ecs.set(game.state.world, c_hrz, components.shape.Scale, .{
-        .scale = @Vector(4, gl.Float){
+        .scale = @Vector(4, f32){
             0.004 * p_x_ratio,
             0.04,
             1,
@@ -54,7 +53,7 @@ fn initCrossHairs() void {
         },
     });
     _ = ecs.set(game.state.world, c_hrz, components.shape.Translation, .{
-        .translation = @Vector(4, gl.Float){
+        .translation = @Vector(4, f32){
             0,
             -0.018,
             0,
@@ -74,7 +73,7 @@ fn initCrossHairs() void {
         components.shape.Color.fromVec(cr_c2),
     );
     _ = ecs.set(game.state.world, c_vrt, components.shape.Scale, .{
-        .scale = @Vector(4, gl.Float){
+        .scale = @Vector(4, f32){
             0.04 * p_x_ratio,
             0.004,
             1,
@@ -82,7 +81,7 @@ fn initCrossHairs() void {
         },
     });
     _ = ecs.set(game.state.world, c_vrt, components.shape.Translation, .{
-        .translation = @Vector(4, gl.Float){
+        .translation = @Vector(4, f32){
             -0.018 * p_x_ratio,
             0,
             0,
@@ -106,10 +105,10 @@ fn initFloor() void {
         components.shape.Color.fromVec(cr_c),
     );
     _ = ecs.set(game.state.world, c_f, components.shape.Scale, .{
-        .scale = @Vector(4, gl.Float){ 500, 500, 500, 0 },
+        .scale = @Vector(4, f32){ 500, 500, 500, 0 },
     });
     _ = ecs.set(game.state.world, c_f, components.shape.Translation, .{
-        .translation = @Vector(4, gl.Float){ -0.5, -0.5, 20, 0 },
+        .translation = @Vector(4, f32){ -0.5, -0.5, 20, 0 },
     });
     const floor_rot = zm.matToQuat(zm.rotationX(1.5 * std.math.pi));
     _ = ecs.set(game.state.world, c_f, components.shape.Rotation, .{
@@ -117,7 +116,7 @@ fn initFloor() void {
     });
     _ = ecs.set(game.state.world, c_f, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
     _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{
-        .loc = @Vector(4, gl.Float){ -25, -25, -25, 0 },
+        .loc = @Vector(4, f32){ -25, -25, -25, 0 },
     });
     ecs.add(game.state.world, c_f, components.Debug);
     ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
@@ -129,13 +128,13 @@ fn initCamera() void {
     const camera = ecs.new_entity(game.state.world, "GameCamera");
     game.state.entities.game_camera = camera;
     _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = gfx.constants.GameUBOBindingPoint });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ 1.0, 1.0, 1.0, 1.0 } });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 0.03, -0.155, -0.7, 0.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, f32){ 1.0, 1.0, 1.0, 1.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, f32){ 0.03, -0.155, -0.7, 0.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = -90, .pitch = -19.4 });
-    _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .up = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 } });
     // These dimensions should also be component data to support monitors other than the one I've been working with:
-    const h: gl.Float = @floatFromInt(config.windows_height);
-    const w: gl.Float = @floatFromInt(config.windows_width);
+    const h: f32 = @floatFromInt(config.windows_height);
+    const w: f32 = @floatFromInt(config.windows_width);
     _ = ecs.set(game.state.world, camera, components.screen.Perspective, .{
         .fovy = config.fov,
         .aspect = w / h,
@@ -154,12 +153,12 @@ fn initSettingsCamera() void {
     const camera = ecs.new_entity(game.state.world, "SettingsCamera");
     game.state.entities.settings_camera = camera;
     _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = gfx.constants.SettingsUBOBindingPoint });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, gl.Float){ -8, 0, 0.0, 0.0 } });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, gl.Float){ 1, 0, 0, 0.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, f32){ -8, 0, 0.0, 0.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, f32){ 1, 0, 0, 0.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 0, .pitch = 0 });
-    _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .up = @Vector(4, gl.Float){ 0.0, 1.0, 0.0, 0.0 } });
-    const h: gl.Float = @floatFromInt(config.windows_height);
-    const w: gl.Float = @floatFromInt(config.windows_width);
+    _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 } });
+    const h: f32 = @floatFromInt(config.windows_height);
+    const w: f32 = @floatFromInt(config.windows_width);
     _ = ecs.set(game.state.world, camera, components.screen.Perspective, .{
         .fovy = config.fov,
         .aspect = w / h,
@@ -257,32 +256,32 @@ pub fn initDemoCube() void {
     const kf0 = ecs.new_id(world);
     _ = ecs.set(world, kf0, components.gfx.AnimationKeyFrame, .{
         .frame = 0,
-        .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
-        .rotation = @Vector(4, gl.Float){ 0.17867, 0.899888, 0.240292, -0.317079 },
+        .translation = @Vector(4, f32){ 0, 0, 0, 0 },
+        .rotation = @Vector(4, f32){ 0.17867, 0.899888, 0.240292, -0.317079 },
     });
     const kf1 = ecs.new_id(world);
     _ = ecs.set(world, kf1, components.gfx.AnimationKeyFrame, .{
         .frame = 1,
-        .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
-        .rotation = @Vector(4, gl.Float){ -0.461112, -0.353858, -0.100431, 0.808 },
+        .translation = @Vector(4, f32){ 0, 0, 0, 0 },
+        .rotation = @Vector(4, f32){ -0.461112, -0.353858, -0.100431, 0.808 },
     });
     const kf2 = ecs.new_id(world);
     _ = ecs.set(world, kf2, components.gfx.AnimationKeyFrame, .{
         .frame = 2,
-        .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
-        .rotation = @Vector(4, gl.Float){ -0.264643, -0.450094, 0.140096, -0.84128 },
+        .translation = @Vector(4, f32){ 0, 0, 0, 0 },
+        .rotation = @Vector(4, f32){ -0.264643, -0.450094, 0.140096, -0.84128 },
     });
     const kf3 = ecs.new_id(world);
     _ = ecs.set(world, kf3, components.gfx.AnimationKeyFrame, .{
         .frame = 3,
-        .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
-        .rotation = @Vector(4, gl.Float){ 0.056235, -0.646945, 0.46856, -0.598959 },
+        .translation = @Vector(4, f32){ 0, 0, 0, 0 },
+        .rotation = @Vector(4, f32){ 0.056235, -0.646945, 0.46856, -0.598959 },
     });
     const kf4 = ecs.new_id(world);
     _ = ecs.set(world, kf4, components.gfx.AnimationKeyFrame, .{
         .frame = 4,
-        .translation = @Vector(4, gl.Float){ 0, 0, 0, 0 },
-        .rotation = @Vector(4, gl.Float){ 0.17867, 0.899888, 0.240292, -0.317079 },
+        .translation = @Vector(4, f32){ 0, 0, 0, 0 },
+        .rotation = @Vector(4, f32){ 0.17867, 0.899888, 0.240292, -0.317079 },
     });
     ecs.add_pair(world, kf0, ecs.ChildOf, animation);
     ecs.add_pair(world, kf1, ecs.ChildOf, animation);
@@ -290,12 +289,12 @@ pub fn initDemoCube() void {
     ecs.add_pair(world, kf3, ecs.ChildOf, animation);
     ecs.add_pair(world, kf4, ecs.ChildOf, animation);
 
-    const p_x_ratio: gl.Float = 0.6666;
-    const p_scale: gl.Float = 0.3;
+    const p_x_ratio: f32 = 0.6666;
+    const p_scale: f32 = 0.3;
     const c_t1 = helpers.new_child(world, settings_data);
     _ = ecs.set(world, c_t1, components.shape.Shape, .{ .shape_type = .plane });
     _ = ecs.set(world, c_t1, components.shape.Color, components.shape.Color.fromVec(cr_c));
-    _ = ecs.set(world, c_t1, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
+    _ = ecs.set(world, c_t1, components.shape.Scale, .{ .scale = @Vector(4, f32){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
     _ = ecs.set(world, c_t1, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_tl });
     _ = ecs.set(world, c_t1, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 });
     ecs.add(world, c_t1, components.shape.NeedsSetup);
@@ -303,7 +302,7 @@ pub fn initDemoCube() void {
     const c_t2 = helpers.new_child(world, settings_data);
     _ = ecs.set(world, c_t2, components.shape.Shape, .{ .shape_type = .plane });
     _ = ecs.set(world, c_t2, components.shape.Color, components.shape.Color.fromVec(cr_c));
-    _ = ecs.set(world, c_t2, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
+    _ = ecs.set(world, c_t2, components.shape.Scale, .{ .scale = @Vector(4, f32){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
     _ = ecs.set(world, c_t2, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_t2 });
     _ = ecs.set(world, c_t2, components.shape.DemoCubeTexture, .{ .beg = 16 * 16, .end = 16 * 16 * 2 });
     _ = ecs.set(world, c_t2, components.shape.Rotation, .{
@@ -315,7 +314,7 @@ pub fn initDemoCube() void {
     const c_t3 = helpers.new_child(world, settings_data);
     _ = ecs.set(world, c_t3, components.shape.Shape, .{ .shape_type = .plane });
     _ = ecs.set(world, c_t3, components.shape.Color, components.shape.Color.fromVec(cr_c));
-    _ = ecs.set(world, c_t3, components.shape.Scale, .{ .scale = @Vector(4, gl.Float){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
+    _ = ecs.set(world, c_t3, components.shape.Scale, .{ .scale = @Vector(4, f32){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
     _ = ecs.set(world, c_t3, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_t3 });
     _ = ecs.set(world, c_t3, components.shape.DemoCubeTexture, .{ .beg = 16 * 16 * 2, .end = 16 * 16 * 3 });
     ecs.add(world, c_t3, components.shape.NeedsSetup);
@@ -334,7 +333,7 @@ pub fn initDemoChunkCamera() void {
         world,
         camera,
         components.screen.WorldScale,
-        .{ .scale = @Vector(4, gl.Float){ chunk_scale, chunk_scale, chunk_scale, 0 } },
+        .{ .scale = @Vector(4, f32){ chunk_scale, chunk_scale, chunk_scale, 0 } },
     );
     var chunk_rot = zm.rotationY(game.state.ui.data.demo_chunk_rotation_y * std.math.pi);
     chunk_rot = zm.mul(chunk_rot, zm.rotationZ(game.state.ui.data.demo_chunk_rotation_z * std.math.pi * 2.0));
@@ -388,7 +387,7 @@ pub fn initDemoCharacterCamera() void {
         world,
         camera,
         components.screen.WorldScale,
-        .{ .scale = @Vector(4, gl.Float){ character_scale, character_scale, character_scale, 0 } },
+        .{ .scale = @Vector(4, f32){ character_scale, character_scale, character_scale, 0 } },
     );
     var character_rot = zm.rotationY(game.state.ui.data.demo_character_rotation_y * std.math.pi);
     character_rot = zm.mul(character_rot, zm.rotationZ(game.state.ui.data.demo_character_rotation_z * std.math.pi * 2.0));

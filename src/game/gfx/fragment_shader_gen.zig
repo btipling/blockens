@@ -1,8 +1,7 @@
 const std = @import("std");
-const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
-const math = @import("../../math/math.zig");
-const game = @import("../../game.zig");
+const math = @import("../math/math.zig");
+const game = @import("../game.zig");
 const shader_helpers = @import("shader_helpers.zig");
 
 pub const FragmentShaderGen = struct {
@@ -11,7 +10,7 @@ pub const FragmentShaderGen = struct {
         has_texture: bool = false,
         has_texture_coords: bool = false,
         has_normals: bool = false,
-        color: ?@Vector(4, gl.Float) = null,
+        color: ?@Vector(4, f32) = null,
         is_meshed: bool = false,
     };
 

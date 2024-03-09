@@ -1,31 +1,31 @@
 const std = @import("std");
 const gl = @import("zopengl").bindings;
-const game = @import("../../game.zig");
+const game = @import("../game.zig");
 
 pub const AttributeBuilder = struct {
-    vbo: gl.Uint = 0,
+    vbo: u32 = 0,
     stride: gl.Sizei = 0, // The size of each vertexes attribute variable bufferXS
     buffer: []u8 = undefined,
     usage: gl.Enum,
-    num_vertices: gl.Uint = 0,
+    num_vertices: u32 = 0,
     attr_vars: std.ArrayListUnmanaged(AttributeVariable) = undefined,
     cur_vertex: usize = 0,
     debug: bool = false,
-    starting_location: gl.Uint = 0,
-    last_location: gl.Uint = 0,
+    starting_location: u32 = 0,
+    last_location: u32 = 0,
 
     const AttributeVariable = struct {
         type: gl.Enum,
-        size: gl.Int,
-        location: gl.Uint = 0,
+        size: i32,
+        location: u32 = 0,
         offset: usize,
         normalized: gl.Boolean = gl.FALSE,
         divisor: bool = false,
     };
 
     pub fn init(
-        num_vertices: gl.Uint,
-        vbo: gl.Uint,
+        num_vertices: u32,
+        vbo: u32,
         usage: gl.Enum,
     ) AttributeBuilder {
         return AttributeBuilder{
@@ -37,10 +37,10 @@ pub const AttributeBuilder = struct {
     }
 
     pub fn initWithLoc(
-        num_vertices: gl.Uint,
-        vbo: gl.Uint,
+        num_vertices: u32,
+        vbo: u32,
         usage: gl.Enum,
-        location: gl.Uint,
+        location: u32,
     ) AttributeBuilder {
         return AttributeBuilder{
             .vbo = vbo,
@@ -57,22 +57,22 @@ pub const AttributeBuilder = struct {
         game.state.allocator.free(self.buffer);
     }
 
-    pub fn get_location(self: AttributeBuilder) gl.Uint {
+    pub fn get_location(self: AttributeBuilder) u32 {
         return self.last_location;
     }
 
     fn sizeFromType(t: gl.Enum) usize {
         return switch (t) {
-            gl.FLOAT => @sizeOf(gl.Float),
+            gl.FLOAT => @sizeOf(f32),
             else => @panic("currently unsupported vertex attribute variable"),
         };
     }
 
-    pub fn defineFloatAttributeValue(self: *AttributeBuilder, size: gl.Int) gl.Uint {
+    pub fn defineFloatAttributeValue(self: *AttributeBuilder, size: i32) u32 {
         return self.defineFloatAttributeValueWithDivisor(size, false);
     }
 
-    pub fn defineFloatAttributeValueWithDivisor(self: *AttributeBuilder, size: gl.Int, divisor: bool) gl.Uint {
+    pub fn defineFloatAttributeValueWithDivisor(self: *AttributeBuilder, size: i32, divisor: bool) u32 {
         var offset: usize = 0;
         for (self.attr_vars.items) |av| {
             offset += @as(usize, @intCast(av.size)) * sizeFromType(av.type);
@@ -112,7 +112,7 @@ pub const AttributeBuilder = struct {
         }
     }
 
-    pub fn addFloatAtLocation(self: *AttributeBuilder, location: gl.Uint, data: []const gl.Float, vertex_index: usize) void {
+    pub fn addFloatAtLocation(self: *AttributeBuilder, location: u32, data: []const f32, vertex_index: usize) void {
         const av = self.attr_vars.items[location - self.starting_location];
         const dataptr: []const u8 = std.mem.sliceAsBytes(data);
         if (self.debug) std.debug.print("dataptr len: {d}\n", .{dataptr.len});

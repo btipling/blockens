@@ -2,8 +2,8 @@ const std = @import("std");
 const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const zstbi = @import("zstbi");
-const game_state = @import("../../state/game.zig");
-const game = @import("../../game.zig");
+const game_state = @import("../state/state.zig");
+const game = @import("../game.zig");
 
 pub const shadergen = @import("shadergen.zig");
 pub const buffer_data = @import("buffer_data.zig");
@@ -14,49 +14,49 @@ pub const GfxErr = error{
 };
 
 pub const Gfx = struct {
-    pub fn initVAO() !gl.Uint {
-        var VAO: gl.Uint = undefined;
+    pub fn initVAO() !u32 {
+        var VAO: u32 = undefined;
         gl.genVertexArrays(1, &VAO);
         gl.bindVertexArray(VAO);
         return VAO;
     }
 
-    pub fn initVBO() !gl.Uint {
-        var VBO: gl.Uint = undefined;
+    pub fn initVBO() !u32 {
+        var VBO: u32 = undefined;
         gl.genBuffers(1, &VBO);
         gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
         return VBO;
     }
 
-    pub fn initEBO(indices: []const gl.Uint) !gl.Uint {
-        var EBO: gl.Uint = undefined;
+    pub fn initEBO(indices: []const u32) !u32 {
+        var EBO: u32 = undefined;
         gl.genBuffers(1, &EBO);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
 
-        const size = @as(isize, @intCast(indices.len * @sizeOf(gl.Uint)));
+        const size = @as(isize, @intCast(indices.len * @sizeOf(u32)));
         const indicesptr: *const anyopaque = indices.ptr;
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, size, indicesptr, gl.STATIC_DRAW);
         return EBO;
     }
 
-    pub fn initVertexShader(vertexShaderSource: [:0]const u8) !gl.Uint {
+    pub fn initVertexShader(vertexShaderSource: [:0]const u8) !u32 {
         return initShader(vertexShaderSource, gl.VERTEX_SHADER);
     }
 
-    pub fn initFragmentShader(fragmentShaderSource: [:0]const u8) !gl.Uint {
+    pub fn initFragmentShader(fragmentShaderSource: [:0]const u8) !u32 {
         return initShader(fragmentShaderSource, gl.FRAGMENT_SHADER);
     }
 
-    pub fn initShader(source: [:0]const u8, shaderType: c_uint) !gl.Uint {
-        const shader: gl.Uint = gl.createShader(shaderType);
+    pub fn initShader(source: [:0]const u8, shaderType: c_uint) !u32 {
+        const shader: u32 = gl.createShader(shaderType);
         gl.shaderSource(shader, 1, &[_][*c]const u8{source.ptr}, null);
         gl.compileShader(shader);
 
-        var success: gl.Int = 0;
+        var success: i32 = 0;
         gl.getShaderiv(shader, gl.COMPILE_STATUS, &success);
         if (success == 0) {
             var infoLog: [512]u8 = undefined;
-            var logSize: gl.Int = 0;
+            var logSize: i32 = 0;
             gl.getShaderInfoLog(shader, 512, &logSize, &infoLog);
             const i: usize = @intCast(logSize);
             std.debug.print("ERROR::SHADER::COMPILATION_FAILED\n{s}\n", .{infoLog[0..i]});
@@ -66,18 +66,18 @@ pub const Gfx = struct {
         return shader;
     }
 
-    pub fn initProgram(shaders: []const gl.Uint) !gl.Uint {
-        const shaderProgram: gl.Uint = gl.createProgram();
+    pub fn initProgram(shaders: []const u32) !u32 {
+        const shaderProgram: u32 = gl.createProgram();
         for (shaders) |shader| {
             gl.attachShader(shaderProgram, shader);
         }
 
         gl.linkProgram(shaderProgram);
-        var success: gl.Int = 0;
+        var success: i32 = 0;
         gl.getProgramiv(shaderProgram, gl.LINK_STATUS, &success);
         if (success == 0) {
             var infoLog: [512]u8 = undefined;
-            var logSize: gl.Int = 0;
+            var logSize: i32 = 0;
             gl.getProgramInfoLog(shaderProgram, 512, &logSize, &infoLog);
             const i: usize = @intCast(logSize);
             std.debug.print("ERROR::SHADER::PROGRAM::LINKING_FAILED\n{s}\n", .{infoLog[0..i]});
@@ -90,30 +90,30 @@ pub const Gfx = struct {
         return shaderProgram;
     }
 
-    pub fn setUniformMat(name: []const u8, program: gl.Uint, m: zm.Mat) void {
+    pub fn setUniformMat(name: []const u8, program: u32, m: zm.Mat) void {
         gl.useProgram(program);
 
-        var ma: [16]gl.Float = [_]gl.Float{undefined} ** 16;
+        var ma: [16]f32 = [_]f32{undefined} ** 16;
         zm.storeMat(&ma, m);
 
         const location = gl.getUniformLocation(program, @ptrCast(name));
         gl.uniformMatrix4fv(location, 1, gl.FALSE, &ma);
     }
 
-    pub fn setUniformBufferObject(name: []const u8, program: gl.Uint, ubo: gl.Uint, buffer_binding_point: gl.Uint) void {
-        const blockIndex: gl.Uint = gl.getUniformBlockIndex(program, @ptrCast(name));
+    pub fn setUniformBufferObject(name: []const u8, program: u32, ubo: u32, buffer_binding_point: u32) void {
+        const blockIndex: u32 = gl.getUniformBlockIndex(program, @ptrCast(name));
         gl.uniformBlockBinding(program, blockIndex, buffer_binding_point);
         gl.bindBufferBase(gl.UNIFORM_BUFFER, buffer_binding_point, ubo);
     }
 
-    pub fn initUniformBufferObject(data: zm.Mat) gl.Uint {
-        var ubo: gl.Uint = undefined;
+    pub fn initUniformBufferObject(data: zm.Mat) u32 {
+        var ubo: u32 = undefined;
         gl.genBuffers(1, &ubo);
         gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
         const uboStruct = struct {
-            transform: [16]gl.Float = [_]gl.Float{undefined} ** 16,
-            time_data: [4]gl.Float = [_]gl.Float{0} ** 4,
-            gfx_data: [4]gl.Uint = [_]gl.Uint{0} ** 4,
+            transform: [16]f32 = [_]f32{undefined} ** 16,
+            time_data: [4]f32 = [_]f32{0} ** 4,
+            gfx_data: [4]u32 = [_]u32{0} ** 4,
         };
         var ubo_data = uboStruct{};
         zm.storeMat(&ubo_data.transform, data);
@@ -123,9 +123,9 @@ pub const Gfx = struct {
         return ubo;
     }
 
-    pub fn updateInstanceData(program: gl.Uint, vao: gl.Uint, vbo: gl.Uint, data: []gl.Float) void {
+    pub fn updateInstanceData(program: u32, vao: u32, vbo: u32, data: []f32) void {
         gl.useProgram(program);
-        const size = @as(isize, @intCast(data.len * @sizeOf(gl.Float)));
+        const size = @as(isize, @intCast(data.len * @sizeOf(f32)));
         const dataptr: *const anyopaque = data.ptr;
         gl.bindVertexArray(vao);
         gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
@@ -137,15 +137,15 @@ pub const Gfx = struct {
 
     pub fn updateUniformBufferObject(
         updated: zm.Mat,
-        time: gl.Float,
-        animations_running: gl.Uint,
-        ubo: gl.Uint,
+        time: f32,
+        animations_running: u32,
+        ubo: u32,
     ) void {
         gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
         const uboStruct = struct {
-            transform: [16]gl.Float = [_]gl.Float{undefined} ** 16,
-            time_data: [4]gl.Float = [_]gl.Float{0} ** 4,
-            gfx_data: [4]gl.Uint = [_]gl.Uint{0} ** 4,
+            transform: [16]f32 = [_]f32{undefined} ** 16,
+            time_data: [4]f32 = [_]f32{0} ** 4,
+            gfx_data: [4]u32 = [_]u32{0} ** 4,
         };
         var ubo_data = uboStruct{};
         zm.storeMat(&ubo_data.transform, updated);
@@ -158,27 +158,27 @@ pub const Gfx = struct {
     }
 
     pub fn initAnimationShaderStorageBufferObject(
-        block_binding_point: gl.Uint,
+        block_binding_point: u32,
         data: []game_state.ElementsRendererConfig.AnimationKeyFrame,
-    ) gl.Uint {
+    ) u32 {
         // _ = data;
         const kf = struct {
-            data: [4]gl.Float,
-            scale: [4]gl.Float,
-            rotation: [4]gl.Float,
-            translation: [4]gl.Float,
+            data: [4]f32,
+            scale: [4]f32,
+            rotation: [4]f32,
+            translation: [4]f32,
         };
         var ar = std.ArrayListUnmanaged(kf){};
         defer ar.deinit(game.state.allocator);
         for (data) |d| {
             ar.append(game.state.allocator, kf{
-                .data = [4]gl.Float{ d.frame, 0, 0, 0 },
+                .data = [4]f32{ d.frame, 0, 0, 0 },
                 .scale = d.scale,
                 .rotation = d.rotation,
                 .translation = d.translation,
             }) catch unreachable;
         }
-        var ssbo: gl.Uint = undefined;
+        var ssbo: u32 = undefined;
         gl.genBuffers(1, &ssbo);
         gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
 
@@ -191,8 +191,8 @@ pub const Gfx = struct {
         return ssbo;
     }
 
-    pub fn initTextureFromColors(texture_data: []const gl.Uint) gl.Uint {
-        var texture: gl.Uint = undefined;
+    pub fn initTextureFromColors(texture_data: []const u32) u32 {
+        var texture: u32 = undefined;
         gl.genTextures(1, &texture);
         gl.bindTexture(gl.TEXTURE_2D, texture);
 
@@ -201,16 +201,16 @@ pub const Gfx = struct {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-        const width: gl.Int = 16;
-        const height: gl.Int = @divFloor(@as(gl.Int, @intCast(texture_data.len)), width);
+        const width: i32 = 16;
+        const height: i32 = @divFloor(@as(i32, @intCast(texture_data.len)), width);
         const imageData: *const anyopaque = texture_data.ptr;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
         gl.generateMipmap(gl.TEXTURE_2D);
         return texture;
     }
 
-    pub fn initTextureFromImage(img: []u8) !gl.Uint {
-        var texture: gl.Uint = undefined;
+    pub fn initTextureFromImage(img: []u8) !u32 {
+        var texture: u32 = undefined;
         gl.genTextures(1, &texture);
         gl.bindTexture(gl.TEXTURE_2D, texture);
 
@@ -222,8 +222,8 @@ pub const Gfx = struct {
         var image = try zstbi.Image.loadFromMemory(img, 4);
         defer image.deinit();
 
-        const width: gl.Int = @as(gl.Int, @intCast(image.width));
-        const height: gl.Int = @as(gl.Int, @intCast(image.height));
+        const width: i32 = @as(i32, @intCast(image.width));
+        const height: i32 = @as(i32, @intCast(image.height));
         const imageData: *const anyopaque = image.data.ptr;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
         gl.generateMipmap(gl.TEXTURE_2D);

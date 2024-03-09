@@ -1,5 +1,4 @@
 const std = @import("std");
-const gl = @import("zopengl").bindings;
 
 pub const varType = enum {
     vec2,
@@ -25,7 +24,7 @@ pub fn attribute_location(
 }
 
 pub fn ssbo_binding(
-    binding_point: gl.Uint,
+    binding_point: u32,
     comptime name: []const u8,
 ) ![250:0]u8 {
     var buffer: [250:0]u8 = [_:0]u8{0} ** 250;
@@ -35,10 +34,10 @@ pub fn ssbo_binding(
 
 pub fn vec4_to_buf(
     comptime fmt: []const u8,
-    v0: gl.Float,
-    v1: gl.Float,
-    v2: gl.Float,
-    v3: gl.Float,
+    v0: f32,
+    v1: f32,
+    v2: f32,
+    v3: f32,
 ) ![250:0]u8 {
     var buffer: [250:0]u8 = [_:0]u8{0} ** 250;
     _ = try std.fmt.bufPrint(&buffer, fmt, .{ v0, v1, v2, v3 });

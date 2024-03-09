@@ -1,11 +1,10 @@
 const std = @import("std");
-const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const zmesh = @import("zmesh");
 const sampler = @import("./cltf_sampler.zig");
-const game = @import("../../game.zig");
-const data = @import("../../data/data.zig");
-const game_state = @import("../../state/game.zig");
+const game = @import("../game.zig");
+const data = @import("../data/data.zig");
+const game_state = @import("../state/state.zig");
 const gltf = zmesh.io.zcgltf;
 
 pub const MeshErr = error{
@@ -218,7 +217,7 @@ pub const Mesh = struct {
         }
     }
 
-    pub fn materialBaseColorFromMesh(mesh: *gltf.Mesh) [4]gl.Float {
+    pub fn materialBaseColorFromMesh(mesh: *gltf.Mesh) [4]f32 {
         const primitives = mesh.primitives;
         for (0..mesh.primitives_count) |i| {
             const primitive = primitives[i];
@@ -231,7 +230,7 @@ pub const Mesh = struct {
             const pbr: gltf.PbrMetallicRoughness = material.pbr_metallic_roughness;
             return pbr.base_color_factor;
         }
-        return [_]gl.Float{ 1.0, 0.0, 1.0, 1.0 };
+        return [_]f32{ 1.0, 0.0, 1.0, 1.0 };
     }
 
     pub fn materialTextureFromMesh(_: *Mesh, mesh: *gltf.Mesh) ![]u8 {

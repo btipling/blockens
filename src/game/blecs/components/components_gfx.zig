@@ -15,25 +15,25 @@ pub const ElementsRendererConfig = struct {
 };
 
 pub const ElementsRenderer = struct {
-    program: gl.Uint = 0,
-    vao: gl.Uint = 0,
-    vbo: gl.Uint = 0,
-    ebo: gl.Uint = 0,
-    texture: gl.Uint = 0,
+    program: u32 = 0,
+    vao: u32 = 0,
+    vbo: u32 = 0,
+    ebo: u32 = 0,
+    texture: u32 = 0,
     numIndices: gl.Int = 0,
     enableDepthTest: bool = true,
 };
 
 pub const AnimationSSBO = struct {
-    ssbo: gl.Uint = 0,
-    animation_id: gl.Uint = 0,
+    ssbo: u32 = 0,
+    animation_id: u32 = 0,
 };
 
 pub const AnimationKeyFrame = struct {
-    frame: gl.Float = 0,
-    scale: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 1, 1, 1, 1 },
-    rotation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 1, 0, 0, 0 },
-    translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 0, 0, 0, 0 },
+    frame: f32 = 0,
+    scale: @Vector(4, f32) = @Vector(4, f32){ 1, 1, 1, 1 },
+    rotation: @Vector(4, f32) = @Vector(4, f32){ 1, 0, 0, 0 },
+    translation: @Vector(4, f32) = @Vector(4, f32){ 0, 0, 0, 0 },
 };
 
 pub const CanDraw = struct {};

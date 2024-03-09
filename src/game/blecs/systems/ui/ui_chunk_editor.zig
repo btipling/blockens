@@ -9,7 +9,7 @@ const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
 const script = @import("../../../script/script.zig");
 const menus = @import("../../../ui/menus.zig");
-const screen_helpers = @import("../../../screen/screen.zig");
+const screen_helpers = @import("../screen_helpers.zig");
 
 pub fn init() void {
     const s = system();

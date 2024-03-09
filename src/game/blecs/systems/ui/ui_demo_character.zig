@@ -6,7 +6,7 @@ const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
 const entities = @import("../../entities/entities.zig");
-const screen_helpers = @import("../../../screen/screen.zig");
+const screen_helpers = @import("../screen_helpers.zig");
 
 pub fn init() void {
     const s = system();

@@ -6,8 +6,7 @@ const gl = zopengl.bindings;
 const zstbi = @import("zstbi");
 const zmesh = @import("zmesh");
 const cfg = @import("config.zig");
-const ui = @import("ui/ui.zig");
-const gameState = @import("state/game.zig");
+const gameState = @import("state/state.zig");
 const blecs = @import("blecs/blecs.zig");
 const input = @import("input/input.zig");
 
@@ -21,7 +20,7 @@ fn cursorPosCallback(_: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) void {
 const glError = struct {
     source: gl.Enum = 0,
     error_type: gl.Enum = 0,
-    id: gl.Uint = 0,
+    id: u32 = 0,
     severity: gl.Enum = 0,
     fn equal(a: glError, b: glError) bool {
         if (a.source != b.source) return false;
@@ -37,7 +36,7 @@ var prev_error: glError = .{};
 fn glErrorCallbackfn(
     source: gl.Enum,
     error_type: gl.Enum,
-    id: gl.Uint,
+    id: u32,
     severity: gl.Enum,
     _: gl.Sizei,
     message: [*c]const gl.Char,
@@ -172,7 +171,7 @@ pub const Game = struct {
         main_loop: while (!state.window.shouldClose()) {
             glfw.pollEvents();
             {
-                const currentFrame: gl.Float = @floatCast(glfw.getTime());
+                const currentFrame: f32 = @floatCast(glfw.getTime());
                 state.input.delta_time = currentFrame - state.input.lastframe;
                 state.input.lastframe = currentFrame;
             }

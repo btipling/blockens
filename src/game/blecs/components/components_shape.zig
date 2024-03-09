@@ -1,5 +1,4 @@
 const ecs = @import("zflecs");
-const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const math = @import("../../math/math.zig");
 const game = @import("../../game.zig");
@@ -15,7 +14,7 @@ pub const Shape = struct {
 };
 
 pub const Color = struct {
-    color: @Vector(4, gl.Float) = undefined,
+    color: @Vector(4, f32) = undefined,
 
     pub fn fromVec(v: math.vecs.Vflx4) Color {
         return Color{
@@ -34,19 +33,19 @@ pub const Color = struct {
 };
 
 pub const Rotation = struct {
-    rot: @Vector(4, gl.Float) = undefined,
+    rot: @Vector(4, f32) = undefined,
 };
 
 pub const Scale = struct {
-    scale: @Vector(4, gl.Float) = undefined,
+    scale: @Vector(4, f32) = undefined,
 };
 
 pub const Translation = struct {
-    translation: @Vector(4, gl.Float) = undefined,
+    translation: @Vector(4, f32) = undefined,
 };
 
 pub const Position = struct {
-    position: @Vector(4, gl.Float) = undefined,
+    position: @Vector(4, f32) = undefined,
 };
 
 pub const DemoCubeTexture = struct {
@@ -55,7 +54,7 @@ pub const DemoCubeTexture = struct {
 };
 
 pub const UBO = struct {
-    binding_point: gl.Uint = 0,
+    binding_point: u32 = 0,
 };
 
 pub const NeedsSetup = struct {};

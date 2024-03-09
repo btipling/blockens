@@ -1,16 +1,15 @@
 const std = @import("std");
-const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const game = @import("../game.zig");
 const blecs = @import("../blecs/blecs.zig");
 const zgui = @import("zgui");
-const gameState = @import("../state/game.zig");
+const gameState = @import("../state/state.zig");
 
 pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
-    const x: gl.Float = @floatCast(xpos);
-    const y: gl.Float = @floatCast(ypos);
-    var last_x: gl.Float = x;
-    var last_y: gl.Float = y;
+    const x: f32 = @floatCast(xpos);
+    const y: f32 = @floatCast(ypos);
+    var last_x: f32 = x;
+    var last_y: f32 = y;
     var needsUpdate = false;
     if (game.state.input.cursor) |c| {
         if (c.last_x != x or c.last_y != y) needsUpdate = true;
@@ -61,7 +60,7 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
     const frontX = @cos(yaw) * @cos(pitch);
     const frontY = @sin(pitch);
     const frontZ = @sin(yaw) * @cos(pitch);
-    const front: @Vector(4, gl.Float) = @Vector(4, gl.Float){ frontX, frontY, frontZ, 1.0 };
+    const front: @Vector(4, f32) = @Vector(4, f32){ frontX, frontY, frontZ, 1.0 };
 
     game.state.input.cursor.?.last_x = x;
     game.state.input.cursor.?.last_y = y;

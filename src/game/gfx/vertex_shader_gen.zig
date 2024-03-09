@@ -1,15 +1,14 @@
 const std = @import("std");
 const zm = @import("zmath");
-const gl = @import("zopengl").bindings;
-const math = @import("../../math/math.zig");
+const math = @import("../math/math.zig");
 const shader_constants = @import("shader_constants.zig");
 const shader_helpers = @import("shader_helpers.zig");
-const game = @import("../../game.zig");
+const game = @import("../game.zig");
 
 pub const MeshTransforms = struct {
-    scale: ?@Vector(4, gl.Float),
-    rotation: ?@Vector(4, gl.Float),
-    translation: ?@Vector(4, gl.Float),
+    scale: ?@Vector(4, f32),
+    rotation: ?@Vector(4, f32),
+    translation: ?@Vector(4, f32),
 };
 
 pub const VertexShaderGen = struct {
@@ -18,13 +17,13 @@ pub const VertexShaderGen = struct {
         has_uniform_mat: bool = false,
         has_ubo: bool = false,
         has_texture_coords: bool = false,
-        animation_block_index: ?gl.Uint = null,
-        animation_id: ?gl.Uint = 0,
-        num_animation_frames: gl.Uint = 0,
+        animation_block_index: ?u32 = null,
+        animation_id: ?u32 = 0,
+        num_animation_frames: u32 = 0,
         has_normals: bool = false,
-        scale: ?@Vector(4, gl.Float) = null,
-        rotation: ?@Vector(4, gl.Float) = null,
-        translation: ?@Vector(4, gl.Float) = null,
+        scale: ?@Vector(4, f32) = null,
+        rotation: ?@Vector(4, f32) = null,
+        translation: ?@Vector(4, f32) = null,
         is_instanced: bool = false,
         is_meshed: bool = false,
         mesh_transforms: ?[]MeshTransforms,

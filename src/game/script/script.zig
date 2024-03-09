@@ -1,6 +1,5 @@
 const std = @import("std");
 const ziglua = @import("ziglua");
-const gl = @import("zopengl").bindings;
 const data = @import("../data/data.zig");
 const state = @import("../state/state.zig");
 const chunk = @import("../chunk.zig");
@@ -30,10 +29,10 @@ pub const Script = struct {
         self.luaInstance.deinit();
     }
 
-    pub fn evalTextureFunc(self: *Script, buf: [maxLuaScriptSize]u8) !?[]gl.Uint {
+    pub fn evalTextureFunc(self: *Script, buf: [maxLuaScriptSize]u8) !?[]u32 {
         std.debug.print("evalTextureFunc from lua {d}\n", .{buf.len});
         self.luaInstance.setTop(0);
-        var textureRGBAColor: [data.RGBAColorTextureSize]gl.Uint = [_]gl.Uint{0} ** data.RGBAColorTextureSize;
+        var textureRGBAColor: [data.RGBAColorTextureSize]u32 = [_]u32{0} ** data.RGBAColorTextureSize;
         var luaCode: [maxLuaScriptSize]u8 = [_]u8{0} ** maxLuaScriptSize;
         var nullIndex: usize = 0;
         for (buf) |c| {
@@ -75,10 +74,10 @@ pub const Script = struct {
                 std.log.err("evalTextureFunc: failed to get color", .{});
                 return err;
             };
-            textureRGBAColor[i - 1] = @as(gl.Uint, @intCast(color));
+            textureRGBAColor[i - 1] = @as(u32, @intCast(color));
             self.luaInstance.pop(1);
         }
-        const rv: []gl.Uint = try self.allocator.alloc(gl.Uint, textureRGBAColor.len);
+        const rv: []u32 = try self.allocator.alloc(u32, textureRGBAColor.len);
         @memcpy(rv, &textureRGBAColor);
         return rv;
     }
@@ -128,7 +127,7 @@ pub const Script = struct {
                 std.log.err("evalChunkFunc: failed to get color\n", .{});
                 return err;
             };
-            c[i - 1] = @as(gl.Int, @intCast(blockId));
+            c[i - 1] = @as(i32, @intCast(blockId));
             self.luaInstance.pop(1);
         }
         const rv: []i32 = try self.allocator.alloc(i32, c.len);
