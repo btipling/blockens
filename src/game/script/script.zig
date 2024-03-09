@@ -32,6 +32,9 @@ pub const Script = struct {
     }
 
     pub fn evalTextureFunc(self: *Script, buf: [maxLuaScriptSize]u8) !?[]u32 {
+        self.mutex.lock();
+        defer self.mutex.unlock();
+
         std.debug.print("evalTextureFunc from lua {d}\n", .{buf.len});
         self.luaInstance.setTop(0);
         var textureRGBAColor: [data.RGBAColorTextureSize]u32 = [_]u32{0} ** data.RGBAColorTextureSize;
