@@ -1,6 +1,5 @@
 const std = @import("std");
 const ecs = @import("zflecs");
-const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const components = @import("../../components/components.zig");
 const helpers = @import("../../helpers.zig");
@@ -37,7 +36,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     }
 }
 
-fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, gl.Float)) void {
+fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32)) void {
     var c: *chunk.Chunk = game.state.gfx.mesh_data.get(entity) orelse return;
     var keys = c.meshes.keyIterator();
     const parent: ecs.entity_t = ecs.get_parent(world, entity);

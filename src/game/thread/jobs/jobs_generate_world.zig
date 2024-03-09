@@ -1,9 +1,9 @@
 const std = @import("std");
-const game = @import("../game.zig");
-const state = @import("../state/state.zig");
-const data = @import("../data/data.zig");
-const script = @import("../script/script.zig");
-const blecs = @import("../blecs/blecs.zig");
+const game = @import("../../game.zig");
+const state = @import("../../state/state.zig");
+const data = @import("../../data/data.zig");
+const script = @import("../../script/script.zig");
+const blecs = @import("../../blecs/blecs.zig");
 
 pub const GenerateWorldJob = struct {
     pub fn exec(_: *@This()) void {

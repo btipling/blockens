@@ -7,7 +7,7 @@ const zmesh = @import("zmesh");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
 const chunk = @import("../chunk.zig");
-const jobs = @import("../jobs/jobs.zig");
+const jobs = @import("../thread/jobs/jobs.zig");
 const gltf = zmesh.io.zcgltf;
 pub const position = @import("position.zig");
 

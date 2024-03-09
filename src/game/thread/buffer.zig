@@ -15,8 +15,8 @@ pub const buffer_message_type = enum {
 pub const buffer_message = packed struct {
     id: i64 = 0,
     type: buffer_message_type,
-    flags: u16,
-    data: u16,
+    flags: u16 = 0,
+    data: u16 = 0,
 };
 
 const Buffer = struct {
@@ -25,7 +25,7 @@ const Buffer = struct {
     msg_mutex: std.Thread.Mutex,
     messages: std.ArrayList(buffer_message),
     chunk_gen_mutex: std.Thread.Mutex,
-    chunk_gens: std.AutoHashMap(buffer_message, []u8),
+    chunk_gens: std.AutoHashMap(buffer_message, []i32),
     chunk_mesh_mutex: std.Thread.Mutex,
     chunk_meshes: std.AutoHashMap(buffer_message, *chunk.Chunk),
 };
@@ -128,7 +128,7 @@ const demo_chunk_flag = 0x2;
 
 pub fn set_progress(msg: *buffer_message, done: bool, percentage: f16) void {
     if (done) msg.flags = msg.flags | done_flag;
-    msg.data = @intCast(percentage);
+    msg.data = @intFromFloat(percentage);
 }
 
 pub fn progress_report(msg: buffer_message) ProgressReport {

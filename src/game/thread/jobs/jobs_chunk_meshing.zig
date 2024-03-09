@@ -1,6 +1,6 @@
 const std = @import("std");
-const chunk = @import("../chunk.zig");
-const blecs = @import("../blecs/blecs.zig");
+const chunk = @import("../../chunk.zig");
+const blecs = @import("../../blecs/blecs.zig");
 
 pub const ChunkMeshJob = struct {
     chunk: *chunk.Chunk,

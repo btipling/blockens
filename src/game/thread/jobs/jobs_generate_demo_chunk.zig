@@ -1,8 +1,8 @@
 const std = @import("std");
-const game = @import("../game.zig");
-const script = @import("../script/script.zig");
-const blecs = @import("../blecs/blecs.zig");
-const buffer = @import("../thread/buffer.zig");
+const game = @import("../../game.zig");
+const script = @import("../../script/script.zig");
+const blecs = @import("../../blecs/blecs.zig");
+const buffer = @import("../buffer.zig");
 
 pub const GenerateDemoChunkJob = struct {
     pub fn exec(_: *@This()) void {
@@ -11,8 +11,9 @@ pub const GenerateDemoChunkJob = struct {
             std.debug.print("Error evaluating chunk function: {}\n", .{err});
             return;
         };
-        buffer.
-        var msg: buffer.buffer_message = buffer.new_message( .chunk_gen);
+        var msg: buffer.buffer_message = buffer.new_message(.chunk_gen);
         buffer.set_progress(&msg, true, 1);
+        buffer.put_chunk_gen_data(msg, chunk_data) catch unreachable;
+        buffer.write_message(msg) catch unreachable;
     }
 };
