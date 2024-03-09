@@ -87,23 +87,19 @@ pub const Script = struct {
         return rv;
     }
 
-    pub fn evalChunkFunc(self: *Script, buf: [maxLuaScriptSize]u8) ![]i32 {
+    pub fn evalChunkFunc(self: *Script, buf: []u8) ![]i32 {
         self.mutex.lock();
         defer self.mutex.unlock();
 
         std.debug.print("evalChunkFunc from lua {d}\n", .{buf.len});
         self.luaInstance.setTop(0);
-        var luaCode: [maxLuaScriptSize]u8 = [_]u8{0} ** maxLuaScriptSize;
-        var nullIndex: usize = 0;
-        for (buf) |c| {
-            if (c == 0) {
-                break;
-            }
-            luaCode[nullIndex] = c;
-            nullIndex += 1;
-        }
-        const luaCString: [:0]const u8 = luaCode[0..nullIndex :0];
-        std.debug.print("evalChunkFunc: nullIndex: {d} \n", .{nullIndex});
+        const slices: [1][]u8 = [_][]u8{buf};
+        const luaCString: [:0]u8 = try std.mem.concatWithSentinel(
+            self.allocator,
+            u8,
+            &slices,
+            0,
+        );
         self.luaInstance.doString(luaCString) catch |err| {
             std.log.err("evalChunkFunc: failed to eval lua code from string {s}.", .{luaCString});
             return err;

@@ -29,6 +29,14 @@ pub fn handle_incomming() void {
 fn handle_chunk_gen(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
     if (buffer.is_demo_chunk(msg)) return handle_demo_chunk_gen(msg);
+    const chunk_data = buffer.get_chunk_gen_data(msg).?;
+
+    var ch_cfg = game.state.ui.data.world_chunk_table_data.get(chunk_data.wp) orelse return;
+    ch_cfg.chunkData = chunk_data.chunk_data;
+    if (game.state.ui.data.world_chunk_table_data.get(chunk_data.wp)) |cd| {
+        game.state.allocator.free(cd.chunkData);
+    }
+    game.state.ui.data.world_chunk_table_data.put(chunk_data.wp, ch_cfg) catch unreachable;
 }
 
 fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
@@ -41,4 +49,6 @@ fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
 
 fn handle_chunk_mesh(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
+    const mesh_data = buffer.get_chunk_mesh_data(msg).?;
+    blecs.ecs.add(mesh_data.world, mesh_data.entity, blecs.components.block.NeedsMeshRendering);
 }
