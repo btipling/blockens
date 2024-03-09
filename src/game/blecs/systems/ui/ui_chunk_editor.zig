@@ -190,7 +190,7 @@ fn evalWorldChunkFunc() !void {
     std.debug.print("Writing chunk to world at position: {}, {}, {}\n", .{ x, y, z });
     const p = @Vector(4, f32){ x, y, z, 0 };
     const wp = state.position.worldPosition.initFromPositionV(p);
-    _ = game.state.jobs.generateWorld(wp, &game.state.ui.data.chunk_buf);
+    _ = game.state.jobs.generateWorldChunk(wp, &game.state.ui.data.chunk_buf);
 }
 
 fn listChunkScripts() !void {

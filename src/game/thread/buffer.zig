@@ -43,12 +43,12 @@ const Buffer = struct {
     chunk_meshes: std.AutoHashMap(buffer_message, chunk_mesh_data),
 };
 
-pub fn init(allocator: std.mem.Allocator) void {
+pub fn init(allocator: std.mem.Allocator) !void {
     var ta: std.heap.ThreadSafeAllocator = .{
         .child_allocator = allocator,
     };
     var a = ta.allocator();
-    buffer = a.create(Buffer);
+    buffer = try a.create(Buffer);
     buffer.* = .{
         .ta = ta,
         .allocator = allocator,
@@ -65,13 +65,13 @@ pub fn deinit() void {
     buffer.messages.deinit();
     var chunk_gen_iter = buffer.chunk_gens.valueIterator();
     while (chunk_gen_iter.next()) |c_d| {
-        buffer.allocator.free(c_d.*);
+        buffer.allocator.free(c_d.*.chunk_data);
     }
     buffer.chunk_gens.deinit();
 
     var chunk_mesh_iter = buffer.chunk_meshes.valueIterator();
     while (chunk_mesh_iter.next()) |c| {
-        buffer.allocator.destroy(c.*);
+        buffer.allocator.destroy(c.*.chunk);
     }
     buffer.chunk_meshes.deinit();
     buffer.allocator.destroy(buffer);
@@ -114,7 +114,10 @@ pub fn get_chunk_gen_data(msg: buffer_message) ?chunk_gen_data {
     buffer.chunk_gen_mutex.lock();
     defer buffer.chunk_gen_mutex.unlock();
     if (msg.type != .chunk_gen) return null;
-    return buffer.chunk_gens.fetchRemove(msg);
+    if (buffer.chunk_gens.fetchRemove(msg)) |kv| {
+        return kv.value;
+    }
+    return null;
 }
 
 pub fn put_chunk_mesh_data(msg: buffer_message, chunk_val: chunk_mesh_data) !void {
@@ -128,7 +131,10 @@ pub fn get_chunk_mesh_data(msg: buffer_message) ?chunk_mesh_data {
     buffer.chunk_mesh_mutex.lock();
     defer buffer.chunk_mesh_mutex.unlock();
     if (msg.type != .chunk_mesh) return null;
-    return buffer.chunk_meshes.fetchRemove(msg);
+    if (buffer.chunk_meshes.fetchRemove(msg)) |kv| {
+        return kv.value;
+    }
+    return null;
 }
 
 pub const ProgressReport = struct {
@@ -147,11 +153,11 @@ pub fn set_progress(msg: *buffer_message, done: bool, percentage: f16) void {
 pub fn progress_report(msg: buffer_message) ProgressReport {
     return .{
         .done = (msg.flags & done_flag) != 0x0,
-        .percent = @floatCast(msg.data),
+        .percent = @floatFromInt(msg.data),
     };
 }
 
-pub fn is_demo_chunk(msg: buffer_message) bool {
+pub fn is_demo_chunk(msg: buffer_message) !bool {
     if (msg.type != .chunk_gen) return BufferErr.Invalid;
     return (msg.flags & demo_chunk_flag) != 0x0;
 }

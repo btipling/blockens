@@ -53,7 +53,7 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn generateWorld(self: *Jobs, wp: state.position.worldPosition, script: []u8) zjobs.JobId {
+    pub fn generateWorldChunk(self: *Jobs, wp: state.position.worldPosition, script: []u8) zjobs.JobId {
         const s = game.state.allocator.alloc(u8, script.len) catch unreachable;
         @memcpy(s, script);
         return self.jobs.schedule(

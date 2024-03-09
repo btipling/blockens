@@ -434,7 +434,7 @@ fn evalChunksFunc() !void {
             ch_script = script.Script.dataScriptToScript(scriptData.script);
             scriptCache.put(ch_cfg.scriptId, ch_script) catch unreachable;
         }
-        _ = game.state.jobs.generateWorld(wp, &ch_script);
+        _ = game.state.jobs.generateWorldChunk(wp, &ch_script);
     }
 }
 
