@@ -158,6 +158,10 @@ pub fn progress_report(msg: buffer_message) ProgressReport {
     };
 }
 
+pub fn set_demo_chunk(msg: *buffer_message) void {
+    msg.flags = msg.flags | demo_chunk_flag;
+}
+
 pub fn is_demo_chunk(msg: buffer_message) !bool {
     if (msg.type != .chunk_gen) return BufferErr.Invalid;
     return (msg.flags & demo_chunk_flag) != 0x0;

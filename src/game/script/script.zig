@@ -100,6 +100,7 @@ pub const Script = struct {
             &slices,
             0,
         );
+        defer self.allocator.free(luaCString);
         self.luaInstance.doString(luaCString) catch |err| {
             std.log.err("evalChunkFunc: failed to eval lua code from string {s}.", .{luaCString});
             return err;

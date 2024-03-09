@@ -11,6 +11,7 @@ pub const GenerateDemoChunkJob = struct {
             return;
         };
         var msg: buffer.buffer_message = buffer.new_message(.chunk_gen);
+        buffer.set_demo_chunk(&msg);
         buffer.set_progress(&msg, true, 1);
         buffer.put_chunk_gen_data(msg, .{
             .chunk_data = chunk_data,
