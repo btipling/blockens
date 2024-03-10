@@ -8,13 +8,13 @@ const game = @import("../../../game.zig");
 
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "GfxUPdateSystem", ecs.PreUpdate, @constCast(&s));
+    ecs.SYSTEM(game.state.world, "GfxUpdateSystem", ecs.PreUpdate, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
-    desc.query.filter.terms[0] = .{ .id = ecs.id(components.gfx.ElementsRenderer) };
-    desc.query.filter.terms[1] = .{ .id = ecs.id(components.gfx.NeedsUniformUpdate) };
+    desc.query.filter.terms[0] = .{ .oper = .And, .id = ecs.id(components.gfx.ElementsRenderer) };
+    desc.query.filter.terms[1] = .{ .oper = .And, .id = ecs.id(components.gfx.NeedsUniformUpdate) };
     desc.run = run;
     return desc;
 }
@@ -26,7 +26,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse return;
             const er = ers[i];
-            ecs.remove(world, entity, components.mob.NeedsSetup);
+            if (!ecs.has_id(world, entity, ecs.id(components.gfx.NeedsUniformUpdate))) {
+                continue;
+            }
+            ecs.remove(world, entity, components.gfx.NeedsUniformUpdate);
             var m = zm.identity();
             if (ecs.get(world, entity, components.screen.WorldRotation)) |r| {
                 m = zm.mul(m, zm.quatToMat(r.rotation));

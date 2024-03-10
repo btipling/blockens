@@ -23,28 +23,107 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
-            if (input.keys.holdKey(.w)) goForward();
-            if (input.keys.holdKey(.s)) goBack();
-            if (input.keys.holdKey(.a)) goLeft();
-            if (input.keys.holdKey(.d)) goRight();
-            if (input.keys.holdKey(.space)) goUp();
-            if (input.keys.holdKey(.left_shift)) goDown();
+            if (input.keys.holdKey(.w)) skyCamF();
+            if (input.keys.holdKey(.s)) skyCamB();
+            if (input.keys.holdKey(.a)) skyCamL();
+            if (input.keys.holdKey(.d)) skyCamR();
+            if (input.keys.holdKey(.space)) skyCamU();
+            if (input.keys.holdKey(.left_shift)) skyCamD();
             if (input.keys.holdKey(.F3)) {
                 ecs.add(game.state.world, game.state.entities.ui, components.ui.Menu);
                 pressedKeyState = .F3;
+            } else if (input.keys.holdKey(.up)) {
+                playerF();
+                pressedKeyState = .up;
+            } else if (input.keys.holdKey(.left)) {
+                playerRL();
+                pressedKeyState = .left;
+            } else if (input.keys.holdKey(.right)) {
+                playerRR();
+                pressedKeyState = .right;
             } else {
                 if (pressedKeyState) |k| {
                     switch (k) {
                         .F3 => {
                             ecs.remove(game.state.world, game.state.entities.ui, components.ui.Menu);
-                            pressedKeyState = null;
                         },
+                        .up => playerStop(),
+                        .left => playerStop(),
+                        .right => playerStop(),
                         else => {},
                     }
+                    pressedKeyState = null;
                 }
             }
         }
     }
+}
+
+fn playerStop() void {
+    ecs.remove(game.state.world, game.state.entities.player, components.mob.Walking);
+}
+
+fn playerRL() void {
+    const rotation: *components.mob.Rotation = ecs.get_mut(
+        game.state.world,
+        game.state.entities.player,
+        components.mob.Rotation,
+    ) orelse return;
+    _ = &rotation;
+    const rot = rotation.rotation;
+    const up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 };
+    const angle = rotation.angle + 0.025;
+    const turn = zm.quatFromNormAxisAngle(up, angle * std.math.pi);
+    const new_rot: @Vector(4, f32) = zm.rotate(rot, turn);
+    std.debug.print("updating player left\n", .{});
+    rotation.rotation = new_rot;
+    rotation.angle = angle;
+    ecs.add(game.state.world, game.state.entities.player, components.mob.Walking);
+    ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
+}
+
+fn playerRR() void {
+    const rotation: *components.mob.Rotation = ecs.get_mut(
+        game.state.world,
+        game.state.entities.player,
+        components.mob.Rotation,
+    ) orelse return;
+    _ = &rotation;
+    const rot = rotation.rotation;
+    const up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 };
+    const angle = rotation.angle - 0.025;
+    const turn = zm.quatFromNormAxisAngle(up, angle * std.math.pi);
+    const new_rot: @Vector(4, f32) = zm.rotate(rot, turn);
+    std.debug.print("updating player left\n", .{});
+    rotation.rotation = new_rot;
+    rotation.angle = angle;
+    ecs.add(game.state.world, game.state.entities.player, components.mob.Walking);
+    ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
+}
+
+fn playerF() void {
+    const rotation: *const components.mob.Rotation = ecs.get(
+        game.state.world,
+        game.state.entities.player,
+        components.mob.Rotation,
+    ) orelse return;
+    var position: *components.mob.Position = ecs.get_mut(
+        game.state.world,
+        game.state.entities.player,
+        components.mob.Position,
+    ) orelse return;
+    _ = &position;
+    const rot = rotation.rotation;
+    const pos = position.position;
+    const speed = 2.5 * game.state.input.delta_time;
+    const forward = @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 };
+    const player_speed: @Vector(4, f32) = @splat(speed);
+    const frontVector: @Vector(4, f32) = zm.rotate(rot, forward);
+    const np = pos + frontVector * player_speed;
+    std.debug.print("updating player forwards\n", .{});
+    position.position = np;
+    ecs.add(game.state.world, game.state.entities.player, components.mob.Walking);
+    ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
 }
 
 fn getSpeed() f32 {
@@ -53,7 +132,7 @@ fn getSpeed() f32 {
     return speed;
 }
 
-fn goForward() void {
+fn skyCamF() void {
     const camera_front: *const components.screen.CameraFront = ecs.get(
         game.state.world,
         game.state.entities.game_camera,
@@ -73,7 +152,7 @@ fn goForward() void {
     updateConditionally(camera_pos, np, cp);
 }
 
-fn goBack() void {
+fn skyCamB() void {
     const camera_front: *const components.screen.CameraFront = ecs.get(
         game.state.world,
         game.state.entities.game_camera,
@@ -93,7 +172,7 @@ fn goBack() void {
     updateConditionally(camera_pos, np, cp);
 }
 
-fn goLeft() void {
+fn skyCamL() void {
     const camera_front: *const components.screen.CameraFront = ecs.get(
         game.state.world,
         game.state.entities.game_camera,
@@ -119,7 +198,7 @@ fn goLeft() void {
     updateConditionally(camera_pos, np, cp);
 }
 
-fn goRight() void {
+fn skyCamR() void {
     const camera_front: *const components.screen.CameraFront = ecs.get(
         game.state.world,
         game.state.entities.game_camera,
@@ -145,7 +224,7 @@ fn goRight() void {
     updateConditionally(camera_pos, np, cp);
 }
 
-fn goUp() void {
+fn skyCamU() void {
     const camera_up: *const components.screen.UpDirection = ecs.get(
         game.state.world,
         game.state.entities.game_camera,
@@ -166,7 +245,7 @@ fn goUp() void {
     updateConditionally(camera_pos, np, cp);
 }
 
-fn goDown() void {
+fn skyCamD() void {
     const camera_up: *const components.screen.UpDirection = ecs.get(
         game.state.world,
         game.state.entities.game_camera,

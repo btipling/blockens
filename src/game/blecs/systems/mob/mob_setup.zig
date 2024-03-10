@@ -52,6 +52,7 @@ fn setupMob(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, data_entity:
     const mob = game.state.gfx.mob_data.get(mob_id).?;
     for (mob.meshes.items, 0..) |mesh, mesh_id| {
         const c_m = helpers.new_child(world, data_entity);
+        ecs.add_pair(world, entity, entities.mob.HasMesh, c_m);
         _ = ecs.set(world, c_m, components.shape.Shape, .{ .shape_type = .mob });
         _ = ecs.set(world, c_m, components.mob.Mesh, .{
             .mesh_id = mesh_id,

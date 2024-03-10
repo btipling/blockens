@@ -14,6 +14,7 @@ pub const Health = struct {
     health: u32 = 0,
 };
 pub const NeedsSetup = struct {};
+pub const NeedsUpdate = struct {};
 pub const Texture = struct {};
 pub const Walking = struct {};
 pub const Position = struct {
@@ -21,6 +22,7 @@ pub const Position = struct {
 };
 pub const Rotation = struct {
     rotation: @Vector(4, f32) = .{ 0, 0, 0, 1 },
+    angle: f32 = 0,
 };
 
 pub fn init() void {
@@ -30,6 +32,7 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, Position);
     ecs.COMPONENT(game.state.world, Rotation);
     ecs.TAG(game.state.world, NeedsSetup);
+    ecs.TAG(game.state.world, NeedsUpdate);
     ecs.TAG(game.state.world, Texture);
     ecs.TAG(game.state.world, Walking);
 }

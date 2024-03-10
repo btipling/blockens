@@ -16,7 +16,7 @@ pub fn init() void {
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
     desc.query.filter.terms[0] = .{ .id = ecs.id(components.mob.Mob) };
-    desc.query.filter.terms[1] = .{ .id = ecs.id(components.mob.Walking) };
+    desc.query.filter.terms[1] = .{ .id = ecs.id(components.mob.NeedsUpdate) };
     desc.run = run;
     return desc;
 }
@@ -26,13 +26,13 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            const m: []components.mob.Mob = ecs.field(it, components.mob.Mob, 1) orelse return;
-            updateMob(world, entity, m[i].data_entity) catch unreachable;
+            updateMob(world, entity) catch unreachable;
         }
     }
 }
 
-fn updateMob(world: *ecs.world_t, entity: ecs.entity_t, data_entity: ecs.entity_t) !void {
+fn updateMob(world: *ecs.world_t, entity: ecs.entity_t) !void {
+    ecs.remove(world, entity, components.mob.NeedsUpdate);
     var loc: @Vector(4, f32) = .{ 1, 1, 1, 1 };
     var rotation: @Vector(4, f32) = .{ 0, 0, 0, 1 };
     if (ecs.get(world, entity, components.mob.Position)) |p| {
@@ -41,13 +41,13 @@ fn updateMob(world: *ecs.world_t, entity: ecs.entity_t, data_entity: ecs.entity_
     if (ecs.get(world, entity, components.mob.Rotation)) |r| {
         rotation = r.rotation;
     }
-    var it = ecs.children(world, data_entity);
-    while (ecs.iter_next(&it)) {
-        for (0..it.count()) |i| {
-            const child_entity = it.entities()[i];
-            _ = ecs.set(world, child_entity, components.screen.WorldRotation, .{ .rotation = rotation });
-            _ = ecs.set(world, child_entity, components.screen.WorldLocation, .{ .loc = loc });
-            ecs.add(world, child_entity, components.gfx.NeedsUniformUpdate);
-        }
+    var i: i32 = 0;
+    while (true) {
+        const child_entity = ecs.get_target(world, entity, entities.mob.HasMesh, i);
+        if (child_entity == 0) break;
+        _ = ecs.set(world, child_entity, components.screen.WorldRotation, .{ .rotation = rotation });
+        _ = ecs.set(world, child_entity, components.screen.WorldLocation, .{ .loc = loc });
+        ecs.add(world, child_entity, components.gfx.NeedsUniformUpdate);
+        i += 1;
     }
 }

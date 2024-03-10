@@ -448,7 +448,8 @@ pub fn initPlayerCharacter() void {
             .position = .{ 80, 64, 166, 0 },
         });
         _ = ecs.set(world, game.state.entities.player, components.mob.Rotation, .{
-            .rotation = .{ 0, 0.777, 0, 1 },
+            .rotation = .{ 0, 0, 0, 1 },
+            .angle = 0,
         });
     }
     ecs.add(world, game.state.entities.player, components.mob.NeedsSetup);
