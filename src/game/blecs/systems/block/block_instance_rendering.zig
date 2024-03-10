@@ -1,6 +1,5 @@
 const std = @import("std");
 const ecs = @import("zflecs");
-const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const components = @import("../../components/components.zig");
 const helpers = @import("../../helpers.zig");
@@ -37,7 +36,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     }
 }
 
-fn render_instances(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, gl.Float)) void {
+fn render_instances(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32)) void {
     var c: *chunk.Chunk = game.state.gfx.mesh_data.get(entity) orelse return;
     _ = game.state.gfx.mesh_data.remove(entity);
     const parent: ecs.entity_t = ecs.get_parent(world, entity);
@@ -79,8 +78,8 @@ fn render_instances(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, g
         }
         const bi: *game_state.BlockInstance = blocks_map.get(block_id).?;
         ecs.add(world, bi.entity_id, components.gfx.NeedsInstanceDataUpdate);
-        const p: @Vector(4, gl.Float) = chunk.getPositionAtIndexV(i);
-        const fp: @Vector(4, gl.Float) = .{ p[0] + loc[0], p[1] + loc[1], p[2] + loc[2], p[3] + loc[3] };
+        const p: @Vector(4, f32) = chunk.getPositionAtIndexV(i);
+        const fp: @Vector(4, f32) = .{ p[0] + loc[0], p[1] + loc[1], p[2] + loc[2], p[3] + loc[3] };
         bi.transforms.append(zm.translationV(fp)) catch |e| {
             std.debug.print("got an error appending transforms? {}\n", .{e});
         };

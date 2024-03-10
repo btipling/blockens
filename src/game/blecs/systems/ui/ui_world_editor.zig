@@ -1,7 +1,6 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const zgui = @import("zgui");
-const gl = @import("zopengl").bindings;
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
@@ -286,7 +285,7 @@ const chunkConfigInfo = struct {
     name: [:0]u8,
 };
 
-fn drawChunkConfigColumn(p: @Vector(4, gl.Float), w: f32, h: f32) !void {
+fn drawChunkConfigColumn(p: @Vector(4, f32), w: f32, h: f32) !void {
     const wp = state.position.worldPosition.initFromPositionV(p);
     var info: ?chunkConfigInfo = null;
     if (game.state.ui.data.world_chunk_table_data.get(wp)) |ch_cfg| {
@@ -375,10 +374,10 @@ fn drawTopDownChunkConfig() !void {
             }
             for (0..config.worldChunkDims) |ii| {
                 const x: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
-                const p: @Vector(4, gl.Float) = .{
-                    @as(gl.Float, @floatFromInt(x)),
-                    @as(gl.Float, @floatFromInt(game.state.ui.data.world_chunk_y)),
-                    @as(gl.Float, @floatFromInt(z)),
+                const p: @Vector(4, f32) = .{
+                    @as(f32, @floatFromInt(x)),
+                    @as(f32, @floatFromInt(game.state.ui.data.world_chunk_y)),
+                    @as(f32, @floatFromInt(z)),
                     0,
                 };
                 try drawChunkConfigColumn(p, colWidth, colWidth);
@@ -418,7 +417,25 @@ fn loadChunksInWorld() !void {
 }
 
 fn evalChunksFunc() !void {
-    _ = game.state.jobs.generateWorld();
+    std.debug.print("GenerateWorldJob: generating world\n", .{});
+    var scriptCache = std.AutoHashMap(i32, [script.maxLuaScriptSize]u8).init(game.state.allocator);
+    defer scriptCache.deinit();
+
+    var instancedKeys = game.state.ui.data.world_chunk_table_data.keyIterator();
+    while (instancedKeys.next()) |_k| {
+        const wp: state.position.worldPosition = _k.*;
+        const ch_cfg = game.state.ui.data.world_chunk_table_data.get(wp).?;
+        var ch_script: [script.maxLuaScriptSize]u8 = undefined;
+        if (scriptCache.get(ch_cfg.scriptId)) |sc| {
+            ch_script = sc;
+        } else {
+            var scriptData: data.chunkScript = undefined;
+            game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData) catch unreachable;
+            ch_script = script.Script.dataScriptToScript(scriptData.script);
+            scriptCache.put(ch_cfg.scriptId, ch_script) catch unreachable;
+        }
+        _ = game.state.jobs.generateWorldChunk(wp, &ch_script);
+    }
 }
 
 fn saveChunkDatas() !void {
@@ -427,7 +444,7 @@ fn saveChunkDatas() !void {
         inner: for (0..config.worldChunkDims) |ii| {
             const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
             const y = game.state.ui.data.world_chunk_y;
-            const p = @Vector(4, gl.Float){
+            const p = @Vector(4, f32){
                 @as(f32, @floatFromInt(x)),
                 @as(f32, @floatFromInt(y)),
                 @as(f32, @floatFromInt(z)),
@@ -478,10 +495,10 @@ fn loadChunkDatas() !void {
                     }
                     return err;
                 };
-                const p = @Vector(4, gl.Float){
-                    @as(gl.Float, @floatFromInt(x)),
-                    @as(gl.Float, @floatFromInt(y)),
-                    @as(gl.Float, @floatFromInt(z)),
+                const p = @Vector(4, f32){
+                    @as(f32, @floatFromInt(x)),
+                    @as(f32, @floatFromInt(y)),
+                    @as(f32, @floatFromInt(z)),
                     0,
                 };
                 const wp = state.position.worldPosition.initFromPositionV(p);

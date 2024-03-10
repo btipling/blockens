@@ -7,7 +7,7 @@ const zmesh = @import("zmesh");
 const data = @import("../data/data.zig");
 const script = @import("../script/script.zig");
 const chunk = @import("../chunk.zig");
-const jobs = @import("../jobs/jobs.zig");
+const thread = @import("../thread/thread.zig");
 const gltf = zmesh.io.zcgltf;
 pub const position = @import("position.zig");
 
@@ -329,7 +329,7 @@ pub const Game = struct {
     input: Input = .{},
     ui: UI = .{},
     gfx: Gfx = .{},
-    jobs: jobs.Jobs = .{},
+    jobs: thread.jobs.Jobs = .{},
     quit: bool = false,
 
     pub fn initInternals(self: *Game) !void {
@@ -338,8 +338,10 @@ pub const Game = struct {
         try self.initUIData();
         try self.initGfx();
         try self.populateUIOptions();
-        self.jobs = jobs.Jobs.init();
+        self.jobs = thread.jobs.Jobs.init();
         self.jobs.start();
+        try thread.handler.init();
+        try thread.buffer.init(self.allocator);
     }
 
     pub fn deinit(self: *Game) void {
@@ -349,6 +351,8 @@ pub const Game = struct {
         self.ui.data.deinit(self.allocator);
         self.allocator.destroy(self.ui.data);
         self.gfx.deinit(self.allocator);
+        thread.buffer.deinit();
+        thread.handler.deinit();
     }
 
     pub fn initDb(self: *Game) !void {

@@ -1,0 +1,25 @@
+const std = @import("std");
+const game = @import("../../game.zig");
+const state = @import("../../state/state.zig");
+const blecs = @import("../../blecs/blecs.zig");
+const buffer = @import("../buffer.zig");
+
+pub const GenerateWorldJob = struct {
+    wp: state.position.worldPosition,
+    script: []u8,
+
+    pub fn exec(self: *@This()) void {
+        const chunk_data = game.state.script.evalChunkFunc(self.script) catch |err| {
+            std.debug.print("Error evaluating chunk in eval chunks function: {}\n", .{err});
+            return;
+        };
+        game.state.allocator.free(self.script);
+        var msg: buffer.buffer_message = buffer.new_message(.chunk_gen);
+        buffer.set_progress(&msg, true, 1);
+        buffer.put_chunk_gen_data(msg, .{
+            .chunk_data = chunk_data,
+            .wp = self.wp,
+        }) catch unreachable;
+        buffer.write_message(msg) catch unreachable;
+    }
+};

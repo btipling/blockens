@@ -1,7 +1,6 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const zgui = @import("zgui");
-const gl = @import("zopengl").bindings;
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
@@ -21,12 +20,12 @@ fn system() ecs.system_desc_t {
 }
 
 const preMaxChunk = struct {
-    rotation_x: gl.Float = 0,
-    rotation_y: gl.Float = 0.341,
-    rotation_z: gl.Float = 0.083,
-    scale: gl.Float = 0.042,
-    translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ 2.55, 0.660, -0.264, 0 },
-    pp_translation: @Vector(4, gl.Float) = @Vector(4, gl.Float){ -0.650, 0.100, 0, 0 },
+    rotation_x: f32 = 0,
+    rotation_y: f32 = 0.341,
+    rotation_z: f32 = 0.083,
+    scale: f32 = 0.042,
+    translation: @Vector(4, f32) = @Vector(4, f32){ 2.55, 0.660, -0.264, 0 },
+    pp_translation: @Vector(4, f32) = @Vector(4, f32){ -0.650, 0.100, 0, 0 },
 };
 
 var pre_max: preMaxChunk = .{};

@@ -2,7 +2,6 @@ const std = @import("std");
 const ecs = @import("zflecs");
 const zmesh = @import("zmesh");
 const zm = @import("zmath");
-const gl = @import("zopengl").bindings;
 const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
@@ -51,7 +50,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 block_instance = game.state.gfx.settings_blocks.get(block.block_id);
             }
             if (block_instance == null) continue;
-            var data = std.ArrayList(gl.Float).initCapacity(
+            var data = std.ArrayList(f32).initCapacity(
                 game.state.allocator,
                 block_instance.?.transforms.items.len * 16,
             ) catch unreachable;

@@ -1,9 +1,9 @@
 const std = @import("std");
 const zjobs = @import("zjobs");
-const gl = @import("zopengl").bindings;
-const chunk = @import("../chunk.zig");
-const game = @import("../game.zig");
-const blecs = @import("../blecs/blecs.zig");
+const chunk = @import("../../chunk.zig");
+const game = @import("../../game.zig");
+const state = @import("../../state/state.zig");
+const blecs = @import("../../blecs/blecs.zig");
 const chunk_meshing = @import("jobs_chunk_meshing.zig");
 const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
 const generate_world = @import("jobs_generate_world.zig");
@@ -53,10 +53,15 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn generateWorld(self: *Jobs) zjobs.JobId {
+    pub fn generateWorldChunk(self: *Jobs, wp: state.position.worldPosition, script: []u8) zjobs.JobId {
+        const s = game.state.allocator.alloc(u8, script.len) catch unreachable;
+        @memcpy(s, script);
         return self.jobs.schedule(
             zjobs.JobId.none,
-            generate_world.GenerateWorldJob{},
+            generate_world.GenerateWorldJob{
+                .wp = wp,
+                .script = s,
+            },
         ) catch |e| {
             std.debug.print("error scheduling gen world job: {}\n", .{e});
             return zjobs.JobId.none;

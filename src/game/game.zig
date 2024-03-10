@@ -9,6 +9,7 @@ const cfg = @import("config.zig");
 const gameState = @import("state/state.zig");
 const blecs = @import("blecs/blecs.zig");
 const input = @import("input/input.zig");
+const thread = @import("thread/thread.zig");
 
 const pressStart2PFont = @embedFile("assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
 const robotoMonoFont = @embedFile("assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
@@ -185,6 +186,7 @@ pub const Game = struct {
                 const h: u32 = @intCast(fb_size[1]);
                 zgui.backend.newFrame(w, h);
             }
+            try thread.handler.handle_incoming();
             _ = blecs.ecs.progress(state.world, 0);
             zgui.backend.draw();
             state.window.swapBuffers();

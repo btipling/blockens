@@ -1,12 +1,12 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const zgui = @import("zgui");
-const gl = @import("zopengl").bindings;
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
+const state = @import("../../../state/state.zig");
 const script = @import("../../../script/script.zig");
 const menus = @import("../../../ui/menus.zig");
 const screen_helpers = @import("../screen_helpers.zig");
@@ -184,13 +184,13 @@ fn floatFromChunkBuf(buf: []u8) f32 {
 }
 
 fn evalWorldChunkFunc() !void {
-    const chunk_data = try game.state.script.evalChunkFunc(game.state.ui.data.chunk_buf);
     const x = floatFromChunkBuf(&game.state.ui.data.chunk_x_buf);
     const y = floatFromChunkBuf(&game.state.ui.data.chunk_y_buf);
     const z = floatFromChunkBuf(&game.state.ui.data.chunk_z_buf);
     std.debug.print("Writing chunk to world at position: {}, {}, {}\n", .{ x, y, z });
-    if (game.state.ui.data.chunk_demo_data) |d| game.state.allocator.free(d);
-    game.state.ui.data.chunk_demo_data = chunk_data;
+    const p = @Vector(4, f32){ x, y, z, 0 };
+    const wp = state.position.worldPosition.initFromPositionV(p);
+    _ = game.state.jobs.generateWorldChunk(wp, &game.state.ui.data.chunk_buf);
 }
 
 fn listChunkScripts() !void {

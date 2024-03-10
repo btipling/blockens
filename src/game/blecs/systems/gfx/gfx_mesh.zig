@@ -41,10 +41,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const parent = ecs.get_parent(world, entity);
             const vertexShader: [:0]const u8 = er.vertexShader;
             const fragmentShader: [:0]const u8 = er.fragmentShader;
-            const positions: [][3]gl.Float = er.positions;
-            const indices: []gl.Uint = er.indices;
-            const texcoords: ?[][2]gl.Float = er.texcoords;
-            const normals: ?[][3]gl.Float = er.normals;
+            const positions: [][3]f32 = er.positions;
+            const indices: []u32 = er.indices;
+            const texcoords: ?[][2]f32 = er.texcoords;
+            const normals: ?[][3]f32 = er.normals;
             const keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = er.keyframes;
             defer game.state.allocator.free(vertexShader);
             defer game.state.allocator.free(fragmentShader);
@@ -62,16 +62,16 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const ebo = gfx.Gfx.initEBO(indices) catch unreachable;
             const vs = gfx.Gfx.initVertexShader(vertexShader) catch unreachable;
             const fs = gfx.Gfx.initFragmentShader(fragmentShader) catch unreachable;
-            const program = gfx.Gfx.initProgram(&[_]gl.Uint{ vs, fs }) catch unreachable;
+            const program = gfx.Gfx.initProgram(&[_]u32{ vs, fs }) catch unreachable;
             gl.useProgram(program);
 
             var builder: *gfx.buffer_data.AttributeBuilder = game.state.allocator.create(gfx.buffer_data.AttributeBuilder) catch unreachable;
             defer game.state.allocator.destroy(builder);
             builder.* = gfx.buffer_data.AttributeBuilder.init(@intCast(positions.len), vbo, gl.STATIC_DRAW);
             defer builder.deinit();
-            var pos_loc: gl.Uint = 0;
-            var tc_loc: gl.Uint = 0;
-            var nor_loc: gl.Uint = 0;
+            var pos_loc: u32 = 0;
+            var tc_loc: u32 = 0;
+            var nor_loc: u32 = 0;
             // same order as defined in shader gen
             pos_loc = builder.defineFloatAttributeValue(3); // positions
             if (texcoords) |_| {
@@ -140,7 +140,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             }
 
             if (er.ubo_binding_point) |ubo_binding_point| {
-                var ubo: gl.Uint = 0;
+                var ubo: u32 = 0;
                 ubo = game.state.gfx.ubos.get(ubo_binding_point) orelse blk: {
                     const m = zm.identity();
                     const new_ubo = gfx.Gfx.initUniformBufferObject(m);
@@ -166,7 +166,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
             if (er.animation_binding_point) |animation_binding_point| {
                 if (er.keyframes) |k| {
-                    var ssbo: gl.Uint = 0;
+                    var ssbo: u32 = 0;
                     ssbo = game.state.gfx.ssbos.get(animation_binding_point) orelse blk: {
                         const new_ssbo = gfx.Gfx.initAnimationShaderStorageBufferObject(animation_binding_point, k);
                         game.state.gfx.ssbos.put(animation_binding_point, new_ssbo) catch unreachable;
@@ -175,7 +175,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 }
             }
 
-            var texture: gl.Uint = 0;
+            var texture: u32 = 0;
             if (er.demo_cube_texture) |dct| {
                 if (game.state.ui.data.texture_rgba_data) |d| {
                     texture = gfx.Gfx.initTextureFromColors(d[dct[0]..dct[1]]);

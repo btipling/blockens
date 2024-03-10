@@ -1,6 +1,5 @@
 const std = @import("std");
 const ecs = @import("zflecs");
-const gl = @import("zopengl").bindings;
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
 const chunk = @import("../../../chunk.zig");

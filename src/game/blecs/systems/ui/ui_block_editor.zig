@@ -1,7 +1,6 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const zgui = @import("zgui");
-const gl = @import("zopengl").bindings;
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
@@ -73,7 +72,7 @@ fn saveBlock() !void {
             return;
         }
     }
-    var emptyText = [_]gl.Uint{0} ** data.RGBAColorTextureSize;
+    var emptyText = [_]u32{0} ** data.RGBAColorTextureSize;
     try game.state.db.saveBlock(&game.state.ui.data.block_create_name_buf, @ptrCast(&emptyText));
     try listBlocks();
 }
@@ -91,7 +90,7 @@ fn loadBlock(block_id: u8) !void {
         nameBuf[i] = c;
     }
     // Settings texture data needs to be copied as it's owned separately
-    const texture_rgba_data: []gl.Uint = try game.state.allocator.alloc(gl.Uint, block.data.texture.len);
+    const texture_rgba_data: []u32 = try game.state.allocator.alloc(u32, block.data.texture.len);
     @memcpy(texture_rgba_data, block.data.texture);
 
     game.state.ui.data.block_create_name_buf = nameBuf;
