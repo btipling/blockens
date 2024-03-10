@@ -36,23 +36,17 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 const ww = zgui.getWindowWidth();
                 zgui.newLine();
                 zgui.newLine();
-                zgui.sameLine(.{
-                    .offset_from_start_x = ww / 2 - 250,
-                    .spacing = 20,
-                });
+
+                centerNext(ww);
                 if (zgui.button("Settings", .{
-                    .w = 450,
+                    .w = 500,
                     .h = 100,
                 })) {
                     screen_helpers.showWorldEditor();
                 }
                 var default_world: i32 = 0;
-                zgui.newLine();
-                zgui.sameLine(.{
-                    .offset_from_start_x = ww / 2 - 250,
-                    .spacing = 20,
-                });
 
+                centerNext(ww);
                 var combo: bool = false;
                 var cw: bool = false;
                 for (game.state.ui.data.world_options.items, 0..) |worldOption, i| {
@@ -77,9 +71,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         cw = zgui.beginPopupContextWindow();
                         default_world = worldOption.id;
                     }
-                    std.debug.print("selectable - {s} combo: {} cw: {}\n", .{ name, combo, cw });
-                    if (combo and cw) {
-                        std.debug.print("selectable? {s}\n", .{name});
+                    if (combo) {
                         if (zgui.selectable(&name, .{})) {
                             loadWorld(worldOption.id);
                         }
@@ -88,19 +80,22 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 if (cw) zgui.endPopup();
                 if (combo) zgui.endCombo();
 
-                zgui.newLine();
-                zgui.sameLine(.{
-                    .offset_from_start_x = ww / 2 - 250,
-                    .spacing = 20,
-                });
+                centerNext(ww);
                 if (zgui.button("Play", .{
-                    .w = 450,
+                    .w = 500,
                     .h = 100,
                 })) {
                     if (game.state.ui.data.world_loaded_id == 0) game.state.ui.data.world_loaded_id = default_world;
                     screen_helpers.showGameScreen();
                     helpers.loadChunkDatas() catch unreachable;
                     helpers.loadChunksInWorld();
+                }
+                centerNext(ww);
+                if (zgui.button("Exit", .{
+                    .w = 500,
+                    .h = 100,
+                })) {
+                    game.state.quit = true;
                 }
             }
             zgui.end();
@@ -110,4 +105,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
 fn loadWorld(worldId: i32) void {
     game.state.ui.data.world_loaded_id = worldId;
+}
+
+fn centerNext(ww: f32) void {
+    zgui.newLine();
+    zgui.sameLine(.{
+        .offset_from_start_x = ww / 2 - 250,
+        .spacing = 20,
+    });
 }
