@@ -323,7 +323,7 @@ const extractions = struct {
         if (ecs.get_id(world, entity, ecs.id(components.screen.WorldRotation))) |opaque_ptr| {
             const u: *const components.screen.WorldRotation = @ptrCast(@alignCast(opaque_ptr));
             e.has_uniform_mat = true;
-            e.uniform_mat = zm.mul(e.uniform_mat, zm.translationV(u.rotation));
+            e.uniform_mat = zm.mul(e.uniform_mat, zm.quatToMat(u.rotation));
         }
         if (ecs.get_id(world, entity, ecs.id(components.screen.WorldLocation))) |opaque_ptr| {
             const u: *const components.screen.WorldLocation = @ptrCast(@alignCast(opaque_ptr));
