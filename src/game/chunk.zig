@@ -79,6 +79,9 @@ pub const Chunker = struct {
     }
 
     fn updateMeshed(self: *Chunker, i: usize) !void {
+        if (self.chunk.instanced.contains(i)) {
+            _ = self.chunk.instanced.remove(i);
+        }
         if (self.numVoxelsInMesh < minVoxelsInMesh) {
             self.toBeMeshed[self.numVoxelsInMesh] = i;
             self.numVoxelsInMesh += 1;
@@ -98,11 +101,9 @@ pub const Chunker = struct {
         if (!self.cachingMeshed) {
             try self.chunk.meshes.put(self.currentVoxel, self.currentScale);
         } else {
-            try self.chunk.instanced.put(i, {});
+            if (!self.chunk.meshed.contains(i)) try self.chunk.instanced.put(i, {});
             for (self.toBeMeshed) |ii| {
-                if (!self.chunk.meshed.contains(ii)) {
-                    try self.chunk.instanced.put(ii, {});
-                }
+                if (!self.chunk.meshed.contains(ii)) try self.chunk.instanced.put(ii, {});
             }
         }
         self.toBeMeshed = [_]usize{0} ** minVoxelsInMesh;
