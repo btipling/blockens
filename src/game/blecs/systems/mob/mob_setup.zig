@@ -41,9 +41,13 @@ fn setupMob(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, data_entity:
         cm.build() catch unreachable;
     }
     var loc: @Vector(4, f32) = .{ 1, 1, 1, 1 };
+    var rotation: @Vector(4, f32) = .{ 0, 0, 0, 1 };
 
     if (ecs.get(world, entity, components.mob.Position)) |p| {
         loc = p.position;
+    }
+    if (ecs.get(world, entity, components.mob.Rotation)) |r| {
+        rotation = r.rotation;
     }
     const mob = game.state.gfx.mob_data.get(mob_id).?;
     for (mob.meshes.items, 0..) |mesh, mesh_id| {
@@ -55,6 +59,7 @@ fn setupMob(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, data_entity:
         });
         {
             _ = ecs.set(world, c_m, components.screen.WorldLocation, .{ .loc = loc });
+            _ = ecs.set(world, c_m, components.screen.WorldRotation, .{ .rotation = rotation });
             if (is_demo) {
                 _ = ecs.set(world, c_m, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
             } else {

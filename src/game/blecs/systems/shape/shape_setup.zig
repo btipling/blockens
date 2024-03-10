@@ -320,10 +320,15 @@ const extractions = struct {
             e.has_ubo = true;
             e.ubo_binding_point = u.binding_point;
         }
+        if (ecs.get_id(world, entity, ecs.id(components.screen.WorldRotation))) |opaque_ptr| {
+            const u: *const components.screen.WorldRotation = @ptrCast(@alignCast(opaque_ptr));
+            e.has_uniform_mat = true;
+            e.uniform_mat = zm.mul(e.uniform_mat, zm.translationV(u.rotation));
+        }
         if (ecs.get_id(world, entity, ecs.id(components.screen.WorldLocation))) |opaque_ptr| {
             const u: *const components.screen.WorldLocation = @ptrCast(@alignCast(opaque_ptr));
             e.has_uniform_mat = true;
-            e.uniform_mat = zm.translationV(u.loc);
+            e.uniform_mat = zm.mul(e.uniform_mat, zm.translationV(u.loc));
         }
         try extractMesh(&e, world, entity);
         extractAnimation(&e, world, entity);
