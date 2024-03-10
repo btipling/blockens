@@ -3,3 +3,4 @@ zig-out
 imgui.ini
 *.db
 .vscode
+error.log

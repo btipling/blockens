@@ -102,9 +102,6 @@ pub const Chunker = struct {
             try self.chunk.meshes.put(self.currentVoxel, self.currentScale);
         } else {
             if (!self.chunk.meshed.contains(i)) try self.chunk.instanced.put(i, {});
-            for (self.toBeMeshed) |ii| {
-                if (!self.chunk.meshed.contains(ii)) try self.chunk.instanced.put(ii, {});
-            }
         }
         self.toBeMeshed = [_]usize{0} ** minVoxelsInMesh;
         self.numVoxelsInMesh = 0;
