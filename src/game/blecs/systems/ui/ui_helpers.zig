@@ -2,6 +2,9 @@ const std = @import("std");
 const zgui = @import("zgui");
 const config = @import("../../../config.zig");
 const data = @import("../../../data/data.zig");
+const game = @import("../../../game.zig");
+const entities = @import("../../entities/entities.zig");
+const game_state = @import("../../../state/state.zig");
 const script = @import("../../../script/script.zig");
 
 const ScriptOptionsParams = struct {
@@ -49,4 +52,49 @@ pub fn scriptOptionsListBox(scriptOptions: std.ArrayList(data.chunkScriptOption)
         zgui.endListBox();
     }
     return rv;
+}
+
+pub fn loadChunksInWorld() void {
+    entities.screen.clearWorld();
+    var instancedKeys = game.state.ui.data.world_chunk_table_data.keyIterator();
+    while (instancedKeys.next()) |_k| {
+        _ = game.state.jobs.copyChunk(_k.*);
+    }
+}
+
+pub fn loadChunkDatas() !void {
+    var td = game.state.ui.data.world_chunk_table_data.valueIterator();
+    while (td.next()) |cc| {
+        game.state.allocator.free(cc.*.chunkData);
+    }
+    game.state.ui.data.world_chunk_table_data.clearAndFree();
+    for (0..2) |_i| {
+        const y: i32 = @as(i32, @intCast(_i));
+        for (0..config.worldChunkDims) |i| {
+            const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
+            for (0..config.worldChunkDims) |ii| {
+                const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
+                var chunkData = data.chunkData{};
+                game.state.db.loadChunkData(game.state.ui.data.world_loaded_id, x, y, z, &chunkData) catch |err| {
+                    if (err == data.DataErr.NotFound) {
+                        continue;
+                    }
+                    return err;
+                };
+                const p = @Vector(4, f32){
+                    @as(f32, @floatFromInt(x)),
+                    @as(f32, @floatFromInt(y)),
+                    @as(f32, @floatFromInt(z)),
+                    0,
+                };
+                const wp = game_state.position.worldPosition.initFromPositionV(p);
+                const cfg = game_state.chunkConfig{
+                    .id = chunkData.id,
+                    .scriptId = chunkData.scriptId,
+                    .chunkData = chunkData.voxels,
+                };
+                try game.state.ui.data.world_chunk_table_data.put(wp, cfg);
+            }
+        }
+    }
 }
