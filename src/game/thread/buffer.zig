@@ -3,6 +3,8 @@ const chunk = @import("../chunk.zig");
 const state = @import("../state/state.zig");
 const blecs = @import("../blecs/blecs.zig");
 
+var id: u64 = 0;
+
 var ta: std.heap.ThreadSafeAllocator = undefined;
 var buffer: *Buffer = undefined;
 
@@ -16,7 +18,8 @@ pub const buffer_message_type = enum {
 };
 
 pub const buffer_message = packed struct {
-    id: i64 = 0,
+    id: u64 = 0,
+    ts: i64 = 0,
     type: buffer_message_type,
     flags: u16 = 0,
     data: u16 = 0,
@@ -85,8 +88,13 @@ pub fn write_message(message: buffer_message) !void {
 }
 
 pub fn new_message(msg_type: buffer_message_type) buffer_message {
+    if (id >= std.math.maxInt(u64)) {
+        id = 0;
+    }
+    id += 1;
     return .{
-        .id = std.time.milliTimestamp(),
+        .id = id,
+        .ts = std.time.milliTimestamp(),
         .type = msg_type,
     };
 }

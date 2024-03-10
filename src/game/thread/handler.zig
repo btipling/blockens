@@ -50,7 +50,7 @@ fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
 
 fn handle_chunk_mesh(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
-    const mesh_data = buffer.get_chunk_mesh_data(msg).?;
+    const mesh_data = buffer.get_chunk_mesh_data(msg) orelse return;
     const world = mesh_data.world orelse return;
     const entity = mesh_data.entity orelse return;
     blecs.ecs.add(world, entity, blecs.components.block.NeedsMeshRendering);
