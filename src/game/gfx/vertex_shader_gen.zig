@@ -201,13 +201,13 @@ pub const VertexShaderGen = struct {
             r.a("    vec4 kft1 = vec4(0, 1, 0, 0);\n");
             r.a("    vec4 kft2 = vec4(0, 0, 1, 0);\n");
             r.a("    vec4 kft3 =  vec4(traq.x, traq.y, traq.z, 1);\n");
-            r.a("    mat4 trans = mat4(kft0, kft1, kft2, kft3);\n");
+            r.a("    mat4 bl_trans = mat4(kft0, kft1, kft2, kft3);\n");
             r.a("    vec4 rotq = slerp(kf.rotation, sf.rotation, indices.t);\n");
             r.a("    mat4 rot = quat_to_mat(rotq);\n");
 
             r.a("    pos = scam * pos;\n");
             r.a("    pos = rot * pos;\n");
-            r.a("    pos = trans * pos;\n");
+            r.a("    pos = bl_trans * pos;\n");
             if (r.cfg.animation_id) |ai| {
                 if (ai != 0) {
                     r.a("   }\n");

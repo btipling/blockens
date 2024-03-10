@@ -9,8 +9,8 @@ AnimationFrameIndices get_frame_indices() {
     float time = animation_data.x;
     AnimationFrameIndices indices = AnimationFrameIndices(-1, -1, 0.0);
 
-    float max = frames[num_animation_frames - 1].data[0];
-    float current_t = mod(time, max); 
+    float bl_max = frames[num_animation_frames - 1].data[0];
+    float current_t = mod(time, bl_max); 
     for (int i = 0; i < num_animation_frames; i++) {
         if (frames[i].data[0] > current_t) {
             indices.index1 = max(0, i - 1);

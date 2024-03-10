@@ -258,6 +258,7 @@ pub fn initDemoCube() void {
     });
     _ = ecs.set(world, c_dc, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 * 3 });
     ecs.add(world, c_dc, components.shape.NeedsSetup);
+    ecs.add(world, c_dc, components.Debug);
     // Add animation to cube:
     const animation = helpers.new_child(world, c_dc);
     _ = ecs.set(world, animation, components.gfx.AnimationSSBO, .{
