@@ -1,8 +1,8 @@
 const std = @import("std");
 const zgui = @import("zgui");
-const config = @import("../config.zig");
-const data = @import("../data/data.zig");
-const script = @import("../script/script.zig");
+const config = @import("../../../config.zig");
+const data = @import("../../../data/data.zig");
+const script = @import("../../../script/script.zig");
 
 const ScriptOptionsParams = struct {
     w: f32 = 500.0,

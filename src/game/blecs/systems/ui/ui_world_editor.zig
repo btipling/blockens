@@ -10,7 +10,7 @@ const chunk = @import("../../../chunk.zig");
 const data = @import("../../../data/data.zig");
 const game_state = @import("../../../state/state.zig");
 const state = @import("../../../state/state.zig");
-const menus = @import("../../../ui/menus.zig");
+const helpers = @import("ui_helpers.zig");
 const script = @import("../../../script/script.zig");
 
 const yOptions = enum {
@@ -251,7 +251,7 @@ fn drawChunkConfigPopup() !void {
             zgui.closeCurrentPopup();
         }
         try listChunkScripts();
-        if (menus.scriptOptionsListBox(game.state.ui.data.chunk_script_options, .{ .w = 700 })) |scriptOptionId| {
+        if (helpers.scriptOptionsListBox(game.state.ui.data.chunk_script_options, .{ .w = 700 })) |scriptOptionId| {
             std.debug.print("selected {d} for chunk at ({d},{d},{d})\n", .{
                 scriptOptionId,
                 game.state.ui.data.world_current_chunk[0],

@@ -21,6 +21,10 @@ pub fn showWorldEditor() void {
     showSettingsScreen(blecs.components.screen.WorldEditor);
 }
 
+pub fn showTitleScreen() void {
+    showSettingsScreen(blecs.components.screen.TitleScreen);
+}
+
 pub fn showSettingsScreen(comptime T: type) void {
     const screen: *blecs.components.screen.Screen = blecs.ecs.get_mut(
         game.state.world,

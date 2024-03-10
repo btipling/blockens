@@ -13,4 +13,5 @@ pub fn init() void {
     tags.init();
     systems.init();
     entities.init();
+    systems.helpers.showTitleScreen();
 }

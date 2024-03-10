@@ -8,7 +8,7 @@ const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
 const state = @import("../../../state/state.zig");
 const script = @import("../../../script/script.zig");
-const menus = @import("../../../ui/menus.zig");
+const helpers = @import("ui_helpers.zig");
 const screen_helpers = @import("../screen_helpers.zig");
 
 pub fn init() void {
@@ -134,7 +134,7 @@ fn drawControls() !void {
             try listChunkScripts();
         }
         zgui.popStyleVar(.{ .count = 1 });
-        if (menus.scriptOptionsListBox(game.state.ui.data.chunk_script_options, .{})) |scriptOptionId| {
+        if (helpers.scriptOptionsListBox(game.state.ui.data.chunk_script_options, .{})) |scriptOptionId| {
             try loadChunkScriptFunc(scriptOptionId);
         }
     }

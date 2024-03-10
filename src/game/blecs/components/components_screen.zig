@@ -74,6 +74,7 @@ pub const BlockEditor = struct {};
 pub const ChunkEditor = struct {};
 pub const CharacterEditor = struct {};
 pub const WorldEditor = struct {};
+pub const TitleScreen = struct {};
 
 pub fn init() void {
     ecs.COMPONENT(game.state.world, Mob);
@@ -109,4 +110,5 @@ pub fn init() void {
     ecs.TAG(game.state.world, ChunkEditor);
     ecs.TAG(game.state.world, CharacterEditor);
     ecs.TAG(game.state.world, WorldEditor);
+    ecs.TAG(game.state.world, TitleScreen);
 }
