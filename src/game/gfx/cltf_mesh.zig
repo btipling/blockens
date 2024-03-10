@@ -214,8 +214,9 @@ pub const Mesh = struct {
             mob_mesh.rotation = .{ gltf_r[0], gltf_r[1], gltf_r[2], gltf_r[3] };
         }
         if (node.has_translation == 1) {
-            const t = node.translation;
-            mob_mesh.translation = .{ t[0], t[1], t[2], 0 };
+            var gltf_t = node.translation;
+            if (parent == null) gltf_t[1] *= -1;
+            mob_mesh.translation = .{ gltf_t[0], gltf_t[1], gltf_t[2], 0 };
         }
     }
 

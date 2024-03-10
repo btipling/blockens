@@ -96,13 +96,13 @@ pub const UIData = struct {
         0,
     },
     demo_character_rotation_x: f32 = 0.500,
-    demo_character_rotation_y: f32 = 0.551,
+    demo_character_rotation_y: f32 = 0.536,
     demo_character_rotation_z: f32 = 0.501,
     demo_character_scale: f32 = 0.235,
     demo_character_translation: @Vector(4, f32) = @Vector(4, f32){
-        -3.550,
-        2.898,
-        -0.423,
+        -7.393,
+        -0.293,
+        -0.060,
         0,
     },
     demo_character_pp_translation: @Vector(4, f32) = @Vector(4, f32){

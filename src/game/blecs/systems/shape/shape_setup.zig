@@ -514,7 +514,10 @@ fn cube() meshData {
 
 fn voxel(world: *ecs.world_t, entity: ecs.entity_t) !meshData {
     if (!ecs.has_id(world, entity, ecs.id(components.block.Meshscale))) return cube();
-    const scale: @Vector(4, f32) = ecs.get(world, entity, components.block.Meshscale).?.scale;
+    var scale: @Vector(4, f32) = .{ 0, 0, 0, 0 };
+    if (ecs.get(world, entity, components.block.Meshscale)) |s| {
+        scale = s.scale;
+    }
     const allocator = game.state.allocator;
     var indicesAL = std.ArrayList(u32).init(allocator);
 
@@ -543,6 +546,7 @@ fn voxel(world: *ecs.world_t, entity: ecs.entity_t) !meshData {
     // voxel meshes are centered around origin and range fro -0.5 to 0.5 so need a translation
     v.translate(0.5, 0.5, 0.5);
     v.scale(scale[0], scale[1], scale[2]);
+    v.translate(0.5, 0.5, 0.5);
 
     const positions: [][3]f32 = game.state.allocator.alloc([3]f32, v.positions.len) catch unreachable;
     @memcpy(positions, v.positions);

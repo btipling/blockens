@@ -79,7 +79,7 @@ fn render_instances(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f
         const bi: *game_state.BlockInstance = blocks_map.get(block_id).?;
         ecs.add(world, bi.entity_id, components.gfx.NeedsInstanceDataUpdate);
         const p: @Vector(4, f32) = chunk.getPositionAtIndexV(i);
-        const fp: @Vector(4, f32) = .{ p[0] + loc[0], p[1] + loc[1], p[2] + loc[2], p[3] + loc[3] };
+        const fp: @Vector(4, f32) = .{ p[0] + 0.5 + loc[0], p[1] + 0.5 + loc[1], p[2] + 0.5 + loc[2], p[3] + loc[3] };
         bi.transforms.append(zm.translationV(fp)) catch |e| {
             std.debug.print("got an error appending transforms? {}\n", .{e});
         };
