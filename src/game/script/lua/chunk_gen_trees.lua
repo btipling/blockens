@@ -1,8 +1,8 @@
 function generate_chunk()
     math.randomseed(os.time())
     local trees = {}
-    local num_trees = 15
-    local leaves_r = 7
+    local num_trees = 25
+    local leaves_r = 3
     for i = 1, num_trees do
         local cx = math.random(64)
         local cz = math.random(64)
@@ -35,15 +35,19 @@ function generate_chunk()
         local leaves = 10
         local r = 5
         blocks[i] = air
-        if y >= 20 then
+        if y >= 10 then
             goto continue
         end
         for index, pos in ipairs(trees) do
             cx = pos[1]
             cz = pos[2]
             if cx == x and cz == z then
-                blocks[i] = tree
-            elseif y >= 10 and (x - cx)^2 + (z - cz)^2 <= leaves_r^2 then
+                if y <= 7 then
+                   blocks[i] = tree
+                else
+                    blocks[i] = leaves
+                end
+            elseif y >= 2 and (x - cx)^2 + (z - cz)^2 <= leaves_r^2 then
                 blocks[i] = leaves
             end
         end
