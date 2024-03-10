@@ -8,7 +8,6 @@ const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
 const game_state = @import("../../../state/state.zig");
 const gfx = @import("../../../gfx/gfx.zig");
-const shadergen = @import("../../../gfx/shadergen.zig");
 
 pub fn init() void {
     const s = system();
@@ -136,7 +135,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             }
 
             if (er.transform) |t| {
-                gfx.Gfx.setUniformMat(shadergen.constants.TransformMatName, program, t);
+                gfx.Gfx.setUniformMat(gfx.constants.TransformMatName, program, t);
             }
 
             if (er.ubo_binding_point) |ubo_binding_point| {
@@ -147,7 +146,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     game.state.gfx.ubos.put(ubo_binding_point, new_ubo) catch unreachable;
                     break :blk new_ubo;
                 };
-                gfx.Gfx.setUniformBufferObject(shadergen.constants.UBOName, program, ubo, ubo_binding_point);
+                gfx.Gfx.setUniformBufferObject(gfx.constants.UBOName, program, ubo, ubo_binding_point);
 
                 var camera: ecs.entity_t = 0;
                 if (parent == screen.gameDataEntity) {

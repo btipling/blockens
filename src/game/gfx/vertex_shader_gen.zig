@@ -1,7 +1,7 @@
 const std = @import("std");
 const zm = @import("zmath");
 const math = @import("../math/math.zig");
-const shader_constants = @import("shader_constants.zig");
+const constants = @import("gfx_constants.zig");
 const shader_helpers = @import("shader_helpers.zig");
 const game = @import("../game.zig");
 
@@ -121,7 +121,7 @@ pub const VertexShaderGen = struct {
         fn gen_uniforms(r: *runner) !void {
             if (r.cfg.has_uniform_mat) {
                 r.a("\nuniform mat4 ");
-                r.a(shader_constants.TransformMatName);
+                r.a(constants.TransformMatName);
                 r.a(";\n\n");
             }
         }
@@ -129,15 +129,15 @@ pub const VertexShaderGen = struct {
         fn gen_ubo(r: *runner) !void {
             if (r.cfg.has_ubo) {
                 r.a("\nlayout(std140) uniform ");
-                r.a(shader_constants.UBOName);
+                r.a(constants.UBOName);
                 r.a(" {\n    mat4 ");
-                r.a(shader_constants.UBOMatName);
+                r.a(constants.UBOMatName);
                 r.a(";\n");
                 r.a("    vec4 ");
-                r.a(shader_constants.UBOAnimationDataName);
+                r.a(constants.UBOAnimationDataName);
                 r.a(";\n");
                 r.a("    uint ");
-                r.a(shader_constants.UBOGFXDataName);
+                r.a(constants.UBOGFXDataName);
                 r.a("[4];\n");
                 r.a("};\n\n");
             }
@@ -158,7 +158,7 @@ pub const VertexShaderGen = struct {
                 r.a("    vec4 translation;\n");
                 r.a("};\n\n");
                 r.a("\n");
-                line = try shader_helpers.ssbo_binding(bi, shader_constants.AnimationBlockName);
+                line = try shader_helpers.ssbo_binding(bi, constants.AnimationBlockName);
                 r.l(&line);
                 r.a("{\n");
                 line = try shader_helpers.scalar(usize, "    key_frame frames[{d}];\n", r.cfg.num_animation_frames);
@@ -187,7 +187,7 @@ pub const VertexShaderGen = struct {
             if (r.cfg.animation_id) |ai| {
                 if (ai != 0) {
                     r.a("   bool isAnimationRunning = (");
-                    r.a(shader_constants.UBOGFXDataName);
+                    r.a(constants.UBOGFXDataName);
                     const line = try shader_helpers.scalar(usize, "[0] & 0x{X}u) != 0u;\n", ai);
                     r.l(&line);
                     r.a("   if(isAnimationRunning) {\n");
@@ -325,12 +325,12 @@ pub const VertexShaderGen = struct {
             try r.gen_mesh_transforms();
             if (r.cfg.has_uniform_mat) {
                 r.a("    pos = ");
-                r.a(shader_constants.TransformMatName);
+                r.a(constants.TransformMatName);
                 r.a(" * pos;\n");
             }
             if (r.cfg.has_ubo) {
                 r.a("    pos = ");
-                r.a(shader_constants.UBOMatName);
+                r.a(constants.UBOMatName);
                 r.a(" * pos;\n");
             }
             r.a("    gl_Position = pos;\n");
