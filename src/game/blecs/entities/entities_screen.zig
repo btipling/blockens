@@ -417,6 +417,25 @@ pub fn initDemoCharacter() void {
             .mob_id = 1,
             .data_entity = settings_data,
         });
+        _ = ecs.set(world, game.state.entities.demo_player, components.mob.Position, .{
+            .position = game.state.ui.data.demo_cube_translation,
+        });
     }
     ecs.add(world, game.state.entities.demo_player, components.mob.NeedsSetup);
+}
+
+pub fn initPlayerCharacter() void {
+    std.debug.print("init player character\n", .{});
+    const world = game.state.world;
+    if (game.state.entities.player == 0) {
+        game.state.entities.player = ecs.new_entity(game.state.world, "Player");
+        _ = ecs.set(world, game.state.entities.player, components.mob.Mob, .{
+            .mob_id = 1,
+            .data_entity = game_data,
+        });
+        _ = ecs.set(world, game.state.entities.player, components.mob.Position, .{
+            .position = .{ 80, 64, 166, 0 },
+        });
+    }
+    ecs.add(world, game.state.entities.player, components.mob.NeedsSetup);
 }

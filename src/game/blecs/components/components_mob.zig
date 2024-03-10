@@ -16,11 +16,15 @@ pub const Health = struct {
 pub const NeedsSetup = struct {};
 pub const Texture = struct {};
 pub const Walking = struct {};
+pub const Position = struct {
+    position: @Vector(4, f32) = .{ 1, 1, 1, 1 },
+};
 
 pub fn init() void {
     ecs.COMPONENT(game.state.world, Mob);
     ecs.COMPONENT(game.state.world, Mesh);
     ecs.COMPONENT(game.state.world, Health);
+    ecs.COMPONENT(game.state.world, Position);
     ecs.TAG(game.state.world, NeedsSetup);
     ecs.TAG(game.state.world, Texture);
     ecs.TAG(game.state.world, Walking);

@@ -89,6 +89,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     screen_helpers.showGameScreen();
                     helpers.loadChunkDatas() catch unreachable;
                     helpers.loadChunksInWorld();
+                    helpers.loadCharacterInWorld();
                 }
                 centerNext(ww);
                 if (zgui.button("Exit", .{

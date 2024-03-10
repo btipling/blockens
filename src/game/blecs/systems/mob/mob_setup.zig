@@ -1,6 +1,7 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
 const helpers = @import("../../helpers.zig");
 const game = @import("../../../game.zig");
 const game_state = @import("../../../state/state.zig");
@@ -33,12 +34,17 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 }
 
 fn setupMob(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, data_entity: ecs.entity_t) !void {
+    const is_demo = data_entity == entities.screen.settings_data;
     if (game.state.gfx.mob_data.get(mob_id) == null) {
         var cm = cltf_mesh.Mesh.init(mob_id) catch unreachable;
         defer cm.deinit();
         cm.build() catch unreachable;
     }
+    var loc: @Vector(4, f32) = .{ 1, 1, 1, 1 };
 
+    if (ecs.get(world, entity, components.mob.Position)) |p| {
+        loc = p.position;
+    }
     const mob = game.state.gfx.mob_data.get(mob_id).?;
     for (mob.meshes.items, 0..) |mesh, mesh_id| {
         const c_m = helpers.new_child(world, data_entity);
@@ -48,14 +54,12 @@ fn setupMob(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, data_entity:
             .mob_entity = entity,
         });
         {
-            // TODO: add position
-            _ = ecs.set(
-                world,
-                c_m,
-                components.shape.Translation,
-                .{ .translation = game.state.ui.data.demo_cube_translation },
-            );
-            _ = ecs.set(world, c_m, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
+            _ = ecs.set(world, c_m, components.screen.WorldLocation, .{ .loc = loc });
+            if (is_demo) {
+                _ = ecs.set(world, c_m, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
+            } else {
+                _ = ecs.set(world, c_m, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
+            }
         }
 
         if (mesh.animations != null and mesh.animations.?.items.len > 0) {

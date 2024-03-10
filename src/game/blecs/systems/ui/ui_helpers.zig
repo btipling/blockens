@@ -62,6 +62,10 @@ pub fn loadChunksInWorld() void {
     }
 }
 
+pub fn loadCharacterInWorld() void {
+    entities.screen.initPlayerCharacter();
+}
+
 pub fn loadChunkDatas() !void {
     var td = game.state.ui.data.world_chunk_table_data.valueIterator();
     while (td.next()) |cc| {
