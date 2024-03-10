@@ -186,7 +186,7 @@ pub const Mesh = struct {
             &mob_mesh.tangents,
         );
         self.mob.meshes.items[mob_mesh.id] = mob_mesh;
-        try self.transformFromNode(node, mob_mesh);
+        try self.transformFromNode(node, mob_mesh, parent);
 
         var nodes: [*]*gltf.Node = undefined;
         const T = @TypeOf(node.children);
@@ -200,7 +200,7 @@ pub const Mesh = struct {
         }
     }
 
-    pub fn transformFromNode(_: *Mesh, node: *gltf.Node, mob_mesh: *game_state.MobMesh) !void {
+    pub fn transformFromNode(_: *Mesh, node: *gltf.Node, mob_mesh: *game_state.MobMesh, parent: ?usize) !void {
         if (node.has_matrix == 1) {
             mob_mesh.transform = zm.matFromArr(node.matrix);
         }
@@ -209,7 +209,9 @@ pub const Mesh = struct {
             mob_mesh.scale = .{ s[0], s[1], s[2], 0 };
         }
         if (node.has_rotation == 1) {
-            mob_mesh.rotation = node.rotation;
+            var gltf_r: zm.Quat = node.rotation;
+            if (parent == null) gltf_r[3] *= -1;
+            mob_mesh.rotation = .{ gltf_r[0], gltf_r[1], gltf_r[2], gltf_r[3] };
         }
         if (node.has_translation == 1) {
             const t = node.translation;
