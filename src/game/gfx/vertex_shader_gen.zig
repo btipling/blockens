@@ -339,6 +339,7 @@ pub const VertexShaderGen = struct {
             }
             if (r.cfg.is_meshed) {
                 r.a("    fragPos = position;\n");
+                r.a("    fragPos = vec3(fragPos.x + 0.5, fragPos.y + 0.5, fragPos.z + 0.5);");
             }
             if (r.cfg.has_normals) {
                 r.a("    fragNormal = normal;\n");

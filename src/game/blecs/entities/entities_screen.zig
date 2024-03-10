@@ -128,9 +128,9 @@ fn initCamera() void {
     const camera = ecs.new_entity(game.state.world, "GameCamera");
     game.state.entities.game_camera = camera;
     _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = gfx.constants.GameUBOBindingPoint });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, f32){ 65, 100, 262, 1.0 } });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, f32){ 0.03, -0.155, -0.7, 0.0 } });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = -90, .pitch = -19.4 });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, f32){ 86, 65, 172, 1.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, f32){ -0.602, -0.00494, -0.372, 0.0 } });
+    _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = -50, .pitch = -1.4 });
     _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 } });
     // These dimensions should also be component data to support monitors other than the one I've been working with:
     const h: f32 = @floatFromInt(config.windows_height);
