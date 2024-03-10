@@ -75,7 +75,6 @@ fn playerRL() void {
     const angle = rotation.angle + 0.025;
     const turn = zm.quatFromNormAxisAngle(up, angle * std.math.pi);
     const new_rot: @Vector(4, f32) = zm.rotate(rot, turn);
-    std.debug.print("updating player left\n", .{});
     rotation.rotation = new_rot;
     rotation.angle = angle;
     ecs.add(game.state.world, game.state.entities.player, components.mob.Walking);
@@ -94,7 +93,6 @@ fn playerRR() void {
     const angle = rotation.angle - 0.025;
     const turn = zm.quatFromNormAxisAngle(up, angle * std.math.pi);
     const new_rot: @Vector(4, f32) = zm.rotate(rot, turn);
-    std.debug.print("updating player left\n", .{});
     rotation.rotation = new_rot;
     rotation.angle = angle;
     ecs.add(game.state.world, game.state.entities.player, components.mob.Walking);
@@ -120,7 +118,6 @@ fn playerF() void {
     const player_speed: @Vector(4, f32) = @splat(speed);
     const frontVector: @Vector(4, f32) = zm.rotate(rot, forward);
     const np = pos + frontVector * player_speed;
-    std.debug.print("updating player forwards\n", .{});
     position.position = np;
     ecs.add(game.state.world, game.state.entities.player, components.mob.Walking);
     ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
