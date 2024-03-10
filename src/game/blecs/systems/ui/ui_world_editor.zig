@@ -4,7 +4,6 @@ const zgui = @import("zgui");
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
-const helpers = @import("../../helpers.zig");
 const game = @import("../../../game.zig");
 const config = @import("../../../config.zig");
 const chunk = @import("../../../chunk.zig");
@@ -388,31 +387,10 @@ fn drawTopDownChunkConfig() !void {
 }
 
 fn loadChunksInWorld() !void {
-    const world = game.state.world;
     entities.screen.clearWorld();
     var instancedKeys = game.state.ui.data.world_chunk_table_data.keyIterator();
     while (instancedKeys.next()) |_k| {
-        if (@TypeOf(_k) == *state.position.worldPosition) {
-            const wp: state.position.worldPosition = _k.*;
-            const ch_cfg = game.state.ui.data.world_chunk_table_data.get(wp).?;
-            const p = wp.vecFromWorldPosition();
-
-            var c: *chunk.Chunk = chunk.Chunk.init(game.state.allocator) catch unreachable;
-
-            c.data = try game.state.allocator.alloc(i32, ch_cfg.chunkData.len);
-            @memcpy(c.data, ch_cfg.chunkData);
-            const chunk_entity = helpers.new_child(world, entities.screen.game_data);
-            _ = ecs.set(world, chunk_entity, components.block.Chunk, .{
-                .loc = .{
-                    p[0] * chunk.chunkDim,
-                    p[1] * chunk.chunkDim,
-                    p[2] * chunk.chunkDim,
-                    0,
-                },
-            });
-            ecs.add(world, chunk_entity, components.block.NeedsMeshing);
-            game.state.gfx.mesh_data.put(chunk_entity, c) catch unreachable;
-        }
+        _ = game.state.jobs.copyChunk(_k.*);
     }
 }
 

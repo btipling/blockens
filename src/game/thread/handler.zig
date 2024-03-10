@@ -3,6 +3,7 @@ const game = @import("../game.zig");
 const blecs = @import("../blecs/blecs.zig");
 const chunk = @import("../chunk.zig");
 const buffer = @import("./buffer.zig");
+const helpers = @import("../blecs/helpers.zig");
 
 var handler: *Handler = undefined;
 
@@ -23,6 +24,7 @@ pub fn handle_incoming() !void {
     switch (msg.type) {
         .chunk_gen => try handle_chunk_gen(msg),
         .chunk_mesh => handle_chunk_mesh(msg),
+        .chunk_copy => handle_copy_chunk(msg),
     }
 }
 
@@ -54,4 +56,23 @@ fn handle_chunk_mesh(msg: buffer.buffer_message) void {
     const world = mesh_data.world orelse return;
     const entity = mesh_data.entity orelse return;
     blecs.ecs.add(world, entity, blecs.components.block.NeedsMeshRendering);
+}
+
+fn handle_copy_chunk(msg: buffer.buffer_message) void {
+    if (!buffer.progress_report(msg).done) return;
+    const copy_data = buffer.get_chunk_copy_data(msg) orelse return;
+    const wp = copy_data.wp;
+    const p = wp.vecFromWorldPosition();
+    const world = game.state.world;
+    const chunk_entity = helpers.new_child(world, blecs.entities.screen.game_data);
+    _ = blecs.ecs.set(world, chunk_entity, blecs.components.block.Chunk, .{
+        .loc = .{
+            p[0] * chunk.chunkDim,
+            p[1] * chunk.chunkDim,
+            p[2] * chunk.chunkDim,
+            0,
+        },
+    });
+    blecs.ecs.add(world, chunk_entity, blecs.components.block.NeedsMeshing);
+    game.state.gfx.mesh_data.put(chunk_entity, copy_data.chunk) catch unreachable;
 }

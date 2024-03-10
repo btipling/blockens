@@ -15,6 +15,7 @@ pub const BufferErr = error{
 pub const buffer_message_type = enum {
     chunk_gen,
     chunk_mesh,
+    chunk_copy,
 };
 
 pub const buffer_message = packed struct {
@@ -36,6 +37,11 @@ pub const chunk_mesh_data = struct {
     chunk: *chunk.Chunk,
 };
 
+pub const chunk_copy_data = struct {
+    wp: state.position.worldPosition,
+    chunk: *chunk.Chunk,
+};
+
 const Buffer = struct {
     ta: std.heap.ThreadSafeAllocator,
     allocator: std.mem.Allocator,
@@ -45,6 +51,8 @@ const Buffer = struct {
     chunk_gens: std.AutoHashMap(buffer_message, chunk_gen_data),
     chunk_mesh_mutex: std.Thread.Mutex,
     chunk_meshes: std.AutoHashMap(buffer_message, chunk_mesh_data),
+    chunk_copy_mutex: std.Thread.Mutex,
+    chunk_copies: std.AutoHashMap(buffer_message, chunk_copy_data),
 };
 
 pub fn init(allocator: std.mem.Allocator) !void {
@@ -62,6 +70,8 @@ pub fn init(allocator: std.mem.Allocator) !void {
         .chunk_gens = std.AutoHashMap(buffer_message, chunk_gen_data).init(a),
         .chunk_mesh_mutex = .{},
         .chunk_meshes = std.AutoHashMap(buffer_message, chunk_mesh_data).init(a),
+        .chunk_copy_mutex = .{},
+        .chunk_copies = std.AutoHashMap(buffer_message, chunk_copy_data).init(a),
     };
 }
 
@@ -78,6 +88,12 @@ pub fn deinit() void {
         buffer.allocator.destroy(c.*.chunk);
     }
     buffer.chunk_meshes.deinit();
+
+    var chunk_copies_iter = buffer.chunk_copies.valueIterator();
+    while (chunk_copies_iter.next()) |c| {
+        buffer.allocator.destroy(c.*.chunk);
+    }
+    buffer.chunk_copies.deinit();
     buffer.allocator.destroy(buffer);
 }
 
@@ -141,6 +157,23 @@ pub fn get_chunk_mesh_data(msg: buffer_message) ?chunk_mesh_data {
     defer buffer.chunk_mesh_mutex.unlock();
     if (msg.type != .chunk_mesh) return null;
     if (buffer.chunk_meshes.fetchRemove(msg)) |kv| {
+        return kv.value;
+    }
+    return null;
+}
+
+pub fn put_chunk_copy_data(msg: buffer_message, chunk_val: chunk_copy_data) !void {
+    buffer.chunk_copy_mutex.lock();
+    defer buffer.chunk_copy_mutex.unlock();
+    if (msg.type != .chunk_copy) return BufferErr.Invalid;
+    try buffer.chunk_copies.put(msg, chunk_val);
+}
+
+pub fn get_chunk_copy_data(msg: buffer_message) ?chunk_copy_data {
+    buffer.chunk_copy_mutex.lock();
+    defer buffer.chunk_copy_mutex.unlock();
+    if (msg.type != .chunk_copy) return null;
+    if (buffer.chunk_copies.fetchRemove(msg)) |kv| {
         return kv.value;
     }
     return null;

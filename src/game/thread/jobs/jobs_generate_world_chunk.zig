@@ -4,7 +4,7 @@ const state = @import("../../state/state.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const buffer = @import("../buffer.zig");
 
-pub const GenerateWorldJob = struct {
+pub const GenerateWorldChunkJob = struct {
     wp: state.position.worldPosition,
     script: []u8,
 
