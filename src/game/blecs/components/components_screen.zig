@@ -17,6 +17,7 @@ pub const Camera = struct {
     ubo: u32 = 0,
     elapsedTime: f32 = 0,
 };
+pub const CurrentCamera = struct {};
 pub const CameraPosition = struct {
     pos: @Vector(4, f32) = undefined,
 };
@@ -81,6 +82,7 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, Screen);
 
     ecs.COMPONENT(game.state.world, Camera);
+    ecs.TAG(game.state.world, CurrentCamera);
     ecs.COMPONENT(game.state.world, CameraPosition);
     ecs.COMPONENT(game.state.world, CameraFront);
     ecs.COMPONENT(game.state.world, CameraRotation);

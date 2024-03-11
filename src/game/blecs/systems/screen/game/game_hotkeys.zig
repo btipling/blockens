@@ -116,8 +116,8 @@ fn playerF() void {
     const speed = 2.5 * game.state.input.delta_time;
     const forward = @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 };
     const player_speed: @Vector(4, f32) = @splat(speed);
-    const frontVector: @Vector(4, f32) = zm.rotate(rot, forward);
-    const np = pos + frontVector * player_speed;
+    const front_vector: @Vector(4, f32) = zm.rotate(rot, forward);
+    const np = pos + front_vector * player_speed;
     position.position = np;
     ecs.add(game.state.world, game.state.entities.player, components.mob.Walking);
     ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
@@ -144,8 +144,8 @@ fn skyCamF() void {
     const cf = camera_front.front;
     const cp = camera_pos.pos;
     const speed = getSpeed();
-    const cameraSpeed: @Vector(4, f32) = @splat(speed);
-    const np = cp + cf * cameraSpeed;
+    const camera_speed: @Vector(4, f32) = @splat(speed);
+    const np = cp + cf * camera_speed;
     updateConditionally(camera_pos, np, cp);
 }
 
@@ -164,8 +164,8 @@ fn skyCamB() void {
     const cf = camera_front.front;
     const cp = camera_pos.pos;
     const speed = getSpeed();
-    const cameraSpeed: @Vector(4, f32) = @splat(speed);
-    const np = cp - cf * cameraSpeed;
+    const camera_speed: @Vector(4, f32) = @splat(speed);
+    const np = cp - cf * camera_speed;
     updateConditionally(camera_pos, np, cp);
 }
 
@@ -190,8 +190,8 @@ fn skyCamL() void {
     const cu = camera_up.up;
     const cp = camera_pos.pos;
     const speed = getSpeed();
-    const cameraSpeed: @Vector(4, f32) = @splat(speed);
-    const np = cp - zm.normalize3(zm.cross3(cf, cu)) * cameraSpeed;
+    const camera_speed: @Vector(4, f32) = @splat(speed);
+    const np = cp - zm.normalize3(zm.cross3(cf, cu)) * camera_speed;
     updateConditionally(camera_pos, np, cp);
 }
 
@@ -216,8 +216,8 @@ fn skyCamR() void {
     const cu = camera_up.up;
     const cp = camera_pos.pos;
     const speed = getSpeed();
-    const cameraSpeed: @Vector(4, f32) = @splat(speed);
-    const np = cp + zm.normalize3(zm.cross3(cf, cu)) * cameraSpeed;
+    const camera_speed: @Vector(4, f32) = @splat(speed);
+    const np = cp + zm.normalize3(zm.cross3(cf, cu)) * camera_speed;
     updateConditionally(camera_pos, np, cp);
 }
 
@@ -236,9 +236,9 @@ fn skyCamU() void {
     const cu = camera_up.up;
     const cp = camera_pos.pos;
     const speed = getSpeed();
-    const cameraSpeed: @Vector(4, f32) = @splat(speed);
-    const upDirection: @Vector(4, f32) = @splat(1.0);
-    const np = cp + cu * cameraSpeed * upDirection;
+    const camera_speed: @Vector(4, f32) = @splat(speed);
+    const up_direction: @Vector(4, f32) = @splat(1.0);
+    const np = cp + cu * camera_speed * up_direction;
     updateConditionally(camera_pos, np, cp);
 }
 
@@ -257,9 +257,9 @@ fn skyCamD() void {
     const cu = camera_up.up;
     const cp = camera_pos.pos;
     const speed = getSpeed();
-    const cameraSpeed: @Vector(4, f32) = @splat(speed);
-    const downDirection: @Vector(4, f32) = @splat(-1.0);
-    const np = cp + cu * cameraSpeed * downDirection;
+    const camera_speed: @Vector(4, f32) = @splat(speed);
+    const down_direction: @Vector(4, f32) = @splat(-1.0);
+    const np = cp + cu * camera_speed * down_direction;
     updateConditionally(camera_pos, np, cp);
 }
 

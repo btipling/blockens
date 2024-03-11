@@ -27,7 +27,7 @@ pub fn init() void {
 
     initCrossHairs();
     // initFloor();
-    initCamera();
+    initCameras();
     initSettingsCamera();
     initCursor();
 }
@@ -124,36 +124,65 @@ fn initFloor() void {
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, game_data);
 }
 
-fn initCamera() void {
-    const camera = ecs.new_entity(game.state.world, "GameCamera");
-    game.state.entities.sky_camera = camera;
-    _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = gfx.constants.GameUBOBindingPoint });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{
+fn initCameras() void {
+    // sky cam
+    const sky_camera = ecs.new_entity(game.state.world, "SkyCamera");
+    game.state.entities.sky_camera = sky_camera;
+    _ = ecs.set(game.state.world, sky_camera, components.screen.Camera, .{ .ubo = gfx.constants.GameUBOBindingPoint });
+    _ = ecs.set(game.state.world, sky_camera, components.screen.CameraPosition, .{
         .pos = @Vector(4, f32){ 86, 65, 172, 1.0 },
     });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{
+    _ = ecs.set(game.state.world, sky_camera, components.screen.CameraFront, .{
         .front = @Vector(4, f32){ -0.602, -0.0494, -0.372, 0.0 },
     });
     _ = ecs.set(
         game.state.world,
-        camera,
+        sky_camera,
         components.screen.CameraRotation,
         .{ .yaw = -508, .pitch = -2.5 },
     );
-    _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{
+    _ = ecs.set(game.state.world, sky_camera, components.screen.UpDirection, .{
         .up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 },
     });
     // These dimensions should also be component data to support monitors other than the one I've been working with:
     const h: f32 = @floatFromInt(config.windows_height);
     const w: f32 = @floatFromInt(config.windows_width);
-    _ = ecs.set(game.state.world, camera, components.screen.Perspective, .{
+    _ = ecs.set(game.state.world, sky_camera, components.screen.Perspective, .{
         .fovy = config.fov,
         .aspect = w / h,
         .near = config.near,
         .far = config.far,
     });
-    ecs.add(game.state.world, camera, components.screen.Updated);
-    ecs.add_pair(game.state.world, camera, ecs.ChildOf, game_data);
+    ecs.add(game.state.world, sky_camera, components.screen.CurrentCamera);
+    ecs.add(game.state.world, sky_camera, components.screen.Updated);
+    ecs.add_pair(game.state.world, sky_camera, ecs.ChildOf, game_data);
+
+    // third person cam
+    const tpc = ecs.new_entity(game.state.world, "ThirdPersonCamera");
+    game.state.entities.third_person_camera = tpc;
+    _ = ecs.set(game.state.world, tpc, components.screen.Camera, .{ .ubo = gfx.constants.GameUBOBindingPoint });
+    _ = ecs.set(game.state.world, tpc, components.screen.CameraPosition, .{
+        .pos = @Vector(4, f32){ 0, 0, 0, 1.0 },
+    });
+    _ = ecs.set(game.state.world, tpc, components.screen.CameraFront, .{
+        .front = @Vector(4, f32){ 0, 0, 0, 0.0 },
+    });
+    _ = ecs.set(
+        game.state.world,
+        tpc,
+        components.screen.CameraRotation,
+        .{ .yaw = 0, .pitch = 5 },
+    );
+    _ = ecs.set(game.state.world, tpc, components.screen.UpDirection, .{
+        .up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 },
+    });
+    _ = ecs.set(game.state.world, tpc, components.screen.Perspective, .{
+        .fovy = config.fov,
+        .aspect = w / h,
+        .near = config.near,
+        .far = config.far,
+    });
+    ecs.add_pair(game.state.world, tpc, ecs.ChildOf, game_data);
 }
 
 fn initCursor() void {
@@ -176,6 +205,7 @@ fn initSettingsCamera() void {
         .near = config.near,
         .far = config.far,
     });
+    ecs.add(game.state.world, camera, components.screen.CurrentCamera);
     ecs.add(game.state.world, camera, components.screen.Updated);
     ecs.add_pair(game.state.world, camera, ecs.ChildOf, settings_data);
 }
