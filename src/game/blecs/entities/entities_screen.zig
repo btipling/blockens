@@ -126,7 +126,7 @@ fn initFloor() void {
 
 fn initCamera() void {
     const camera = ecs.new_entity(game.state.world, "GameCamera");
-    game.state.entities.game_camera = camera;
+    game.state.entities.sky_camera = camera;
     _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = gfx.constants.GameUBOBindingPoint });
     _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{
         .pos = @Vector(4, f32){ 86, 65, 172, 1.0 },
@@ -203,10 +203,10 @@ pub fn clearWorld() void {
             ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
         }
     }
-    ecs.remove(world, game.state.entities.game_camera, components.screen.WorldTranslation);
-    ecs.remove(world, game.state.entities.game_camera, components.screen.WorldRotation);
-    ecs.remove(world, game.state.entities.game_camera, components.screen.WorldScale);
-    ecs.remove(world, game.state.entities.game_camera, components.screen.PostPerspective);
+    ecs.remove(world, game.state.entities.sky_camera, components.screen.WorldTranslation);
+    ecs.remove(world, game.state.entities.sky_camera, components.screen.WorldRotation);
+    ecs.remove(world, game.state.entities.sky_camera, components.screen.WorldScale);
+    ecs.remove(world, game.state.entities.sky_camera, components.screen.PostPerspective);
 }
 
 pub fn clearDemoObjects() void {

@@ -22,17 +22,17 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |_| {
             const camera_front: *const components.screen.CameraFront = ecs.get(
                 game.state.world,
-                game.state.entities.game_camera,
+                game.state.entities.sky_camera,
                 components.screen.CameraFront,
             ) orelse continue;
             const camera_pos: *const components.screen.CameraPosition = ecs.get(
                 game.state.world,
-                game.state.entities.game_camera,
+                game.state.entities.sky_camera,
                 components.screen.CameraPosition,
             ) orelse continue;
             const camera_rot: *const components.screen.CameraRotation = ecs.get(
                 game.state.world,
-                game.state.entities.game_camera,
+                game.state.entities.sky_camera,
                 components.screen.CameraRotation,
             ) orelse continue;
             const time: *const components.Time = ecs.get(

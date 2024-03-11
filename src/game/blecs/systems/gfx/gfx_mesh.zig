@@ -150,7 +150,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
                 var camera: ecs.entity_t = 0;
                 if (parent == screen.gameDataEntity) {
-                    camera = game.state.entities.game_camera;
+                    camera = game.state.entities.sky_camera;
                 }
                 if (parent == screen.settingDataEntity) {
                     camera = game.state.entities.settings_camera;

@@ -34,7 +34,7 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
         blecs.components.screen.Screen,
     ) orelse unreachable;
 
-    var camera = game.state.entities.game_camera;
+    var camera = game.state.entities.sky_camera;
     if (blecs.ecs.has_id(game.state.world, screen.current, blecs.ecs.id(blecs.components.screen.Settings))) {
         camera = game.state.entities.settings_camera;
     }

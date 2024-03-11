@@ -132,12 +132,12 @@ fn getSpeed() f32 {
 fn skyCamF() void {
     const camera_front: *const components.screen.CameraFront = ecs.get(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.CameraFront,
     ) orelse return;
     var camera_pos: *components.screen.CameraPosition = ecs.get_mut(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.CameraPosition,
     ) orelse return;
     _ = &camera_pos;
@@ -152,12 +152,12 @@ fn skyCamF() void {
 fn skyCamB() void {
     const camera_front: *const components.screen.CameraFront = ecs.get(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.CameraFront,
     ) orelse return;
     var camera_pos: *components.screen.CameraPosition = ecs.get_mut(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.CameraPosition,
     ) orelse return;
     _ = &camera_pos;
@@ -172,17 +172,17 @@ fn skyCamB() void {
 fn skyCamL() void {
     const camera_front: *const components.screen.CameraFront = ecs.get(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.CameraFront,
     ) orelse return;
     const camera_up: *const components.screen.UpDirection = ecs.get(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.UpDirection,
     ) orelse return;
     var camera_pos: *components.screen.CameraPosition = ecs.get_mut(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.CameraPosition,
     ) orelse return;
     _ = &camera_pos;
@@ -198,17 +198,17 @@ fn skyCamL() void {
 fn skyCamR() void {
     const camera_front: *const components.screen.CameraFront = ecs.get(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.CameraFront,
     ) orelse return;
     const camera_up: *const components.screen.UpDirection = ecs.get(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.UpDirection,
     ) orelse return;
     var camera_pos: *components.screen.CameraPosition = ecs.get_mut(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.CameraPosition,
     ) orelse return;
     _ = &camera_pos;
@@ -224,12 +224,12 @@ fn skyCamR() void {
 fn skyCamU() void {
     const camera_up: *const components.screen.UpDirection = ecs.get(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.UpDirection,
     ) orelse return;
     var camera_pos: *components.screen.CameraPosition = ecs.get_mut(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.CameraPosition,
     ) orelse return;
     _ = &camera_pos;
@@ -245,12 +245,12 @@ fn skyCamU() void {
 fn skyCamD() void {
     const camera_up: *const components.screen.UpDirection = ecs.get(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.UpDirection,
     ) orelse return;
     var camera_pos: *components.screen.CameraPosition = ecs.get_mut(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.CameraPosition,
     ) orelse return;
     _ = &camera_pos;
@@ -268,7 +268,7 @@ fn updateConditionally(camera_pos: *components.screen.CameraPosition, np: [4]f32
     camera_pos.pos = np;
     ecs.add(
         game.state.world,
-        game.state.entities.game_camera,
+        game.state.entities.sky_camera,
         components.screen.Updated,
     );
 }
