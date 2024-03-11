@@ -3,6 +3,7 @@ const ecs = @import("zflecs");
 const zgui = @import("zgui");
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 
 pub fn init() void {
@@ -20,19 +21,20 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
+            const current_camera = entities.screen.getCurrentCamera();
             const camera_front: *const components.screen.CameraFront = ecs.get(
                 game.state.world,
-                game.state.entities.sky_camera,
+                current_camera,
                 components.screen.CameraFront,
             ) orelse continue;
             const camera_pos: *const components.screen.CameraPosition = ecs.get(
                 game.state.world,
-                game.state.entities.sky_camera,
+                current_camera,
                 components.screen.CameraPosition,
             ) orelse continue;
             const camera_rot: *const components.screen.CameraRotation = ecs.get(
                 game.state.world,
-                game.state.entities.sky_camera,
+                current_camera,
                 components.screen.CameraRotation,
             ) orelse continue;
             const time: *const components.Time = ecs.get(

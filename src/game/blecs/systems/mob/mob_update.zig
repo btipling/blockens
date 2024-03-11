@@ -51,14 +51,19 @@ fn updateMob(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), ro
 }
 
 fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: @Vector(4, f32)) void {
+    const camera_distance_scalar: f32 = 4.5;
+    const camera_height: f32 = 2;
     const tpc = game.state.entities.third_person_camera;
     var cp: *components.screen.CameraPosition = ecs.get_mut(world, tpc, components.screen.CameraPosition) orelse return;
     var cf: *components.screen.CameraFront = ecs.get_mut(world, tpc, components.screen.CameraFront) orelse return;
-    const cu: *const components.screen.UpDirection = ecs.get(world, tpc, components.screen.UpDirection) orelse return;
-    const forward = cu.up;
+    const forward = @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 };
     const front_vector: @Vector(4, f32) = zm.rotate(rotation, forward);
-    const camera_distance: @Vector(4, f32) = @splat(5);
-    const np = loc - front_vector * camera_distance;
-    cf.front = front_vector;
+    const camera_distance: @Vector(4, f32) = @splat(camera_distance_scalar);
+    // const offset: @Vector(4, f32) = .{ loc[0], loc[1] + camera_height, loc[2], loc[3] };
+    var np = loc - front_vector * camera_distance;
+    const offset = camera_height / 2;
+    np[1] += offset;
+    cf.front = zm.normalize4(loc - np);
+    np[1] += camera_height + offset;
     cp.pos = np;
 }

@@ -3,6 +3,7 @@ const ecs = @import("zflecs");
 const zm = @import("zmath");
 const glfw = @import("zglfw");
 const components = @import("../../../components/components.zig");
+const entities = @import("../../../entities/entities.zig");
 const game = @import("../../../../game.zig");
 const input = @import("../../../../input/input.zig");
 
@@ -23,6 +24,7 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
+            if (input.keys.pressedKey(.q)) entities.screen.toggleCamera();
             if (input.keys.holdKey(.w)) skyCamF();
             if (input.keys.holdKey(.s)) skyCamB();
             if (input.keys.holdKey(.a)) skyCamL();

@@ -165,13 +165,13 @@ fn initCameras() void {
         .pos = @Vector(4, f32){ 0, 0, 0, 1.0 },
     });
     _ = ecs.set(game.state.world, tpc, components.screen.CameraFront, .{
-        .front = @Vector(4, f32){ 0, 0, 0, 0.0 },
+        .front = @Vector(4, f32){ 0.1, -0.08, 0.1, 0.0 },
     });
     _ = ecs.set(
         game.state.world,
         tpc,
         components.screen.CameraRotation,
-        .{ .yaw = 0, .pitch = 5 },
+        .{ .yaw = 0, .pitch = -10 },
     );
     _ = ecs.set(game.state.world, tpc, components.screen.UpDirection, .{
         .up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 },
@@ -208,6 +208,29 @@ fn initSettingsCamera() void {
     ecs.add(game.state.world, camera, components.screen.CurrentCamera);
     ecs.add(game.state.world, camera, components.screen.Updated);
     ecs.add_pair(game.state.world, camera, ecs.ChildOf, settings_data);
+}
+
+pub fn toggleCamera() void {
+    const world = game.state.world;
+    const sky_cam = game.state.entities.sky_camera;
+    const tpc = game.state.entities.third_person_camera;
+    if (ecs.has_id(world, sky_cam, ecs.id(components.screen.CurrentCamera))) {
+        ecs.remove(world, sky_cam, components.screen.CurrentCamera);
+        ecs.add(world, tpc, components.screen.CurrentCamera);
+        return;
+    }
+    ecs.remove(world, tpc, components.screen.CurrentCamera);
+    ecs.add(world, sky_cam, components.screen.CurrentCamera);
+}
+
+pub fn getCurrentCamera() ecs.entity_t {
+    const world = game.state.world;
+    const sky_cam = game.state.entities.sky_camera;
+    const tpc = game.state.entities.third_person_camera;
+    if (ecs.has_id(world, sky_cam, ecs.id(components.screen.CurrentCamera))) {
+        return sky_cam;
+    }
+    return tpc;
 }
 
 pub fn clearWorld() void {
