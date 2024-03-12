@@ -65,6 +65,9 @@ fn drawControls() !void {
         })) {
             try evalChunkFunc();
         }
+        if (zgui.checkbox("Use MultiDraw", .{ .v = &game.state.ui.data.chunk_use_multi_draw })) {
+            std.debug.print("Toggled multidraw {}\n", .{game.state.ui.data.chunk_use_multi_draw});
+        }
         if (zgui.button("Toggle wireframe", .{
             .w = 500,
             .h = 75,
