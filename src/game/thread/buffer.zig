@@ -27,6 +27,7 @@ pub const buffer_message = packed struct {
 };
 
 pub const chunk_gen_data = struct {
+    multi_draw: bool = false,
     wp: ?state.position.worldPosition = null,
     chunk_data: []i32,
 };

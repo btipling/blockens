@@ -46,6 +46,7 @@ fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
     const chunk_data = buffer.get_chunk_gen_data(msg).?;
     if (game.state.ui.data.chunk_demo_data) |d| game.state.allocator.free(d);
+    std.debug.print("initing demo chunk using multi draw: {}\n", .{chunk_data.multi_draw});
     game.state.ui.data.chunk_demo_data = chunk_data.chunk_data;
     blecs.ecs.add(game.state.world, game.state.entities.screen, blecs.components.screen.NeedsDemoChunk);
 }
