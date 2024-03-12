@@ -56,11 +56,11 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn generateDemoChunk(self: *Jobs) zjobs.JobId {
+    pub fn generateDemoChunk(self: *Jobs, multi_draw: bool) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
             generate_demo_chunk.GenerateDemoChunkJob{
-                .multi_draw = game.state.ui.data.chunk_use_multi_draw,
+                .multi_draw = multi_draw,
             },
         ) catch |e| {
             std.debug.print("error scheduling demo chunk job: {}\n", .{e});

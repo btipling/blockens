@@ -28,11 +28,13 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
+            const n: []components.screen.NeedsDemoChunk = ecs.field(it, components.screen.NeedsDemoChunk, 2) orelse return;
+            const multi_draw = n[i].multi_draw;
             ecs.remove(world, entity, components.screen.NeedsDemoChunk);
             if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Settings))) {
                 continue;
             }
-            entities.screen.initDemoChunk();
+            entities.screen.initDemoChunk(multi_draw);
         }
     }
 }

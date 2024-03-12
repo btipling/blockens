@@ -36,6 +36,7 @@ pub const chunk_mesh_data = struct {
     world: ?*blecs.ecs.world_t = null,
     entity: ?blecs.ecs.entity_t = null,
     chunk: *chunk.Chunk,
+    multi_draw: bool = false,
 };
 
 pub const chunk_copy_data = struct {

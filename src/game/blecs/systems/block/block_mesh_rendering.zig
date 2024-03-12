@@ -40,6 +40,9 @@ fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32)) 
     var c: *chunk.Chunk = game.state.gfx.mesh_data.get(entity) orelse return;
     var keys = c.meshes.keyIterator();
     const parent: ecs.entity_t = ecs.get_parent(world, entity);
+    if (ecs.has_id(world, entity, ecs.id(components.block.UseMultiDraw))) {
+        std.debug.print("use multi draw detected in render mesh.\n", .{});
+    }
     while (keys.next()) |_k| {
         const i: usize = _k.*;
         if (c.meshes.get(i)) |s| {

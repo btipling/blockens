@@ -48,7 +48,12 @@ fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
     if (game.state.ui.data.chunk_demo_data) |d| game.state.allocator.free(d);
     std.debug.print("initing demo chunk using multi draw: {}\n", .{chunk_data.multi_draw});
     game.state.ui.data.chunk_demo_data = chunk_data.chunk_data;
-    blecs.ecs.add(game.state.world, game.state.entities.screen, blecs.components.screen.NeedsDemoChunk);
+    _ = blecs.ecs.set(
+        game.state.world,
+        game.state.entities.screen,
+        blecs.components.screen.NeedsDemoChunk,
+        .{ .multi_draw = chunk_data.multi_draw },
+    );
 }
 
 fn handle_chunk_mesh(msg: buffer.buffer_message) void {

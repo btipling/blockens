@@ -174,7 +174,7 @@ fn toggleWireframe() void {
 }
 
 fn evalChunkFunc() !void {
-    _ = game.state.jobs.generateDemoChunk();
+    _ = game.state.jobs.generateDemoChunk(game.state.ui.data.chunk_use_multi_draw);
 }
 
 fn floatFromChunkBuf(buf: []u8) f32 {

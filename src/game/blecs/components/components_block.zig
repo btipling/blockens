@@ -16,6 +16,7 @@ pub const Instance = struct {};
 pub const NeedsMeshing = struct {};
 pub const NeedsMeshRendering = struct {};
 pub const NeedsInstanceRendering = struct {};
+pub const UseMultiDraw = struct {};
 
 pub fn init() void {
     const world = game.state.world;
@@ -26,4 +27,5 @@ pub fn init() void {
     ecs.TAG(world, NeedsMeshing);
     ecs.TAG(world, NeedsMeshRendering);
     ecs.TAG(world, NeedsInstanceRendering);
+    ecs.TAG(world, UseMultiDraw);
 }

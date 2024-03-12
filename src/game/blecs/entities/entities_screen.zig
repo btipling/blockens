@@ -417,7 +417,7 @@ pub fn initDemoChunkCamera() void {
     );
 }
 
-pub fn initDemoChunk() void {
+pub fn initDemoChunk(multi_draw: bool) void {
     if (game.state.ui.data.chunk_demo_data == null) {
         return;
     }
@@ -435,6 +435,9 @@ pub fn initDemoChunk() void {
     _ = ecs.set(world, chunk_entity, components.block.Chunk, .{
         .loc = .{ -32, 0, -32, 0 },
     });
+    if (multi_draw) {
+        ecs.add(world, chunk_entity, components.block.UseMultiDraw);
+    }
     ecs.add(world, chunk_entity, components.block.NeedsMeshing);
     game.state.gfx.mesh_data.put(chunk_entity, c) catch unreachable;
     return;
