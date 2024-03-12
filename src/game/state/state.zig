@@ -174,6 +174,14 @@ pub const BlockInstance = struct {
     transforms: std.ArrayList(zm.Mat) = undefined,
 };
 
+pub const ChunkElement = struct {};
+
+pub const ChunkElements = struct {
+    entity_id: blecs.ecs.entity_t = 0,
+    vbo: u32 = 0,
+    transforms: std.ArrayList(zm.Mat) = undefined,
+};
+
 pub const MobCamera = struct {
     // TODO: add camera name and deinit
     aspectRatio: f32 = 1,
@@ -276,6 +284,7 @@ pub const Gfx = struct {
     blocks: std.AutoHashMap(u8, *Block) = undefined,
     game_blocks: std.AutoHashMap(u8, *BlockInstance) = undefined,
     settings_blocks: std.AutoHashMap(u8, *BlockInstance) = undefined,
+    settings_chunks: std.AutoHashMap(position.worldPosition, *ChunkElements) = undefined,
     mesh_data: std.AutoHashMap(blecs.ecs.entity_t, *chunk.Chunk) = undefined,
     mob_data: std.AutoHashMap(i32, *Mob) = undefined,
     animations_running: u32 = 0,
