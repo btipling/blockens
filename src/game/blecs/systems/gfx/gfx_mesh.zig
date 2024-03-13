@@ -37,6 +37,16 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 std.debug.print("couldn't find render config for {d}\n", .{erc.id});
                 continue;
             };
+            var deinit_mesh = true;
+            if (ecs.get(world, entity, components.shape.Shape)) |s| {
+                const sh: *const components.shape.Shape = s;
+                switch (sh.shape_type) {
+                    .meshed_voxel => {
+                        deinit_mesh = false;
+                    },
+                    else => {},
+                }
+            }
             const parent = ecs.get_parent(world, entity);
             const vertexShader: [:0]const u8 = er.vertexShader;
             const fragmentShader: [:0]const u8 = er.fragmentShader;
@@ -47,10 +57,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = er.keyframes;
             defer game.state.allocator.free(vertexShader);
             defer game.state.allocator.free(fragmentShader);
-            defer game.state.allocator.free(positions);
-            defer game.state.allocator.free(indices);
-            defer if (texcoords) |t| game.state.allocator.free(t);
-            defer if (normals) |n| game.state.allocator.free(n);
             defer if (keyframes) |kf| game.state.allocator.free(kf);
             defer _ = game.state.gfx.renderConfigs.remove(erc.id);
             defer game.state.allocator.destroy(er);
@@ -202,6 +208,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .numIndices = @intCast(er.indices.len),
             });
             ecs.add(world, entity, components.gfx.CanDraw);
+            if (deinit_mesh) {
+                defer game.state.allocator.free(positions);
+                defer game.state.allocator.free(indices);
+                defer if (texcoords) |t| game.state.allocator.free(t);
+                defer if (normals) |n| game.state.allocator.free(n);
+            }
         }
     }
 }

@@ -50,36 +50,33 @@ fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), 
     } else {
         c = game.state.gfx.settings_chunks.get(wp) orelse return;
     }
-    var keys = c.meshes.keyIterator();
-    while (keys.next()) |_k| {
-        const i: usize = _k.*;
-        if (c.meshes.get(i)) |s| {
-            const block_id: u8 = @intCast(c.data[i]);
-            const p = chunk.getPositionAtIndexV(i);
-            const mb_e = helpers.new_child(world, parent);
-            _ = ecs.set(world, mb_e, components.shape.Shape, .{ .shape_type = .meshed_voxel });
-            const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
-            _ = ecs.set(world, mb_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
-            if (parent == entities.screen.game_data) {
-                _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
-            } else {
-                _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
-            }
-            _ = ecs.set(world, mb_e, components.block.Block, .{
-                .block_id = block_id,
-            });
-            _ = ecs.set(world, mb_e, components.shape.Translation, .{
-                .translation = .{ -0.5, -0.5, -0.5, 0 },
-            });
-            _ = ecs.set(world, mb_e, components.screen.WorldLocation, .{
-                .loc = .{ p[0] + loc[0], p[1] + loc[1], p[2] + loc[2], p[3] + loc[3] },
-            });
-            _ = ecs.set(world, mb_e, components.block.Meshscale, .{
-                .scale = s,
-            });
-            // ecs.add(world, mb_e, components.Debug);
-            ecs.add(world, mb_e, components.shape.NeedsSetup);
+    for (c.elements.items, 0..) |element, i| {
+        const p = chunk.getPositionAtIndexV(element.chunk_index);
+        const mb_e = helpers.new_child(world, parent);
+        _ = ecs.set(world, mb_e, components.shape.Shape, .{ .shape_type = .meshed_voxel });
+        const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
+        _ = ecs.set(world, mb_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
+        if (parent == entities.screen.game_data) {
+            _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
+        } else {
+            _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
         }
+        _ = ecs.set(world, mb_e, components.block.Block, .{
+            .block_id = element.block_id,
+        });
+        _ = ecs.set(world, mb_e, components.block.BlockData, .{
+            .chunk_world_position = c.wp,
+            .element_index = i,
+            .is_settings = c.is_settings,
+        });
+        _ = ecs.set(world, mb_e, components.shape.Translation, .{
+            .translation = .{ -0.5, -0.5, -0.5, 0 },
+        });
+        _ = ecs.set(world, mb_e, components.screen.WorldLocation, .{
+            .loc = .{ p[0] + loc[0], p[1] + loc[1], p[2] + loc[2], p[3] + loc[3] },
+        });
+        // ecs.add(world, mb_e, components.Debug);
+        ecs.add(world, mb_e, components.shape.NeedsSetup);
     }
 }
 

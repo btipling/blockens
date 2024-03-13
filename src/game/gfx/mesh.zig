@@ -192,16 +192,7 @@ pub fn cube() meshData {
     return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
 }
 
-pub fn voxel(world: *blecs.ecs.world_t, entity: blecs.ecs.entity_t) !meshData {
-    if (!blecs.ecs.has_id(world, entity, blecs.ecs.id(blecs.components.block.Meshscale))) return cube();
-    var scale: @Vector(4, f32) = .{ 0, 0, 0, 0 };
-    if (blecs.ecs.get(world, entity, blecs.components.block.Meshscale)) |s| {
-        scale = s.scale;
-    }
-    return voxelWithScale(scale);
-}
-
-pub fn voxelWithScale(scale: @Vector(4, f32)) !meshData {
+pub fn voxel(scale: @Vector(4, f32)) !meshData {
     const allocator = game.state.allocator;
     var indicesAL = std.ArrayList(u32).init(allocator);
 

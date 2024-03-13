@@ -4,6 +4,7 @@ const zmesh = @import("zmesh");
 const zm = @import("zmath");
 const tags = @import("../../tags.zig");
 const game = @import("../../../game.zig");
+const chunk = @import("../../../chunk.zig");
 const game_state = @import("../../../state.zig");
 const math = @import("../../../math/math.zig");
 const gfx = @import("../../../gfx/gfx.zig");
@@ -31,10 +32,19 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             var e = extractions.extract(world, entity) catch unreachable;
             defer e.deinit();
 
-            const mesh_data = switch (sh[i].shape_type) {
+            const mesh_data: gfx.mesh.meshData = switch (sh[i].shape_type) {
                 .plane => gfx.mesh.plane(),
                 .cube => gfx.mesh.cube(),
-                .meshed_voxel => gfx.mesh.voxel(world, entity) catch unreachable,
+                .meshed_voxel => blk: {
+                    const data: *const components.block.BlockData = ecs.get(world, entity, components.block.BlockData) orelse unreachable;
+                    var c: *chunk.Chunk = undefined;
+                    if (data.is_settings) {
+                        c = game.state.gfx.settings_chunks.get(data.chunk_world_position).?;
+                    } else {
+                        c = game.state.gfx.game_chunks.get(data.chunk_world_position).?;
+                    }
+                    break :blk c.elements.items[data.element_index].mesh_data;
+                },
                 .mob => gfx.mesh.mob(world, entity),
             };
 
@@ -156,7 +166,7 @@ const extractions = struct {
                 if (e.debug) std.debug.print("extractBlock: has instances\n", .{});
                 e.is_instanced = true;
             }
-            if (ecs.has_id(world, entity, ecs.id(components.block.Meshscale))) {
+            if (ecs.has_id(world, entity, ecs.id(components.block.BlockData))) {
                 if (e.debug) std.debug.print("extractBlock: is meshed\n", .{});
                 e.is_meshed = true;
             }

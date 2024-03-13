@@ -2,6 +2,7 @@ const std = @import("std");
 const chunk = @import("../../chunk.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const buffer = @import("../buffer.zig");
+const gfx = @import("../../gfx/gfx.zig");
 
 pub const ChunkMeshJob = struct {
     chunk: *chunk.Chunk,
@@ -9,8 +10,24 @@ pub const ChunkMeshJob = struct {
     world: *blecs.ecs.world_t,
 
     pub fn exec(self: *@This()) void {
-        std.debug.print("ChunkMeshJob: meshing chunk of length {d}\n", .{self.chunk.data.len});
-        self.chunk.findMeshes() catch unreachable;
+        var c = self.chunk;
+        std.debug.print("ChunkMeshJob: meshing chunk of length {d}\n", .{c.data.len});
+        c.findMeshes() catch unreachable;
+
+        var keys = c.meshes.keyIterator();
+        while (keys.next()) |_k| {
+            const i: usize = _k.*;
+            if (c.meshes.get(i)) |s| {
+                const mesh_data: gfx.mesh.meshData = gfx.mesh.voxel(s) catch unreachable;
+                const e: chunk.ChunkElement = .{
+                    .chunk_index = i,
+                    .block_id = @intCast(c.data[i]),
+                    .mesh_data = mesh_data,
+                };
+                c.elements.append(e) catch unreachable;
+            }
+        }
+
         var msg: buffer.buffer_message = buffer.new_message(.chunk_mesh);
         buffer.set_progress(&msg, true, 1);
         buffer.put_chunk_mesh_data(msg, .{
