@@ -1,11 +1,11 @@
 const std = @import("std");
 const game = @import("../../game.zig");
-const state = @import("../../state/state.zig");
+const chunk = @import("../../chunk.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const buffer = @import("../buffer.zig");
 
 pub const GenerateWorldChunkJob = struct {
-    wp: state.position.worldPosition,
+    wp: chunk.worldPosition,
     script: []u8,
 
     pub fn exec(self: *@This()) void {

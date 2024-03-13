@@ -257,7 +257,7 @@ fn drawChunkConfigPopup() !void {
                 game.state.ui.data.world_current_chunk[1],
                 game.state.ui.data.world_current_chunk[2],
             });
-            const wp = game_state.position.worldPosition.initFromPositionV(game.state.ui.data.world_current_chunk);
+            const wp = chunk.worldPosition.initFromPositionV(game.state.ui.data.world_current_chunk);
 
             var id: i32 = 0;
             var cd: []i32 = undefined;
@@ -284,7 +284,7 @@ const chunkConfigInfo = struct {
 };
 
 fn drawChunkConfigColumn(p: @Vector(4, f32), w: f32, h: f32) !void {
-    const wp = game_state.position.worldPosition.initFromPositionV(p);
+    const wp = chunk.worldPosition.initFromPositionV(p);
     var info: ?chunkConfigInfo = null;
     if (game.state.ui.data.world_chunk_table_data.get(wp)) |ch_cfg| {
         for (game.state.ui.data.chunk_script_options.items) |so| {
@@ -392,7 +392,7 @@ fn evalChunksFunc() !void {
 
     var instancedKeys = game.state.ui.data.world_chunk_table_data.keyIterator();
     while (instancedKeys.next()) |_k| {
-        const wp: game_state.position.worldPosition = _k.*;
+        const wp: chunk.worldPosition = _k.*;
         const ch_cfg = game.state.ui.data.world_chunk_table_data.get(wp).?;
         var ch_script: [script.maxLuaScriptSize]u8 = undefined;
         if (scriptCache.get(ch_cfg.scriptId)) |sc| {
@@ -419,7 +419,7 @@ fn saveChunkDatas() !void {
                 @as(f32, @floatFromInt(z)),
                 0,
             };
-            const wp = game_state.position.worldPosition.initFromPositionV(p);
+            const wp = chunk.worldPosition.initFromPositionV(p);
             if (game.state.ui.data.world_chunk_table_data.get(wp)) |ch_cfg| {
                 if (ch_cfg.id != 0) {
                     // update

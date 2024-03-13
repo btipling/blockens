@@ -1,10 +1,12 @@
 const std = @import("std");
 const zgui = @import("zgui");
+const ecs = @import("zflecs");
 const config = @import("../../../config.zig");
 const data = @import("../../../data/data.zig");
 const game = @import("../../../game.zig");
 const entities = @import("../../entities/entities.zig");
 const game_state = @import("../../../state/state.zig");
+const chunk = @import("../../../chunk.zig");
 const script = @import("../../../script/script.zig");
 
 const ScriptOptionsParams = struct {
@@ -58,7 +60,7 @@ pub fn loadChunksInWorld() void {
     entities.screen.clearWorld();
     var instancedKeys = game.state.ui.data.world_chunk_table_data.keyIterator();
     while (instancedKeys.next()) |_k| {
-        _ = game.state.jobs.copyChunk(_k.*);
+        _ = game.state.jobs.copyChunk(_k.*, ecs.new_id(game.state.world), false, false);
     }
 }
 
@@ -91,7 +93,7 @@ pub fn loadChunkDatas() !void {
                     @as(f32, @floatFromInt(z)),
                     0,
                 };
-                const wp = game_state.position.worldPosition.initFromPositionV(p);
+                const wp = chunk.worldPosition.initFromPositionV(p);
                 const cfg = game_state.chunkConfig{
                     .id = chunkData.id,
                     .scriptId = chunkData.scriptId,

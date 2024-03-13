@@ -67,9 +67,7 @@ pub const Cursor = struct {};
 pub const Settings = struct {};
 pub const Updated = struct {};
 pub const NeedsAnimation = struct {};
-pub const NeedsDemoChunk = struct {
-    multi_draw: bool = false,
-};
+pub const NeedsDemoChunk = struct {};
 
 // setting screens
 pub const TextureGen = struct {};
@@ -107,7 +105,7 @@ pub fn init() void {
     ecs.TAG(game.state.world, Settings);
     ecs.TAG(game.state.world, Updated);
     ecs.TAG(game.state.world, NeedsAnimation);
-    ecs.COMPONENT(game.state.world, NeedsDemoChunk);
+    ecs.TAG(game.state.world, NeedsDemoChunk);
 
     ecs.TAG(game.state.world, TextureGen);
     ecs.TAG(game.state.world, BlockEditor);

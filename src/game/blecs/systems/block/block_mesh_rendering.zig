@@ -33,18 +33,23 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
             if (ecs.has_id(world, entity, ecs.id(components.block.UseMultiDraw))) {
                 std.debug.print("use multi draw detected in render mesh.\n", .{});
-                render_multidraw(world, entity, c[i].loc);
+                render_multidraw(world, entity, c[i].loc, c[i].wp);
             } else {
-                render_mesh(world, entity, c[i].loc);
+                render_mesh(world, entity, c[i].loc, c[i].wp);
             }
             ecs.add(world, entity, components.block.NeedsInstanceRendering);
         }
     }
 }
 
-fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32)) void {
-    var c: *chunk.Chunk = game.state.gfx.mesh_data.get(entity) orelse return;
+fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), wp: chunk.worldPosition) void {
+    var c: *chunk.Chunk = undefined;
     const parent: ecs.entity_t = ecs.get_parent(world, entity);
+    if (parent == entities.screen.game_data) {
+        c = game.state.gfx.game_chunks.get(wp) orelse return;
+    } else {
+        c = game.state.gfx.settings_chunks.get(wp) orelse return;
+    }
     var keys = c.meshes.keyIterator();
     while (keys.next()) |_k| {
         const i: usize = _k.*;
@@ -78,18 +83,23 @@ fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32)) 
     }
 }
 
-fn render_multidraw(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32)) void {
-    _ = world;
+fn render_multidraw(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), wp: chunk.worldPosition) void {
     _ = loc;
-    var c: *chunk.Chunk = game.state.gfx.mesh_data.get(entity) orelse return;
+    var c: *chunk.Chunk = undefined;
     // _ = game.state.gfx.mesh_data.remove(entity);
-    // const parent: ecs.entity_t = ecs.get_parent(world, entity);
+    const parent: ecs.entity_t = ecs.get_parent(world, entity);
+    if (parent == entities.screen.game_data) {
+        c = game.state.gfx.game_chunks.get(wp) orelse return;
+    } else {
+        c = game.state.gfx.settings_chunks.get(wp) orelse return;
+    }
 
     var keys = c.meshes.keyIterator();
     while (keys.next()) |_k| {
         const i: usize = _k.*;
         if (c.meshes.get(i)) |s| {
             _ = s;
+            // const mb_e = helpers.new_child(world, parent);
             //     var block_id: u8 = 0;
             //     block_id = @intCast(c.data[i]);
             //     if (block_id == 0) continue; // Some kind of one off bug somewhere?
@@ -111,11 +121,11 @@ fn render_multidraw(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f
             //         _ = ecs.set(world, bi.entity_id, components.shape.Shape, .{ .shape_type = .cube });
             //         const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
             //         _ = ecs.set(world, bi.entity_id, components.shape.Color, components.shape.Color.fromVec(cr_c));
-            //         if (parent == entities.screen.game_data) {
-            //             _ = ecs.set(world, bi.entity_id, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
-            //         } else {
-            //             _ = ecs.set(world, bi.entity_id, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
-            //         }
+            // if (parent == entities.screen.game_data) {
+            //     _ = ecs.set(world, bi.entity_id, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
+            // } else {
+            //     _ = ecs.set(world, bi.entity_id, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
+            // }
             //         _ = ecs.set(world, bi.entity_id, components.block.Block, .{
             //             .block_id = block_id,
             //         });

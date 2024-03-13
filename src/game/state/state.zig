@@ -9,7 +9,6 @@ const script = @import("../script/script.zig");
 const chunk = @import("../chunk.zig");
 const thread = @import("../thread/thread.zig");
 const gltf = zmesh.io.zcgltf;
-pub const position = @import("position.zig");
 
 pub const max_world_name = 20;
 
@@ -71,7 +70,7 @@ pub const UIData = struct {
     world_load_disabled: bool = false,
     world_name_buf: [max_world_name]u8 = [_]u8{0} ** max_world_name,
     world_options: std.ArrayList(data.worldOption) = undefined,
-    world_chunk_table_data: std.AutoHashMap(position.worldPosition, chunkConfig) = undefined,
+    world_chunk_table_data: std.AutoHashMap(chunk.worldPosition, chunkConfig) = undefined,
     world_loaded_id: i32 = 0,
     world_chunk_y: i32 = 0,
     world_current_chunk: @Vector(4, f32) = undefined,
@@ -169,14 +168,6 @@ pub const Block = struct {
 };
 
 pub const BlockInstance = struct {
-    entity_id: blecs.ecs.entity_t = 0,
-    vbo: u32 = 0,
-    transforms: std.ArrayList(zm.Mat) = undefined,
-};
-
-pub const ChunkElement = struct {};
-
-pub const ChunkElements = struct {
     entity_id: blecs.ecs.entity_t = 0,
     vbo: u32 = 0,
     transforms: std.ArrayList(zm.Mat) = undefined,
@@ -284,10 +275,10 @@ pub const Gfx = struct {
     blocks: std.AutoHashMap(u8, *Block) = undefined,
     game_blocks: std.AutoHashMap(u8, *BlockInstance) = undefined,
     settings_blocks: std.AutoHashMap(u8, *BlockInstance) = undefined,
-    settings_chunks: std.AutoHashMap(position.worldPosition, *ChunkElements) = undefined,
-    mesh_data: std.AutoHashMap(blecs.ecs.entity_t, *chunk.Chunk) = undefined,
     mob_data: std.AutoHashMap(i32, *Mob) = undefined,
     animations_running: u32 = 0,
+    settings_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
+    game_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
 
     fn deinit(self: *Gfx, allocator: std.mem.Allocator) void {
         self.ubos.deinit();
@@ -315,18 +306,24 @@ pub const Gfx = struct {
             allocator.destroy(b.*);
         }
         self.settings_blocks.deinit();
-        var md_i = self.mesh_data.valueIterator();
-        while (md_i.next()) |c| {
-            c.*.deinit();
-            allocator.destroy(c.*);
-        }
-        self.mesh_data.deinit();
         var mb_i = self.mob_data.valueIterator();
         while (mb_i.next()) |m| {
             m.*.deinit(allocator);
             allocator.destroy(m.*);
         }
         self.mob_data.deinit();
+        var sc_i = self.settings_chunks.valueIterator();
+        while (sc_i.next()) |ce| {
+            ce.*.deinit();
+            allocator.destroy(ce.*);
+        }
+        self.settings_chunks.deinit();
+        var gc_i = self.game_chunks.valueIterator();
+        while (gc_i.next()) |ce| {
+            ce.*.deinit();
+            allocator.destroy(ce.*);
+        }
+        self.game_chunks.deinit();
     }
 };
 
@@ -385,7 +382,7 @@ pub const Game = struct {
             .block_options = std.ArrayList(data.blockOption).init(self.allocator),
             .chunk_script_options = std.ArrayList(data.chunkScriptOption).init(self.allocator),
             .world_options = std.ArrayList(data.worldOption).init(self.allocator),
-            .world_chunk_table_data = std.AutoHashMap(position.worldPosition, chunkConfig).init(self.allocator),
+            .world_chunk_table_data = std.AutoHashMap(chunk.worldPosition, chunkConfig).init(self.allocator),
         };
     }
 
@@ -396,7 +393,8 @@ pub const Game = struct {
             .renderConfigs = std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig).init(self.allocator),
             .game_blocks = std.AutoHashMap(u8, *BlockInstance).init(self.allocator),
             .settings_blocks = std.AutoHashMap(u8, *BlockInstance).init(self.allocator),
-            .mesh_data = std.AutoHashMap(blecs.ecs.entity_t, *chunk.Chunk).init(self.allocator),
+            .settings_chunks = std.AutoHashMap(chunk.worldPosition, *chunk.Chunk).init(self.allocator),
+            .game_chunks = std.AutoHashMap(chunk.worldPosition, *chunk.Chunk).init(self.allocator),
             .mob_data = std.AutoHashMap(i32, *Mob).init(self.allocator),
         };
         self.gfx.blocks = std.AutoHashMap(u8, *Block).init(self.allocator);

@@ -30,16 +30,20 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             const c: []components.block.Chunk = ecs.field(it, components.block.Chunk, 1) orelse return;
             ecs.remove(world, entity, components.block.NeedsInstanceRendering);
-            render_instances(world, entity, c[i].loc);
+            render_instances(world, entity, c[i].loc, c[i].wp);
             ecs.delete(world, entity);
         }
     }
 }
 
-fn render_instances(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32)) void {
-    var c: *chunk.Chunk = game.state.gfx.mesh_data.get(entity) orelse return;
-    _ = game.state.gfx.mesh_data.remove(entity);
+fn render_instances(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), wp: chunk.worldPosition) void {
+    var c: *chunk.Chunk = undefined;
     const parent: ecs.entity_t = ecs.get_parent(world, entity);
+    if (parent == entities.screen.game_data) {
+        c = game.state.gfx.game_chunks.get(wp) orelse return;
+    } else {
+        c = game.state.gfx.settings_chunks.get(wp) orelse return;
+    }
 
     var instancedKeys = c.instanced.keyIterator();
     while (instancedKeys.next()) |_k| {
@@ -84,7 +88,4 @@ fn render_instances(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f
             std.debug.print("got an error appending transforms? {}\n", .{e});
         };
     }
-    if (parent == entities.screen.game_data) game.state.allocator.free(c.data);
-    c.deinit();
-    game.state.allocator.destroy(c);
 }

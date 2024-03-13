@@ -44,11 +44,20 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn copyChunk(self: *Jobs, wp: state.position.worldPosition) zjobs.JobId {
+    pub fn copyChunk(
+        self: *Jobs,
+        wp: chunk.worldPosition,
+        entity: blecs.ecs.entity_t,
+        is_settings: bool,
+        multi_draw: bool,
+    ) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
             chunk_copy.CopyChunkJob{
                 .wp = wp,
+                .entity = entity,
+                .is_settings = is_settings,
+                .multi_draw = multi_draw,
             },
         ) catch |e| {
             std.debug.print("error scheduling copy chunk job: {}\n", .{e});
@@ -56,19 +65,17 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn generateDemoChunk(self: *Jobs, multi_draw: bool) zjobs.JobId {
+    pub fn generateDemoChunk(self: *Jobs) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
-            generate_demo_chunk.GenerateDemoChunkJob{
-                .multi_draw = multi_draw,
-            },
+            generate_demo_chunk.GenerateDemoChunkJob{},
         ) catch |e| {
             std.debug.print("error scheduling demo chunk job: {}\n", .{e});
             return zjobs.JobId.none;
         };
     }
 
-    pub fn generateWorldChunk(self: *Jobs, wp: state.position.worldPosition, script: []u8) zjobs.JobId {
+    pub fn generateWorldChunk(self: *Jobs, wp: chunk.worldPosition, script: []u8) zjobs.JobId {
         const s = game.state.allocator.alloc(u8, script.len) catch unreachable;
         @memcpy(s, script);
         return self.jobs.schedule(

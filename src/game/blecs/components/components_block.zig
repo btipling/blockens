@@ -1,9 +1,11 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const game = @import("../../game.zig");
+const chunk = @import("../../chunk.zig");
 
 pub const Chunk = struct {
     loc: @Vector(4, f32) = undefined,
+    wp: chunk.worldPosition = undefined,
 };
 
 pub const Block = struct {

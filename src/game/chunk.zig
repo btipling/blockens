@@ -1,9 +1,33 @@
 const std = @import("std");
+const zm = @import("zmath");
+const blecs = @import("blecs/blecs.zig");
 
 pub const chunkDim = 64;
 pub const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
 const drawSize = chunkDim * chunkDim;
 const minVoxelsInMesh = 10;
+
+pub const worldPosition = struct {
+    x: u32,
+    y: u32,
+    z: u32,
+    pub fn initFromPositionV(p: @Vector(4, f32)) worldPosition {
+        const x = @as(u32, @bitCast(p[0]));
+        const y = @as(u32, @bitCast(p[1]));
+        const z = @as(u32, @bitCast(p[2]));
+        return worldPosition{
+            .x = x,
+            .y = y,
+            .z = z,
+        };
+    }
+    pub fn vecFromWorldPosition(self: worldPosition) @Vector(4, f32) {
+        const x = @as(f32, @bitCast(self.x));
+        const y = @as(f32, @bitCast(self.y));
+        const z = @as(f32, @bitCast(self.z));
+        return .{ x, y, z, 0 };
+    }
+};
 
 pub fn getPositionAtIndexV(i: usize) @Vector(4, f32) {
     const x = @as(f32, @floatFromInt(@mod(i, chunkDim)));
@@ -22,27 +46,63 @@ pub fn getIndexFromPositionV(p: @Vector(4, f32)) usize {
     );
 }
 
+pub const ChunkElement = struct {
+    positions: [][3]f32 = undefined,
+    normals: [][3]f32 = null,
+    indices: []u32 = undefined,
+    transform: zm.Mat = undefined,
+    fn deinit(self: ChunkElement, allocator: std.mem.Allocator) void {
+        allocator.free(self.positions);
+        allocator.free(self.normals);
+        allocator.free(self.indices);
+    }
+};
+
 pub const Chunk = struct {
+    wp: worldPosition,
+    entity: blecs.ecs.entity_t = 0,
     data: []i32 = undefined,
     meshes: std.AutoHashMap(usize, @Vector(4, f32)),
     meshed: std.AutoHashMap(usize, void),
     instanced: std.AutoHashMap(usize, void),
     allocator: std.mem.Allocator,
-    pub fn init(allocator: std.mem.Allocator) !*Chunk {
+    vbo: u32 = 0,
+    tm_vbo: u32 = 0,
+    elements: std.ArrayList(ChunkElement) = undefined,
+    is_settings: bool = false,
+    multi_draw: bool = false,
+    pub fn init(
+        allocator: std.mem.Allocator,
+        wp: worldPosition,
+        entity: blecs.ecs.entity_t,
+        is_settings: bool,
+        multi_draw: bool,
+    ) !*Chunk {
         const c: *Chunk = try allocator.create(Chunk);
         c.* = Chunk{
+            .wp = wp,
+            .entity = entity,
             .meshes = std.AutoHashMap(usize, @Vector(4, f32)).init(allocator),
             .meshed = std.AutoHashMap(usize, void).init(allocator),
             .instanced = std.AutoHashMap(usize, void).init(allocator),
+            .elements = std.ArrayList(ChunkElement).init(allocator),
             .allocator = allocator,
+            .is_settings = is_settings,
+            .multi_draw = multi_draw,
         };
         return c;
     }
 
     pub fn deinit(self: *Chunk) void {
+        std.debug.print("deiniting chunk {d}??\n", .{self.entity});
         self.meshes.deinit();
         self.meshed.deinit();
         self.instanced.deinit();
+        for (self.elements.items) |ce| {
+            ce.deinit(self.allocator);
+        }
+        self.elements.deinit();
+        self.allocator.free(self.data);
     }
 
     pub fn isMeshed(self: *Chunk, i: usize) bool {

@@ -27,8 +27,7 @@ pub const buffer_message = packed struct {
 };
 
 pub const chunk_gen_data = struct {
-    multi_draw: bool = false,
-    wp: ?state.position.worldPosition = null,
+    wp: ?chunk.worldPosition = null,
     chunk_data: []i32,
 };
 
@@ -36,11 +35,9 @@ pub const chunk_mesh_data = struct {
     world: ?*blecs.ecs.world_t = null,
     entity: ?blecs.ecs.entity_t = null,
     chunk: *chunk.Chunk,
-    multi_draw: bool = false,
 };
 
 pub const chunk_copy_data = struct {
-    wp: state.position.worldPosition,
     chunk: *chunk.Chunk,
 };
 

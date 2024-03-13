@@ -423,23 +423,14 @@ pub fn initDemoChunk(multi_draw: bool) void {
     }
     clearDemoObjects();
     const world = game.state.world;
-
     initDemoChunkCamera();
     // TODO chunk data needs to be u32s...
-    const chunk_data: []i32 = game.state.ui.data.chunk_demo_data.?;
-
-    var c: *chunk.Chunk = chunk.Chunk.init(game.state.allocator) catch unreachable;
-    c.data = chunk_data;
-
-    const chunk_entity = helpers.new_child(world, settings_data);
-    _ = ecs.set(world, chunk_entity, components.block.Chunk, .{
-        .loc = .{ -32, 0, -32, 0 },
-    });
-    if (multi_draw) {
-        ecs.add(world, chunk_entity, components.block.UseMultiDraw);
-    }
-    ecs.add(world, chunk_entity, components.block.NeedsMeshing);
-    game.state.gfx.mesh_data.put(chunk_entity, c) catch unreachable;
+    _ = game.state.jobs.copyChunk(
+        chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 }),
+        ecs.new_id(world),
+        true,
+        multi_draw,
+    );
     return;
 }
 

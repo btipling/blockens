@@ -7,6 +7,7 @@ const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
 const state = @import("../../../state/state.zig");
+const chunk = @import("../../../chunk.zig");
 const script = @import("../../../script/script.zig");
 const helpers = @import("ui_helpers.zig");
 const screen_helpers = @import("../screen_helpers.zig");
@@ -174,7 +175,7 @@ fn toggleWireframe() void {
 }
 
 fn evalChunkFunc() !void {
-    _ = game.state.jobs.generateDemoChunk(game.state.ui.data.chunk_use_multi_draw);
+    _ = game.state.jobs.generateDemoChunk();
 }
 
 fn floatFromChunkBuf(buf: []u8) f32 {
@@ -192,7 +193,7 @@ fn evalWorldChunkFunc() !void {
     const z = floatFromChunkBuf(&game.state.ui.data.chunk_z_buf);
     std.debug.print("Writing chunk to world at position: {}, {}, {}\n", .{ x, y, z });
     const p = @Vector(4, f32){ x, y, z, 0 };
-    const wp = state.position.worldPosition.initFromPositionV(p);
+    const wp = chunk.worldPosition.initFromPositionV(p);
     _ = game.state.jobs.generateWorldChunk(wp, &game.state.ui.data.chunk_buf);
 }
 

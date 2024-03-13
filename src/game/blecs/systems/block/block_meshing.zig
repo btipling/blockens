@@ -1,6 +1,7 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const chunk = @import("../../../chunk.zig");
 
@@ -22,9 +23,16 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
+            const ch_c: []components.block.Chunk = ecs.field(it, components.block.Chunk, 1) orelse return;
+            const wp = ch_c[i].wp;
+            const parent: ecs.entity_t = ecs.get_parent(world, entity);
             ecs.remove(world, entity, components.block.NeedsMeshing);
-            var c: *chunk.Chunk = game.state.gfx.mesh_data.get(entity) orelse continue;
-            _ = &c;
+            var c: *chunk.Chunk = undefined;
+            if (parent == entities.screen.game_data) {
+                c = game.state.gfx.game_chunks.get(wp) orelse continue;
+            } else {
+                c = game.state.gfx.settings_chunks.get(wp) orelse continue;
+            }
             _ = game.state.jobs.meshChunk(world, entity, c);
         }
     }
