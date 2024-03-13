@@ -75,6 +75,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 const m: u32 = @intCast(minutes);
                 const s: u32 = @intCast(seconds);
                 zgui.text("Hello blockens! {d:0>2}:{d:0>2}:{d:0>2}", .{ h, m, s });
+                zgui.sameLine(.{});
+                const fps: u32 = @intFromFloat((1 / (it.delta_time)));
+                zgui.text(" fps: {d}", .{fps});
                 zgui.text("F1 for settings", .{});
                 const x: i32 = @intFromFloat(camera_pos.pos[0]);
                 const y: i32 = @intFromFloat(camera_pos.pos[1]);

@@ -190,7 +190,7 @@ pub const Game = struct {
                 zgui.backend.newFrame(w, h);
             }
             try thread.handler.handle_incoming();
-            _ = blecs.ecs.progress(state.world, 0);
+            _ = blecs.ecs.progress(state.world, state.input.delta_time);
             zgui.backend.draw();
             state.window.swapBuffers();
         }
