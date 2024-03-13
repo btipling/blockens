@@ -98,6 +98,30 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 })) {
                     entities.screen.initDemoCube();
                 }
+                if (zgui.inputFloat4("atlas scale input", .{
+                    .v = &game.state.ui.data.demo_atlas_scale,
+                })) {
+                    entities.screen.initDemoCube();
+                }
+                if (zgui.sliderFloat4("atlas scale slider", .{
+                    .v = &game.state.ui.data.demo_atlas_scale,
+                    .min = -10,
+                    .max = 10,
+                })) {
+                    entities.screen.initDemoCube();
+                }
+                if (zgui.inputFloat4("atlas pos input", .{
+                    .v = &game.state.ui.data.demo_atlas_translation,
+                })) {
+                    entities.screen.initDemoCube();
+                }
+                if (zgui.sliderFloat4("atlas pos slider", .{
+                    .v = &game.state.ui.data.demo_atlas_translation,
+                    .min = -10,
+                    .max = 10,
+                })) {
+                    entities.screen.initDemoCube();
+                }
             }
             zgui.end();
         }

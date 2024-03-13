@@ -383,6 +383,28 @@ pub fn initDemoCube() void {
     _ = ecs.set(world, c_t3, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_t3 });
     _ = ecs.set(world, c_t3, components.shape.DemoCubeTexture, .{ .beg = 16 * 16 * 2, .end = 16 * 16 * 3 });
     ecs.add(world, c_t3, components.shape.NeedsSetup);
+    initDemoTextureAtlas();
+}
+
+pub fn initDemoTextureAtlas() void {
+    const world = game.state.world;
+    const cr_c = math.vecs.Vflx4.initFloats(1, 0, 1, 1);
+    const c_atlas = helpers.new_child(world, settings_data);
+    const color = components.shape.Color.fromVec(cr_c);
+    std.debug.print("setting atlas color to ({d}, {d}, {d}, {d}) for entity {d}\n", .{
+        color.color[0],
+        color.color[1],
+        color.color[2],
+        color.color[3],
+        c_atlas,
+    });
+    _ = ecs.set(world, c_atlas, components.shape.Shape, .{ .shape_type = .plane });
+    _ = ecs.set(world, c_atlas, components.shape.Color, components.shape.Color.fromVec(cr_c));
+    _ = ecs.set(world, c_atlas, components.shape.Scale, .{ .scale = game.state.ui.data.demo_atlas_scale });
+    _ = ecs.set(world, c_atlas, components.shape.Translation, .{ .translation = game.state.ui.data.demo_atlas_translation });
+    // _ = ecs.set(world, c_t1, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 });
+    ecs.add(world, c_atlas, components.Debug);
+    ecs.add(world, c_atlas, components.shape.NeedsSetup);
 }
 
 pub fn initDemoChunkCamera() void {
