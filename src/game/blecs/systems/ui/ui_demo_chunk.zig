@@ -148,11 +148,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     .w = 250,
                 })) {
                     game.state.ui.data.demo_chunk_rotation_x = 0;
-                    game.state.ui.data.demo_chunk_rotation_y = 1.239;
-                    game.state.ui.data.demo_chunk_rotation_z = 0.904;
-                    game.state.ui.data.demo_chunk_scale = 0.09;
-                    game.state.ui.data.demo_chunk_translation = .{ -3.531, -2.953, 0.397, 0 };
-                    game.state.ui.data.demo_chunk_pp_translation = .{ 0, 1.410, -0.439, 0 };
+                    game.state.ui.data.demo_chunk_rotation_y = 0.341;
+                    game.state.ui.data.demo_chunk_rotation_z = 0.236;
+                    game.state.ui.data.demo_chunk_scale = 0.042;
+                    game.state.ui.data.demo_chunk_translation = .{ -4.538, -1.101, -0.264, 0 };
+                    game.state.ui.data.demo_chunk_pp_translation = .{ -0.650, 0.100, 0.000, 0 };
                     entities.screen.initDemoChunkCamera();
                 }
             }

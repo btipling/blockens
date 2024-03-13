@@ -7,6 +7,8 @@ const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
 const entities_screen = @import("entities_screen.zig");
 
+pub const MaxBlocks = 256;
+
 pub fn init() void {
     initBlocks();
 }
@@ -59,12 +61,16 @@ pub fn deinitBlock(block_id: u8) void {
 pub fn loadTextureAtlas() void {
     var ta = std.ArrayList(u32).init(game.state.allocator);
     defer ta.deinit();
-
+    game.state.ui.data.texture_atlas_block_index = [_]usize{0} ** MaxBlocks;
     var it = game.state.gfx.blocks.valueIterator();
+    var i: usize = 0;
     while (it.next()) |b| {
         const block = b.*;
         ta.appendSlice(block.data.texture) catch unreachable;
+        game.state.ui.data.texture_atlas_block_index[@intCast(block.id)] = i;
+        i += 1;
     }
+    game.state.ui.data.texture_atlas_num_blocks = i;
     if (game.state.ui.data.texture_atlas_rgba_data) |d| game.state.allocator.free(d);
     game.state.ui.data.texture_atlas_rgba_data = ta.toOwnedSlice() catch unreachable;
 }

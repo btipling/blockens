@@ -5,30 +5,43 @@
     // be done by reducing the fragPos to a 0-1 range, by removing the integer part of the position.
     // Then the texture coordinates will be manually interpolated by the fragPos.
 
-    // `textColor` and `fragNormal` must predefined elsewhere.
+    // `textColor`, `bl_surface_height` and `fragNormal` must predefined elsewhere.
+    highp float surface_h = bl_surface_height;
+    highp float surface_t = bl_surface_height * 2;
+    highp float texture_start = surface_h * 3 * texture_offset;
+    float top_offset = 0.001;
+    float bot_offset = 0.00001;
+    float threshold = 0.001;
     if (abs(fragNormal.y) > 0.5) {
         // top or bottom of voxel
         if (fragNormal.y > 0) {
-            textColor = texture(texture1, vec2(fract(fragPos.x), fract(fragPos.z * -1.0) * 0.33333));
+            textColor = texture(texture1, vec2(fract(fragPos.x), (fract(fragPos.z * -1.0) * surface_h) + texture_start + top_offset));
         } else {
-            textColor = texture(texture1, vec2(fract(fragPos.z * -1.0), (fract(fragPos.x) * 0.33333) + 0.66666));
+            float tc_pre = fract(fragPos.x) * surface_h;
+            if (tc_pre < threshold) {
+                tc_pre = threshold;
+            }
+            if (surface_h - tc_pre < threshold) {
+                tc_pre = surface_h;
+            }
+            textColor = texture(texture1, vec2(fract(fragPos.z * -1.0), tc_pre + surface_t + texture_start));
         }
     } else if (abs(fragNormal.x) > 0.5) {
         // side of voxel
         if (fragNormal.x > 0) {
             // right
-            textColor = texture(texture1, vec2(fract(fragPos.z), (fract(fragPos.y * -1.0) * 0.33333) + 0.33333));
+            textColor = texture(texture1, vec2(fract(fragPos.z), (fract(fragPos.y * -1.0) * surface_h) + surface_h + texture_start));
         } else {
             // left
-            textColor = texture(texture1, vec2(fract(fragPos.z * -1.0), (fract(fragPos.y * -1.0) * 0.33333) + 0.33333));
+            textColor = texture(texture1, vec2(fract(fragPos.z * -1.0), (fract(fragPos.y * -1.0) * surface_h) + surface_h + texture_start));
         }
     } else {
         // front or back of voxel
         if (fragNormal.z > 0) {
             // front
-            textColor = texture(texture1, vec2(fract(fragPos.x * -1.0), (fract(fragPos.y * -1.0) * 0.33333) + 0.33333));
+            textColor = texture(texture1, vec2(fract(fragPos.x * -1.0), (fract(fragPos.y * -1.0) * surface_h) + surface_h + texture_start));
         } else {
             // back
-            textColor = texture(texture1, vec2(fract(fragPos.x), (fract(fragPos.y * -1.0) * 0.33333) + 0.33333));
+            textColor = texture(texture1, vec2(fract(fragPos.x), (fract(fragPos.y * -1.0) * surface_h) + surface_h + texture_start));
         }
     } 

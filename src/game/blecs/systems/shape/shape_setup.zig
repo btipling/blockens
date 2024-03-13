@@ -114,6 +114,10 @@ const shaders = struct {
             if (e.has_texture_atlas) has_texture = true;
             if (e.has_mob_texture) has_texture = true;
         }
+        var block_index: usize = 0;
+        if (e.block_id) |bi| {
+            block_index = game.state.ui.data.texture_atlas_block_index[@intCast(bi)];
+        }
         const f_cfg = gfx.shadergen.fragment.FragmentShaderGen.fragmentShaderConfig{
             .debug = e.debug,
             .color = e.color,
@@ -121,6 +125,7 @@ const shaders = struct {
             .has_texture = has_texture,
             .has_normals = mesh_data.normals != null,
             .is_meshed = e.is_meshed,
+            .block_index = block_index,
         };
         return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;
     }

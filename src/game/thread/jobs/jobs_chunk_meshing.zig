@@ -1,5 +1,6 @@
 const std = @import("std");
 const chunk = @import("../../chunk.zig");
+const game = @import("../../game.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const buffer = @import("../buffer.zig");
 const gfx = @import("../../gfx/gfx.zig");
@@ -18,10 +19,15 @@ pub const ChunkMeshJob = struct {
         while (keys.next()) |_k| {
             const i: usize = _k.*;
             if (c.meshes.get(i)) |s| {
-                const mesh_data: gfx.mesh.meshData = gfx.mesh.voxel(s) catch unreachable;
+                const block_id: u8 = @intCast(c.data[i]);
+                const mesh_data: gfx.mesh.meshData = gfx.mesh.voxel(
+                    game.state.ui.data.texture_atlas_num_blocks,
+                    block_id,
+                    s,
+                ) catch unreachable;
                 const e: chunk.ChunkElement = .{
                     .chunk_index = i,
-                    .block_id = @intCast(c.data[i]),
+                    .block_id = block_id,
                     .mesh_data = mesh_data,
                 };
                 c.elements.append(e) catch unreachable;

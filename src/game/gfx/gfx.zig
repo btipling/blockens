@@ -5,6 +5,8 @@ const zstbi = @import("zstbi");
 const game_state = @import("../state.zig");
 const game = @import("../game.zig");
 
+pub var atlas_texture: ?u32 = null;
+
 pub const shadergen = @import("shadergen.zig");
 pub const buffer_data = @import("buffer_data.zig");
 pub const constants = @import("gfx_constants.zig");
@@ -113,7 +115,7 @@ pub const Gfx = struct {
         gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
         const uboStruct = struct {
             transform: [16]f32 = [_]f32{undefined} ** 16,
-            time_data: [4]f32 = [_]f32{0} ** 4,
+            shader_data: [4]f32 = [_]f32{0} ** 4,
             gfx_data: [4]u32 = [_]u32{0} ** 4,
         };
         var ubo_data = uboStruct{};
@@ -140,17 +142,19 @@ pub const Gfx = struct {
         updated: zm.Mat,
         time: f32,
         animations_running: u32,
+        num_blocks: usize,
         ubo: u32,
     ) void {
         gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
         const uboStruct = struct {
             transform: [16]f32 = [_]f32{undefined} ** 16,
-            time_data: [4]f32 = [_]f32{0} ** 4,
+            shader_data: [4]f32 = [_]f32{0} ** 4,
             gfx_data: [4]u32 = [_]u32{0} ** 4,
         };
         var ubo_data = uboStruct{};
         zm.storeMat(&ubo_data.transform, updated);
-        ubo_data.time_data[0] = time;
+        ubo_data.shader_data[0] = time;
+        ubo_data.shader_data[1] = 0.333 / @as(f32, @floatFromInt(num_blocks)); // texture.s surface height
         ubo_data.gfx_data[0] = animations_running;
 
         const size: isize = @intCast(@sizeOf(uboStruct));
@@ -207,6 +211,29 @@ pub const Gfx = struct {
         const imageData: *const anyopaque = texture_data.ptr;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
         gl.generateMipmap(gl.TEXTURE_2D);
+        return texture;
+    }
+
+    pub fn initTextureAtlasFromColors(texture_data: []const u32) u32 {
+        if (atlas_texture) |t| {
+            gl.bindTexture(gl.TEXTURE_2D, t);
+            return t;
+        }
+        var texture: u32 = undefined;
+        gl.genTextures(1, &texture);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_BORDER);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+        const width: i32 = 16;
+        const height: i32 = @divFloor(@as(i32, @intCast(texture_data.len)), width);
+        const imageData: *const anyopaque = texture_data.ptr;
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        atlas_texture = texture;
         return texture;
     }
 

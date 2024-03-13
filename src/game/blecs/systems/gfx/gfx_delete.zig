@@ -6,6 +6,7 @@ const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
 const screen_entity = @import("../../entities/entities_screen.zig");
+const gfx = @import("../../../gfx/gfx.zig");
 
 pub fn init() void {
     const s = system();
@@ -55,7 +56,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             gl.deleteBuffers(1, &er.vbo);
             gl.deleteBuffers(1, &er.ebo);
             if (er.texture != 0) {
-                gl.deleteTextures(1, &er.texture);
+                if (gfx.atlas_texture) |at| {
+                    if (er.texture != at) gl.deleteTextures(1, &er.texture);
+                } else {
+                    gl.deleteTextures(1, &er.texture);
+                }
             }
             ecs.delete(game.state.world, entity);
         }

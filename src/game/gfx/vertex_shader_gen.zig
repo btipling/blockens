@@ -112,6 +112,7 @@ pub const VertexShaderGen = struct {
             }
             if (r.cfg.is_meshed) {
                 r.a("\nout vec3 fragPos;\n");
+                r.a("flat out highp float bl_surface_height;\n");
             }
             if (r.cfg.has_normals) {
                 r.a("\nflat out vec3 fragNormal;\n");
@@ -134,7 +135,7 @@ pub const VertexShaderGen = struct {
                 r.a(constants.UBOMatName);
                 r.a(";\n");
                 r.a("    vec4 ");
-                r.a(constants.UBOAnimationDataName);
+                r.a(constants.UBOShaderDataName);
                 r.a(";\n");
                 r.a("    uint ");
                 r.a(constants.UBOGFXDataName);
@@ -338,6 +339,9 @@ pub const VertexShaderGen = struct {
                 r.a("    TexCoord = eTexCoord;\n");
             }
             if (r.cfg.is_meshed) {
+                r.a("    bl_surface_height = ");
+                r.a(constants.UBOShaderDataName);
+                r.a("[1];\n");
                 r.a("    fragPos = position;\n");
                 r.a("    fragPos = vec3(fragPos.x + 0.5, fragPos.y + 0.5, fragPos.z + 0.5);");
             }

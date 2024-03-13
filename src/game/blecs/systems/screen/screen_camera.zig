@@ -139,6 +139,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 m,
                 mut_camera.elapsedTime,
                 game.state.gfx.animations_running,
+                game.state.ui.data.texture_atlas_num_blocks,
                 ubo,
             );
             ecs.remove(world, entity, components.screen.Updated);

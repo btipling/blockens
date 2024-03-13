@@ -6,7 +6,7 @@ struct AnimationFrameIndices {
 
 // num_animation_frames must be set
 AnimationFrameIndices get_frame_indices() {
-    float time = animation_data.x;
+    float time = shader_data.x;
     AnimationFrameIndices indices = AnimationFrameIndices(-1, -1, 0.0);
 
     float bl_max = frames[num_animation_frames - 1].data[0];
