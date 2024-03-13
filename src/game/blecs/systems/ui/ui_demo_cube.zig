@@ -122,6 +122,18 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 })) {
                     entities.screen.initDemoCube();
                 }
+                if (zgui.inputFloat("atlas rotation input", .{
+                    .v = &game.state.ui.data.demo_atlas_rotation,
+                })) {
+                    entities.screen.initDemoCube();
+                }
+                if (zgui.sliderFloat("atlas rotation slider", .{
+                    .v = &game.state.ui.data.demo_atlas_rotation,
+                    .min = 0,
+                    .max = 2,
+                })) {
+                    entities.screen.initDemoCube();
+                }
             }
             zgui.end();
         }

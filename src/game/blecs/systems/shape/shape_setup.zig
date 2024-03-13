@@ -68,6 +68,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .is_instanced = e.is_instanced,
                 .block_id = e.block_id,
                 .has_mob_texture = e.has_mob_texture,
+                .has_block_texture_atlas = e.has_texture_atlas,
             };
             const erc_id = ecs.new_id(world);
             game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
@@ -108,15 +109,10 @@ const shaders = struct {
     fn genFragmentShader(e: *const extractions, mesh_data: *const gfx.mesh.meshData) [:0]const u8 {
         var has_texture = false;
         if (mesh_data.texcoords != null) {
-            if (e.block_id != null) {
-                has_texture = true;
-            }
-            if (e.has_demo_cube_texture) {
-                has_texture = true;
-            }
-            if (e.has_mob_texture) {
-                has_texture = true;
-            }
+            if (e.block_id != null) has_texture = true;
+            if (e.has_demo_cube_texture) has_texture = true;
+            if (e.has_texture_atlas) has_texture = true;
+            if (e.has_mob_texture) has_texture = true;
         }
         const f_cfg = gfx.shadergen.fragment.FragmentShaderGen.fragmentShaderConfig{
             .debug = e.debug,
@@ -141,6 +137,7 @@ const extractions = struct {
     has_uniform_mat: bool = false,
     uniform_mat: zm.Mat = zm.identity(),
     has_demo_cube_texture: bool = false,
+    has_texture_atlas: bool = false,
     dc_t_beg: usize = 0,
     dc_t_end: usize = 0,
     has_animation_block: bool = false,
@@ -317,6 +314,9 @@ const extractions = struct {
             e.has_demo_cube_texture = true;
             e.dc_t_beg = dct.beg;
             e.dc_t_end = dct.end;
+        }
+        if (ecs.has_id(world, entity, ecs.id(components.block.UseTextureAtlas))) {
+            e.has_texture_atlas = true;
         }
         if (ecs.get_id(world, entity, ecs.id(components.shape.UBO))) |opaque_ptr| {
             const u: *const components.shape.UBO = @ptrCast(@alignCast(opaque_ptr));

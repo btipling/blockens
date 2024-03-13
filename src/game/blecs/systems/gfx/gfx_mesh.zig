@@ -186,6 +186,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     texture = gfx.Gfx.initTextureFromColors(d[dct[0]..dct[1]]);
                 }
             }
+            if (er.has_block_texture_atlas) {
+                if (game.state.ui.data.texture_atlas_rgba_data) |d| {
+                    texture = gfx.Gfx.initTextureFromColors(d);
+                }
+            }
             if (er.block_id != null and game.state.gfx.blocks.contains(er.block_id.?)) {
                 const block = game.state.gfx.blocks.get(er.block_id.?).?;
                 texture = gfx.Gfx.initTextureFromColors(block.data.texture);

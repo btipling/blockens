@@ -388,7 +388,7 @@ pub fn initDemoCube() void {
 
 pub fn initDemoTextureAtlas() void {
     const world = game.state.world;
-    const cr_c = math.vecs.Vflx4.initFloats(1, 0, 1, 1);
+    const cr_c = math.vecs.Vflx4.initFloats(0, 0, 1, 0);
     const c_atlas = helpers.new_child(world, settings_data);
     const color = components.shape.Color.fromVec(cr_c);
     std.debug.print("setting atlas color to ({d}, {d}, {d}, {d}) for entity {d}\n", .{
@@ -398,11 +398,18 @@ pub fn initDemoTextureAtlas() void {
         color.color[3],
         c_atlas,
     });
+    const atlas_rot = zm.rotationZ(game.state.ui.data.demo_atlas_rotation * std.math.pi * 2.0);
+    _ = ecs.set(
+        game.state.world,
+        c_atlas,
+        components.screen.WorldRotation,
+        .{ .rotation = zm.matToQuat(atlas_rot) },
+    );
     _ = ecs.set(world, c_atlas, components.shape.Shape, .{ .shape_type = .plane });
     _ = ecs.set(world, c_atlas, components.shape.Color, components.shape.Color.fromVec(cr_c));
     _ = ecs.set(world, c_atlas, components.shape.Scale, .{ .scale = game.state.ui.data.demo_atlas_scale });
     _ = ecs.set(world, c_atlas, components.shape.Translation, .{ .translation = game.state.ui.data.demo_atlas_translation });
-    // _ = ecs.set(world, c_t1, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 });
+    ecs.add(world, c_atlas, components.block.UseTextureAtlas);
     ecs.add(world, c_atlas, components.Debug);
     ecs.add(world, c_atlas, components.shape.NeedsSetup);
 }
