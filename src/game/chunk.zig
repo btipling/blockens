@@ -94,7 +94,6 @@ pub const Chunk = struct {
     }
 
     pub fn deinit(self: *Chunk) void {
-        std.debug.print("deiniting chunk {d}??\n", .{self.entity});
         self.meshes.deinit();
         self.meshed.deinit();
         self.instanced.deinit();

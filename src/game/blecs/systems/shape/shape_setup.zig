@@ -22,13 +22,6 @@ fn system() ecs.system_desc_t {
     return desc;
 }
 
-const meshData = struct {
-    positions: [][3]f32,
-    indices: []u32,
-    texcoords: ?[][2]f32 = null,
-    normals: ?[][3]f32 = null,
-};
-
 fn run(it: *ecs.iter_t) callconv(.C) void {
     const world = it.world;
     while (ecs.iter_next(it)) {
@@ -39,10 +32,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             defer e.deinit();
 
             const mesh_data = switch (sh[i].shape_type) {
-                .plane => plane(),
-                .cube => cube(),
-                .meshed_voxel => voxel(world, entity) catch unreachable,
-                .mob => mob(world, entity),
+                .plane => gfx.mesh.plane(),
+                .cube => gfx.mesh.cube(),
+                .meshed_voxel => gfx.mesh.voxel(world, entity) catch unreachable,
+                .mob => gfx.mesh.mob(world, entity),
             };
 
             var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
@@ -77,7 +70,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 }
 
 const shaders = struct {
-    fn genVertexShader(e: *const extractions, mesh_data: *const meshData) [:0]const u8 {
+    fn genVertexShader(e: *const extractions, mesh_data: *const gfx.mesh.meshData) [:0]const u8 {
         const v_cfg = gfx.shadergen.vertex.VertexShaderGen.vertexShaderConfig{
             .debug = e.debug,
             .has_uniform_mat = e.has_uniform_mat,
@@ -102,7 +95,7 @@ const shaders = struct {
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
     }
-    fn genFragmentShader(e: *const extractions, mesh_data: *const meshData) [:0]const u8 {
+    fn genFragmentShader(e: *const extractions, mesh_data: *const gfx.mesh.meshData) [:0]const u8 {
         var has_texture = false;
         if (mesh_data.texcoords != null) {
             if (e.block_id != null) {
@@ -335,256 +328,3 @@ const extractions = struct {
         return e;
     }
 };
-
-// :: Plane
-fn plane() meshData {
-    var p = zmesh.Shape.initPlane(1, 1);
-    defer p.deinit();
-    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, p.positions.len) catch unreachable;
-    @memcpy(positions, p.positions);
-    const indices: []u32 = game.state.allocator.alloc(u32, p.indices.len) catch unreachable;
-    @memcpy(indices, p.indices);
-    var texcoords: ?[][2]f32 = null;
-    if (p.texcoords) |_| {
-        const tc: [][2]f32 = game.state.allocator.alloc([2]f32, p.texcoords.?.len) catch unreachable;
-        @memcpy(tc, p.texcoords.?);
-        texcoords = tc;
-    }
-    var normals: ?[][3]f32 = null;
-    if (p.normals) |_| {
-        const ns: [][3]f32 = game.state.allocator.alloc([3]f32, p.normals.?.len) catch unreachable;
-        @memcpy(ns, p.normals.?);
-        normals = ns;
-    }
-    return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
-}
-
-// :: Cube
-const cube_positions: [36][3]f32 = .{
-    // front
-    .{ -0.5, -0.5, 0.5 },
-    .{ 0.5, -0.5, 0.5 },
-    .{ 0.5, 0.5, 0.5 },
-    .{ -0.5, -0.5, 0.5 },
-    .{ 0.5, 0.5, 0.5 },
-    .{ -0.5, 0.5, 0.5 },
-
-    // right
-    .{ 0.5, -0.5, 0.5 },
-    .{ 0.5, -0.5, -0.5 },
-    .{ 0.5, 0.5, -0.5 },
-    .{ 0.5, -0.5, 0.5 },
-    .{ 0.5, 0.5, -0.5 },
-    .{ 0.5, 0.5, 0.5 },
-    // back
-    .{ 0.5, -0.5, -0.5 },
-    .{ -0.5, -0.5, -0.5 },
-    .{ -0.5, 0.5, -0.5 },
-    .{ 0.5, -0.5, -0.5 },
-    .{ -0.5, 0.5, -0.5 },
-    .{ 0.5, 0.5, -0.5 },
-    // left
-    .{ -0.5, -0.5, -0.5 },
-    .{ -0.5, -0.5, 0.5 },
-    .{ -0.5, 0.5, 0.5 },
-    .{ -0.5, -0.5, -0.5 },
-    .{ -0.5, 0.5, 0.5 },
-    .{ -0.5, 0.5, -0.5 },
-    // bottom
-    .{ -0.5, -0.5, -0.5 },
-    .{ 0.5, -0.5, -0.5 },
-    .{ 0.5, -0.5, 0.5 },
-    .{ -0.5, -0.5, -0.5 },
-    .{ 0.5, -0.5, 0.5 },
-    .{ -0.5, -0.5, 0.5 },
-    // top
-    .{ -0.5, 0.5, 0.5 },
-    .{ 0.5, 0.5, 0.5 },
-    .{ 0.5, 0.5, -0.5 },
-    .{ -0.5, 0.5, 0.5 },
-    .{ 0.5, 0.5, -0.5 },
-    .{ -0.5, 0.5, -0.5 },
-};
-
-const cube_indices: [36]u32 = .{
-    0, 1, 2, 3, 4, 5, // front
-    6, 7, 8, 9, 10, 11, // right
-    12, 13, 14, 15, 16, 17, // back
-    18, 19, 20, 21, 22, 23, // left
-    24, 25, 26, 27, 28, 29, // bottom
-    30, 31, 32, 33, 34, 35, // top
-};
-
-const cube_texcoords: [36][2]f32 = .{
-    // front
-    .{ 0.0, 0.666 },
-    .{ 1.0, 0.666 },
-    .{ 1.0, 0.333 },
-    .{ 0.0, 0.666 },
-    .{ 1.0, 0.333 },
-    .{ 0.0, 0.333 },
-    // right
-    .{ 0.0, 0.666 },
-    .{ 1.0, 0.666 },
-    .{ 1.0, 0.333 },
-    .{ 0.0, 0.666 },
-    .{ 1.0, 0.333 },
-    .{ 0.0, 0.333 },
-    // back
-    .{ 0.0, 0.666 },
-    .{ 1.0, 0.666 },
-    .{ 1.0, 0.333 },
-    .{ 0.0, 0.666 },
-    .{ 1.0, 0.333 },
-    .{ 0.0, 0.333 },
-    // left
-    .{ 0.0, 0.666 },
-    .{ 1.0, 0.666 },
-    .{ 1.0, 0.333 },
-    .{ 0.0, 0.666 },
-    .{ 1.0, 0.333 },
-    .{ 0.0, 0.333 },
-    // bottom
-    .{ 0.0, 0.666 },
-    .{ 1.0, 0.666 },
-    .{ 1.0, 1.0 },
-    .{ 0.0, 0.666 },
-    .{ 1.0, 1.0 },
-    .{ 0.0, 1.0 },
-    // top
-    .{ 0.0, 0.0 },
-    .{ 1.0, 0.0 },
-    .{ 1.0, 0.333 },
-    .{ 0.0, 0.0 },
-    .{ 1.0, 0.333 },
-    .{ 0.0, 0.333 },
-};
-
-const cube_normals: [36][3]f32 = .{
-    // front
-    .{ 0.0, 0.0, 1.0 },
-    .{ 0.0, 0.0, 1.0 },
-    .{ 0.0, 0.0, 1.0 },
-    .{ 0.0, 0.0, 1.0 },
-    .{ 0.0, 0.0, 1.0 },
-    .{ 0.0, 0.0, 1.0 },
-    // right
-    .{ 1.0, 0.0, 0.0 },
-    .{ 1.0, 0.0, 0.0 },
-    .{ 1.0, 0.0, 0.0 },
-    .{ 1.0, 0.0, 0.0 },
-    .{ 1.0, 0.0, 0.0 },
-    .{ 1.0, 0.0, 0.0 },
-    // backl
-    .{ 0.0, 0.0, -1.0 },
-    .{ 0.0, 0.0, -1.0 },
-    .{ 0.0, 0.0, -1.0 },
-    .{ 0.0, 0.0, -1.0 },
-    .{ 0.0, 0.0, -1.0 },
-    .{ 0.0, 0.0, -1.0 },
-    // left
-    .{ -1.0, 0.0, 0.0 },
-    .{ -1.0, 0.0, 0.0 },
-    .{ -1.0, 0.0, 0.0 },
-    .{ -1.0, 0.0, 0.0 },
-    .{ -1.0, 0.0, 0.0 },
-    .{ -1.0, 0.0, 0.0 },
-    // bottom
-    .{ 0.0, -1.0, 0.0 },
-    .{ 0.0, -1.0, 0.0 },
-    .{ 0.0, -1.0, 0.0 },
-    .{ 0.0, -1.0, 0.0 },
-    .{ 0.0, -1.0, 0.0 },
-    .{ 0.0, -1.0, 0.0 },
-    // top
-    .{ 0.0, 1.0, 0.0 },
-    .{ 0.0, 1.0, 0.0 },
-    .{ 0.0, 1.0, 0.0 },
-    .{ 0.0, 1.0, 0.0 },
-    .{ 0.0, 1.0, 0.0 },
-    .{ 0.0, 1.0, 0.0 },
-};
-
-fn cube() meshData {
-    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, cube_positions.len) catch unreachable;
-    @memcpy(positions, &cube_positions);
-    const indices: []u32 = game.state.allocator.alloc(u32, cube_indices.len) catch unreachable;
-    @memcpy(indices, &cube_indices);
-    const texcoords: [][2]f32 = game.state.allocator.alloc([2]f32, cube_texcoords.len) catch unreachable;
-    @memcpy(texcoords, &cube_texcoords);
-    const normals: [][3]f32 = game.state.allocator.alloc([3]f32, cube_normals.len) catch unreachable;
-    @memcpy(normals, &cube_normals);
-    return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
-}
-
-fn voxel(world: *ecs.world_t, entity: ecs.entity_t) !meshData {
-    if (!ecs.has_id(world, entity, ecs.id(components.block.Meshscale))) return cube();
-    var scale: @Vector(4, f32) = .{ 0, 0, 0, 0 };
-    if (ecs.get(world, entity, components.block.Meshscale)) |s| {
-        scale = s.scale;
-    }
-    const allocator = game.state.allocator;
-    var indicesAL = std.ArrayList(u32).init(allocator);
-
-    defer indicesAL.deinit();
-    var _i = cube_indices;
-    try indicesAL.appendSlice(&_i);
-
-    var positionsAL = std.ArrayList([3]f32).init(allocator);
-    defer positionsAL.deinit();
-    var _p = cube_positions;
-    try positionsAL.appendSlice(&_p);
-
-    var normalsAL = std.ArrayList([3]f32).init(allocator);
-    defer normalsAL.deinit();
-    var _n = cube_normals;
-    try normalsAL.appendSlice(&_n);
-
-    var texcoordsAL = std.ArrayList([2]f32).init(allocator);
-    defer texcoordsAL.deinit();
-    var _t = cube_texcoords;
-    try texcoordsAL.appendSlice(&_t);
-
-    var v = zmesh.Shape.init(indicesAL, positionsAL, normalsAL, texcoordsAL);
-    defer v.deinit();
-
-    // voxel meshes are centered around origin and range fro -0.5 to 0.5 so need a translation
-    v.translate(0.5, 0.5, 0.5);
-    v.scale(scale[0], scale[1], scale[2]);
-    v.translate(0.5, 0.5, 0.5);
-
-    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, v.positions.len) catch unreachable;
-    @memcpy(positions, v.positions);
-    const indices: []u32 = game.state.allocator.alloc(u32, v.indices.len) catch unreachable;
-    @memcpy(indices, v.indices);
-    const texcoords: [][2]f32 = game.state.allocator.alloc([2]f32, v.texcoords.?.len) catch unreachable;
-    @memcpy(texcoords, v.texcoords.?);
-    const normals: [][3]f32 = game.state.allocator.alloc([3]f32, v.normals.?.len) catch unreachable;
-    @memcpy(normals, v.normals.?);
-    return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
-}
-
-fn mob(world: *ecs.world_t, entity: ecs.entity_t) meshData {
-    if (!ecs.has_id(world, entity, ecs.id(components.mob.Mesh))) return cube();
-    const mesh_c: *const components.mob.Mesh = ecs.get(world, entity, components.mob.Mesh).?;
-    if (!ecs.has_id(world, mesh_c.mob_entity, ecs.id(components.mob.Mob))) return cube();
-    const mob_c: *const components.mob.Mob = ecs.get(world, mesh_c.mob_entity, components.mob.Mob).?;
-    if (!game.state.gfx.mob_data.contains(mob_c.mob_id)) return cube();
-    const mob_data: *game_state.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
-    if (mob_data.meshes.items.len <= mesh_c.mesh_id) return cube();
-    const mesh: *game_state.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
-    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, mesh.positions.items.len) catch unreachable;
-    @memcpy(positions, mesh.positions.items);
-    const indices: []u32 = game.state.allocator.alloc(u32, mesh.indices.items.len) catch unreachable;
-    @memcpy(indices, mesh.indices.items);
-    var texcoords: ?[][2]f32 = null;
-    if (mesh.texture != null) {
-        var tc = game.state.allocator.alloc([2]f32, mesh.textcoords.items.len) catch unreachable;
-        _ = &tc;
-        @memcpy(tc, mesh.textcoords.items);
-        texcoords = tc;
-    }
-    const normals: [][3]f32 = game.state.allocator.alloc([3]f32, mesh.normals.items.len) catch unreachable;
-    @memcpy(normals, mesh.normals.items);
-    return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
-}

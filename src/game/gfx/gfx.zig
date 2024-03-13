@@ -8,6 +8,7 @@ const game = @import("../game.zig");
 pub const shadergen = @import("shadergen.zig");
 pub const buffer_data = @import("buffer_data.zig");
 pub const constants = @import("gfx_constants.zig");
+pub const mesh = @import("mesh.zig");
 
 pub const GfxErr = error{
     RenderError,
