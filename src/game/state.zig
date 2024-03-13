@@ -53,6 +53,7 @@ pub const UIData = struct {
     texture_buf: [script.maxLuaScriptSize]u8 = [_]u8{0} ** script.maxLuaScriptSize,
     texture_name_buf: [script.maxLuaScriptNameSize]u8 = [_]u8{0} ** script.maxLuaScriptNameSize,
     texture_rgba_data: ?[]u32 = null,
+    texture_atlas_rgba_data: ?[]u32 = null,
     block_options: std.ArrayList(data.blockOption) = undefined,
     block_create_name_buf: [data.maxBlockSizeName]u8 = [_]u8{0} ** data.maxBlockSizeName,
     block_update_name_buf: [data.maxBlockSizeName]u8 = [_]u8{0} ** data.maxBlockSizeName,
@@ -126,6 +127,7 @@ pub const UIData = struct {
         }
         self.world_chunk_table_data.deinit();
         if (self.texture_rgba_data) |d| allocator.free(d);
+        if (self.texture_atlas_rgba_data) |d| allocator.free(d);
         if (self.chunk_demo_data) |d| allocator.free(d);
     }
 };

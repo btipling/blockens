@@ -17,6 +17,7 @@ pub fn initBlocks() void {
         const block_id: u8 = @intCast(o.id);
         initBlock(block_id);
     }
+    loadTextureAtlas();
 }
 
 pub fn deinitBlocks() void {
@@ -45,6 +46,7 @@ pub fn initBlock(block_id: u8) void {
         game.state.allocator.destroy(b);
     }
     game.state.gfx.blocks.put(block_id, block) catch unreachable;
+    loadTextureAtlas();
 }
 
 pub fn deinitBlock(block_id: u8) void {
@@ -52,4 +54,17 @@ pub fn deinitBlock(block_id: u8) void {
         game.state.allocator.free(b.data.texture);
         game.state.allocator.destroy(b);
     }
+}
+
+pub fn loadTextureAtlas() void {
+    var ta = std.ArrayList(u32).init(game.state.allocator);
+    defer ta.deinit();
+
+    var it = game.state.gfx.blocks.valueIterator();
+    while (it.next()) |b| {
+        const block = b.*;
+        ta.appendSlice(block.data.texture) catch unreachable;
+    }
+    if (game.state.ui.data.texture_atlas_rgba_data) |d| game.state.allocator.free(d);
+    game.state.ui.data.texture_atlas_rgba_data = ta.toOwnedSlice() catch unreachable;
 }
