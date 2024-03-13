@@ -1,6 +1,6 @@
 const std = @import("std");
 const chunk = @import("../chunk.zig");
-const state = @import("../state/state.zig");
+const state = @import("../state.zig");
 const blecs = @import("../blecs/blecs.zig");
 
 var id: u64 = 0;

@@ -5,7 +5,7 @@ const zm = @import("zmath");
 const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
-const game_data = @import("../../../state/state.zig");
+const game_data = @import("../../../state.zig");
 const screen_entity = @import("../../entities/entities_screen.zig");
 const gfx = @import("../../../gfx/gfx.zig");
 

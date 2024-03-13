@@ -3,7 +3,7 @@ const ecs = @import("zflecs");
 const components = @import("../../components/components.zig");
 const helpers = @import("../../helpers.zig");
 const game = @import("../../../game.zig");
-const game_state = @import("../../../state/state.zig");
+const game_state = @import("../../../state.zig");
 const cltf_mesh = @import("../../../gfx/cltf_mesh.zig");
 const gfx = @import("../../../gfx/gfx.zig");
 

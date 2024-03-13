@@ -3,7 +3,7 @@ const zm = @import("zmath");
 const game = @import("../game.zig");
 const blecs = @import("../blecs/blecs.zig");
 const zgui = @import("zgui");
-const gameState = @import("../state/state.zig");
+const gameState = @import("../state.zig");
 
 pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
     const x: f32 = @floatCast(xpos);

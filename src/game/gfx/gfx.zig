@@ -2,7 +2,7 @@ const std = @import("std");
 const gl = @import("zopengl").bindings;
 const zm = @import("zmath");
 const zstbi = @import("zstbi");
-const game_state = @import("../state/state.zig");
+const game_state = @import("../state.zig");
 const game = @import("../game.zig");
 
 pub const shadergen = @import("shadergen.zig");

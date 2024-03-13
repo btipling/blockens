@@ -1,7 +1,7 @@
 const std = @import("std");
 const game = @import("../../game.zig");
 const chunk = @import("../../chunk.zig");
-const state = @import("../../state/state.zig");
+const state = @import("../../state.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const buffer = @import("../buffer.zig");
 

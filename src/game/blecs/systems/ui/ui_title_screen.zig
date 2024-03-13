@@ -3,7 +3,7 @@ const ecs = @import("zflecs");
 const zgui = @import("zgui");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
-const game_state = @import("../../../state/state.zig");
+const game_state = @import("../../../state.zig");
 const screen_helpers = @import("../screen_helpers.zig");
 const helpers = @import("ui_helpers.zig");
 

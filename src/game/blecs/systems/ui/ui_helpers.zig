@@ -5,7 +5,7 @@ const config = @import("../../../config.zig");
 const data = @import("../../../data/data.zig");
 const game = @import("../../../game.zig");
 const entities = @import("../../entities/entities.zig");
-const game_state = @import("../../../state/state.zig");
+const game_state = @import("../../../state.zig");
 const chunk = @import("../../../chunk.zig");
 const script = @import("../../../script/script.zig");
 

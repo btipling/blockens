@@ -4,7 +4,7 @@ const zmesh = @import("zmesh");
 const sampler = @import("./cltf_sampler.zig");
 const game = @import("../game.zig");
 const data = @import("../data/data.zig");
-const game_state = @import("../state/state.zig");
+const game_state = @import("../state.zig");
 const gltf = zmesh.io.zcgltf;
 
 pub const MeshErr = error{

@@ -1,7 +1,7 @@
 const std = @import("std");
 const ziglua = @import("ziglua");
 const data = @import("../data/data.zig");
-const state = @import("../state/state.zig");
+const state = @import("../state.zig");
 const chunk = @import("../chunk.zig");
 
 const Lua = ziglua.Lua;
