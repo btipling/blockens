@@ -95,6 +95,7 @@ const shaders = struct {
             .animation_id = e.animation_id,
             .is_instanced = e.is_instanced,
             .is_meshed = e.is_meshed,
+            .has_block_data = e.has_texture_atlas,
             .mesh_transforms = blk: {
                 if (e.mesh_transforms) |mt| break :blk mt.items;
                 break :blk null;
@@ -125,6 +126,7 @@ const shaders = struct {
             .has_texture = has_texture,
             .has_normals = mesh_data.normals != null,
             .is_meshed = e.is_meshed,
+            .has_block_data = e.has_texture_atlas,
             .block_index = block_index,
         };
         return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;

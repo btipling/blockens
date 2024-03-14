@@ -8,7 +8,7 @@
     // `textColor`, `bl_surface_height` and `fragNormal` must predefined elsewhere.
     highp float surface_h = bl_surface_height;
     highp float surface_t = bl_surface_height * 2;
-    highp float texture_start = surface_h * 3 * texture_offset;
+    highp float texture_start = surface_h * 3 * bl_block_index;
     float top_offset = 0.001;
     float bot_offset = 0.00001;
     float threshold = 0.001;

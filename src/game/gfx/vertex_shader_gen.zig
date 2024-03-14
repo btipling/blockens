@@ -21,6 +21,7 @@ pub const VertexShaderGen = struct {
         animation_id: ?u32 = 0,
         num_animation_frames: u32 = 0,
         has_normals: bool = false,
+        has_block_data: bool = false,
         scale: ?@Vector(4, f32) = null,
         rotation: ?@Vector(4, f32) = null,
         translation: ?@Vector(4, f32) = null,
@@ -96,6 +97,11 @@ pub const VertexShaderGen = struct {
                 r.l(&line);
                 r.location += 1;
             }
+            if (r.cfg.has_block_data) {
+                line = try shader_helpers.attribute_location(r.location, "block_data", .vec2);
+                r.l(&line);
+                r.location += 1;
+            }
         }
 
         fn gen_instanced_vars(r: *runner) !void {
@@ -108,14 +114,19 @@ pub const VertexShaderGen = struct {
         fn gen_out_vars(r: *runner) !void {
             r.a("\n");
             if (r.cfg.has_texture_coords) {
-                r.a("\nout vec2 TexCoord;\n");
+                r.a("out vec2 TexCoord;\n");
             }
             if (r.cfg.is_meshed) {
-                r.a("\nout vec3 fragPos;\n");
+                r.a("out vec3 fragPos;\n");
                 r.a("flat out highp float bl_surface_height;\n");
             }
             if (r.cfg.has_normals) {
-                r.a("\nflat out vec3 fragNormal;\n");
+                r.a("flat out vec3 fragNormal;\n");
+            }
+
+            if (r.cfg.has_block_data) {
+                r.a("flat out float bl_block_index;\n");
+                r.a("flat out float bl_num_blocks;\n");
             }
         }
 
@@ -347,6 +358,11 @@ pub const VertexShaderGen = struct {
             }
             if (r.cfg.has_normals) {
                 r.a("    fragNormal = normal;\n");
+            }
+
+            if (r.cfg.has_block_data) {
+                r.a("    bl_block_index = block_data[0];\n");
+                r.a("    bl_num_blocks = block_data[1];\n");
             }
             r.a("}\n");
         }

@@ -64,6 +64,7 @@ pub const AttributeBuilder = struct {
     fn sizeFromType(t: gl.Enum) usize {
         return switch (t) {
             gl.FLOAT => @sizeOf(f32),
+            gl.UNSIGNED_INT => @sizeOf(u32),
             else => @panic("currently unsupported vertex attribute variable"),
         };
     }
@@ -79,6 +80,33 @@ pub const AttributeBuilder = struct {
         }
         const av: AttributeVariable = .{
             .type = gl.FLOAT,
+            .size = size,
+            .location = self.last_location,
+            .normalized = gl.FALSE,
+            .offset = offset,
+            .divisor = divisor,
+        };
+        self.last_location += 1;
+        self.stride += @as(gl.Sizei, @intCast(av.size)) * @as(gl.Sizei, @intCast(sizeFromType(av.type)));
+        self.attr_vars.append(game.state.allocator, av) catch unreachable;
+        if (self.debug) std.debug.print("defined float attribute value: \n", .{});
+        if (self.debug) std.debug.print("   - size: {d} \n", .{av.size});
+        if (self.debug) std.debug.print("   - offset: {d} \n", .{av.offset});
+        if (self.debug) std.debug.print("   - location: {d} \n\n", .{av.location});
+        return av.location;
+    }
+
+    pub fn defineUintAttributeValue(self: *AttributeBuilder, size: i32) u32 {
+        return self.defineUintAttributeValueWithDivisor(size, false);
+    }
+
+    pub fn defineUintAttributeValueWithDivisor(self: *AttributeBuilder, size: i32, divisor: bool) u32 {
+        var offset: usize = 0;
+        for (self.attr_vars.items) |av| {
+            offset += @as(usize, @intCast(av.size)) * sizeFromType(av.type);
+        }
+        const av: AttributeVariable = .{
+            .type = gl.UNSIGNED_INT,
             .size = size,
             .location = self.last_location,
             .normalized = gl.FALSE,
@@ -113,6 +141,25 @@ pub const AttributeBuilder = struct {
     }
 
     pub fn addFloatAtLocation(self: *AttributeBuilder, location: u32, data: []const f32, vertex_index: usize) void {
+        const av = self.attr_vars.items[location - self.starting_location];
+        const dataptr: []const u8 = std.mem.sliceAsBytes(data);
+        if (self.debug) std.debug.print("dataptr len: {d}\n", .{dataptr.len});
+        for (dataptr) |b| {
+            if (self.debug) std.debug.print("{d} ", .{b});
+        }
+        if (self.debug) std.debug.print("\n", .{});
+        const stride: usize = @intCast(self.stride);
+        const start = stride * vertex_index + av.offset;
+        if (self.debug) std.debug.print("addFloatAtLocation - loc: {d}, vertex: {d} \n", .{ location, vertex_index });
+        for (0..dataptr.len) |i| {
+            const buf_i = start + i;
+            if (self.debug) std.debug.print(" {d} ,", .{buf_i});
+            self.buffer[buf_i] = dataptr[i];
+        }
+        if (self.debug) std.debug.print("\n", .{});
+    }
+
+    pub fn addUintAtLocation(self: *AttributeBuilder, location: u32, data: []const u32, vertex_index: usize) void {
         const av = self.attr_vars.items[location - self.starting_location];
         const dataptr: []const u8 = std.mem.sliceAsBytes(data);
         if (self.debug) std.debug.print("dataptr len: {d}\n", .{dataptr.len});

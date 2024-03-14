@@ -77,13 +77,17 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             var pos_loc: u32 = 0;
             var tc_loc: u32 = 0;
             var nor_loc: u32 = 0;
+            var block_data_loc: u32 = 0;
             // same order as defined in shader gen
-            pos_loc = builder.defineFloatAttributeValue(3); // positions
+            pos_loc = builder.defineFloatAttributeValue(3);
             if (texcoords) |_| {
-                tc_loc = builder.defineFloatAttributeValue(2); // texture coords
+                tc_loc = builder.defineFloatAttributeValue(2);
             }
             if (normals) |_| {
-                nor_loc = builder.defineFloatAttributeValue(3); // normals
+                nor_loc = builder.defineFloatAttributeValue(3);
+            }
+            if (er.has_block_texture_atlas) {
+                block_data_loc = builder.defineFloatAttributeValue(2);
             }
             builder.initBuffer();
             for (0..positions.len) |ii| {
@@ -96,6 +100,16 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 if (normals) |ns| {
                     var n = ns[ii];
                     builder.addFloatAtLocation(nor_loc, &n, ii);
+                }
+                if (er.has_block_texture_atlas) {
+                    var block_index: f32 = 0;
+                    var num_blocks: f32 = 0;
+                    if (er.block_id) |bi| {
+                        block_index = @floatFromInt(game.state.ui.data.texture_atlas_block_index[@intCast(bi)]);
+                        num_blocks = @floatFromInt(game.state.ui.data.texture_atlas_num_blocks);
+                    }
+                    var bd: [2]f32 = [_]f32{ block_index, num_blocks };
+                    builder.addFloatAtLocation(block_data_loc, &bd, ii);
                 }
                 builder.nextVertex();
             }

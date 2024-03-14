@@ -12,6 +12,7 @@ pub const FragmentShaderGen = struct {
         has_normals: bool = false,
         color: ?@Vector(4, f32) = null,
         is_meshed: bool = false,
+        has_block_data: bool = false,
         block_index: usize = 0,
     };
 
@@ -63,19 +64,15 @@ pub const FragmentShaderGen = struct {
             if (r.cfg.has_normals) {
                 r.a("\nflat in vec3 fragNormal;\n");
             }
+            if (r.cfg.is_meshed and r.cfg.has_block_data) {
+                r.a("flat in float bl_block_index;\n");
+                r.a("flat in float bl_num_blocks;\n");
+            }
             if (r.cfg.has_texture) {
                 r.a("\nuniform sampler2D texture1;\n");
             }
             r.a("\nvoid main()\n");
             r.a("{\n");
-            if (r.cfg.is_meshed) {
-                var line = try shader_helpers.scalar(
-                    usize,
-                    "\n    float texture_offset = {d};\n",
-                    r.cfg.block_index,
-                );
-                r.l(&line);
-            }
             // magenta to highlight shader without materials
             if (r.cfg.color) |c| {
                 const line = try shader_helpers.vec4_to_buf("    vec4 Color = vec4({d}, {d}, {d}, {d});\n", c[0], c[1], c[2], c[3]);
