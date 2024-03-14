@@ -68,8 +68,6 @@ pub const Chunk = struct {
     meshed: std.AutoHashMap(usize, void),
     instanced: std.AutoHashMap(usize, void),
     allocator: std.mem.Allocator,
-    vbo: u32 = 0,
-    tm_vbo: u32 = 0,
     elements: std.ArrayList(ChunkElement) = undefined,
     is_settings: bool = false,
     multi_draw: bool = false,

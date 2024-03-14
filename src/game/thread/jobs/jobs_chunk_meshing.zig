@@ -33,10 +33,16 @@ pub const ChunkMeshJob = struct {
             const i: usize = _k.*;
             if (c.meshes.get(i)) |s| {
                 const block_id: u8 = @intCast(c.data[i]);
+                if (block_id == 0) std.debug.panic("why are there air blocks being meshed >:|", .{});
                 const mesh_data: gfx.mesh.meshData = gfx.mesh.voxel(s) catch unreachable;
 
                 const p: @Vector(4, f32) = chunk.getPositionAtIndexV(i);
-                const fp: @Vector(4, f32) = .{ p[0] + loc[0], p[1] + loc[1], p[2] + loc[2], p[3] + loc[3] };
+                const fp: @Vector(4, f32) = .{
+                    p[0] + loc[0] - 0.5,
+                    p[1] + loc[1] - 0.5,
+                    p[2] + loc[2] - 0.5,
+                    p[3] + loc[3],
+                };
                 const e: chunk.ChunkElement = .{
                     .chunk_index = i,
                     .block_id = block_id,

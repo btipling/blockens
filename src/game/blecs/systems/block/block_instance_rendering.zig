@@ -31,7 +31,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const c: []components.block.Chunk = ecs.field(it, components.block.Chunk, 1) orelse return;
             ecs.remove(world, entity, components.block.NeedsInstanceRendering);
             render_instances(world, entity, c[i].loc, c[i].wp);
-            ecs.delete(world, entity);
+            if (!ecs.has_id(world, entity, ecs.id(components.block.UseMultiDraw))) {
+                ecs.delete(world, entity);
+            }
         }
     }
 }
