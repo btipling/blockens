@@ -64,7 +64,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
             const vao = gfx.Gfx.initVAO() catch unreachable;
             const vbo = gfx.Gfx.initVBO() catch unreachable;
-            const ebo = gfx.Gfx.initEBO(indices) catch unreachable;
+            var ebo: u32 = 0;
+            if (er.is_multi_draw) {
+                ebo = gfx.Gfx.initEBO(indices) catch unreachable;
+            } else {
+                ebo = gfx.Gfx.initEBO(indices) catch unreachable;
+            }
             const vs = gfx.Gfx.initVertexShader(vertexShader) catch unreachable;
             const fs = gfx.Gfx.initFragmentShader(fragmentShader) catch unreachable;
             const program = gfx.Gfx.initProgram(&[_]u32{ vs, fs }) catch unreachable;
@@ -83,23 +88,23 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (texcoords) |_| {
                 tc_loc = builder.defineFloatAttributeValue(2);
             }
-            if (!er.is_multi_draw) {
-                if (normals) |_| {
-                    nor_loc = builder.defineFloatAttributeValue(3);
-                }
-                if (er.has_block_texture_atlas) {
-                    block_data_loc = builder.defineFloatAttributeValue(2);
-                }
+            if (normals) |_| {
+                nor_loc = builder.defineFloatAttributeValue(3);
+            }
+            if (er.has_block_texture_atlas) {
+                block_data_loc = builder.defineFloatAttributeValue(2);
             }
             builder.initBuffer();
-            for (0..positions.len) |ii| {
-                var p = positions[ii];
-                builder.addFloatAtLocation(pos_loc, &p, ii);
-                if (texcoords) |tcs| {
-                    var t = tcs[ii];
-                    builder.addFloatAtLocation(tc_loc, &t, ii);
-                }
-                if (!er.is_multi_draw) {
+            if (er.is_multi_draw) {
+                // add data some other way?
+            } else {
+                for (0..positions.len) |ii| {
+                    var p = positions[ii];
+                    builder.addFloatAtLocation(pos_loc, &p, ii);
+                    if (texcoords) |tcs| {
+                        var t = tcs[ii];
+                        builder.addFloatAtLocation(tc_loc, &t, ii);
+                    }
                     if (normals) |ns| {
                         var n = ns[ii];
                         builder.addFloatAtLocation(nor_loc, &n, ii);
@@ -114,8 +119,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         var bd: [2]f32 = [_]f32{ block_index, num_blocks };
                         builder.addFloatAtLocation(block_data_loc, &bd, ii);
                     }
+                    builder.nextVertex();
                 }
-                builder.nextVertex();
             }
             builder.write();
             if (er.is_instanced and er.block_id != null) {
@@ -141,14 +146,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         builder.get_location(),
                     );
                     defer instance_builder.deinit();
-                    if (er.is_multi_draw) {
-                        if (normals) |_| {
-                            nor_loc = builder.defineFloatAttributeValue(3);
-                        }
-                        if (er.has_block_texture_atlas) {
-                            block_data_loc = builder.defineFloatAttributeValue(2);
-                        }
-                    }
                     const col1_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
                     const col2_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
                     const col3_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
