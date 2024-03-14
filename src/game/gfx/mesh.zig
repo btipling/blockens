@@ -135,32 +135,6 @@ const cube_texcoords: [36][2]f32 = .{
     .{ 0.0, 0.333 },
 };
 
-fn map_cube_text_to_atlas(num_blocks: usize, offset: usize, tc: [36][2]f32) [36][2]f32 {
-    const surface_height: f32 = 1 / 3;
-    const change = surface_height / @as(f32, @floatFromInt(num_blocks));
-    const surface1_start = change * 0;
-    const surface2_start = change * 1;
-    const surface3_start = change * 2;
-    const surface3_end = change * 3;
-    const texture_start = change * 3 * @as(f32, @floatFromInt(offset));
-    var rv = tc;
-    for (0..rv.len) |i| {
-        if ((rv[i][1]) == 0) {
-            rv[i][1] = surface1_start + texture_start;
-        }
-        if ((rv[i][1]) == 0.333) {
-            rv[i][1] = surface2_start + texture_start;
-        }
-        if ((rv[i][1]) == 0.666) {
-            rv[i][1] = surface3_start + texture_start;
-        }
-        if ((rv[i][1]) == 1.0) {
-            rv[i][1] = surface3_end + texture_start;
-        }
-    }
-    return rv;
-}
-
 const cube_normals: [36][3]f32 = .{
     // front
     .{ 0.0, 0.0, 1.0 },
@@ -218,7 +192,7 @@ pub fn cube() meshData {
     return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
 }
 
-pub fn voxel(num_blocks: usize, block_id: u8, scale: @Vector(4, f32)) !meshData {
+pub fn voxel(scale: @Vector(4, f32)) !meshData {
     const allocator = game.state.allocator;
     var indicesAL = std.ArrayList(u32).init(allocator);
 
@@ -239,9 +213,6 @@ pub fn voxel(num_blocks: usize, block_id: u8, scale: @Vector(4, f32)) !meshData 
     var texcoordsAL = std.ArrayList([2]f32).init(allocator);
     defer texcoordsAL.deinit();
     var _t = cube_texcoords;
-    // _ = block_id;
-    const offset = game.state.ui.data.texture_atlas_block_index[block_id];
-    _t = map_cube_text_to_atlas(num_blocks, offset, _t);
     try texcoordsAL.appendSlice(&_t);
 
     var v = zmesh.Shape.init(indicesAL, positionsAL, normalsAL, texcoordsAL);

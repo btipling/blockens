@@ -126,7 +126,6 @@ pub const VertexShaderGen = struct {
 
             if (r.cfg.has_block_data) {
                 r.a("flat out float bl_block_index;\n");
-                r.a("flat out float bl_num_blocks;\n");
             }
         }
 
@@ -355,15 +354,14 @@ pub const VertexShaderGen = struct {
                 r.a("[1];\n");
                 r.a("    fragPos = position;\n");
                 r.a("    fragPos = vec3(fragPos.x + 0.5, fragPos.y + 0.5, fragPos.z + 0.5);");
+                if (r.cfg.has_block_data) {
+                    r.a("    bl_block_index = block_data[0];\n");
+                }
             }
             if (r.cfg.has_normals) {
                 r.a("    fragNormal = normal;\n");
             }
 
-            if (r.cfg.has_block_data) {
-                r.a("    bl_block_index = block_data[0];\n");
-                r.a("    bl_num_blocks = block_data[1];\n");
-            }
             r.a("}\n");
         }
 

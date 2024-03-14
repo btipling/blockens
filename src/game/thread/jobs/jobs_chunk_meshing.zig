@@ -20,11 +20,7 @@ pub const ChunkMeshJob = struct {
             const i: usize = _k.*;
             if (c.meshes.get(i)) |s| {
                 const block_id: u8 = @intCast(c.data[i]);
-                const mesh_data: gfx.mesh.meshData = gfx.mesh.voxel(
-                    game.state.ui.data.texture_atlas_num_blocks,
-                    block_id,
-                    s,
-                ) catch unreachable;
+                const mesh_data: gfx.mesh.meshData = gfx.mesh.voxel(s) catch unreachable;
                 const e: chunk.ChunkElement = .{
                     .chunk_index = i,
                     .block_id = block_id,

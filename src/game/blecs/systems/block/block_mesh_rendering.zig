@@ -75,7 +75,7 @@ fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), 
         _ = ecs.set(world, mb_e, components.screen.WorldLocation, .{
             .loc = .{ p[0] + loc[0], p[1] + loc[1], p[2] + loc[2], p[3] + loc[3] },
         });
-        ecs.add(world, mb_e, components.Debug);
+        // ecs.add(world, mb_e, components.Debug);
 
         ecs.add(world, mb_e, components.block.UseTextureAtlas);
         ecs.add(world, mb_e, components.shape.NeedsSetup);
