@@ -45,6 +45,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                     break :blk c.elements.items[data.element_index].mesh_data;
                 },
+                .multidraw_voxel => .{
+                    // allocate empty things that get thrown away, but signal these things exist
+                    // just added differently
+                    .positions = game.state.allocator.alloc([3]f32, 0) catch unreachable,
+                    .indices = game.state.allocator.alloc(u32, 0) catch unreachable,
+                    .texcoords = game.state.allocator.alloc([2]f32, 0) catch unreachable,
+                    .normals = game.state.allocator.alloc([3]f32, 0) catch unreachable,
+                },
                 .mob => gfx.mesh.mob(world, entity),
             };
 
@@ -95,7 +103,7 @@ const shaders = struct {
             .animation_block_index = e.animation_binding_point,
             .animation_id = e.animation_id,
             .is_instanced = e.is_instanced,
-            .is_meshed = e.is_meshed,
+            .is_meshed = e.is_meshed or e.is_multi_draw,
             .has_block_data = e.has_texture_atlas,
             .mesh_transforms = blk: {
                 if (e.mesh_transforms) |mt| break :blk mt.items;
@@ -128,7 +136,6 @@ const shaders = struct {
             .has_normals = mesh_data.normals != null,
             .is_meshed = e.is_meshed,
             .has_block_data = e.has_texture_atlas,
-            .block_index = block_index,
         };
         return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;
     }

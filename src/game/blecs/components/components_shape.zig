@@ -9,6 +9,7 @@ pub const Shape = struct {
         plane,
         cube,
         meshed_voxel,
+        multidraw_voxel,
         mob,
     };
 };

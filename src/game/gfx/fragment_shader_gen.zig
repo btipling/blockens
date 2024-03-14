@@ -13,7 +13,6 @@ pub const FragmentShaderGen = struct {
         color: ?@Vector(4, f32) = null,
         is_meshed: bool = false,
         has_block_data: bool = false,
-        block_index: usize = 0,
     };
 
     // genFragmentShader - call ower owns the returned slice
