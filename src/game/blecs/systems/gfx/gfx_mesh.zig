@@ -83,11 +83,13 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (texcoords) |_| {
                 tc_loc = builder.defineFloatAttributeValue(2);
             }
-            if (normals) |_| {
-                nor_loc = builder.defineFloatAttributeValue(3);
-            }
-            if (er.has_block_texture_atlas) {
-                block_data_loc = builder.defineFloatAttributeValue(2);
+            if (!er.is_multi_draw) {
+                if (normals) |_| {
+                    nor_loc = builder.defineFloatAttributeValue(3);
+                }
+                if (er.has_block_texture_atlas) {
+                    block_data_loc = builder.defineFloatAttributeValue(2);
+                }
             }
             builder.initBuffer();
             for (0..positions.len) |ii| {
@@ -97,19 +99,21 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     var t = tcs[ii];
                     builder.addFloatAtLocation(tc_loc, &t, ii);
                 }
-                if (normals) |ns| {
-                    var n = ns[ii];
-                    builder.addFloatAtLocation(nor_loc, &n, ii);
-                }
-                if (er.has_block_texture_atlas) {
-                    var block_index: f32 = 0;
-                    var num_blocks: f32 = 0;
-                    if (er.block_id) |bi| {
-                        block_index = @floatFromInt(game.state.ui.data.texture_atlas_block_index[@intCast(bi)]);
-                        num_blocks = @floatFromInt(game.state.ui.data.texture_atlas_num_blocks);
+                if (!er.is_multi_draw) {
+                    if (normals) |ns| {
+                        var n = ns[ii];
+                        builder.addFloatAtLocation(nor_loc, &n, ii);
                     }
-                    var bd: [2]f32 = [_]f32{ block_index, num_blocks };
-                    builder.addFloatAtLocation(block_data_loc, &bd, ii);
+                    if (er.has_block_texture_atlas) {
+                        var block_index: f32 = 0;
+                        var num_blocks: f32 = 0;
+                        if (er.block_id) |bi| {
+                            block_index = @floatFromInt(game.state.ui.data.texture_atlas_block_index[@intCast(bi)]);
+                            num_blocks = @floatFromInt(game.state.ui.data.texture_atlas_num_blocks);
+                        }
+                        var bd: [2]f32 = [_]f32{ block_index, num_blocks };
+                        builder.addFloatAtLocation(block_data_loc, &bd, ii);
+                    }
                 }
                 builder.nextVertex();
             }
@@ -137,12 +141,30 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         builder.get_location(),
                     );
                     defer instance_builder.deinit();
+                    if (er.is_multi_draw) {
+                        if (normals) |_| {
+                            nor_loc = builder.defineFloatAttributeValue(3);
+                        }
+                        if (er.has_block_texture_atlas) {
+                            block_data_loc = builder.defineFloatAttributeValue(2);
+                        }
+                    }
                     const col1_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
                     const col2_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
                     const col3_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
                     const col4_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
                     const r = zm.matToArr(zm.identity());
                     instance_builder.initBuffer();
+                    if (er.is_multi_draw) {
+                        if (normals) |_| {
+                            var n: [3]f32 = [_]f32{0} ** 3;
+                            builder.addFloatAtLocation(nor_loc, &n, 0);
+                        }
+                        if (er.has_block_texture_atlas) {
+                            var bd: [2]f32 = [_]f32{ 0, 0 };
+                            builder.addFloatAtLocation(block_data_loc, &bd, 0);
+                        }
+                    }
                     instance_builder.addFloatAtLocation(col1_loc, @ptrCast(r[0..4]), 0);
                     instance_builder.addFloatAtLocation(col2_loc, @ptrCast(r[4..8]), 0);
                     instance_builder.addFloatAtLocation(col3_loc, @ptrCast(r[8..12]), 0);

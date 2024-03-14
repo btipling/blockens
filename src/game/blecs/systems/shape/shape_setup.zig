@@ -69,6 +69,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .block_id = e.block_id,
                 .has_mob_texture = e.has_mob_texture,
                 .has_block_texture_atlas = e.has_texture_atlas,
+                .is_multi_draw = e.is_multi_draw,
             };
             const erc_id = ecs.new_id(world);
             game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
@@ -156,9 +157,16 @@ const extractions = struct {
     is_meshed: bool = false,
     has_mob_texture: bool = false,
     mesh_transforms: ?std.ArrayList(gfx.shadergen.vertex.MeshTransforms) = null,
+    is_multi_draw: bool = false,
 
     fn deinit(self: *extractions) void {
         if (self.mesh_transforms) |mt| mt.deinit();
+    }
+
+    fn extractMultiDraw(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
+        if (ecs.has_id(world, entity, ecs.id(components.block.UseMultiDraw))) {
+            e.is_multi_draw = true;
+        }
     }
 
     fn extractBlock(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {

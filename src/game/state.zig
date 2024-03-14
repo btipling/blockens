@@ -167,6 +167,7 @@ pub const ElementsRendererConfig = struct {
     block_id: ?u8 = 0,
     has_mob_texture: bool = false,
     has_block_texture_atlas: bool = false,
+    is_multi_draw: bool = false,
     mob: ?MobRef = null,
 };
 
