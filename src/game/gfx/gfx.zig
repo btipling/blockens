@@ -138,6 +138,24 @@ pub const Gfx = struct {
         return;
     }
 
+    pub const multiDrawData = struct {
+        normals: [3]f32,
+        block_data: [2]f32,
+        transform: [16]f32,
+    };
+
+    pub fn updateMultiDrawData(program: u32, vao: u32, vbo: u32, data: []multiDrawData) void {
+        gl.useProgram(program);
+        const size = @as(isize, @intCast(data.len * @sizeOf(multiDrawData)));
+        const dataptr: *const anyopaque = data.ptr;
+        gl.bindVertexArray(vao);
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+        gl.bufferData(gl.ARRAY_BUFFER, size, dataptr, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, 0);
+        gl.bindVertexArray(0);
+        return;
+    }
+
     pub fn updateUniformBufferObject(
         updated: zm.Mat,
         time: f32,

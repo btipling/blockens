@@ -57,29 +57,36 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 gl.bindTexture(gl.TEXTURE_2D, er.texture);
             }
             gl.bindVertexArray(er.vao);
-            if (!ecs.has_id(world, entity, ecs.id(components.block.Instance))) {
+            const has_instance = ecs.has_id(world, entity, ecs.id(components.block.Instance));
+            const use_multidraw = ecs.has_id(world, entity, ecs.id(components.block.UseMultiDraw));
+            if (!has_instance and !use_multidraw) {
                 gl.drawElements(gl.TRIANGLES, er.numIndices, gl.UNSIGNED_INT, null);
                 continue;
             }
-            // draw instances
-            const block: ?*const components.block.Block = ecs.get(world, entity, components.block.Block);
-            if (block == null) continue;
-            var block_instance: ?*game_state.BlockInstance = null;
-            if (parent == screen.gameDataEntity) {
-                block_instance = game.state.gfx.game_blocks.get(block.?.block_id);
+            if (has_instance) {
+                // draw instances
+                const block: ?*const components.block.Block = ecs.get(world, entity, components.block.Block);
+                if (block == null) continue;
+                var block_instance: ?*game_state.BlockInstance = null;
+                if (parent == screen.gameDataEntity) {
+                    block_instance = game.state.gfx.game_blocks.get(block.?.block_id);
+                }
+                if (parent == screen.settingDataEntity) {
+                    block_instance = game.state.gfx.settings_blocks.get(block.?.block_id);
+                }
+                if (block_instance == null) continue;
+                if (block_instance.?.transforms.items.len < 1) continue;
+                gl.drawElementsInstanced(
+                    gl.TRIANGLES,
+                    er.numIndices,
+                    gl.UNSIGNED_INT,
+                    null,
+                    @intCast(block_instance.?.transforms.items.len),
+                );
             }
-            if (parent == screen.settingDataEntity) {
-                block_instance = game.state.gfx.settings_blocks.get(block.?.block_id);
+            if (use_multidraw) {
+                // TODO figure this out lol: gl.multiDrawElements();
             }
-            if (block_instance == null) continue;
-            if (block_instance.?.transforms.items.len < 1) continue;
-            gl.drawElementsInstanced(
-                gl.TRIANGLES,
-                er.numIndices,
-                gl.UNSIGNED_INT,
-                null,
-                @intCast(block_instance.?.transforms.items.len),
-            );
         }
     }
     if (enableWireframe) gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
