@@ -46,10 +46,9 @@ fn render_instances(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f
     } else {
         c = game.state.gfx.settings_chunks.get(wp) orelse return;
     }
-
-    var instancedKeys = c.instanced.keyIterator();
-    while (instancedKeys.next()) |_k| {
-        const i: usize = _k.*;
+    if (c.instanced == null) return;
+    for (c.instanced.?) |_i| {
+        const i: usize = @intCast(_i);
         var block_id: u8 = 0;
         block_id = @intCast(c.data[i]);
         if (block_id == 0) continue; // Some kind of one off bug somewhere?
