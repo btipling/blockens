@@ -96,7 +96,7 @@ const shaders = struct {
             .animation_block_index = e.animation_binding_point,
             .animation_id = e.animation_id,
             .is_instanced = e.is_instanced,
-            .is_meshed = e.is_meshed or e.is_multi_draw,
+            .is_meshed = e.is_meshed,
             .has_block_data = e.has_texture_atlas,
             .mesh_transforms = blk: {
                 if (e.mesh_transforms) |mt| break :blk mt.items;
@@ -166,6 +166,7 @@ const extractions = struct {
     fn extractMultiDraw(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
         if (ecs.has_id(world, entity, ecs.id(components.block.UseMultiDraw))) {
             e.is_multi_draw = true;
+            e.is_meshed = true;
         }
     }
 
