@@ -65,7 +65,6 @@ pub const Chunk = struct {
     entity: blecs.ecs.entity_t = 0,
     data: []u32 = undefined,
     meshes: std.AutoHashMap(usize, @Vector(4, f32)),
-    meshed: std.AutoHashMap(usize, void),
     instanced: std.AutoHashMap(usize, void),
     allocator: std.mem.Allocator,
     elements: std.ArrayList(ChunkElement) = undefined,
@@ -84,7 +83,6 @@ pub const Chunk = struct {
             .wp = wp,
             .entity = entity,
             .meshes = std.AutoHashMap(usize, @Vector(4, f32)).init(allocator),
-            .meshed = std.AutoHashMap(usize, void).init(allocator),
             .instanced = std.AutoHashMap(usize, void).init(allocator),
             .elements = std.ArrayList(ChunkElement).init(allocator),
             .allocator = allocator,
@@ -96,7 +94,6 @@ pub const Chunk = struct {
 
     pub fn deinit(self: *Chunk) void {
         self.meshes.deinit();
-        self.meshed.deinit();
         self.instanced.deinit();
         for (self.elements.items) |ce| {
             ce.deinit(self.allocator);
@@ -107,12 +104,13 @@ pub const Chunk = struct {
     }
 
     pub fn isMeshed(self: *Chunk, i: usize) bool {
-        return self.meshed.contains(i);
+        return self.meshed[i] == i;
     }
 
     pub fn findMeshes(self: *Chunk) !void {
         const start = std.time.milliTimestamp();
         var chunker = try Chunker.init(self);
+        defer chunker.deinit();
         try chunker.run();
         const done = std.time.milliTimestamp();
         const duration = (done - start);
@@ -127,8 +125,10 @@ pub const Chunker = struct {
     currentScale: @Vector(4, f32),
     toBeMeshed: [minVoxelsInMesh]usize,
     cachingMeshed: bool,
+    meshed: [chunkSize]usize,
 
     pub fn init(chunk: *Chunk) !Chunker {
+        // chunkSize
         return Chunker{
             .chunk = chunk,
             .numVoxelsInMesh = 0,
@@ -136,8 +136,11 @@ pub const Chunker = struct {
             .currentScale = .{ 1, 1, 1, 0 },
             .toBeMeshed = [_]usize{0} ** minVoxelsInMesh,
             .cachingMeshed = true,
+            .meshed = [_]usize{0} ** chunkSize,
         };
     }
+
+    pub fn deinit(_: *Chunker) void {}
 
     fn updateMeshed(self: *Chunker, i: usize) !void {
         if (self.chunk.instanced.contains(i)) {
@@ -150,19 +153,20 @@ pub const Chunker = struct {
         }
         if (self.cachingMeshed) {
             for (self.toBeMeshed) |ii| {
-                try self.chunk.meshed.put(ii, {});
+                self.meshed[ii] = ii;
             }
             self.cachingMeshed = false;
             self.toBeMeshed = [_]usize{0} ** minVoxelsInMesh;
         }
-        try self.chunk.meshed.put(i, {});
+        self.meshed[i] = i;
     }
 
     fn updateChunk(self: *Chunker, i: usize) !void {
         if (!self.cachingMeshed) {
             try self.chunk.meshes.put(self.currentVoxel, self.currentScale);
         } else {
-            if (!self.chunk.meshed.contains(i)) try self.chunk.instanced.put(i, {});
+            const contains: bool = self.meshed[i] == i;
+            if (!contains) try self.chunk.instanced.put(i, {});
         }
         self.toBeMeshed = [_]usize{0} ** minVoxelsInMesh;
         self.numVoxelsInMesh = 0;
@@ -175,6 +179,7 @@ pub const Chunker = struct {
     }
 
     pub fn run(self: *Chunker) !void {
+        self.meshed[0] = 1; // meshed is when self.meshed[i] == i. Inited with 0 so special case.
         var op: @Vector(4, f32) = .{ 0, 0, 0, 0 };
         var p = op;
         p[0] += 1;
@@ -211,7 +216,7 @@ pub const Chunker = struct {
             if (blockId == 0) {
                 continue :outer;
             }
-            if (self.chunk.meshed.contains(i)) {
+            if (self.meshed[i] == i) {
                 continue :outer;
             }
             self.currentVoxel = i;
@@ -223,7 +228,7 @@ pub const Chunker = struct {
             inner: while (true) {
                 const ii = getIndexFromPositionV(p);
                 if (numDimsTravelled == 1) {
-                    if (blockId != self.chunk.data[ii] or self.chunk.meshed.contains(ii)) {
+                    if (blockId != self.chunk.data[ii] or self.meshed[ii] == ii) {
                         numDimsTravelled += 1;
                         p[1] += 1;
                         p[0] = op[0];
@@ -246,7 +251,7 @@ pub const Chunker = struct {
                     numXAdded += 1;
                 } else if (numDimsTravelled == 2) {
                     // doing y here, only add if all x along the y are the same
-                    if (blockId != self.chunk.data[ii] or self.chunk.meshed.contains(ii)) {
+                    if (blockId != self.chunk.data[ii] or self.meshed[ii] == ii) {
                         p[1] = op[1];
                         p[2] += 1;
                         numDimsTravelled += 1;
@@ -283,7 +288,7 @@ pub const Chunker = struct {
                     if (blockId != self.chunk.data[ii]) {
                         break :inner;
                     }
-                    if (self.chunk.meshed.contains(ii)) {
+                    if (self.meshed[ii] == ii) {
                         break :inner;
                     }
                     if (p[0] != endX) {
