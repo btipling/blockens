@@ -17,6 +17,7 @@ pub const ChunkMeshJob = struct {
         c.findMeshes() catch unreachable;
 
         var keys = c.meshes.keyIterator();
+        var draws = std.ArrayList(c_int).init(game.state.allocator);
         const cp = c.wp.vecFromWorldPosition();
         var loc: @Vector(4, f32) = undefined;
         if (c.is_settings) {
@@ -35,7 +36,7 @@ pub const ChunkMeshJob = struct {
                 const block_id: u8 = @intCast(c.data[i]);
                 if (block_id == 0) std.debug.panic("why are there air blocks being meshed >:|", .{});
                 const mesh_data: gfx.mesh.meshData = gfx.mesh.voxel(s) catch unreachable;
-
+                draws.append(@intCast(mesh_data.indices.len)) catch unreachable;
                 const p: @Vector(4, f32) = chunk.getPositionAtIndexV(i);
                 const fp: @Vector(4, f32) = .{
                     p[0] + loc[0] - 0.5,
@@ -52,7 +53,7 @@ pub const ChunkMeshJob = struct {
                 c.elements.append(e) catch unreachable;
             }
         }
-
+        self.chunk.draws = draws.toOwnedSlice() catch unreachable;
         var msg: buffer.buffer_message = buffer.new_message(.chunk_mesh);
         buffer.set_progress(&msg, true, 1);
         buffer.put_chunk_mesh_data(msg, .{

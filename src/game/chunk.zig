@@ -69,6 +69,7 @@ pub const Chunk = struct {
     instanced: std.AutoHashMap(usize, void),
     allocator: std.mem.Allocator,
     elements: std.ArrayList(ChunkElement) = undefined,
+    draws: ?[]c_int = null,
     is_settings: bool = false,
     multi_draw: bool = false,
     pub fn init(
@@ -102,6 +103,7 @@ pub const Chunk = struct {
         }
         self.elements.deinit();
         self.allocator.free(self.data);
+        if (self.draws) |d| self.allocator.free(d);
     }
 
     pub fn isMeshed(self: *Chunk, i: usize) bool {
