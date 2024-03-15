@@ -160,7 +160,7 @@ pub const chunkData = struct {
     y: i32 = 0,
     z: i32 = 0,
     scriptId: i32 = 0,
-    voxels: []i32 = undefined,
+    voxels: []u32 = undefined,
 };
 
 pub const Data = struct {
@@ -744,7 +744,7 @@ pub const Data = struct {
     }
 
     // chunk crud:
-    fn chunkToBlob(chunk: []i32) [ChunkBlobArrayStoreSize]u8 {
+    fn chunkToBlob(chunk: []u32) [ChunkBlobArrayStoreSize]u8 {
         var blob: [ChunkBlobArrayStoreSize]u8 = undefined;
         for (chunk, 0..) |t, i| {
             const u = @as(u32, @bitCast(t));
@@ -761,8 +761,8 @@ pub const Data = struct {
         return blob;
     }
 
-    fn blobToChunk(self: *Data, blob: sqlite.Blob) []i32 {
-        var chunk: [chunkSize]i32 = undefined;
+    fn blobToChunk(self: *Data, blob: sqlite.Blob) []u32 {
+        var chunk: [chunkSize]u32 = undefined;
         for (chunk, 0..) |_, i| {
             const offset = i * 4;
             const a = @as(u32, @intCast(blob.data[offset]));
@@ -770,9 +770,9 @@ pub const Data = struct {
             const c = @as(u32, @intCast(blob.data[offset + 2]));
             const d = @as(u32, @intCast(blob.data[offset + 3]));
             const cd: u32 = a << 24 | b << 16 | c << 8 | d;
-            chunk[i] = @as(i32, @bitCast(cd));
+            chunk[i] = @bitCast(cd);
         }
-        const rv: []i32 = self.allocator.alloc(i32, chunk.len) catch unreachable;
+        const rv: []u32 = self.allocator.alloc(u32, chunk.len) catch unreachable;
         @memcpy(rv, &chunk);
         return rv;
     }
@@ -784,7 +784,7 @@ pub const Data = struct {
         y: i32,
         z: i32,
         scriptId: i32,
-        voxels: []i32,
+        voxels: []u32,
     ) !void {
         var insertStmt = try self.db.prepare(
             struct {
@@ -816,7 +816,7 @@ pub const Data = struct {
         };
     }
 
-    pub fn updateChunkData(self: *Data, id: i32, script_id: i32, voxels: []i32) !void {
+    pub fn updateChunkData(self: *Data, id: i32, script_id: i32, voxels: []u32) !void {
         var updateStmt = try self.db.prepare(
             struct {
                 id: i32,

@@ -28,7 +28,7 @@ pub const buffer_message = packed struct {
 
 pub const chunk_gen_data = struct {
     wp: ?chunk.worldPosition = null,
-    chunk_data: []i32,
+    chunk_data: []u32,
 };
 
 pub const chunk_mesh_data = struct {

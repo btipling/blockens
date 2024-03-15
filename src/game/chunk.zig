@@ -38,9 +38,9 @@ pub fn getPositionAtIndexV(i: usize) @Vector(4, f32) {
 }
 
 pub fn getIndexFromPositionV(p: @Vector(4, f32)) usize {
-    const x = @as(i32, @intFromFloat(p[0]));
-    const y = @as(i32, @intFromFloat(p[1]));
-    const z = @as(i32, @intFromFloat(p[2]));
+    const x = @as(u32, @intFromFloat(p[0]));
+    const y = @as(u32, @intFromFloat(p[1]));
+    const z = @as(u32, @intFromFloat(p[2]));
     return @as(
         usize,
         @intCast(@mod(x, chunkDim) + @mod(y, chunkDim) * chunkDim + @mod(z, chunkDim) * chunkDim * chunkDim),
@@ -63,7 +63,7 @@ pub const ChunkElement = struct {
 pub const Chunk = struct {
     wp: worldPosition,
     entity: blecs.ecs.entity_t = 0,
-    data: []i32 = undefined,
+    data: []u32 = undefined,
     meshes: std.AutoHashMap(usize, @Vector(4, f32)),
     meshed: std.AutoHashMap(usize, void),
     instanced: std.AutoHashMap(usize, void),

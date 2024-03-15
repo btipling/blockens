@@ -44,7 +44,7 @@ pub const Input = struct {
 pub const chunkConfig = struct {
     id: i32 = 0, // from sqlite
     scriptId: i32,
-    chunkData: []i32 = undefined,
+    chunkData: []u32 = undefined,
 };
 
 pub const UIData = struct {
@@ -68,7 +68,7 @@ pub const UIData = struct {
     chunk_script_options: std.ArrayList(data.chunkScriptOption) = undefined,
     chunk_loaded_script_id: i32 = 0,
     chunk_script_color: [3]f32 = [_]f32{0} ** 3,
-    chunk_demo_data: ?[]i32 = null,
+    chunk_demo_data: ?[]u32 = null,
     chunk_use_multi_draw: bool = false,
     world_load_disabled: bool = false,
     world_name_buf: [max_world_name]u8 = [_]u8{0} ** max_world_name,

@@ -21,11 +21,11 @@ pub const CopyChunkJob = struct {
         ) catch unreachable;
 
         if (self.is_settings) {
-            c.data = game.state.allocator.alloc(i32, game.state.ui.data.chunk_demo_data.?.len) catch unreachable;
+            c.data = game.state.allocator.alloc(u32, game.state.ui.data.chunk_demo_data.?.len) catch unreachable;
             @memcpy(c.data, game.state.ui.data.chunk_demo_data.?);
         } else {
             const ch_cfg = game.state.ui.data.world_chunk_table_data.get(self.wp) orelse return;
-            c.data = game.state.allocator.alloc(i32, ch_cfg.chunkData.len) catch unreachable;
+            c.data = game.state.allocator.alloc(u32, ch_cfg.chunkData.len) catch unreachable;
             @memcpy(c.data, ch_cfg.chunkData);
         }
 

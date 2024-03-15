@@ -453,7 +453,6 @@ pub fn initDemoChunk(multi_draw: bool) void {
     clearDemoObjects();
     const world = game.state.world;
     initDemoChunkCamera();
-    // TODO chunk data needs to be u32s...
     _ = game.state.jobs.copyChunk(
         chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 }),
         ecs.new_id(world),

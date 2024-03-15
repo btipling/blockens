@@ -87,7 +87,7 @@ pub const Script = struct {
         return rv;
     }
 
-    pub fn evalChunkFunc(self: *Script, buf: []u8) ![]i32 {
+    pub fn evalChunkFunc(self: *Script, buf: []u8) ![]u32 {
         self.mutex.lock();
         defer self.mutex.unlock();
 
@@ -125,17 +125,17 @@ pub const Script = struct {
             std.log.err("evalChunkFunc: chunks is not back to a table\n", .{});
             return ScriptError.ExpectedTable;
         }
-        var c: [chunk.chunkSize]i32 = [_]i32{0} ** chunk.chunkSize;
+        var c: [chunk.chunkSize]u32 = [_]u32{0} ** chunk.chunkSize;
         for (1..(ts + 1)) |i| {
             _ = self.luaInstance.rawGetIndex(-1, @intCast(i));
             const blockId = self.luaInstance.toInteger(-1) catch |err| {
                 std.log.err("evalChunkFunc: failed to get color\n", .{});
                 return err;
             };
-            c[i - 1] = @as(i32, @intCast(blockId));
+            c[i - 1] = @as(u32, @intCast(blockId));
             self.luaInstance.pop(1);
         }
-        const rv: []i32 = try self.allocator.alloc(i32, c.len);
+        const rv: []u32 = try self.allocator.alloc(u32, c.len);
         @memcpy(rv, &c);
         return rv;
     }
