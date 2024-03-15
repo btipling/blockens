@@ -182,40 +182,20 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                 }
                 if (block_instance != null) {
-                    const instance_vbo = gfx.Gfx.initVBO() catch unreachable;
-                    var instance_builder: *gfx.buffer_data.AttributeBuilder = game.state.allocator.create(gfx.buffer_data.AttributeBuilder) catch unreachable;
-                    defer game.state.allocator.destroy(instance_builder);
-                    instance_builder.* = gfx.buffer_data.AttributeBuilder.initWithLoc(
-                        @intCast(positions.len),
-                        instance_vbo,
-                        gl.STATIC_DRAW,
+                    block_instance.?.vbo = gfx.Gfx.initTransformsUBO(
+                        positions.len,
                         builder.get_location(),
-                    );
-                    defer instance_builder.deinit();
-                    const col1_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
-                    const col2_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
-                    const col3_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
-                    const col4_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
-                    const r = zm.matToArr(zm.identity());
-                    instance_builder.initBuffer(num_elements);
-                    if (er.is_multi_draw) {
-                        if (normals) |_| {
-                            var n: [3]f32 = [_]f32{0} ** 3;
-                            builder.addFloatAtLocation(nor_loc, &n, 0);
-                        }
-                        if (er.has_block_texture_atlas) {
-                            var bd: [2]f32 = [_]f32{ 0, 0 };
-                            builder.addFloatAtLocation(block_data_loc, &bd, 0);
-                        }
-                    }
-                    instance_builder.addFloatAtLocation(col1_loc, @ptrCast(r[0..4]), 0);
-                    instance_builder.addFloatAtLocation(col2_loc, @ptrCast(r[4..8]), 0);
-                    instance_builder.addFloatAtLocation(col3_loc, @ptrCast(r[8..12]), 0);
-                    instance_builder.addFloatAtLocation(col4_loc, @ptrCast(r[12..16]), 0);
-                    instance_builder.nextVertex();
-                    instance_builder.write();
-                    block_instance.?.vbo = instance_vbo;
+                    ) catch unreachable;
                     ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
+                }
+                if (er.is_multi_draw) {
+                    if (c) |_c| {
+                        _c.vbo = gfx.Gfx.initTransformsUBO(
+                            positions.len,
+                            builder.get_location(),
+                        ) catch unreachable;
+                        ecs.add(world, entity, components.gfx.NeedsMultiDrawDataUpdate);
+                    }
                 }
             }
 

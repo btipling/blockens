@@ -26,6 +26,7 @@ pub const VertexShaderGen = struct {
         rotation: ?@Vector(4, f32) = null,
         translation: ?@Vector(4, f32) = null,
         is_instanced: bool = false,
+        is_multi_draw: bool = false,
         is_meshed: bool = false,
         mesh_transforms: ?[]MeshTransforms,
     };
@@ -105,7 +106,7 @@ pub const VertexShaderGen = struct {
         }
 
         fn gen_instanced_vars(r: *runner) !void {
-            if (!r.cfg.is_instanced) return;
+            if (!r.cfg.is_instanced and !r.cfg.is_multi_draw) return;
             var line = try shader_helpers.attribute_location(r.location, "attribTransform", .mat4);
             r.l(&line);
             r.location += 1;

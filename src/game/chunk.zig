@@ -71,6 +71,7 @@ pub const Chunk = struct {
     draws: ?[]c_int = null,
     is_settings: bool = false,
     multi_draw: bool = false,
+    vbo: u32 = 0,
     pub fn init(
         allocator: std.mem.Allocator,
         wp: worldPosition,

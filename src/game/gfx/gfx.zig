@@ -257,4 +257,30 @@ pub const Gfx = struct {
         gl.generateMipmap(gl.TEXTURE_2D);
         return texture;
     }
+
+    pub fn initTransformsUBO(num_vertices: usize, attrib_var_loc: u32) !u32 {
+        const instance_vbo = try initVBO();
+        var instance_builder: *buffer_data.AttributeBuilder = try game.state.allocator.create(buffer_data.AttributeBuilder);
+        defer game.state.allocator.destroy(instance_builder);
+        instance_builder.* = buffer_data.AttributeBuilder.initWithLoc(
+            @intCast(num_vertices),
+            instance_vbo,
+            gl.STATIC_DRAW,
+            attrib_var_loc,
+        );
+        defer instance_builder.deinit();
+        const col1_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
+        const col2_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
+        const col3_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
+        const col4_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
+        const r = zm.matToArr(zm.identity());
+        instance_builder.initBuffer(1);
+        instance_builder.addFloatAtLocation(col1_loc, @ptrCast(r[0..4]), 0);
+        instance_builder.addFloatAtLocation(col2_loc, @ptrCast(r[4..8]), 0);
+        instance_builder.addFloatAtLocation(col3_loc, @ptrCast(r[8..12]), 0);
+        instance_builder.addFloatAtLocation(col4_loc, @ptrCast(r[12..16]), 0);
+        instance_builder.nextVertex();
+        instance_builder.write();
+        return instance_vbo;
+    }
 };
