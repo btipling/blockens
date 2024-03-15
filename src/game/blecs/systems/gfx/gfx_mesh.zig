@@ -7,6 +7,7 @@ const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
 const game_state = @import("../../../state.zig");
+const chunk = @import("../../../chunk.zig");
 const gfx = @import("../../../gfx/gfx.zig");
 
 pub fn init() void {
@@ -65,8 +66,25 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const vao = gfx.Gfx.initVAO() catch unreachable;
             const vbo = gfx.Gfx.initVBO() catch unreachable;
             var ebo: u32 = 0;
+            var c: ?*chunk.Chunk = null;
             if (er.is_multi_draw) {
-                ebo = gfx.Gfx.initEBO(indices) catch unreachable;
+                const chunk_c: *const components.block.Chunk = ecs.get(world, entity, components.block.Chunk).?;
+                if (parent == screen.gameDataEntity) {
+                    c = game.state.gfx.game_chunks.get(chunk_c.wp);
+                }
+                if (parent == screen.settingDataEntity) {
+                    c = game.state.gfx.settings_chunks.get(chunk_c.wp);
+                }
+            }
+            if (er.is_multi_draw) {
+                if (c) |_c| {
+                    var ial = std.ArrayList(u32).init(game.state.allocator);
+                    defer ial.deinit();
+                    for (_c.elements.items) |e| {
+                        ial.appendSlice(e.mesh_data.indices) catch unreachable;
+                    }
+                    ebo = gfx.Gfx.initEBO(ial.items) catch unreachable;
+                }
             } else {
                 ebo = gfx.Gfx.initEBO(indices) catch unreachable;
             }
@@ -94,9 +112,37 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (er.has_block_texture_atlas) {
                 block_data_loc = builder.defineFloatAttributeValue(2);
             }
-            builder.initBuffer();
+            var num_elements: usize = 1;
             if (er.is_multi_draw) {
-                // add data some other way?
+                num_elements = c.?.elements.items.len;
+            }
+            builder.initBuffer(num_elements);
+            if (er.is_multi_draw) {
+                if (c) |_c| {
+                    for (_c.elements.items) |e| {
+                        const md = e.mesh_data;
+                        for (0..md.positions.len) |ii| {
+                            var p = md.positions[ii];
+                            builder.addFloatAtLocation(pos_loc, &p, ii);
+                            if (md.texcoords) |tcs| {
+                                var t = tcs[ii];
+                                builder.addFloatAtLocation(tc_loc, &t, ii);
+                            }
+                            if (md.normals) |ns| {
+                                var n = ns[ii];
+                                builder.addFloatAtLocation(nor_loc, &n, ii);
+                            }
+                            if (er.has_block_texture_atlas) {
+                                const bi = e.block_id;
+                                const block_index: f32 = @floatFromInt(game.state.ui.data.texture_atlas_block_index[@intCast(bi)]);
+                                const num_blocks: f32 = @floatFromInt(game.state.ui.data.texture_atlas_num_blocks);
+                                var bd: [2]f32 = [_]f32{ block_index, num_blocks };
+                                builder.addFloatAtLocation(block_data_loc, &bd, ii);
+                            }
+                            builder.nextVertex();
+                        }
+                    }
+                }
             } else {
                 for (0..positions.len) |ii| {
                     var p = positions[ii];
@@ -151,7 +197,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     const col3_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
                     const col4_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
                     const r = zm.matToArr(zm.identity());
-                    instance_builder.initBuffer();
+                    instance_builder.initBuffer(num_elements);
                     if (er.is_multi_draw) {
                         if (normals) |_| {
                             var n: [3]f32 = [_]f32{0} ** 3;

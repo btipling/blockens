@@ -45,14 +45,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                     break :blk c.elements.items[data.element_index].mesh_data;
                 },
-                .multidraw_voxel => .{
-                    // allocate empty things that get thrown away, but signal these things exist
-                    // just added differently
-                    .positions = game.state.allocator.alloc([3]f32, 0) catch unreachable,
-                    .indices = game.state.allocator.alloc(u32, 0) catch unreachable,
-                    .texcoords = game.state.allocator.alloc([2]f32, 0) catch unreachable,
-                    .normals = game.state.allocator.alloc([3]f32, 0) catch unreachable,
-                },
+                .multidraw_voxel => gfx.mesh.cube(), // just to setup the positions
                 .mob => gfx.mesh.mob(world, entity),
             };
 
@@ -357,6 +350,7 @@ const extractions = struct {
         }
         try extractMesh(&e, world, entity);
         extractAnimation(&e, world, entity);
+        extractMultiDraw(&e, world, entity);
         return e;
     }
 };

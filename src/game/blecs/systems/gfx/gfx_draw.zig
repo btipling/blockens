@@ -5,6 +5,7 @@ const gl = @import("zopengl").bindings;
 const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
+const chunk = @import("../../../chunk.zig");
 const game_state = @import("../../../state.zig");
 
 pub fn init() void {
@@ -85,7 +86,27 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 );
             }
             if (use_multidraw) {
-                // TODO figure this out lol: gl.multiDrawElements();
+                const chunk_c: ?*const components.block.Chunk = ecs.get(world, entity, components.block.Chunk);
+                if (chunk_c == null) continue;
+                var c: *chunk.Chunk = undefined;
+                if (parent == screen.gameDataEntity) {
+                    if (game.state.gfx.game_chunks.get(chunk_c.?.wp)) |c_| {
+                        c = c_;
+                    } else {
+                        continue;
+                    }
+                }
+                if (parent == screen.settingDataEntity) {
+                    if (game.state.gfx.settings_chunks.get(chunk_c.?.wp)) |c_| {
+                        c = c_;
+                    } else {
+                        continue;
+                    }
+                }
+                if (c.draws) |d| {
+                    var indices_ptr = [1]?*anyopaque{null};
+                    gl.multiDrawElements(gl.TRIANGLES, d.ptr, gl.UNSIGNED_INT, &indices_ptr, @intCast(d.len));
+                }
             }
         }
     }

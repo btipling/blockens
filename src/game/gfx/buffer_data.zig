@@ -13,6 +13,7 @@ pub const AttributeBuilder = struct {
     debug: bool = false,
     starting_location: u32 = 0,
     last_location: u32 = 0,
+    num_elements: usize = 1,
 
     const AttributeVariable = struct {
         type: gl.Enum,
@@ -123,19 +124,21 @@ pub const AttributeBuilder = struct {
         return av.location;
     }
 
-    pub fn initBuffer(self: *AttributeBuilder) void {
-        const s = @as(usize, @intCast(self.stride)) * @as(usize, @intCast(self.num_vertices));
+    pub fn initBuffer(self: *AttributeBuilder, num_elements: usize) void {
+        var s = @as(usize, @intCast(self.stride)) * @as(usize, @intCast(self.num_vertices));
+        s *= num_elements;
         if (self.debug) std.debug.print("init buffer with stride: {d} num vertices: {d} and size: {d}\n\n", .{
             self.stride,
             self.num_vertices,
             s,
         });
+        self.num_elements = num_elements;
         self.buffer = game.state.allocator.alloc(u8, s) catch unreachable;
     }
 
     pub fn nextVertex(self: *AttributeBuilder) void {
         self.cur_vertex += 1;
-        if (self.cur_vertex > self.num_vertices) {
+        if (self.cur_vertex > self.num_vertices * self.num_elements) {
             @panic("vertex overflow");
         }
     }

@@ -32,7 +32,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             ecs.remove(world, entity, components.block.NeedsMeshRendering);
 
             if (ecs.has_id(world, entity, ecs.id(components.block.UseMultiDraw))) {
-                std.debug.print("use multi draw detected in render mesh.\n", .{});
                 render_multidraw(world, entity, c[i].loc, c[i].wp);
             } else {
                 render_mesh(world, entity, c[i].loc, c[i].wp);
