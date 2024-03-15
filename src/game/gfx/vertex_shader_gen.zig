@@ -305,7 +305,7 @@ pub const VertexShaderGen = struct {
         }
 
         fn gen_instance_mat(r: *runner) !void {
-            if (!r.cfg.is_instanced) return;
+            if (!r.cfg.is_instanced and !r.cfg.is_multi_draw) return;
             r.a("    pos = attribTransform * pos;\n");
         }
 

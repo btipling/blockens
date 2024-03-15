@@ -188,14 +188,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     ) catch unreachable;
                     ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
                 }
-                if (er.is_multi_draw) {
-                    if (c) |_c| {
-                        _c.vbo = gfx.Gfx.initTransformsUBO(
-                            positions.len,
-                            builder.get_location(),
-                        ) catch unreachable;
-                        ecs.add(world, entity, components.gfx.NeedsMultiDrawDataUpdate);
-                    }
+            }
+            if (er.is_multi_draw) {
+                if (c) |_c| {
+                    _c.vbo = gfx.Gfx.initTransformsUBO(
+                        positions.len,
+                        builder.get_location(),
+                    ) catch unreachable;
+                    ecs.add(world, entity, components.gfx.NeedsMultiDrawDataUpdate);
                 }
             }
 
