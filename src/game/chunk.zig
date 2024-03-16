@@ -51,7 +51,7 @@ pub const ChunkElement = struct {
     chunk_index: usize = 0,
     block_id: u8 = 0,
     mesh_data: gfx.mesh.meshData,
-    transform: zm.Mat = undefined,
+    translation: @Vector(4, f32) = .{ 0, 0, 0, 0 },
     fn deinit(self: ChunkElement, allocator: std.mem.Allocator) void {
         allocator.free(self.mesh_data.positions);
         allocator.free(self.mesh_data.normals.?);

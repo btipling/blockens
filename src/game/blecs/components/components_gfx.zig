@@ -38,7 +38,6 @@ pub const AnimationKeyFrame = struct {
 
 pub const CanDraw = struct {};
 pub const NeedsInstanceDataUpdate = struct {};
-pub const NeedsMultiDrawDataUpdate = struct {};
 pub const NeedsUniformUpdate = struct {};
 pub const NeedsDeletion = struct {};
 
@@ -53,7 +52,6 @@ pub fn init() void {
     ecs.COMPONENT(world, AnimationKeyFrame);
     ecs.TAG(world, CanDraw);
     ecs.TAG(world, NeedsInstanceDataUpdate);
-    ecs.TAG(world, NeedsMultiDrawDataUpdate);
     ecs.TAG(world, NeedsUniformUpdate);
     ecs.TAG(world, NeedsDeletion);
     ecs.TAG(world, Wireframe);

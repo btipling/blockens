@@ -168,6 +168,7 @@ pub const ElementsRendererConfig = struct {
     has_mob_texture: bool = false,
     has_block_texture_atlas: bool = false,
     is_multi_draw: bool = false,
+    has_attr_translation: bool = false,
     mob: ?MobRef = null,
 };
 

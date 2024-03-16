@@ -32,21 +32,11 @@ pub const Gfx = struct {
     }
 
     pub fn initEBO(indices: []const u32) !u32 {
-        std.debug.print("initEBO: [", .{});
-        for (indices) |i| {
-            std.debug.print("{d}, ", .{i});
-        }
-        std.debug.print("]\n", .{});
         var EBO: u32 = undefined;
         gl.genBuffers(1, &EBO);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
 
         const size = @as(isize, @intCast(indices.len * @sizeOf(u32)));
-        std.debug.print("size of ebo buffer: {d}, half: {d} ebo: {d}\n", .{
-            size,
-            @divExact(size, 2),
-            EBO,
-        });
         const indicesptr: *const anyopaque = indices.ptr;
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, size, indicesptr, gl.STATIC_DRAW);
         return EBO;

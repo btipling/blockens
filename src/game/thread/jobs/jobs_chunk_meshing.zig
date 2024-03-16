@@ -31,7 +31,6 @@ pub const ChunkMeshJob = struct {
                 0,
             };
         }
-        std.debug.print("indexes being generated: [", .{});
         var index_offset: u32 = 0;
         while (keys.next()) |_k| {
             const i: usize = _k.*;
@@ -60,13 +59,11 @@ pub const ChunkMeshJob = struct {
                     .chunk_index = i,
                     .block_id = block_id,
                     .mesh_data = mesh_data,
-                    .transform = zm.translationV(fp),
+                    .translation = fp,
                 };
                 c.elements.append(e) catch unreachable;
             }
         }
-        std.debug.print("]\n", .{});
-        for (draws.items) |d| std.debug.print("draw?? {d}\n", .{d});
         self.chunk.draws = draws.toOwnedSlice() catch unreachable;
         var msg: buffer.buffer_message = buffer.new_message(.chunk_mesh);
         buffer.set_progress(&msg, true, 1);

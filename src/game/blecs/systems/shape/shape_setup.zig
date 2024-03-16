@@ -71,6 +71,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .has_mob_texture = e.has_mob_texture,
                 .has_block_texture_atlas = e.has_texture_atlas,
                 .is_multi_draw = e.is_multi_draw,
+                .has_attr_translation = e.is_multi_draw,
             };
             const erc_id = ecs.new_id(world);
             game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
@@ -99,6 +100,7 @@ const shaders = struct {
             .is_multi_draw = e.is_multi_draw,
             .is_meshed = e.is_meshed,
             .has_block_data = e.has_texture_atlas,
+            .has_attr_translation = e.is_multi_draw,
             .mesh_transforms = blk: {
                 if (e.mesh_transforms) |mt| break :blk mt.items;
                 break :blk null;

@@ -84,11 +84,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         ial.appendSlice(e.mesh_data.indices) catch unreachable;
                     }
                     ebo = gfx.Gfx.initEBO(ial.items) catch unreachable;
-                    std.debug.print("init multi draw ebo for entity {d} ebo: {d}\n", .{ entity, ebo });
                 }
             } else {
                 ebo = gfx.Gfx.initEBO(indices) catch unreachable;
-                std.debug.print("init regular draw ebo, entity: {d} ebo: {d}\n", .{ entity, ebo });
             }
             const vs = gfx.Gfx.initVertexShader(vertexShader) catch unreachable;
             const fs = gfx.Gfx.initFragmentShader(fragmentShader) catch unreachable;
@@ -107,11 +105,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 gl.STATIC_DRAW,
             );
             defer builder.deinit();
-            if (er.is_multi_draw) builder.debug = true;
+            // if (er.is_multi_draw) builder.debug = true;
             var pos_loc: u32 = 0;
             var tc_loc: u32 = 0;
             var nor_loc: u32 = 0;
             var block_data_loc: u32 = 0;
+            var attr_trans_loc: u32 = 0;
             // same order as defined in shader gen
             pos_loc = builder.defineFloatAttributeValue(3);
             if (texcoords) |_| {
@@ -122,6 +121,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             }
             if (er.has_block_texture_atlas) {
                 block_data_loc = builder.defineFloatAttributeValue(2);
+            }
+            if (er.is_multi_draw and er.has_attr_translation) {
+                attr_trans_loc = builder.defineFloatAttributeValue(4);
             }
             builder.initBuffer();
             if (er.is_multi_draw) {
@@ -148,6 +150,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                                 const num_blocks: f32 = @floatFromInt(game.state.ui.data.texture_atlas_num_blocks);
                                 var bd: [2]f32 = [_]f32{ block_index, num_blocks };
                                 builder.addFloatAtLocation(block_data_loc, &bd, vertex_index);
+                            }
+                            if (er.has_attr_translation) {
+                                var atr_data: [4]f32 = e.translation;
+                                builder.addFloatAtLocation(attr_trans_loc, &atr_data, vertex_index);
                             }
                             builder.nextVertex();
                         }
@@ -197,15 +203,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         builder.get_location(),
                     ) catch unreachable;
                     ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
-                }
-            }
-            if (er.is_multi_draw) {
-                if (c) |_c| {
-                    _c.vbo = gfx.Gfx.initTransformsUBO(
-                        positions.len,
-                        builder.get_location(),
-                    ) catch unreachable;
-                    ecs.add(world, entity, components.gfx.NeedsMultiDrawDataUpdate);
                 }
             }
 

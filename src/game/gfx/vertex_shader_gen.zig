@@ -22,6 +22,7 @@ pub const VertexShaderGen = struct {
         num_animation_frames: u32 = 0,
         has_normals: bool = false,
         has_block_data: bool = false,
+        has_attr_translation: bool = false,
         scale: ?@Vector(4, f32) = null,
         rotation: ?@Vector(4, f32) = null,
         translation: ?@Vector(4, f32) = null,
@@ -103,10 +104,15 @@ pub const VertexShaderGen = struct {
                 r.l(&line);
                 r.location += 1;
             }
+            if (r.cfg.has_attr_translation) {
+                line = try shader_helpers.attribute_location(r.location, "bl_attr_tr", .vec4);
+                r.l(&line);
+                r.location += 1;
+            }
         }
 
         fn gen_instanced_vars(r: *runner) !void {
-            if (!r.cfg.is_instanced and !r.cfg.is_multi_draw) return;
+            if (!r.cfg.is_instanced) return;
             var line = try shader_helpers.attribute_location(r.location, "attribTransform", .mat4);
             r.l(&line);
             r.location += 1;
@@ -227,6 +233,16 @@ pub const VertexShaderGen = struct {
             }
         }
 
+        fn gen_attr_translation(r: *runner) !void {
+            if (!r.cfg.has_attr_translation) return;
+            r.a("    vec4 bl_atrt0 = vec4(1, 0, 0, 0);\n");
+            r.a("    vec4 bl_atrt1 = vec4(0, 1, 0, 0);\n");
+            r.a("    vec4 bl_atrt2 = vec4(0, 0, 1, 0);\n");
+            r.a("    vec4 bl_atrt3 =  vec4(bl_attr_tr.x, bl_attr_tr.y, bl_attr_tr.z, 1);\n");
+            r.a("    mat4 bl_attr_trm = mat4(bl_atrt0, bl_atrt1, bl_atrt2, bl_atrt3);\n");
+            r.a("    pos = bl_attr_trm * pos;\n");
+        }
+
         fn gen_mesh_transforms(r: *runner) !void {
             if (r.cfg.mesh_transforms == null) return;
             r.a("\n");
@@ -305,15 +321,12 @@ pub const VertexShaderGen = struct {
         }
 
         fn gen_instance_mat(r: *runner) !void {
-            if (!r.cfg.is_instanced and !r.cfg.is_multi_draw) return;
+            if (!r.cfg.is_instanced) return;
             r.a("    pos = attribTransform * pos;\n");
         }
 
-        fn gen_main(r: *runner) !void {
-            r.a("void main()\n");
-            r.a("{\n");
-            r.a("    vec4 pos;\n");
-            r.a("    pos = vec4(position.xyz, 1.0);\n");
+        fn gen_inline_mesh_transforms(r: *runner) !void {
+            if (r.cfg.mesh_transforms == null) return;
             var m = zm.identity();
             if (r.cfg.mesh_transforms) |mts| {
                 const mt = mts[0];
@@ -331,6 +344,15 @@ pub const VertexShaderGen = struct {
             line = try shader_helpers.vec4_to_buf("    vec4 sc3 = vec4({d}, {d}, {d}, {d});\n", mr[12], mr[13], mr[14], mr[15]);
             r.l(&line);
             r.a("    mat4 scam = mat4(sc0, sc1, sc2, sc3);\n");
+        }
+
+        fn gen_main(r: *runner) !void {
+            r.a("void main()\n");
+            r.a("{\n");
+            r.a("    vec4 pos;\n");
+            r.a("    pos = vec4(position.xyz, 1.0);\n");
+            try r.gen_inline_mesh_transforms();
+            try r.gen_attr_translation();
             try r.gen_instance_mat();
             try r.gen_inline_mat();
             try r.gen_animation_frames();
