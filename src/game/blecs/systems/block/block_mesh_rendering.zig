@@ -34,49 +34,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (ecs.has_id(world, entity, ecs.id(components.block.UseMultiDraw))) {
                 render_multidraw(world, entity, c[i].loc, c[i].wp);
             } else {
-                render_mesh(world, entity, c[i].loc, c[i].wp);
+                std.debug.print("deprecated!\n", .{});
             }
             ecs.add(world, entity, components.block.NeedsInstanceRendering);
         }
-    }
-}
-
-fn render_mesh(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), wp: chunk.worldPosition) void {
-    var c: *chunk.Chunk = undefined;
-    const parent: ecs.entity_t = ecs.get_parent(world, entity);
-    if (parent == entities.screen.game_data) {
-        c = game.state.gfx.game_chunks.get(wp) orelse return;
-    } else {
-        c = game.state.gfx.settings_chunks.get(wp) orelse return;
-    }
-    for (c.elements.items, 0..) |element, i| {
-        const p = chunk.getPositionAtIndexV(element.chunk_index);
-        const mb_e = helpers.new_child(world, parent);
-        _ = ecs.set(world, mb_e, components.shape.Shape, .{ .shape_type = .meshed_voxel });
-        const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
-        _ = ecs.set(world, mb_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
-        if (parent == entities.screen.game_data) {
-            _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
-        } else {
-            _ = ecs.set(world, mb_e, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
-        }
-        _ = ecs.set(world, mb_e, components.block.Block, .{
-            .block_id = element.block_id,
-        });
-        _ = ecs.set(world, mb_e, components.block.BlockData, .{
-            .chunk_world_position = c.wp,
-            .element_index = i,
-            .is_settings = c.is_settings,
-        });
-        _ = ecs.set(world, mb_e, components.shape.Translation, .{
-            .translation = .{ -0.5, -0.5, -0.5, 0 },
-        });
-        _ = ecs.set(world, mb_e, components.screen.WorldLocation, .{
-            .loc = .{ p[0] + loc[0], p[1] + loc[1], p[2] + loc[2], p[3] + loc[3] },
-        });
-
-        ecs.add(world, mb_e, components.block.UseTextureAtlas);
-        ecs.add(world, mb_e, components.shape.NeedsSetup);
     }
 }
 

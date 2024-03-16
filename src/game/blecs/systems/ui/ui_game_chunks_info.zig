@@ -4,8 +4,8 @@ const zgui = @import("zgui");
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
-const entities = @import("../../entities/entities.zig");
 const screen_helpers = @import("../screen_helpers.zig");
+const chunk = @import("../../../chunk.zig");
 
 pub fn init() void {
     const s = system();
@@ -35,8 +35,59 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     zgui.endMenuBar();
                 }
                 zgui.text("Some chunks info here!", .{});
+                showChunkList() catch unreachable;
             }
             zgui.end();
         }
+    }
+}
+
+fn showChunkList() !void {
+    if (zgui.beginTable(
+        "Loaded Chunks",
+        .{
+            .flags = .{
+                .resizable = true,
+            },
+            .column = 3,
+            .outer_size = .{ 2000, 500 },
+        },
+    )) {
+        const world = game.state.world;
+        zgui.tableSetupColumn("Chunk Position", .{
+            .flags = .{
+                .no_resize = false,
+            },
+        });
+        zgui.tableSetupColumn("Entity", .{});
+        zgui.tableSetupColumn("Visibility", .{});
+        zgui.tableHeadersRow();
+        var it = game.state.gfx.game_chunks.iterator();
+        while (it.next()) |kv| {
+            const wp = kv.key_ptr.*;
+            const c = kv.value_ptr.*;
+            const entity = c.entity;
+            const p = wp.vecFromWorldPosition();
+            zgui.tableNextRow(.{});
+            _ = zgui.tableSetColumnIndex(0);
+            zgui.text("{d: >5}, {d: >5}, {d: >5}", .{
+                p[0] * chunk.chunkDim,
+                p[1] * chunk.chunkDim,
+                p[2] * chunk.chunkDim,
+            });
+            _ = zgui.tableSetColumnIndex(1);
+            zgui.text("{d}", .{entity});
+            _ = zgui.tableSetColumnIndex(2);
+            var is_drawn = false;
+            if (ecs.has_id(world, entity, ecs.id(components.gfx.CanDraw))) {
+                is_drawn = true;
+            }
+            if (is_drawn) {
+                zgui.text("visible", .{});
+            } else {
+                zgui.text("hidden", .{});
+            }
+        }
+        zgui.endTable();
     }
 }
