@@ -69,7 +69,7 @@ pub const Chunk = struct {
     allocator: std.mem.Allocator,
     elements: std.ArrayList(ChunkElement) = undefined,
     draws: ?[]c_int = null,
-    // draw_offsets: ?[]?*anyopaque = null,
+    draw_offsets: ?[]?*const anyopaque = null,
     is_settings: bool = false,
     multi_draw: bool = false,
     vbo: u32 = 0,
