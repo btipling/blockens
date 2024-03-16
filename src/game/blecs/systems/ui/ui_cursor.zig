@@ -19,14 +19,19 @@ fn system() ecs.system_desc_t {
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
+    const world = it.world;
     while (ecs.iter_next(it)) {
-        for (0..it.count()) |_| {
-            const has_cusor = ecs.has_id(
-                game.state.world,
+        for (0..it.count()) |i| {
+            const ui: []components.ui.UI = ecs.field(it, components.ui.UI, 1) orelse return;
+            var has_cursor = ecs.has_id(
+                world,
                 game.state.entities.ui,
                 ecs.id(components.ui.Menu),
             );
-            if (has_cusor) {
+            if (ui[i].dialog_count > 0) {
+                has_cursor = true;
+            }
+            if (has_cursor) {
                 game.state.window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.normal);
                 continue;
             }

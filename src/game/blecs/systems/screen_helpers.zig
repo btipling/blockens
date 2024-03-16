@@ -1,3 +1,4 @@
+const std = @import("std");
 const blecs = @import("../blecs.zig");
 const game = @import("../../game.zig");
 
@@ -79,11 +80,17 @@ pub fn toggleDemoCharacterOptions() void {
 }
 
 fn toggleUI(comptime T: type) void {
-    if (blecs.ecs.has_id(game.state.world, game.state.entities.ui, blecs.ecs.id(T))) {
-        blecs.ecs.remove(game.state.world, game.state.entities.ui, T);
+    const world = game.state.world;
+    const entity = game.state.entities.ui;
+    const ui: *blecs.components.ui.UI = blecs.ecs.get_mut(world, entity, blecs.components.ui.UI) orelse return;
+    if (blecs.ecs.has_id(world, entity, blecs.ecs.id(T))) {
+        blecs.ecs.remove(world, entity, T);
+        ui.dialog_count -= 1;
+        if (ui.dialog_count < 0) std.debug.panic("invalid ui dialog count: {d}\n", .{ui.dialog_count});
         return;
     }
-    blecs.ecs.add(game.state.world, game.state.entities.ui, T);
+    blecs.ecs.add(world, entity, T);
+    ui.dialog_count += 1;
 }
 
 pub fn toggleWireframe(entity: blecs.ecs.entity_t) void {
