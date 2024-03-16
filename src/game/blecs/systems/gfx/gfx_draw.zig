@@ -21,22 +21,6 @@ fn system() ecs.system_desc_t {
     return desc;
 }
 
-const num_offsets = 300_000;
-const voxel_indices_offsets: [num_offsets]?c_int = get_offsets(num_offsets);
-
-fn get_offsets(comptime n: usize) [n]?c_int {
-    @setEvalBranchQuota(500_000);
-    var rv: [n]?c_int = undefined;
-    for (0..n) |i| {
-        if (i == 0) {
-            rv[i] = null;
-        } else {
-            rv[i] = @intCast(@sizeOf(c_uint) * 36 * i);
-        }
-    }
-    return rv;
-}
-
 fn run(it: *ecs.iter_t) callconv(.C) void {
     const world = it.world;
     const screen: *const components.screen.Screen = ecs.get(
@@ -120,24 +104,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                 }
                 if (c.draws) |d| {
-                    // const count: c_int = @intCast(@sizeOf(c_uint) * 36);
-                    // const indices_ptr = [_]?*anyopaque{
-                    //     null,
-                    //     @as(*anyopaque, @ptrFromInt(count)),
-                    // };
-                    var indices_offsets: [num_offsets]?*const anyopaque = undefined;
-                    for (0..d.len) |ii| {
-                        if (voxel_indices_offsets[ii] == null) {
-                            indices_offsets[ii] = null;
-                        } else {
-                            indices_offsets[ii] = @as(
-                                *anyopaque,
-                                @ptrFromInt(@as(usize, @intCast(voxel_indices_offsets[ii].?))),
-                            );
-                        }
-                    }
-
-                    gl.multiDrawElements(gl.TRIANGLES, d.ptr, gl.UNSIGNED_INT, @ptrCast(indices_offsets[0..d.len]), @intCast(d.len));
+                    gl.multiDrawElements(gl.TRIANGLES, d.ptr, gl.UNSIGNED_INT, @ptrCast(c.draw_offsets_gl.?.ptr), @intCast(d.len));
                 }
             }
         }

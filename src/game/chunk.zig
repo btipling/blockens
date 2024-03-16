@@ -68,6 +68,8 @@ pub const Chunk = struct {
     allocator: std.mem.Allocator,
     elements: std.ArrayList(ChunkElement) = undefined,
     draws: ?[]c_int = null,
+    draw_offsets: ?[]c_int = null, // this only exists to hold the values that draw_offsets_gl points to...
+    draw_offsets_gl: ?[]?*const anyopaque = null,
     is_settings: bool = false,
     multi_draw: bool = true,
     vbo: u32 = 0,
@@ -99,6 +101,8 @@ pub const Chunk = struct {
         self.elements.deinit();
         self.allocator.free(self.data);
         if (self.draws) |d| self.allocator.free(d);
+        if (self.draw_offsets) |d| self.allocator.free(d);
+        if (self.draw_offsets_gl) |d| self.allocator.free(d);
     }
 
     pub fn findMeshes(self: *Chunk) !void {

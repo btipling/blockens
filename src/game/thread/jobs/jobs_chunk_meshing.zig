@@ -18,6 +18,8 @@ pub const ChunkMeshJob = struct {
 
         var keys = c.meshes.keyIterator();
         var draws = std.ArrayList(c_int).init(game.state.allocator);
+        var draw_offsets = std.ArrayList(c_int).init(game.state.allocator);
+        var draw_offsets_gl = std.ArrayList(?*const anyopaque).init(game.state.allocator);
         const cp = c.wp.vecFromWorldPosition();
         var loc: @Vector(4, f32) = undefined;
         if (c.is_settings) {
@@ -42,6 +44,8 @@ pub const ChunkMeshJob = struct {
                         mesh_data.indices[ii] = index + index_offset;
                     }
                     draws.append(@intCast(mesh_data.indices.len)) catch unreachable;
+                    draw_offsets.append(@intCast(@sizeOf(c_uint) * index_offset)) catch unreachable;
+
                     index_offset += @intCast(mesh_data.indices.len);
                 }
                 const p: @Vector(4, f32) = chunk.getPositionAtIndexV(i);
@@ -61,6 +65,18 @@ pub const ChunkMeshJob = struct {
             }
         }
         self.chunk.draws = draws.toOwnedSlice() catch unreachable;
+        self.chunk.draw_offsets = draw_offsets.toOwnedSlice() catch unreachable;
+        for (0..self.chunk.draw_offsets.?.len) |i| {
+            if (self.chunk.draw_offsets.?[i] == 0) {
+                draw_offsets_gl.append(null) catch unreachable;
+            } else {
+                draw_offsets_gl.append(@as(
+                    *anyopaque,
+                    @ptrFromInt(@as(usize, @intCast(self.chunk.draw_offsets.?[i]))),
+                )) catch unreachable;
+            }
+        }
+        self.chunk.draw_offsets_gl = draw_offsets_gl.toOwnedSlice() catch unreachable;
         var msg: buffer.buffer_message = buffer.new_message(.chunk_mesh);
         buffer.set_progress(&msg, true, 1);
         buffer.put_chunk_mesh_data(msg, .{
