@@ -1,4 +1,5 @@
 const std = @import("std");
+const ztracy = @import("ztracy");
 const ui = @import("libs/ui/build.zig");
 const glfw = @import("libs/glfw/build.zig");
 const opengl = @import("libs/opengl/build.zig");
@@ -34,6 +35,12 @@ pub fn build(b: *std.Build) !void {
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }
+
+    const ztracy_pkg = ztracy.package(b, target, optimize, .{
+        .options = .{ .enable_ztracy = true },
+    });
+
+    ztracy_pkg.link(exe);
 
     const glfw_pkg = glfw.package(b, target, optimize, .{});
     const ui_pkg = ui.package(b, target, optimize, .{
