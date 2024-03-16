@@ -24,8 +24,16 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |_| {
             zgui.setNextItemWidth(-1);
             if (zgui.begin("Game Chunks Info", .{
-                .flags = .{},
+                .flags = .{
+                    .menu_bar = true,
+                },
             })) {
+                if (zgui.beginMenuBar()) {
+                    if (zgui.menuItem("Close", .{})) {
+                        screen_helpers.toggleGameChunksInfo();
+                    }
+                    zgui.endMenuBar();
+                }
                 zgui.text("Some chunks info here!", .{});
             }
             zgui.end();
