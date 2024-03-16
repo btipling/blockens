@@ -1,5 +1,4 @@
 const std = @import("std");
-const ztracy = @import("ztracy");
 const game = @import("game/game.zig");
 const config = @import("config");
 
@@ -9,6 +8,7 @@ pub fn main() !void {
 
     var g: game.Game = undefined;
     if (config.use_tracy) {
+        const ztracy = @import("ztracy");
         const tracy_zone = ztracy.ZoneNC(@src(), "Blockens", 0x00_ff_00_00);
         defer tracy_zone.End();
         var tracy_allocator = ztracy.TracyAllocator.init(gpa.allocator());
