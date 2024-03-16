@@ -79,6 +79,10 @@ pub fn toggleDemoCharacterOptions() void {
     toggleUI(blecs.components.ui.DemoCharacter);
 }
 
+pub fn toggleGameChunksInfo() void {
+    toggleUI(blecs.components.ui.GameChunksInfo);
+}
+
 fn toggleUI(comptime T: type) void {
     const world = game.state.world;
     const entity = game.state.entities.ui;

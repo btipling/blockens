@@ -10,6 +10,7 @@ const demo_cube = @import("ui_demo_cube.zig");
 const demo_chunk = @import("ui_demo_chunk.zig");
 const demo_character = @import("ui_demo_character.zig");
 const settings_camera = @import("ui_settings_camera.zig");
+const game_chunks_info = @import("ui_game_chunks_info.zig");
 const cursor = @import("ui_cursor.zig");
 
 pub fn init() void {
@@ -25,5 +26,6 @@ pub fn init() void {
     demo_chunk.init();
     demo_character.init();
     settings_camera.init();
+    game_chunks_info.init();
     cursor.init();
 }

@@ -51,7 +51,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                     zgui.endMenu();
                 }
-                if (zgui.beginMenu("Settings UI", true)) {
+                if (zgui.beginMenu("Setting Tools", true)) {
                     if (zgui.menuItem("Toogle Camera Options", .{})) {
                         screen_helpers.toggleCameraOptions();
                     }
@@ -63,6 +63,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                     if (zgui.menuItem("Toggle Demo Character Options", .{})) {
                         screen_helpers.toggleDemoCharacterOptions();
+                    }
+                    zgui.endMenu();
+                }
+                if (zgui.beginMenu("Game Tools", true)) {
+                    if (zgui.menuItem("Toogle Chunks Info", .{})) {
+                        screen_helpers.toggleGameChunksInfo();
                     }
                     zgui.endMenu();
                 }
