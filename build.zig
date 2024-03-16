@@ -28,19 +28,25 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
+    // options
+    const options = b.addOptions();
+    const use_tracy = b.option(bool, "use_tracy", "enable profiling tracy") orelse false;
+    if (use_tracy) {
+        const ztracy_pkg = ztracy.package(b, target, optimize, .{
+            .options = .{ .enable_ztracy = true },
+        });
+        ztracy_pkg.link(exe);
+    }
+    options.addOption(bool, "use_tracy", use_tracy);
+    exe.root_module.addOptions("config", options);
     b.installArtifact(exe);
+
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
 
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }
-
-    const ztracy_pkg = ztracy.package(b, target, optimize, .{
-        .options = .{ .enable_ztracy = true },
-    });
-
-    ztracy_pkg.link(exe);
 
     const glfw_pkg = glfw.package(b, target, optimize, .{});
     const ui_pkg = ui.package(b, target, optimize, .{
