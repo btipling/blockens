@@ -6,7 +6,7 @@ const gfx = @import("gfx/gfx.zig");
 pub const chunkDim = 64;
 pub const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
 const drawSize = chunkDim * chunkDim;
-const minVoxelsInMesh = 10;
+const minVoxelsInMesh = 1;
 
 pub const worldPosition = struct {
     x: u32,
@@ -65,7 +65,6 @@ pub const Chunk = struct {
     entity: blecs.ecs.entity_t = 0,
     data: []u32 = undefined,
     meshes: std.AutoHashMap(usize, @Vector(4, f32)),
-    instanced: ?[]isize = null,
     allocator: std.mem.Allocator,
     elements: std.ArrayList(ChunkElement) = undefined,
     draws: ?[]c_int = null,
@@ -84,7 +83,6 @@ pub const Chunk = struct {
             .wp = wp,
             .entity = entity,
             .meshes = std.AutoHashMap(usize, @Vector(4, f32)).init(allocator),
-            .instanced = null,
             .elements = std.ArrayList(ChunkElement).init(allocator),
             .allocator = allocator,
             .is_settings = is_settings,
@@ -95,7 +93,6 @@ pub const Chunk = struct {
 
     pub fn deinit(self: *Chunk) void {
         self.meshes.deinit();
-        if (self.instanced) |i| self.allocator.free(i);
         for (self.elements.items) |ce| {
             ce.deinit(self.allocator);
         }
@@ -109,10 +106,6 @@ pub const Chunk = struct {
         var chunker = try Chunker.init(self);
         defer chunker.deinit();
         try chunker.run();
-        const instanced: []isize = std.mem.sliceTo(&chunker.instanced, -1);
-        const i_ptr = try self.allocator.alloc(isize, instanced.len);
-        @memcpy(i_ptr, instanced);
-        self.instanced = i_ptr;
         const done = std.time.milliTimestamp();
         const duration = (done - start);
         std.debug.print("meshing took {d}ms\n", .{duration});
@@ -127,9 +120,6 @@ pub const Chunker = struct {
     toBeMeshed: [minVoxelsInMesh]usize,
     cachingMeshed: bool,
     meshed: [chunkSize]bool,
-    is_instanced: [chunkSize]bool,
-    instanced: [chunkSize]isize,
-    instanced_count: usize = 0,
 
     pub fn init(chunk: *Chunk) !Chunker {
         // chunkSize
@@ -141,15 +131,12 @@ pub const Chunker = struct {
             .toBeMeshed = [_]usize{0} ** minVoxelsInMesh,
             .cachingMeshed = true,
             .meshed = [_]bool{false} ** chunkSize,
-            .is_instanced = [_]bool{false} ** chunkSize,
-            .instanced = [_]isize{-1} ** chunkSize,
         };
     }
 
     pub fn deinit(_: *Chunker) void {}
 
     fn updateMeshed(self: *Chunker, i: usize) !void {
-        if (self.is_instanced[i]) self.is_instanced[i] = false;
         if (self.numVoxelsInMesh < minVoxelsInMesh) {
             self.toBeMeshed[self.numVoxelsInMesh] = i;
             self.numVoxelsInMesh += 1;
@@ -165,17 +152,8 @@ pub const Chunker = struct {
         self.meshed[i] = true;
     }
 
-    fn updateChunk(self: *Chunker, i: usize) !void {
-        if (!self.cachingMeshed) {
-            try self.chunk.meshes.put(self.currentVoxel, self.currentScale);
-        } else {
-            const contains: bool = self.meshed[i];
-            if (!contains) {
-                self.is_instanced[i] = true;
-                self.instanced[self.instanced_count] = @intCast(i);
-                self.instanced_count += 1;
-            }
-        }
+    fn updateChunk(self: *Chunker) !void {
+        try self.chunk.meshes.put(self.currentVoxel, self.currentScale);
         self.toBeMeshed = [_]usize{0} ** minVoxelsInMesh;
         self.numVoxelsInMesh = 0;
         self.initScale();
@@ -331,7 +309,7 @@ pub const Chunker = struct {
                     continue :inner;
                 }
             }
-            try self.updateChunk(i);
+            try self.updateChunk();
         }
     }
 };
