@@ -13,7 +13,7 @@ Copyright (c) 2021 Michal Ziulek
 Used for: 
 
 OpenGL, Mesh, Zmath, Dear Imgui, 
-Pool, STBI, GPU, GLFW, flecs
+Pool, STBI, GPU, GLFW, flecs, zjobs, tracy
 
 ## zig-lua
 
