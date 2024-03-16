@@ -223,7 +223,7 @@ pub const VertexShaderGen = struct {
             r.a("    vec4 rotq = slerp(kf.rotation, sf.rotation, indices.t);\n");
             r.a("    mat4 rot = quat_to_mat(rotq);\n");
 
-            r.a("    pos = scam * pos;\n");
+            if (r.cfg.mesh_transforms != null) r.a("    pos = scam * pos;\n");
             r.a("    pos = rot * pos;\n");
             r.a("    pos = bl_trans * pos;\n");
             if (r.cfg.animation_id) |ai| {
