@@ -95,5 +95,5 @@ fn render_multidraw(world: *ecs.world_t, entity: ecs.entity_t, _: @Vector(4, f32
     _ = ecs.set(world, entity, components.shape.Shape, .{ .shape_type = .multidraw_voxel });
     ecs.add(world, entity, components.block.UseTextureAtlas);
     ecs.add(world, entity, components.shape.NeedsSetup);
-    ecs.add(world, entity, components.Debug);
+    // ecs.add(world, entity, components.Debug);
 }

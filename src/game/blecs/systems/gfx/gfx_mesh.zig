@@ -84,9 +84,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         ial.appendSlice(e.mesh_data.indices) catch unreachable;
                     }
                     ebo = gfx.Gfx.initEBO(ial.items) catch unreachable;
+                    std.debug.print("init multi draw ebo for entity {d} ebo: {d}\n", .{ entity, ebo });
                 }
             } else {
                 ebo = gfx.Gfx.initEBO(indices) catch unreachable;
+                std.debug.print("init regular draw ebo, entity: {d} ebo: {d}\n", .{ entity, ebo });
             }
             const vs = gfx.Gfx.initVertexShader(vertexShader) catch unreachable;
             const fs = gfx.Gfx.initFragmentShader(fragmentShader) catch unreachable;
@@ -95,8 +97,17 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
             var builder: *gfx.buffer_data.AttributeBuilder = game.state.allocator.create(gfx.buffer_data.AttributeBuilder) catch unreachable;
             defer game.state.allocator.destroy(builder);
-            builder.* = gfx.buffer_data.AttributeBuilder.init(@intCast(positions.len), vbo, gl.STATIC_DRAW);
+            var num_elements: usize = 1;
+            if (er.is_multi_draw) {
+                num_elements = c.?.elements.items.len;
+            }
+            builder.* = gfx.buffer_data.AttributeBuilder.init(
+                @intCast(positions.len * num_elements),
+                vbo,
+                gl.STATIC_DRAW,
+            );
             defer builder.deinit();
+            if (er.is_multi_draw) builder.debug = true;
             var pos_loc: u32 = 0;
             var tc_loc: u32 = 0;
             var nor_loc: u32 = 0;
@@ -112,32 +123,31 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (er.has_block_texture_atlas) {
                 block_data_loc = builder.defineFloatAttributeValue(2);
             }
-            var num_elements: usize = 1;
-            if (er.is_multi_draw) {
-                num_elements = c.?.elements.items.len;
-            }
-            builder.initBuffer(num_elements);
+            builder.initBuffer();
             if (er.is_multi_draw) {
                 if (c) |_c| {
-                    for (_c.elements.items) |e| {
+                    for (_c.elements.items, 0..) |e, ei| {
+                        // if (ei != 0) break;
+                        const vertex_offset = positions.len * ei;
                         const md = e.mesh_data;
                         for (0..md.positions.len) |ii| {
                             var p = md.positions[ii];
-                            builder.addFloatAtLocation(pos_loc, &p, ii);
+                            const vertex_index: usize = ii + vertex_offset;
+                            builder.addFloatAtLocation(pos_loc, &p, vertex_index);
                             if (md.texcoords) |tcs| {
                                 var t = tcs[ii];
-                                builder.addFloatAtLocation(tc_loc, &t, ii);
+                                builder.addFloatAtLocation(tc_loc, &t, vertex_index);
                             }
                             if (md.normals) |ns| {
                                 var n = ns[ii];
-                                builder.addFloatAtLocation(nor_loc, &n, ii);
+                                builder.addFloatAtLocation(nor_loc, &n, vertex_index);
                             }
                             if (er.has_block_texture_atlas) {
                                 const bi = e.block_id;
                                 const block_index: f32 = @floatFromInt(game.state.ui.data.texture_atlas_block_index[@intCast(bi)]);
                                 const num_blocks: f32 = @floatFromInt(game.state.ui.data.texture_atlas_num_blocks);
                                 var bd: [2]f32 = [_]f32{ block_index, num_blocks };
-                                builder.addFloatAtLocation(block_data_loc, &bd, ii);
+                                builder.addFloatAtLocation(block_data_loc, &bd, vertex_index);
                             }
                             builder.nextVertex();
                         }

@@ -32,11 +32,21 @@ pub const Gfx = struct {
     }
 
     pub fn initEBO(indices: []const u32) !u32 {
+        std.debug.print("initEBO: [", .{});
+        for (indices) |i| {
+            std.debug.print("{d}, ", .{i});
+        }
+        std.debug.print("]\n", .{});
         var EBO: u32 = undefined;
         gl.genBuffers(1, &EBO);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
 
         const size = @as(isize, @intCast(indices.len * @sizeOf(u32)));
+        std.debug.print("size of ebo buffer: {d}, half: {d} ebo: {d}\n", .{
+            size,
+            @divExact(size, 2),
+            EBO,
+        });
         const indicesptr: *const anyopaque = indices.ptr;
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, size, indicesptr, gl.STATIC_DRAW);
         return EBO;
@@ -274,7 +284,7 @@ pub const Gfx = struct {
         const col3_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
         const col4_loc = instance_builder.defineFloatAttributeValueWithDivisor(4, true);
         const r = zm.matToArr(zm.identity());
-        instance_builder.initBuffer(1);
+        instance_builder.initBuffer();
         instance_builder.addFloatAtLocation(col1_loc, @ptrCast(r[0..4]), 0);
         instance_builder.addFloatAtLocation(col2_loc, @ptrCast(r[4..8]), 0);
         instance_builder.addFloatAtLocation(col3_loc, @ptrCast(r[8..12]), 0);

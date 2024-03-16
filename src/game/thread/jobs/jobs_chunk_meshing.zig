@@ -18,6 +18,7 @@ pub const ChunkMeshJob = struct {
 
         var keys = c.meshes.keyIterator();
         var draws = std.ArrayList(c_int).init(game.state.allocator);
+        // var draws_offsets = std.ArrayList(?*anyopaque).init(game.state.allocator);
         const cp = c.wp.vecFromWorldPosition();
         var loc: @Vector(4, f32) = undefined;
         if (c.is_settings) {
@@ -30,13 +31,24 @@ pub const ChunkMeshJob = struct {
                 0,
             };
         }
+        std.debug.print("indexes being generated: [", .{});
+        var index_offset: u32 = 0;
         while (keys.next()) |_k| {
             const i: usize = _k.*;
             if (c.meshes.get(i)) |s| {
                 const block_id: u8 = @intCast(c.data[i]);
                 if (block_id == 0) std.debug.panic("why are there air blocks being meshed >:|", .{});
                 const mesh_data: gfx.mesh.meshData = gfx.mesh.voxel(s) catch unreachable;
-                draws.append(@intCast(mesh_data.indices.len)) catch unreachable;
+                if (c.multi_draw) {
+                    for (mesh_data.indices, 0..) |index, ii| {
+                        mesh_data.indices[ii] = index + index_offset;
+                    }
+                    draws.append(@intCast(mesh_data.indices.len)) catch unreachable;
+                    // if (index_offset == 0) {
+                    //     draws_offsets.append(null);
+                    // } else {}
+                    index_offset += @intCast(mesh_data.indices.len);
+                }
                 const p: @Vector(4, f32) = chunk.getPositionAtIndexV(i);
                 const fp: @Vector(4, f32) = .{
                     p[0] + loc[0] - 0.5,
@@ -53,6 +65,8 @@ pub const ChunkMeshJob = struct {
                 c.elements.append(e) catch unreachable;
             }
         }
+        std.debug.print("]\n", .{});
+        for (draws.items) |d| std.debug.print("draw?? {d}\n", .{d});
         self.chunk.draws = draws.toOwnedSlice() catch unreachable;
         var msg: buffer.buffer_message = buffer.new_message(.chunk_mesh);
         buffer.set_progress(&msg, true, 1);

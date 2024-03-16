@@ -149,9 +149,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 })) {
                     game.state.ui.data.demo_chunk_rotation_x = 0;
                     game.state.ui.data.demo_chunk_rotation_y = 0.341;
-                    game.state.ui.data.demo_chunk_rotation_z = 0.236;
-                    game.state.ui.data.demo_chunk_scale = 0.042;
-                    game.state.ui.data.demo_chunk_translation = .{ -4.538, -1.101, -0.264, 0 };
+                    game.state.ui.data.demo_chunk_rotation_z = 0.938;
+                    game.state.ui.data.demo_chunk_scale = 0.107;
+                    game.state.ui.data.demo_chunk_translation = .{ -1.718, -1.631, -0.264, 0 };
                     game.state.ui.data.demo_chunk_pp_translation = .{ -0.650, 0.100, 0.000, 0 };
                     entities.screen.initDemoChunkCamera();
                 }

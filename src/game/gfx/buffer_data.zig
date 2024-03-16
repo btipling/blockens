@@ -13,7 +13,6 @@ pub const AttributeBuilder = struct {
     debug: bool = false,
     starting_location: u32 = 0,
     last_location: u32 = 0,
-    num_elements: usize = 1,
 
     const AttributeVariable = struct {
         type: gl.Enum,
@@ -124,26 +123,29 @@ pub const AttributeBuilder = struct {
         return av.location;
     }
 
-    pub fn initBuffer(self: *AttributeBuilder, num_elements: usize) void {
-        var s = @as(usize, @intCast(self.stride)) * @as(usize, @intCast(self.num_vertices));
-        s *= num_elements;
+    pub fn initBuffer(self: *AttributeBuilder) void {
+        const s = @as(usize, @intCast(self.stride)) * @as(usize, @intCast(self.num_vertices));
         if (self.debug) std.debug.print("init buffer with stride: {d} num vertices: {d} and size: {d}\n\n", .{
             self.stride,
             self.num_vertices,
             s,
         });
-        self.num_elements = num_elements;
         self.buffer = game.state.allocator.alloc(u8, s) catch unreachable;
     }
 
     pub fn nextVertex(self: *AttributeBuilder) void {
         self.cur_vertex += 1;
-        if (self.cur_vertex > self.num_vertices * self.num_elements) {
+        if (self.cur_vertex > self.num_vertices) {
             @panic("vertex overflow");
         }
     }
 
-    pub fn addFloatAtLocation(self: *AttributeBuilder, location: u32, data: []const f32, vertex_index: usize) void {
+    pub fn addFloatAtLocation(
+        self: *AttributeBuilder,
+        location: u32,
+        data: []const f32,
+        vertex_index: usize,
+    ) void {
         const av = self.attr_vars.items[location - self.starting_location];
         const dataptr: []const u8 = std.mem.sliceAsBytes(data);
         if (self.debug) std.debug.print("dataptr len: {d}\n", .{dataptr.len});
@@ -153,26 +155,11 @@ pub const AttributeBuilder = struct {
         if (self.debug) std.debug.print("\n", .{});
         const stride: usize = @intCast(self.stride);
         const start = stride * vertex_index + av.offset;
-        if (self.debug) std.debug.print("addFloatAtLocation - loc: {d}, vertex: {d} \n", .{ location, vertex_index });
-        for (0..dataptr.len) |i| {
-            const buf_i = start + i;
-            if (self.debug) std.debug.print(" {d} ,", .{buf_i});
-            self.buffer[buf_i] = dataptr[i];
-        }
-        if (self.debug) std.debug.print("\n", .{});
-    }
-
-    pub fn addUintAtLocation(self: *AttributeBuilder, location: u32, data: []const u32, vertex_index: usize) void {
-        const av = self.attr_vars.items[location - self.starting_location];
-        const dataptr: []const u8 = std.mem.sliceAsBytes(data);
-        if (self.debug) std.debug.print("dataptr len: {d}\n", .{dataptr.len});
-        for (dataptr) |b| {
-            if (self.debug) std.debug.print("{d} ", .{b});
-        }
-        if (self.debug) std.debug.print("\n", .{});
-        const stride: usize = @intCast(self.stride);
-        const start = stride * vertex_index + av.offset;
-        if (self.debug) std.debug.print("addFloatAtLocation - loc: {d}, vertex: {d} \n", .{ location, vertex_index });
+        if (self.debug) std.debug.print("addFloatAtLocation - loc: {d}, vertex: {d} av.offset: {d} \n", .{
+            location,
+            vertex_index,
+            av.offset,
+        });
         for (0..dataptr.len) |i| {
             const buf_i = start + i;
             if (self.debug) std.debug.print(" {d} ,", .{buf_i});

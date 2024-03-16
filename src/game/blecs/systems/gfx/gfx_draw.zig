@@ -104,7 +104,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                 }
                 if (c.draws) |d| {
-                    var indices_ptr = [1]?*anyopaque{null};
+                    const count: c_int = @intCast(@sizeOf(c_uint) * 36);
+                    const indices_ptr = [_]?*anyopaque{
+                        null,
+                        @as(*anyopaque, @ptrFromInt(count)),
+                    };
                     gl.multiDrawElements(gl.TRIANGLES, d.ptr, gl.UNSIGNED_INT, &indices_ptr, @intCast(d.len));
                 }
             }
