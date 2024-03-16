@@ -73,6 +73,7 @@ pub const ChunkMeshJob = struct {
             }
         }
         self.chunk.draws = draws.toOwnedSlice() catch unreachable;
+        self.chunk.draw_offsets = draws_offsets.toOwnedSlice() catch unreachable;
         var msg: buffer.buffer_message = buffer.new_message(.chunk_mesh);
         buffer.set_progress(&msg, true, 1);
         buffer.put_chunk_mesh_data(msg, .{
