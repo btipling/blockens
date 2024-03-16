@@ -70,7 +70,7 @@ pub const Chunk = struct {
     elements: std.ArrayList(ChunkElement) = undefined,
     draws: ?[]c_int = null,
     is_settings: bool = false,
-    multi_draw: bool = false,
+    multi_draw: bool = true,
     vbo: u32 = 0,
     pub fn init(
         allocator: std.mem.Allocator,
