@@ -30,12 +30,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             const c: []components.block.Chunk = ecs.field(it, components.block.Chunk, 1) orelse return;
             ecs.remove(world, entity, components.block.NeedsMeshRendering);
-
-            if (ecs.has_id(world, entity, ecs.id(components.block.UseMultiDraw))) {
-                render_multidraw(world, entity, c[i].loc, c[i].wp);
-            } else {
-                std.debug.print("deprecated!\n", .{});
-            }
+            render_multidraw(world, entity, c[i].loc, c[i].wp);
             ecs.add(world, entity, components.block.NeedsInstanceRendering);
         }
     }
