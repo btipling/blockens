@@ -10,6 +10,14 @@
 
  Currently using zig version 0.12.0-dev.2835+256c5934b to build.
 
+## Running
+
+The project must currently be run from the projects root directory.
+```
+zig build run
+```
+Should do it. Note, lua script evals are much slower in debug builds than they are in fast release builds.
+
  ## Notes
 
  There is a very mimial default world that is created on first run. Setting up a world requires writing lua scripts
