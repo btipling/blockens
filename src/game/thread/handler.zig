@@ -9,6 +9,8 @@ var handler: *Handler = undefined;
 
 const Handler = struct {};
 
+const maxHandlersPerFrame = 1000;
+
 pub fn init() !void {
     handler = try game.state.allocator.create(Handler);
     handler.* = .{};
@@ -19,12 +21,16 @@ pub fn deinit() void {
 }
 
 pub fn handle_incoming() !void {
-    if (!buffer.has_message()) return;
-    const msg = buffer.next_message() orelse return;
-    switch (msg.type) {
-        .chunk_gen => try handle_chunk_gen(msg),
-        .chunk_mesh => handle_chunk_mesh(msg),
-        .chunk_copy => handle_copy_chunk(msg),
+    var i: u32 = 0;
+    while (buffer.has_message()) {
+        const msg = buffer.next_message() orelse return;
+        switch (msg.type) {
+            .chunk_gen => try handle_chunk_gen(msg),
+            .chunk_mesh => handle_chunk_mesh(msg),
+            .chunk_copy => handle_copy_chunk(msg),
+        }
+        i += 0;
+        if (i >= maxHandlersPerFrame) return;
     }
 }
 

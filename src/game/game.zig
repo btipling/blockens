@@ -84,6 +84,7 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     glfw.windowHintTyped(.resizable, false);
     glfw.windowHintTyped(.focused, true);
     glfw.windowHintTyped(.maximized, true);
+    glfw.windowHintTyped(.decorated, false);
     const window = glfw.Window.create(cfg.windows_width, cfg.windows_height, cfg.game_name, null) catch |err| {
         std.log.err("Failed to create game window.", .{});
         return err;

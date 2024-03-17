@@ -8,7 +8,7 @@ pub const helpers = @import("helpers.zig");
 
 pub fn init() void {
     game.state.world = ecs.init();
-    ecs.set_threads(game.state.world, 4);
+    ecs.set_target_fps(game.state.world, 120);
     components.init();
     tags.init();
     systems.init();
