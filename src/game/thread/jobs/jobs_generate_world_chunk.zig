@@ -3,12 +3,17 @@ const game = @import("../../game.zig");
 const chunk = @import("../../chunk.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const buffer = @import("../buffer.zig");
+const config = @import("config");
 
 pub const GenerateWorldChunkJob = struct {
     wp: chunk.worldPosition,
     script: []u8,
 
     pub fn exec(self: *@This()) void {
+        if (config.use_tracy) {
+            const ztracy = @import("ztracy");
+            ztracy.SetThreadName("GenerateWorldChunkJob");
+        }
         const chunk_data = game.state.script.evalChunkFunc(self.script) catch |err| {
             std.debug.print("Error evaluating chunk in eval chunks function: {}\n", .{err});
             return;

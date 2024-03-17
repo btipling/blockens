@@ -5,6 +5,7 @@ const game = @import("../../game.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const buffer = @import("../buffer.zig");
 const gfx = @import("../../gfx/gfx.zig");
+const config = @import("config");
 
 pub const ChunkMeshJob = struct {
     chunk: *chunk.Chunk,
@@ -12,6 +13,10 @@ pub const ChunkMeshJob = struct {
     world: *blecs.ecs.world_t,
 
     pub fn exec(self: *@This()) void {
+        if (config.use_tracy) {
+            const ztracy = @import("ztracy");
+            ztracy.SetThreadName("ChunkMeshJob");
+        }
         var c = self.chunk;
         std.debug.print("ChunkMeshJob: meshing chunk of length {d}\n", .{c.data.len});
         c.findMeshes() catch unreachable;

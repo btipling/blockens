@@ -4,6 +4,7 @@ const chunk = @import("../../chunk.zig");
 const state = @import("../../state.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const buffer = @import("../buffer.zig");
+const config = @import("config");
 
 pub const CopyChunkJob = struct {
     wp: chunk.worldPosition,
@@ -11,6 +12,10 @@ pub const CopyChunkJob = struct {
     is_settings: bool,
 
     pub fn exec(self: *@This()) void {
+        if (config.use_tracy) {
+            const ztracy = @import("ztracy");
+            ztracy.SetThreadName("CopyChunkJob");
+        }
         var c: *chunk.Chunk = chunk.Chunk.init(
             game.state.allocator,
             self.wp,
