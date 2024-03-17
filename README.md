@@ -1,7 +1,7 @@
 # blockens
  A voxel game project.
-
-![image](https://github.com/btipling/blockens/assets/249641/dd6cb670-548b-44fc-b7c0-b681e9a8376c)
+ 
+![image](https://github.com/btipling/blockens/assets/249641/dace9cd6-d44f-4ed1-950d-a950ca85ecd0)
 
  ## Requirements
  This project is built with OpenGL 4.6 and thus will not work with MacOS until I build a backend to support that OS.
