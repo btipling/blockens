@@ -1,5 +1,7 @@
 const std = @import("std");
 const zm = @import("zmath");
+const ztracy = @import("ztracy");
+const config = @import("config");
 const blecs = @import("blecs/blecs.zig");
 const gfx = @import("gfx/gfx.zig");
 
@@ -103,13 +105,17 @@ pub const Chunk = struct {
     }
 
     pub fn findMeshes(self: *Chunk) !void {
-        const start = std.time.milliTimestamp();
-        var chunker = try Chunker.init(self);
-        defer chunker.deinit();
-        try chunker.run();
-        const done = std.time.milliTimestamp();
-        const duration = (done - start);
-        std.debug.print("meshing took {d}ms\n", .{duration});
+        if (config.use_tracy) {
+            const tracy_zone = ztracy.ZoneNC(@src(), "ChunkMeshing", 0x00_00_f0_f0);
+            defer tracy_zone.End();
+            var chunker = try Chunker.init(self);
+            defer chunker.deinit();
+            try chunker.run();
+        } else {
+            var chunker = try Chunker.init(self);
+            defer chunker.deinit();
+            try chunker.run();
+        }
     }
 };
 

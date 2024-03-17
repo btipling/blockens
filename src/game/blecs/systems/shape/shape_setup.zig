@@ -2,6 +2,8 @@ const std = @import("std");
 const ecs = @import("zflecs");
 const zmesh = @import("zmesh");
 const zm = @import("zmath");
+const ztracy = @import("ztracy");
+const config = @import("config");
 const tags = @import("../../tags.zig");
 const game = @import("../../../game.zig");
 const chunk = @import("../../../chunk.zig");
@@ -29,58 +31,68 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             const sh: []components.shape.Shape = ecs.field(it, components.shape.Shape, 1) orelse return;
-            var e = extractions.extract(world, entity) catch unreachable;
-            defer e.deinit();
-
-            const mesh_data: gfx.mesh.meshData = switch (sh[i].shape_type) {
-                .plane => gfx.mesh.plane(),
-                .cube => gfx.mesh.cube(),
-                .meshed_voxel => blk: {
-                    const data: *const components.block.BlockData = ecs.get(world, entity, components.block.BlockData) orelse unreachable;
-                    var c: *chunk.Chunk = undefined;
-                    if (data.is_settings) {
-                        c = game.state.gfx.settings_chunks.get(data.chunk_world_position).?;
-                    } else {
-                        c = game.state.gfx.game_chunks.get(data.chunk_world_position).?;
-                    }
-                    break :blk c.elements.items[data.element_index].mesh_data;
-                },
-                .multidraw_voxel => gfx.mesh.cube(), // just to setup the positions
-                .mob => gfx.mesh.mob(world, entity),
-            };
-
-            var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
-            var dc: ?struct { usize, usize } = null;
-            if (e.has_demo_cube_texture) {
-                dc = struct { usize, usize }{ e.dc_t_beg, e.dc_t_end };
+            if (config.use_tracy) {
+                const tracy_zone = ztracy.ZoneNC(@src(), "ShapeSetupSystem", 0xff_00_ff_f0);
+                defer tracy_zone.End();
+                shapeSetup(world, entity, sh[i]);
+            } else {
+                shapeSetup(world, entity, sh[i]);
             }
-            erc.* = .{
-                .vertexShader = shaders.genVertexShader(&e, &mesh_data),
-                .fragmentShader = shaders.genFragmentShader(&e, &mesh_data),
-                .positions = mesh_data.positions,
-                .indices = mesh_data.indices,
-                .transform = null,
-                .ubo_binding_point = null,
-                .demo_cube_texture = dc,
-                .texcoords = mesh_data.texcoords,
-                .normals = mesh_data.normals,
-                .keyframes = e.keyframes,
-                .animation_binding_point = e.animation_binding_point,
-                .is_instanced = e.is_instanced,
-                .block_id = e.block_id,
-                .has_mob_texture = e.has_mob_texture,
-                .has_block_texture_atlas = e.has_texture_atlas,
-                .is_multi_draw = e.is_multi_draw,
-                .has_attr_translation = e.is_multi_draw,
-            };
-            const erc_id = ecs.new_id(world);
-            game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
-            if (e.has_uniform_mat) erc.transform = e.uniform_mat;
-            if (e.has_ubo) erc.ubo_binding_point = e.ubo_binding_point;
-            _ = ecs.set(world, entity, components.gfx.ElementsRendererConfig, .{ .id = erc_id });
-            ecs.remove(world, entity, components.shape.NeedsSetup);
         }
     }
+}
+
+fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Shape) void {
+    var e = extractions.extract(world, entity) catch unreachable;
+    defer e.deinit();
+
+    const mesh_data: gfx.mesh.meshData = switch (sh.shape_type) {
+        .plane => gfx.mesh.plane(),
+        .cube => gfx.mesh.cube(),
+        .meshed_voxel => blk: {
+            const data: *const components.block.BlockData = ecs.get(world, entity, components.block.BlockData) orelse unreachable;
+            var c: *chunk.Chunk = undefined;
+            if (data.is_settings) {
+                c = game.state.gfx.settings_chunks.get(data.chunk_world_position).?;
+            } else {
+                c = game.state.gfx.game_chunks.get(data.chunk_world_position).?;
+            }
+            break :blk c.elements.items[data.element_index].mesh_data;
+        },
+        .multidraw_voxel => gfx.mesh.cube(), // just to setup the positions
+        .mob => gfx.mesh.mob(world, entity),
+    };
+
+    var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
+    var dc: ?struct { usize, usize } = null;
+    if (e.has_demo_cube_texture) {
+        dc = struct { usize, usize }{ e.dc_t_beg, e.dc_t_end };
+    }
+    erc.* = .{
+        .vertexShader = shaders.genVertexShader(&e, &mesh_data),
+        .fragmentShader = shaders.genFragmentShader(&e, &mesh_data),
+        .positions = mesh_data.positions,
+        .indices = mesh_data.indices,
+        .transform = null,
+        .ubo_binding_point = null,
+        .demo_cube_texture = dc,
+        .texcoords = mesh_data.texcoords,
+        .normals = mesh_data.normals,
+        .keyframes = e.keyframes,
+        .animation_binding_point = e.animation_binding_point,
+        .is_instanced = e.is_instanced,
+        .block_id = e.block_id,
+        .has_mob_texture = e.has_mob_texture,
+        .has_block_texture_atlas = e.has_texture_atlas,
+        .is_multi_draw = e.is_multi_draw,
+        .has_attr_translation = e.is_multi_draw,
+    };
+    const erc_id = ecs.new_id(world);
+    game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
+    if (e.has_uniform_mat) erc.transform = e.uniform_mat;
+    if (e.has_ubo) erc.ubo_binding_point = e.ubo_binding_point;
+    _ = ecs.set(world, entity, components.gfx.ElementsRendererConfig, .{ .id = erc_id });
+    ecs.remove(world, entity, components.shape.NeedsSetup);
 }
 
 const shaders = struct {

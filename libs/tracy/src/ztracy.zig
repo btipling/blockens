@@ -596,15 +596,12 @@ const tracy_full = struct {
             new_len: usize,
             ra: usize,
         ) bool {
+            const prev_ptr = buf.ptr;
             const self: *TracyAllocator = @ptrCast(@alignCast(ctx));
             const result = self.child_allocator.rawResize(buf, log2_ptr_align, new_len, ra);
-            if (result) {
-                Free(buf.ptr);
+            if (!result) {
+                Free(prev_ptr);
                 Alloc(buf.ptr, new_len);
-            } else {
-                var buffer: [128]u8 = undefined;
-                const msg = std.fmt.bufPrint(&buffer, "resize failed requesting {d} -> {d}", .{ buf.len, new_len }) catch return result;
-                Message(msg);
             }
             return result;
         }

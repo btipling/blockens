@@ -9,7 +9,7 @@ pub fn main() !void {
     var g: game.Game = undefined;
     if (config.use_tracy) {
         const ztracy = @import("ztracy");
-        const tracy_zone = ztracy.ZoneNC(@src(), "Blockens", 0x00_ff_00_00);
+        const tracy_zone = ztracy.ZoneNC(@src(), "Blockens Init", 0x00_ff_00_00);
         defer tracy_zone.End();
         var tracy_allocator = ztracy.TracyAllocator.init(gpa.allocator());
         g = try game.Game.init(tracy_allocator.allocator());

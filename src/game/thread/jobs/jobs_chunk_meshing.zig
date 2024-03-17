@@ -1,11 +1,12 @@
 const std = @import("std");
 const zm = @import("zmath");
+const ztracy = @import("ztracy");
+const config = @import("config");
 const chunk = @import("../../chunk.zig");
 const game = @import("../../game.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const buffer = @import("../buffer.zig");
 const gfx = @import("../../gfx/gfx.zig");
-const config = @import("config");
 
 pub const ChunkMeshJob = struct {
     chunk: *chunk.Chunk,
@@ -14,9 +15,16 @@ pub const ChunkMeshJob = struct {
 
     pub fn exec(self: *@This()) void {
         if (config.use_tracy) {
-            const ztracy = @import("ztracy");
             ztracy.SetThreadName("ChunkMeshJob");
+            const tracy_zone = ztracy.ZoneNC(@src(), "ChunkMeshJob", 0x00_00_ff_f0);
+            defer tracy_zone.End();
+            self.mesh();
+        } else {
+            self.mesh();
         }
+    }
+
+    pub fn mesh(self: *@This()) void {
         var c = self.chunk;
         std.debug.print("ChunkMeshJob: meshing chunk of length {d}\n", .{c.data.len});
         c.findMeshes() catch unreachable;

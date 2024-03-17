@@ -1,7 +1,9 @@
 const std = @import("std");
 const glfw = @import("zglfw");
 const zgui = @import("zgui");
+const ztracy = @import("ztracy");
 const zopengl = @import("zopengl");
+const config = @import("config");
 const gl = zopengl.bindings;
 const zstbi = @import("zstbi");
 const zmesh = @import("zmesh");
@@ -171,6 +173,7 @@ pub const Game = struct {
     }
 
     pub fn run(_: Game) !void {
+        if (config.use_tracy) {}
         std.debug.print("\nHello blockens!\n", .{});
         main_loop: while (!state.window.shouldClose()) {
             glfw.pollEvents();
@@ -193,6 +196,9 @@ pub const Game = struct {
             _ = blecs.ecs.progress(state.world, state.input.delta_time);
             zgui.backend.draw();
             state.window.swapBuffers();
+            if (config.use_tracy) {
+                ztracy.FrameMark();
+            }
         }
     }
 };
