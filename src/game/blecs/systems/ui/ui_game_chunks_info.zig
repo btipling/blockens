@@ -82,12 +82,16 @@ fn showChunkList() !void {
             zgui.text("{d}", .{entity});
             _ = zgui.tableSetColumnIndex(2);
             var is_drawn = false;
-            var can_draw = false;
+            var hidden = false;
             const renderer_entity = ecs.get_target(world, entity, entities.block.HasChunkRenderer, 0);
             if (renderer_entity != 0) {
-                can_draw = ecs.has_id(world, renderer_entity, ecs.id(components.gfx.CanDraw));
+                const can_draw = ecs.has_id(world, renderer_entity, ecs.id(components.gfx.CanDraw));
                 if (can_draw) {
                     is_drawn = true;
+                }
+                hidden = ecs.has_id(world, renderer_entity, ecs.id(components.gfx.ManuallyHidden));
+                if (hidden) {
+                    is_drawn = false;
                 }
             }
             if (is_drawn) {
@@ -100,10 +104,10 @@ fn showChunkList() !void {
                 const btn_label: [:0]u8 = try std.fmt.bufPrintZ(&buffer, "toggle##{d}", .{i});
                 if (zgui.smallButton(btn_label)) {
                     if (renderer_entity != 0) {
-                        if (can_draw) {
-                            ecs.remove(world, renderer_entity, components.gfx.CanDraw);
+                        if (hidden) {
+                            ecs.remove(world, renderer_entity, components.gfx.ManuallyHidden);
                         } else {
-                            ecs.add(world, renderer_entity, components.gfx.CanDraw);
+                            ecs.add(world, renderer_entity, components.gfx.ManuallyHidden);
                         }
                     }
                 }
