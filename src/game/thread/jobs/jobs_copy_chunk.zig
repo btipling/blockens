@@ -15,7 +15,15 @@ pub const CopyChunkJob = struct {
         if (config.use_tracy) {
             const ztracy = @import("ztracy");
             ztracy.SetThreadName("CopyChunkJob");
+            const tracy_zone = ztracy.ZoneNC(@src(), "CopyChunkJob", 0x00_00_ff_f0);
+            defer tracy_zone.End();
+            self.copyChunkJob();
+        } else {
+            self.copyChunkJob();
         }
+    }
+
+    pub fn copyChunkJob(self: *@This()) void {
         var c: *chunk.Chunk = chunk.Chunk.init(
             game.state.allocator,
             self.wp,

@@ -84,14 +84,13 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     glfw.windowHintTyped(.resizable, false);
     glfw.windowHintTyped(.focused, true);
     glfw.windowHintTyped(.maximized, true);
-    glfw.windowHintTyped(.decorated, false);
     const window = glfw.Window.create(cfg.windows_width, cfg.windows_height, cfg.game_name, null) catch |err| {
         std.log.err("Failed to create game window.", .{});
         return err;
     };
     window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
     glfw.makeContextCurrent(window);
-    glfw.swapInterval(1);
+    glfw.swapInterval(0);
     return window;
 }
 
@@ -186,18 +185,49 @@ pub const Game = struct {
                 break :main_loop;
             }
 
-            {
-                const fb_size = state.window.getFramebufferSize();
-                const w: u32 = @intCast(fb_size[0]);
-                const h: u32 = @intCast(fb_size[1]);
-                zgui.backend.newFrame(w, h);
-            }
-            try thread.handler.handle_incoming();
-            _ = blecs.ecs.progress(state.world, state.input.delta_time);
-            zgui.backend.draw();
-            state.window.swapBuffers();
             if (config.use_tracy) {
+                const render_frame_zone = ztracy.ZoneNC(@src(), "RenderFrame", 0x00_00_00_ff);
+                defer render_frame_zone.End();
+                {
+                    const imgui_new_frame_zone = ztracy.ZoneN(@src(), "ImguiNewFrame");
+                    defer imgui_new_frame_zone.End();
+                    const fb_size = state.window.getFramebufferSize();
+                    const w: u32 = @intCast(fb_size[0]);
+                    const h: u32 = @intCast(fb_size[1]);
+                    zgui.backend.newFrame(w, h);
+                }
+                {
+                    const handle_i_zone = ztracy.ZoneN(@src(), "ThreadHandler");
+                    defer handle_i_zone.End();
+                    try thread.handler.handle_incoming();
+                }
+                {
+                    const ecs_progress_zone = ztracy.ZoneN(@src(), "ECSProgress");
+                    defer ecs_progress_zone.End();
+                    _ = blecs.ecs.progress(state.world, state.input.delta_time);
+                }
+                {
+                    const imgui_draw_zone = ztracy.ZoneN(@src(), "ImguiDraw");
+                    defer imgui_draw_zone.End();
+                    zgui.backend.draw();
+                }
+                {
+                    const swap_buffers_zone = ztracy.ZoneN(@src(), "SwapBuffers");
+                    defer swap_buffers_zone.End();
+                    state.window.swapBuffers();
+                }
                 ztracy.FrameMark();
+            } else {
+                {
+                    const fb_size = state.window.getFramebufferSize();
+                    const w: u32 = @intCast(fb_size[0]);
+                    const h: u32 = @intCast(fb_size[1]);
+                    zgui.backend.newFrame(w, h);
+                }
+                try thread.handler.handle_incoming();
+                _ = blecs.ecs.progress(state.world, state.input.delta_time);
+                zgui.backend.draw();
+                state.window.swapBuffers();
             }
         }
     }

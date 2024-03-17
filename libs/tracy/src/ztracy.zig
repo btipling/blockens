@@ -600,6 +600,7 @@ const tracy_full = struct {
             const self: *TracyAllocator = @ptrCast(@alignCast(ctx));
             const result = self.child_allocator.rawResize(buf, log2_ptr_align, new_len, ra);
             if (!result) {
+                if (@intFromPtr(prev_ptr) == @intFromPtr(buf.ptr)) return result;
                 Free(prev_ptr);
                 Alloc(buf.ptr, new_len);
             }

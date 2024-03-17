@@ -13,7 +13,15 @@ pub const GenerateWorldChunkJob = struct {
         if (config.use_tracy) {
             const ztracy = @import("ztracy");
             ztracy.SetThreadName("GenerateWorldChunkJob");
+            const tracy_zone = ztracy.ZoneNC(@src(), "GenerateWorldChunkJob", 0x00_00_ff_f0);
+            defer tracy_zone.End();
+            self.generateWorldChunkJob();
+        } else {
+            self.generateWorldChunkJob();
         }
+    }
+
+    pub fn generateWorldChunkJob(self: *@This()) void {
         const chunk_data = game.state.script.evalChunkFunc(self.script) catch |err| {
             std.debug.print("Error evaluating chunk in eval chunks function: {}\n", .{err});
             return;
