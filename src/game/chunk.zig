@@ -71,14 +71,12 @@ pub const Chunk = struct {
     draw_offsets: ?[]c_int = null, // this only exists to hold the values that draw_offsets_gl points to...
     draw_offsets_gl: ?[]?*const anyopaque = null,
     is_settings: bool = false,
-    multi_draw: bool = true,
     vbo: u32 = 0,
     pub fn init(
         allocator: std.mem.Allocator,
         wp: worldPosition,
         entity: blecs.ecs.entity_t,
         is_settings: bool,
-        multi_draw: bool,
     ) !*Chunk {
         const c: *Chunk = try allocator.create(Chunk);
         c.* = Chunk{
@@ -88,7 +86,6 @@ pub const Chunk = struct {
             .elements = std.ArrayList(ChunkElement).init(allocator),
             .allocator = allocator,
             .is_settings = is_settings,
-            .multi_draw = multi_draw,
         };
         return c;
     }

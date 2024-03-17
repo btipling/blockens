@@ -9,7 +9,6 @@ pub const CopyChunkJob = struct {
     wp: chunk.worldPosition,
     entity: blecs.ecs.entity_t,
     is_settings: bool,
-    multi_draw: bool,
 
     pub fn exec(self: *@This()) void {
         var c: *chunk.Chunk = chunk.Chunk.init(
@@ -17,7 +16,6 @@ pub const CopyChunkJob = struct {
             self.wp,
             self.entity,
             self.is_settings,
-            self.multi_draw,
         ) catch unreachable;
 
         if (self.is_settings) {

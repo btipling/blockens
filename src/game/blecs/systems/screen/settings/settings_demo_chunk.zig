@@ -32,7 +32,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Settings))) {
                 continue;
             }
-            entities.screen.initDemoChunk(game.state.ui.data.chunk_use_multi_draw);
+            entities.screen.initDemoChunk();
         }
     }
 }

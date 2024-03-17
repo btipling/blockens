@@ -96,9 +96,7 @@ fn handle_copy_chunk(msg: buffer.buffer_message) void {
         .loc = loc,
         .wp = wp,
     });
-    if (copy_data.chunk.multi_draw) {
-        blecs.ecs.add(world, chunk_entity, blecs.components.block.UseMultiDraw);
-    }
+    blecs.ecs.add(world, chunk_entity, blecs.components.block.UseMultiDraw);
     blecs.ecs.add(world, chunk_entity, blecs.components.block.NeedsMeshing);
     if (copy_data.chunk.is_settings) {
         if (game.state.gfx.settings_chunks.get(wp)) |c| {

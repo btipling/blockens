@@ -446,7 +446,7 @@ pub fn initDemoChunkCamera() void {
     );
 }
 
-pub fn initDemoChunk(multi_draw: bool) void {
+pub fn initDemoChunk() void {
     if (game.state.ui.data.chunk_demo_data == null) {
         return;
     }
@@ -457,7 +457,6 @@ pub fn initDemoChunk(multi_draw: bool) void {
         chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 }),
         ecs.new_id(world),
         true,
-        multi_draw,
     );
     return;
 }

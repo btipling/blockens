@@ -60,7 +60,7 @@ pub fn loadChunksInWorld() void {
     entities.screen.clearWorld();
     var instancedKeys = game.state.ui.data.world_chunk_table_data.keyIterator();
     while (instancedKeys.next()) |_k| {
-        _ = game.state.jobs.copyChunk(_k.*, ecs.new_id(game.state.world), false, true);
+        _ = game.state.jobs.copyChunk(_k.*, ecs.new_id(game.state.world), false);
     }
 }
 
