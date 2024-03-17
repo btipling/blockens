@@ -3,6 +3,7 @@ const ecs = @import("zflecs");
 const zgui = @import("zgui");
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const screen_helpers = @import("../screen_helpers.zig");
 const chunk = @import("../../../chunk.zig");
@@ -79,8 +80,11 @@ fn showChunkList() !void {
             zgui.text("{d}", .{entity});
             _ = zgui.tableSetColumnIndex(2);
             var is_drawn = false;
-            if (ecs.has_id(world, entity, ecs.id(components.gfx.CanDraw))) {
-                is_drawn = true;
+            const renderer_entity = ecs.get_target(world, entity, entities.block.HasChunkRenderer, 0);
+            if (renderer_entity != 0) {
+                if (ecs.has_id(world, renderer_entity, ecs.id(components.gfx.CanDraw))) {
+                    is_drawn = true;
+                }
             }
             if (is_drawn) {
                 zgui.text("visible", .{});

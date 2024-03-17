@@ -74,6 +74,13 @@ fn handle_copy_chunk(msg: buffer.buffer_message) void {
     } else {
         chunk_entity = helpers.new_child(world, blecs.entities.screen.game_data);
     }
+
+    blecs.ecs.add_pair(
+        world,
+        copy_data.chunk.entity,
+        blecs.entities.block.HasChunkRenderer,
+        chunk_entity,
+    );
     var loc: @Vector(4, f32) = undefined;
     if (copy_data.chunk.is_settings) {
         loc = .{ -32, 0, -32, 0 };

@@ -7,9 +7,12 @@ const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
 const entities_screen = @import("entities_screen.zig");
 
+pub var HasChunkRenderer: ecs.entity_t = 0;
+
 pub const MaxBlocks = 256;
 
 pub fn init() void {
+    HasChunkRenderer = ecs.new_id(game.state.world);
     initBlocks();
 }
 
