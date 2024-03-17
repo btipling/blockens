@@ -3,8 +3,9 @@ const ecs = @import("zflecs");
 const zm = @import("zmath");
 const math = @import("../../../math/math.zig");
 const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities_screen.zig");
+const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
+const chunk = @import("../../../chunk.zig");
 const gfx = @import("../../../gfx/gfx.zig");
 
 pub fn init() void {
@@ -124,8 +125,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 camera_position + camera_front,
                 up_direction,
             );
+            const perspective = zm.perspectiveFovRh(fovy, aspect, near, far);
+            cullChunks(camera_position, lookAt, perspective);
             m = zm.mul(m, lookAt);
-            m = zm.mul(m, zm.perspectiveFovRh(fovy, aspect, near, far));
+            m = zm.mul(m, perspective);
             if (post_perspective) |pp| {
                 m = zm.mul(m, zm.translationV(pp));
             }
@@ -144,5 +147,116 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             );
             ecs.remove(world, entity, components.screen.Updated);
         }
+    }
+}
+
+fn euclideanDistance(v1: @Vector(4, f32), v2: @Vector(4, f32)) f32 {
+    const diff = v1 - v2;
+    const diffSquared = diff * diff;
+    const sumSquared = zm.dot4(diffSquared, @Vector(4, f32){ 1.0, 1.0, 1.0, 0.0 })[0];
+    return std.math.sqrt(sumSquared);
+}
+
+fn cullChunks(camera_position: @Vector(4, f32), view: zm.Mat, perspective: zm.Mat) void {
+    const world = game.state.world;
+    var it = game.state.gfx.game_chunks.iterator();
+    outer: while (it.next()) |e| {
+        const wp: chunk.worldPosition = e.key_ptr.*;
+        const c: *chunk.Chunk = e.value_ptr.*;
+        const p = wp.vecFromWorldPosition();
+        const loc: @Vector(4, f32) = .{
+            p[0] * chunk.chunkDim,
+            p[1] * chunk.chunkDim,
+            p[2] * chunk.chunkDim,
+            1,
+        };
+        const front_bot_l: @Vector(4, f32) = loc;
+        const front_bot_r: @Vector(4, f32) = .{
+            loc[0] + chunk.chunkDim,
+            loc[1],
+            loc[2],
+            loc[3],
+        };
+        const front_top_l: @Vector(4, f32) = .{
+            loc[0],
+            loc[1] + chunk.chunkDim,
+            loc[2],
+            loc[3],
+        };
+        const front_top_r: @Vector(4, f32) = .{
+            loc[0] + chunk.chunkDim,
+            loc[1] + chunk.chunkDim,
+            loc[2],
+            loc[3],
+        };
+        const back_bot_l: @Vector(4, f32) = .{
+            loc[0],
+            loc[1],
+            loc[2] + chunk.chunkDim,
+            loc[3],
+        };
+        const back_bot_r: @Vector(4, f32) = .{
+            loc[0] + chunk.chunkDim,
+            loc[1],
+            loc[2] + chunk.chunkDim,
+            loc[3],
+        };
+        const back_top_l: @Vector(4, f32) = .{
+            loc[0],
+            loc[1] + chunk.chunkDim,
+            loc[2] + chunk.chunkDim,
+            loc[3],
+        };
+        const back_top_r: @Vector(4, f32) = .{
+            loc[0] + chunk.chunkDim,
+            loc[1] + chunk.chunkDim,
+            loc[2] + chunk.chunkDim,
+            loc[3],
+        };
+        const to_check: [8]@Vector(4, f32) = .{
+            front_bot_l,
+            front_bot_r,
+            front_top_l,
+            front_top_r,
+            back_bot_l,
+            back_bot_r,
+            back_top_l,
+            back_top_r,
+        };
+        for (to_check) |coordinates| {
+            const distance_from_camera = euclideanDistance(camera_position, coordinates);
+            if (distance_from_camera <= chunk.chunkDim) {
+                const renderer_entity = ecs.get_target(
+                    world,
+                    c.entity,
+                    entities.block.HasChunkRenderer,
+                    0,
+                );
+                ecs.add(world, renderer_entity, components.gfx.CanDraw);
+                continue :outer;
+            }
+            const ca_s: @Vector(4, f32) = zm.mul(coordinates, view);
+            const clip_space: @Vector(4, f32) = zm.mul(ca_s, perspective);
+            if (-clip_space[3] <= clip_space[0] and clip_space[0] <= clip_space[3] and
+                -clip_space[3] <= clip_space[1] and clip_space[1] <= clip_space[3] and
+                -clip_space[3] <= clip_space[2] and clip_space[2] <= clip_space[3])
+            {
+                const renderer_entity = ecs.get_target(
+                    world,
+                    c.entity,
+                    entities.block.HasChunkRenderer,
+                    0,
+                );
+                ecs.add(world, renderer_entity, components.gfx.CanDraw);
+                continue :outer;
+            }
+        }
+        const renderer_entity = ecs.get_target(
+            world,
+            c.entity,
+            entities.block.HasChunkRenderer,
+            0,
+        );
+        ecs.remove(world, renderer_entity, components.gfx.CanDraw);
     }
 }
