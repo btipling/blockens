@@ -130,16 +130,16 @@ fn initCameras() void {
     game.state.entities.sky_camera = sky_camera;
     _ = ecs.set(game.state.world, sky_camera, components.screen.Camera, .{ .ubo = gfx.constants.GameUBOBindingPoint });
     _ = ecs.set(game.state.world, sky_camera, components.screen.CameraPosition, .{
-        .pos = @Vector(4, f32){ 86, 65, 172, 1.0 },
+        .pos = @Vector(4, f32){ 62, 81, 63, 1.0 },
     });
     _ = ecs.set(game.state.world, sky_camera, components.screen.CameraFront, .{
-        .front = @Vector(4, f32){ -0.602, -0.0494, -0.372, 0.0 },
+        .front = @Vector(4, f32){ -0.417, -0.398, -0.409, 0.0 },
     });
     _ = ecs.set(
         game.state.world,
         sky_camera,
         components.screen.CameraRotation,
-        .{ .yaw = -508, .pitch = -2.5 },
+        .{ .yaw = -496, .pitch = -34.3 },
     );
     _ = ecs.set(game.state.world, sky_camera, components.screen.UpDirection, .{
         .up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 },
@@ -520,7 +520,7 @@ pub fn initPlayerCharacter() void {
             .data_entity = game_data,
         });
         _ = ecs.set(world, game.state.entities.player, components.mob.Position, .{
-            .position = .{ 80, 64, 166, 0 },
+            .position = .{ 32, 64, 32, 0 },
         });
         _ = ecs.set(world, game.state.entities.player, components.mob.Rotation, .{
             .rotation = .{ 0, 0, 0, 1 },

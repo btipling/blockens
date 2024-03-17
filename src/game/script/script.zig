@@ -87,14 +87,14 @@ pub const Script = struct {
         return rv;
     }
 
-    pub fn evalChunkFunc(self: *Script, buf: []u8) ![]u32 {
+    pub fn evalChunkFunc(self: *Script, buf: []const u8) ![]u32 {
         self.mutex.lock();
         defer self.mutex.unlock();
 
         std.debug.print("evalChunkFunc from lua {d}\n", .{buf.len});
         self.luaInstance.setTop(0);
-        const slices: [1][]u8 = [_][]u8{buf};
-        const luaCString: [:0]u8 = try std.mem.concatWithSentinel(
+        const slices: [1][]const u8 = [_][]const u8{buf};
+        const luaCString: [:0]const u8 = try std.mem.concatWithSentinel(
             self.allocator,
             u8,
             &slices,

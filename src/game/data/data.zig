@@ -195,7 +195,7 @@ pub const Data = struct {
         }
     }
 
-    pub fn ensureDefaultWorld(self: *Data) !void {
+    pub fn ensureDefaultWorld(self: *Data) !bool {
         // query for the default world
         var selectStmt = try self.db.prepare(
             struct {
@@ -214,10 +214,11 @@ pub const Data = struct {
 
             while (try selectStmt.step()) |r| {
                 std.debug.print("Found default world: {s}\n", .{r.name.data});
-                return;
+                return true;
             }
         }
         try saveWorld(self, "default");
+        return false;
     }
 
     pub fn saveWorld(self: *Data, name: []const u8) !void {

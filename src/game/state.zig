@@ -350,10 +350,10 @@ pub const Game = struct {
     quit: bool = false,
 
     pub fn initInternals(self: *Game) !void {
-        try self.initDb();
-        try self.initScript();
         try self.initUIData();
         try self.initGfx();
+        try self.initScript();
+        try self.initDb();
         try self.populateUIOptions();
         self.jobs = thread.jobs.Jobs.init();
         self.jobs.start();
@@ -378,10 +378,37 @@ pub const Game = struct {
             std.log.err("Failed to ensure schema: {}\n", .{err});
             return err;
         };
-        self.db.ensureDefaultWorld() catch |err| {
+        const had_world = self.db.ensureDefaultWorld() catch |err| {
             std.log.err("Failed to ensure default world: {}\n", .{err});
             return err;
         };
+        if (had_world) return;
+        try self.initInitialWorld();
+    }
+
+    pub fn initInitialWorld(self: *Game) !void {
+        var dirt_texture_script = [_]u8{0} ** script.maxLuaScriptSize;
+        const dtsb = @embedFile("script/lua/gen_dirt_texture.lua");
+        for (dtsb, 0..) |c, i| {
+            dirt_texture_script[i] = c;
+        }
+        const dirt_texture = try self.script.evalTextureFunc(dirt_texture_script);
+        var grass_texture_script = [_]u8{0} ** script.maxLuaScriptSize;
+        const gtsb = @embedFile("script/lua/gen_grass_texture.lua");
+        for (gtsb, 0..) |c, i| {
+            grass_texture_script[i] = c;
+        }
+        const grass_texture = try self.script.evalTextureFunc(grass_texture_script);
+        if (dirt_texture == null or grass_texture == null) std.debug.panic("couldn't generate lua textures!\n", .{});
+        try self.db.saveBlock("dirt", @ptrCast(dirt_texture.?));
+        try self.db.saveBlock("grass", @ptrCast(grass_texture.?));
+        const default_chunk_script: []const u8 = @embedFile("script/lua/chunk_gen_default.lua");
+        try self.db.saveChunkScript("default", default_chunk_script, .{ 0, 1, 0 });
+        const chunk_data = try self.script.evalChunkFunc(default_chunk_script);
+        try self.db.saveChunkData(1, 0, 0, 0, 1, chunk_data);
+        self.allocator.free(chunk_data);
+        self.allocator.free(dirt_texture.?);
+        self.allocator.free(grass_texture.?);
     }
 
     pub fn initUIData(self: *Game) !void {
