@@ -24,7 +24,7 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
-            if (input.keys.pressedKey(.q)) entities.screen.toggleCamera();
+            if (input.keys.pressedKey(.q)) toggleCamera();
             if (input.keys.holdKey(.w)) skyCamF();
             if (input.keys.holdKey(.s)) skyCamB();
             if (input.keys.holdKey(.a)) skyCamL();
@@ -59,6 +59,29 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             }
         }
     }
+}
+
+fn toggleCamera() void {
+    // init player camera
+    const rotation: *const components.mob.Rotation = ecs.get(
+        game.state.world,
+        game.state.entities.player,
+        components.mob.Rotation,
+    ) orelse return;
+    var position: *components.mob.Position = ecs.get_mut(
+        game.state.world,
+        game.state.entities.player,
+        components.mob.Position,
+    ) orelse return;
+    _ = &position;
+    const rot = rotation.rotation;
+    const pos = position.position;
+    const forward = @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 };
+    const front_vector: @Vector(4, f32) = zm.rotate(rot, forward);
+    const np = pos + front_vector;
+    position.position = np;
+    ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
+    entities.screen.toggleCamera();
 }
 
 fn playerStop() void {
