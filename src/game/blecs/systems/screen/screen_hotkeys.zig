@@ -34,12 +34,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (input.keys.pressedKey(.F1)) {
                 screen_helpers.showTitleScreen();
             }
-            if (input.keys.pressedKey(.F2)) {
-                screen_helpers.showGameScreen();
-            }
-            if (input.keys.pressedKey(.F12)) {
-                game.state.quit = true;
-            }
         }
     }
 }

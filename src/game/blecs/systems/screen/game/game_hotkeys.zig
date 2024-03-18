@@ -31,9 +31,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (input.keys.holdKey(.d)) skyCamR();
             if (input.keys.holdKey(.space)) skyCamU();
             if (input.keys.holdKey(.left_shift)) skyCamD();
-            if (input.keys.holdKey(.F3)) {
+            if (input.keys.holdKey(.F2)) {
                 ecs.add(game.state.world, game.state.entities.ui, components.ui.Menu);
-                pressedKeyState = .F3;
+                pressedKeyState = .F2;
             } else if (input.keys.holdKey(.up)) {
                 playerF();
                 pressedKeyState = .up;
@@ -46,7 +46,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             } else {
                 if (pressedKeyState) |k| {
                     switch (k) {
-                        .F3 => {
+                        .F2 => {
                             ecs.remove(game.state.world, game.state.entities.ui, components.ui.Menu);
                         },
                         .up => playerStop(),
