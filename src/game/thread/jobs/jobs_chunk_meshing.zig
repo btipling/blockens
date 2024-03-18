@@ -26,9 +26,7 @@ pub const ChunkMeshJob = struct {
 
     pub fn mesh(self: *@This()) void {
         var c = self.chunk;
-        std.debug.print("ChunkMeshJob: meshing chunk of length {d}\n", .{c.data.len});
         c.findMeshes() catch unreachable;
-
         var keys = c.meshes.keyIterator();
         var draws = std.ArrayList(c_int).init(game.state.allocator);
         var draw_offsets = std.ArrayList(c_int).init(game.state.allocator);
