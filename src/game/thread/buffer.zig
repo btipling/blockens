@@ -114,12 +114,6 @@ pub fn new_message(msg_type: buffer_message_type) buffer_message {
     };
 }
 
-pub fn has_message() bool {
-    buffer.msg_mutex.lock();
-    defer buffer.msg_mutex.unlock();
-    return buffer.messages.items.len > 0;
-}
-
 pub fn next_message() ?buffer_message {
     buffer.msg_mutex.lock();
     defer buffer.msg_mutex.unlock();

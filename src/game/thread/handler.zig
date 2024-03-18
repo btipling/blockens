@@ -22,8 +22,7 @@ pub fn deinit() void {
 
 pub fn handle_incoming() !void {
     var i: u32 = 0;
-    while (buffer.has_message()) {
-        const msg = buffer.next_message() orelse return;
+    while (buffer.next_message()) |msg| {
         switch (msg.type) {
             .chunk_gen => try handle_chunk_gen(msg),
             .chunk_mesh => handle_chunk_mesh(msg),
