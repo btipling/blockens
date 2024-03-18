@@ -35,9 +35,18 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
         blecs.components.screen.Screen,
     ) orelse unreachable;
 
-    var camera = game.state.entities.sky_camera;
-    if (blecs.ecs.has_id(world, screen.current, blecs.ecs.id(blecs.components.screen.Settings))) {
-        camera = game.state.entities.settings_camera;
+    var camera = game.state.entities.settings_camera;
+    if (!blecs.ecs.has_id(world, screen.current, blecs.ecs.id(blecs.components.screen.Settings))) {
+        var filter_desc: blecs.ecs.filter_desc_t = .{};
+        filter_desc.terms[0] = .{ .id = blecs.ecs.id(blecs.components.screen.CurrentCamera) };
+        const filter = blecs.ecs.filter_init(world, &filter_desc) catch unreachable;
+        var it = blecs.ecs.filter_iter(world, filter);
+        while (blecs.ecs.filter_next(&it)) {
+            camera = it.entities()[0];
+            break;
+        }
+        blecs.ecs.iter_fini(&it);
+        blecs.ecs.filter_fini(filter);
     }
 
     var camera_rot: *blecs.components.screen.CameraRotation = blecs.ecs.get_mut(

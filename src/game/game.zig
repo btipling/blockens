@@ -53,6 +53,12 @@ fn glErrorCallbackfn(
     };
     if (prev_error.equal(err)) return;
     prev_error = err;
+    // Ignored errors:
+    switch (id) {
+        131185 => return, // GL_STATIC_DRAW hint
+        131218 => return, // fragment shader recompiled
+        else => {},
+    }
     const errorMessage: [:0]const u8 = std.mem.sliceTo(message, 0);
     std.debug.print("\n:::GL Error:::\n", .{});
     std.debug.print("\n\t - source: {d}\n", .{source});
