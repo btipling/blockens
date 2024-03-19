@@ -20,6 +20,10 @@ fn cursorPosCallback(_: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) void {
     input.cursor.cursorPosCallback(xpos, ypos);
 }
 
+fn framebufferSizeCallback(_: *glfw.Window, width: i32, height: i32) callconv(.C) void {
+    std.debug.print("frame buffer resized {d} {d}", .{ width, height });
+}
+
 const glError = struct {
     source: gl.Enum = 0,
     error_type: gl.Enum = 0,
@@ -79,6 +83,8 @@ const GL_DEBUG_OUTPUT_SYNCHRONOUS = 0x8242;
 const GL_DEBUG_OUTPUT = 0x92E0;
 
 pub var state: *gameState.Game = undefined;
+var window_width: u32 = 0;
+var window_height: u32 = 0;
 
 fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     glfw.windowHintTyped(.context_version_major, gl_major);
@@ -91,25 +97,30 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     glfw.windowHintTyped(.focused, true);
     glfw.windowHintTyped(.maximized, true);
     glfw.windowHintTyped(.decorated, false);
-    const window = glfw.Window.create(cfg.windows_width, cfg.windows_height, cfg.game_name, null) catch |err| {
+    const m = glfw.Monitor.getPrimary().?;
+    const mode = try m.getVideoMode();
+    window_width = @intCast(mode.width);
+    window_height = @intCast(mode.height);
+    std.debug.print("width: {d} height: {d}\n", .{ window_width, window_height });
+    const window = glfw.Window.create(
+        mode.width,
+        mode.height,
+        cfg.game_name,
+        glfw.Monitor.getPrimary(),
+    ) catch |err| {
         std.log.err("Failed to create game window.", .{});
         return err;
     };
+    _ = window.setFramebufferSizeCallback(framebufferSizeCallback);
     window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
     glfw.makeContextCurrent(window);
     glfw.swapInterval(0);
     return window;
 }
 
-fn initGL(gl_major: u8, gl_minor: u8, window: *glfw.Window) !void {
+fn initGL(gl_major: u8, gl_minor: u8, _: *glfw.Window) !void {
     try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
 
-    {
-        const dimensions: [2]i32 = window.getSize();
-        const w = dimensions[0];
-        const h = dimensions[1];
-        std.debug.print("Window size is {d}x{d}\n", .{ w, h });
-    }
     gl.enable(gl.BLEND); // enable transparency
     gl.enable(gl.DEPTH_TEST);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -157,6 +168,8 @@ pub const Game = struct {
                 .gameFont = gameFont,
             },
             .window = window,
+            .window_width = window_width,
+            .window_height = window_height,
         };
         try state.initInternals();
 
@@ -190,6 +203,9 @@ pub const Game = struct {
             }
             if (state.quit) {
                 break :main_loop;
+            }
+            {
+                gl.viewport(0, 0, @intCast(window_width), @intCast(window_height));
             }
 
             if (config.use_tracy) {
