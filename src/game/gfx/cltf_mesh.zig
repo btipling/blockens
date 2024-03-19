@@ -13,6 +13,9 @@ pub const MeshErr = error{
     BuildErr,
 };
 
+// Because I reverse the w.
+pub const forward_vec = @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 };
+
 pub const Mesh = struct {
     mob: *game_state.Mob,
     file_data: *gltf.Data, // managed by zmesh.io
@@ -210,7 +213,9 @@ pub const Mesh = struct {
         }
         if (node.has_rotation == 1) {
             var gltf_r: zm.Quat = node.rotation;
-            if (parent == null) gltf_r[3] *= -1;
+            if (parent == null) {
+                gltf_r[3] *= -1;
+            }
             mob_mesh.rotation = .{ gltf_r[0], gltf_r[1], gltf_r[2], gltf_r[3] };
         }
         if (node.has_translation == 1) {

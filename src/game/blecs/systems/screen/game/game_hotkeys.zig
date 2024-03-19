@@ -6,8 +6,11 @@ const components = @import("../../../components/components.zig");
 const entities = @import("../../../entities/entities.zig");
 const game = @import("../../../../game.zig");
 const input = @import("../../../../input/input.zig");
+const gfx = @import("../../../../gfx/gfx.zig");
 
 var pressedKeyState: ?glfw.Key = null;
+
+// I inverse the w on gltf
 
 pub fn init() void {
     const s = system();
@@ -76,8 +79,8 @@ fn toggleCamera() void {
     _ = &position;
     const rot = rotation.rotation;
     const pos = position.position;
-    const forward = @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 };
-    const front_vector: @Vector(4, f32) = zm.rotate(rot, forward);
+
+    const front_vector: @Vector(4, f32) = zm.rotate(rot, gfx.cltf.forward_vec);
     const np = pos + front_vector;
     position.position = np;
     ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
@@ -139,9 +142,8 @@ fn playerF() void {
     const rot = rotation.rotation;
     const pos = position.position;
     const speed = 2.5 * game.state.input.delta_time;
-    const forward = @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 };
     const player_speed: @Vector(4, f32) = @splat(speed);
-    const front_vector: @Vector(4, f32) = zm.rotate(rot, forward);
+    const front_vector: @Vector(4, f32) = zm.rotate(rot, gfx.cltf.forward_vec);
     const np = pos + front_vector * player_speed;
     position.position = np;
     ecs.add(game.state.world, game.state.entities.player, components.mob.Walking);
