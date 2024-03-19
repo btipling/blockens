@@ -22,19 +22,13 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
     }
     if (!needsUpdate) return;
 
-    var x_offset = x - last_x;
-    var y_offset = last_y - y;
-
-    const sensitivity = 0.1;
-    x_offset *= sensitivity;
-    y_offset *= sensitivity;
-
     const screen: *const blecs.components.screen.Screen = blecs.ecs.get(
         world,
         game.state.entities.screen,
         blecs.components.screen.Screen,
     ) orelse unreachable;
 
+    var is_game_camera = false;
     var camera = game.state.entities.settings_camera;
     if (!blecs.ecs.has_id(world, screen.current, blecs.ecs.id(blecs.components.screen.Settings))) {
         var filter_desc: blecs.ecs.filter_desc_t = .{};
@@ -43,19 +37,27 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
         var it = blecs.ecs.filter_iter(world, filter);
         while (blecs.ecs.filter_next(&it)) {
             camera = it.entities()[0];
+            is_game_camera = true;
             break;
         }
         blecs.ecs.iter_fini(&it);
         blecs.ecs.filter_fini(filter);
     }
 
+    var x_offset: f32 = x - last_x;
+    var y_offset: f32 = last_y - y;
+
+    const sensitivity: f32 = 0.1;
+    x_offset *= sensitivity;
+    y_offset *= sensitivity;
+
     var camera_rot: *blecs.components.screen.CameraRotation = blecs.ecs.get_mut(
         world,
         camera,
         blecs.components.screen.CameraRotation,
     ) orelse return;
-    const camera_rot_yaw = camera_rot.yaw + x_offset;
-    var camera_rot_pitch = camera_rot.pitch + y_offset;
+    const camera_rot_yaw: f32 = camera_rot.yaw + x_offset;
+    var camera_rot_pitch: f32 = camera_rot.pitch + y_offset;
 
     if (camera_rot_pitch > 89.0) {
         camera_rot_pitch = 89.0;
@@ -99,6 +101,21 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
         std.debug.print("no camera front yet\n", .{});
         return;
     };
+    if (is_game_camera and camera != game.state.entities.sky_camera) {
+        const rotation: *blecs.components.mob.Rotation = blecs.ecs.get_mut(
+            game.state.world,
+            game.state.entities.player,
+            blecs.components.mob.Rotation,
+        ) orelse return;
+        const rot = rotation.rotation;
+        const angle: f32 = -camera_rot_yaw / 180;
+        const up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 };
+        const turn = zm.quatFromNormAxisAngle(up, angle);
+        const new_rot: @Vector(4, f32) = zm.rotate(rot, turn);
+        rotation.rotation = new_rot;
+        rotation.angle = angle;
+        blecs.ecs.add(game.state.world, game.state.entities.player, blecs.components.mob.NeedsUpdate);
+    }
     camera_front.front = zm.normalize4(front);
     camera_rot.pitch = camera_rot_pitch;
     camera_rot.yaw = camera_rot_yaw;
