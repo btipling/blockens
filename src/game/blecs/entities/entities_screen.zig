@@ -197,8 +197,8 @@ fn initSettingsCamera() void {
     _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, f32){ 1, 0, 0, 0.0 } });
     _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 0, .pitch = 0 });
     _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 } });
-    const h: f32 = @floatFromInt(game.state.window_width);
-    const w: f32 = @floatFromInt(game.state.window_height);
+    const w: f32 = @floatFromInt(config.settings_windows_width);
+    const h: f32 = @floatFromInt(config.settings_windows_height);
     _ = ecs.set(game.state.world, camera, components.screen.Perspective, .{
         .fovy = config.fov,
         .aspect = w / h,
