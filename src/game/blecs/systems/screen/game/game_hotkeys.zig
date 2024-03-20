@@ -10,8 +10,6 @@ const gfx = @import("../../../../gfx/gfx.zig");
 
 var pressedKeyState: ?glfw.Key = null;
 
-// I inverse the w on gltf
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "GameHotkeysSystem", ecs.OnLoad, @constCast(&s));
@@ -25,43 +23,36 @@ fn system() ecs.system_desc_t {
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
+    const world = game.state.world;
+    const sky_cam = game.state.entities.sky_camera;
+    const tpc = game.state.entities.third_person_camera;
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
-            if (input.keys.pressedKey(.q)) toggleCamera();
-            if (input.keys.holdKey(.w)) skyCamF();
-            if (input.keys.holdKey(.s)) skyCamB();
-            if (input.keys.holdKey(.a)) skyCamL();
-            if (input.keys.holdKey(.d)) skyCamR();
-            if (input.keys.holdKey(.space)) skyCamU();
-            if (input.keys.holdKey(.left_shift)) skyCamD();
-            if (input.keys.holdKey(.F2)) {
-                ecs.add(game.state.world, game.state.entities.ui, components.ui.Menu);
-                pressedKeyState = .F2;
-            } else if (input.keys.holdKey(.up)) {
-                playerF();
-                pressedKeyState = .up;
-            } else if (input.keys.holdKey(.left)) {
-                playerRL();
-                pressedKeyState = .left;
-            } else if (input.keys.holdKey(.right)) {
-                playerRR();
-                pressedKeyState = .right;
-            } else {
-                if (pressedKeyState) |k| {
-                    switch (k) {
-                        .F2 => {
-                            ecs.remove(game.state.world, game.state.entities.ui, components.ui.Menu);
-                        },
-                        .up => playerStop(),
-                        .left => playerStop(),
-                        .right => playerStop(),
-                        else => {},
-                    }
-                    pressedKeyState = null;
-                }
+            if (ecs.has_id(world, sky_cam, ecs.id(components.screen.CurrentCamera))) {
+                pressedKeyState = handleSkyCamKeys() orelse handleSharedKeys() orelse unsetKeyState();
+            } else if (ecs.has_id(world, tpc, ecs.id(components.screen.CurrentCamera))) {
+                pressedKeyState = handleThirdPlayerCamKeys() orelse handleSharedKeys() orelse unsetKeyState();
             }
         }
     }
+}
+
+fn handleSharedKeys() ?glfw.Key {
+    if (input.keys.pressedKey(.q)) toggleCamera();
+    if (input.keys.holdKey(.F2)) {
+        ecs.add(game.state.world, game.state.entities.ui, components.ui.Menu);
+        return .F2;
+    }
+    return null;
+}
+
+fn unsetKeyState() ?glfw.Key {
+    if (pressedKeyState != null) {
+        ecs.remove(game.state.world, game.state.entities.ui, components.ui.Menu);
+        ecs.remove(game.state.world, game.state.entities.player, components.mob.Walking);
+        pressedKeyState = null;
+    }
+    return pressedKeyState;
 }
 
 fn toggleCamera() void {
@@ -87,8 +78,12 @@ fn toggleCamera() void {
     entities.screen.toggleCamera();
 }
 
-fn playerStop() void {
-    ecs.remove(game.state.world, game.state.entities.player, components.mob.Walking);
+fn handleThirdPlayerCamKeys() ?glfw.Key {
+    if (input.keys.holdKey(.w)) {
+        playerF();
+        return .w;
+    }
+    return null;
 }
 
 fn playerRL() void {
@@ -154,6 +149,26 @@ fn getSpeed() f32 {
     var speed = 2.5 * game.state.input.delta_time;
     if (!input.keys.holdKey(.left_control)) speed *= 20;
     return speed;
+}
+
+fn handleSkyCamKeys() ?glfw.Key {
+    if (input.keys.holdKey(.w)) skyCamF();
+    if (input.keys.holdKey(.s)) skyCamB();
+    if (input.keys.holdKey(.a)) skyCamL();
+    if (input.keys.holdKey(.d)) skyCamR();
+    if (input.keys.holdKey(.space)) skyCamU();
+    if (input.keys.holdKey(.left_shift)) skyCamD();
+    if (input.keys.holdKey(.up)) {
+        playerF();
+        return .up;
+    } else if (input.keys.holdKey(.left)) {
+        playerRL();
+        return .left;
+    } else if (input.keys.holdKey(.right)) {
+        playerRR();
+        return .right;
+    }
+    return null;
 }
 
 fn skyCamF() void {
