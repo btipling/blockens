@@ -9,6 +9,7 @@ const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
 const chunk = @import("../../chunk.zig");
 const gfx = @import("../../gfx/gfx.zig");
+const data = @import("../../data/data.zig");
 
 pub var game_data: ecs.entity_t = undefined;
 pub var settings_data: ecs.entity_t = undefined;
@@ -511,6 +512,8 @@ pub fn initDemoCharacter() void {
 }
 
 pub fn initPlayerCharacter() void {
+    var player_pos: data.Data.playerPosition = .{};
+    game.state.db.loadPlayerPosition(game.state.ui.data.world_loaded_id, &player_pos) catch unreachable;
     std.debug.print("init player character\n", .{});
     const world = game.state.world;
     if (game.state.entities.player == 0) {
@@ -520,11 +523,11 @@ pub fn initPlayerCharacter() void {
             .data_entity = game_data,
         });
         _ = ecs.set(world, game.state.entities.player, components.mob.Position, .{
-            .position = .{ 32, 64, 32, 0 },
+            .position = player_pos.pos,
         });
         _ = ecs.set(world, game.state.entities.player, components.mob.Rotation, .{
-            .rotation = .{ 0, 0, 0, 1 },
-            .angle = 0,
+            .rotation = player_pos.rot,
+            .angle = player_pos.angle,
         });
     }
     ecs.add(world, game.state.entities.player, components.mob.NeedsSetup);

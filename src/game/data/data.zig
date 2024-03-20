@@ -998,17 +998,17 @@ pub const Data = struct {
     }
 
     pub const playerPosition = struct {
-        id: i32,
-        world_id: i32,
-        pos: @Vector(4, f32),
-        rot: @Vector(4, f32),
-        angle: f32,
+        id: i32 = 0,
+        world_id: i32 = 0,
+        pos: @Vector(4, f32) = undefined,
+        rot: @Vector(4, f32) = undefined,
+        angle: f32 = 0,
     };
 
-    pub fn loadPlayerPosition(self: *Data, id: i32, data: *playerPosition) !void {
+    pub fn loadPlayerPosition(self: *Data, world_id: i32, data: *playerPosition) !void {
         var select_stmt = try self.db.prepare(
             struct {
-                id: i32,
+                world_id: i32,
             },
             struct {
                 id: i32,
@@ -1027,7 +1027,7 @@ pub const Data = struct {
         defer select_stmt.deinit();
 
         {
-            try select_stmt.bind(.{ .id = id });
+            try select_stmt.bind(.{ .world_id = world_id });
             defer select_stmt.reset();
 
             while (try select_stmt.step()) |r| {
