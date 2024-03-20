@@ -156,6 +156,11 @@ fn drawWorldOptions() !void {
             .h = 100,
         })) {
             try saveWorld();
+            const num_worlds = game.state.ui.data.world_options.items.len;
+            const newest_world: data.worldOption = game.state.ui.data.world_options.items[num_worlds - 1];
+            try game.state.initInitialPlayer(
+                newest_world.id,
+            );
         }
         zgui.pushFont(game.state.ui.codeFont);
         zgui.pushItemWidth(500);
