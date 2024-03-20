@@ -4,6 +4,7 @@ const zm = @import("zmath");
 const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
+const math = @import("../../../math/math.zig");
 const gfx = @import("../../../gfx/gfx.zig");
 
 pub fn init() void {
@@ -52,23 +53,47 @@ fn updateMob(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), ro
 }
 
 fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: @Vector(4, f32)) void {
-    const camera_distance_scalar: f32 = 4.5;
-    const camera_height: f32 = 2;
+    // The player's position is on the ground, we want the head position, which is about 2 world coordinates higher.
+    const head_height: f32 = 2;
+    const player_head_pos: @Vector(4, f32) = .{ loc[0], loc[1] + head_height, loc[2], loc[3] };
+
+    // Get a bunch of data.
     const tpc = game.state.entities.third_person_camera;
     var cp: *components.screen.CameraPosition = ecs.get_mut(world, tpc, components.screen.CameraPosition) orelse return;
     var cf: *components.screen.CameraFront = ecs.get_mut(world, tpc, components.screen.CameraFront) orelse return;
     const cr: *const components.screen.CameraRotation = ecs.get(world, tpc, components.screen.CameraRotation) orelse return;
-    const front_vector: @Vector(4, f32) = zm.rotate(rotation, gfx.cltf.forward_vec);
-    const camera_distance: @Vector(4, f32) = @splat(camera_distance_scalar);
-    var np = loc - front_vector * camera_distance;
-    const offset = camera_height / 2;
-    np[1] += offset;
-    cf.front = zm.normalize4(loc - np);
 
-    const pitch = cr.pitch * (std.math.pi / 180.0);
-    const frontY = @sin(pitch);
-    const front: @Vector(4, f32) = @Vector(4, f32){ cf.front[0], frontY, cf.front[2], 1.0 };
-    cf.front = zm.normalize4(front);
-    np[1] += camera_height + offset;
-    cp.pos = np;
+    {
+        // ** This block of code locks the third party's camera rotation to always be facing the same direction as the player. **
+        // front_vector is the direction the player is facing, using the modified forward vec because of clft format specific adjustments.
+        const front_vector: @Vector(4, f32) = zm.rotate(rotation, gfx.cltf.forward_vec);
+        // This basically puts the third person camera directly behind the player's head at all times.
+        const np = player_head_pos - front_vector;
+        // We always normalize our front after changing it.
+        cf.front = zm.normalize4(player_head_pos - np);
+    }
+    {
+        // ** This block of code gets us the pitch at which the third person camera front needs to be at **
+        // The up vector
+        const up: @Vector(4, f32) = .{ 0, 1, 0, 0 };
+        // The horizontal axis, based on the camera front right behind player's head around which we rotate the pitch.
+        const horizontal_axis = zm.normalize4(zm.cross3(cf.front, up));
+        const pitch = cr.pitch * (std.math.pi / 180.0);
+        // rotateVector takes the front and horizontal axes, turns them into quaternions and appies rotation via pitch.
+        const rotated_front = math.vecs.rotateVector(cf.front, horizontal_axis, pitch);
+        // The only thing being updated here on the front is the Y, the pitch. The camera's front is already correct otherwise.
+        cf.front = @Vector(4, f32){
+            cf.front[0],
+            zm.normalize4(rotated_front)[1],
+            cf.front[2],
+            1.0,
+        };
+    }
+    {
+        // ** This block of code positions the camera further back from the head than right behind it **
+        const camera_distance_scalar: f32 = 4.5;
+        const camera_distance: @Vector(4, f32) = @splat(camera_distance_scalar);
+        cp.pos = player_head_pos - cf.front * camera_distance;
+        // TODO: camera collision detection with world around so the camera doesn't pass through objects in the world and the ground.
+    }
 }

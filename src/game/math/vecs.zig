@@ -60,3 +60,22 @@ pub const Vflx4 = struct {
         ) catch return &self.buffer;
     }
 };
+
+pub fn rotateVector(v: zm.F32x4, axis: zm.F32x4, angle: f32) zm.F32x4 {
+    const s: f32 = zm.sin(angle / 2.0);
+    const c: f32 = zm.cos(angle / 2.0);
+
+    // Creating quaternion from axis-angle
+    const q: zm.Quat = .{
+        c,
+        axis[0] * s,
+        axis[1] * s,
+        axis[2] * s,
+    };
+
+    // Quaternion for vector (v as a quaternion with 0 real part)
+    const vq: zm.Quat = .{ 0.0, v[0], v[1], v[2] };
+
+    // Rotate vector using quaternion multiplication (p' = qpq^-1)
+    return zm.qmul(vq, zm.inverse(q));
+}
