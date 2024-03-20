@@ -935,7 +935,7 @@ pub const Data = struct {
             void,
             insert_player_pos_stmt,
         );
-        defer insert_player_pos_stmt.deinit();
+        defer insert_stmt.deinit();
 
         insert_stmt.exec(
             .{

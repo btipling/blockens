@@ -1,6 +1,5 @@
 INSERT INTO
     player_position (
-        name,
         world_id,
         world_pos_x,
         world_pos_y,
@@ -9,7 +8,9 @@ INSERT INTO
         rot_x,
         rot_y,
         rot_z,
-        rot_angle
+        rot_angle,
+        created_at,
+        updated_at
     )
 VALUES
     (

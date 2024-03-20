@@ -375,6 +375,7 @@ pub const Game = struct {
     }
 
     pub fn initDb(self: *Game) !void {
+        errdefer self.script.deinit();
         self.db = try data.Data.init(self.allocator);
         self.db.ensureSchema() catch |err| {
             std.log.err("Failed to ensure schema: {}\n", .{err});
@@ -386,6 +387,7 @@ pub const Game = struct {
         };
         if (had_world) return;
         try self.initInitialWorld();
+        try self.initInitialPlayer(1);
     }
 
     pub fn initInitialWorld(self: *Game) !void {
@@ -411,6 +413,13 @@ pub const Game = struct {
         self.allocator.free(chunk_data);
         self.allocator.free(dirt_texture.?);
         self.allocator.free(grass_texture.?);
+    }
+
+    pub fn initInitialPlayer(self: *Game, world_id: i32) !void {
+        const initial_pos: @Vector(4, f32) = .{ 32, 64, 32, 0 };
+        const initial_rot: @Vector(4, f32) = .{ 0, 0, 0, 1 };
+        const initial_angle: f32 = 0;
+        try self.db.savePlayerPosition(world_id, initial_pos, initial_rot, initial_angle);
     }
 
     pub fn initUIData(self: *Game) !void {

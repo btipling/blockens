@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS player_position (
     world_pos_x FLOAT,
     world_pos_y FLOAT,
     world_pos_z FLOAT,
-    rot_w = FLOAT,
+    rot_w FLOAT,
     rot_x FLOAT,
     rot_y FLOAT,
     rot_z FLOAT,
