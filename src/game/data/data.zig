@@ -957,14 +957,14 @@ pub const Data = struct {
 
     pub fn updatePlayerPosition(
         self: *Data,
-        id: i32,
+        world_id: i32,
         pos: @Vector(4, f32),
         rot: @Vector(4, f32),
         angle: f32,
     ) !void {
         var update_stmt = try self.db.prepare(
             struct {
-                id: i32,
+                world_id: i32,
                 world_pos_x: f32,
                 world_pos_y: f32,
                 world_pos_z: f32,
@@ -981,7 +981,7 @@ pub const Data = struct {
 
         update_stmt.exec(
             .{
-                .id = id,
+                .world_id = world_id,
                 .world_pos_x = pos[0],
                 .world_pos_y = pos[1],
                 .world_pos_z = pos[2],
@@ -1043,17 +1043,17 @@ pub const Data = struct {
         return DataErr.NotFound;
     }
 
-    pub fn deletePlayePosition(self: *Data, id: i32) !void {
+    pub fn deletePlayerPosition(self: *Data, world_id: i32) !void {
         var delete_stmt = try self.db.prepare(
             struct {
-                id: i32,
+                world_id: i32,
             },
             void,
             delete_player_pos_stmt,
         );
 
         delete_stmt.exec(
-            .{ .id = id },
+            .{ .world_id = world_id },
         ) catch |err| {
             std.log.err("Failed to delete player position: {}", .{err});
             return err;

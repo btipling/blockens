@@ -79,3 +79,20 @@ pub fn rotateVector(v: zm.F32x4, axis: zm.F32x4, angle: f32) zm.F32x4 {
     // Rotate vector using quaternion multiplication (p' = qpq^-1)
     return zm.qmul(vq, zm.inverse(q));
 }
+
+pub fn quatToPitchYaw(quat: zm.Quat) struct { f32, f32 } {
+    const w = quat[0];
+    const x = quat[1];
+    const y = quat[2];
+    const z = quat[3];
+
+    // Calculate the pitch angle
+    const sin_pitch = 2.0 * (w * y - z * x);
+    const pitch: f32 = std.math.asin(sin_pitch);
+
+    // Calculate the yaw angle
+    const sin_yaw = 2.0 * (w * z + x * y);
+    const cos_yaw = 1.0 - 2.0 * (y * y + z * z);
+    const yaw: f32 = std.math.atan2(sin_yaw, cos_yaw);
+    return struct { f32, f32 }{ pitch, yaw };
+}

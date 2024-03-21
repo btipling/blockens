@@ -95,8 +95,8 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     glfw.windowHintTyped(.doublebuffer, true);
     glfw.windowHintTyped(.resizable, false);
     glfw.windowHintTyped(.focused, true);
-    glfw.windowHintTyped(.maximized, true);
-    glfw.windowHintTyped(.decorated, false);
+    glfw.windowHintTyped(.maximized, false);
+    glfw.windowHintTyped(.decorated, true);
     const m = glfw.Monitor.getPrimary().?;
     const mode = try m.getVideoMode();
     window_width = @intCast(mode.width);
@@ -106,7 +106,7 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
         mode.width,
         mode.height,
         cfg.game_name,
-        glfw.Monitor.getPrimary(),
+        null,
     ) catch |err| {
         std.log.err("Failed to create game window.", .{});
         return err;

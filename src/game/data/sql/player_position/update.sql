@@ -11,4 +11,4 @@ SET
     rot_angle = :rot_angle,
     updated_at = CURRENT_TIMESTAMP
 WHERE
-    id = :id;
+    world_id = :world_id;

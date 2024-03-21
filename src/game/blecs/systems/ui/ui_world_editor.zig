@@ -111,6 +111,7 @@ fn updateWorld() !void {
 fn deleteWorld() !void {
     const id = @as(i32, @intCast(game.state.ui.data.world_loaded_id));
     try game.state.db.deleteWorld(id);
+    try game.state.db.deletePlayerPosition(id);
     try listWorlds();
     game.state.ui.data.world_loaded_id = 0;
 }
@@ -248,7 +249,13 @@ fn drawTopDownChunkConfgOptions() !void {
     }
 }
 
-fn drawChunkConfigPopup() !void {
+const updateScriptConfigAt = struct {
+    wp: chunk.worldPosition,
+    script_id: i32,
+};
+
+fn drawChunkConfigPopup() !?updateScriptConfigAt {
+    var rv: ?updateScriptConfigAt = null;
     if (zgui.beginPopup("ScriptsPicker", .{})) {
         zgui.text("Select a script for this chunk", .{});
         if (zgui.smallButton("x")) {
@@ -263,24 +270,39 @@ fn drawChunkConfigPopup() !void {
                 game.state.ui.data.world_current_chunk[2],
             });
             const wp = chunk.worldPosition.initFromPositionV(game.state.ui.data.world_current_chunk);
-
-            var id: i32 = 0;
-            var cd: []u32 = undefined;
-            if (game.state.ui.data.world_chunk_table_data.get(wp)) |ch_cfg| {
-                id = ch_cfg.id;
-                cd = ch_cfg.chunkData;
-            } else {
-                return;
-            }
-            const ch_cfg: game_state.chunkConfig = .{
-                .id = id,
-                .scriptId = scriptOptionId,
-                .chunkData = cd,
-            };
-            try game.state.ui.data.world_chunk_table_data.put(wp, ch_cfg);
+            rv = .{ .wp = wp, .script_id = scriptOptionId };
         }
         zgui.endPopup();
     }
+    return rv;
+}
+
+fn updateChunkConfigFromPopup(updated_script_cfg: ?updateScriptConfigAt) !void {
+    if (updated_script_cfg == null) return;
+    const cfg = updated_script_cfg.?;
+    const wp = cfg.wp;
+    const scriptOptionId = cfg.script_id;
+    var id: i32 = 0;
+    var cd: []u32 = undefined;
+    if (game.state.ui.data.world_chunk_table_data.get(wp)) |ch_cfg| {
+        id = ch_cfg.id;
+        cd = ch_cfg.chunkData;
+    } else {
+        const p = wp.vecFromWorldPosition();
+        std.debug.print("wp not in world_chunk_table_data {d} {d} {d} {d}\n", .{
+            p[0],
+            p[1],
+            p[2],
+            p[3],
+        });
+        return;
+    }
+    const ch_cfg: game_state.chunkConfig = .{
+        .id = id,
+        .scriptId = scriptOptionId,
+        .chunkData = cd,
+    };
+    try game.state.ui.data.world_chunk_table_data.put(wp, ch_cfg);
 }
 
 const chunkConfigInfo = struct {
@@ -366,7 +388,7 @@ fn drawTopDownChunkConfig() !void {
             zgui.tableSetupColumn(colHeader, .{});
         }
         zgui.tableHeadersRow();
-        try drawChunkConfigPopup();
+        const updated_cfg = try drawChunkConfigPopup();
         for (0..config.worldChunkDims) |i| {
             const z: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
             zgui.tableNextRow(.{
@@ -387,6 +409,7 @@ fn drawTopDownChunkConfig() !void {
             }
         }
         zgui.endTable();
+        try updateChunkConfigFromPopup(updated_cfg);
     }
 }
 
