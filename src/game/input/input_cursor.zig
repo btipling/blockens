@@ -60,7 +60,7 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
         camera,
         blecs.components.screen.CameraRotation,
     ) orelse return;
-    const camera_rot_yaw: f32 = camera_rot.yaw + x_offset;
+    var camera_rot_yaw: f32 = camera_rot.yaw + x_offset;
     var camera_rot_pitch: f32 = camera_rot.pitch + y_offset;
 
     if (camera_rot_pitch > 89.0) {
@@ -112,12 +112,18 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
             blecs.components.mob.Rotation,
         ) orelse return;
         const rot = rotation.rotation;
-        const angle: f32 = -camera_rot_yaw / 180;
-        const up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 };
-        const turn = zm.quatFromNormAxisAngle(up, angle);
-        const new_rot: @Vector(4, f32) = zm.rotate(rot, turn);
-        rotation.rotation = new_rot;
-        rotation.angle = angle;
+        var angle: f32 = -camera_rot_yaw / 180;
+        if (!rotation.mouse_moved) {
+            angle = rotation.angle;
+            camera_rot_yaw = angle * -180;
+            rotation.mouse_moved = true;
+        } else {
+            const up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 };
+            const turn = zm.quatFromNormAxisAngle(up, angle);
+            const new_rot: @Vector(4, f32) = zm.rotate(rot, turn);
+            rotation.rotation = new_rot;
+            rotation.angle = angle;
+        }
         blecs.ecs.add(game.state.world, game.state.entities.player, blecs.components.mob.NeedsUpdate);
     }
     camera_front.front = zm.normalize4(front);

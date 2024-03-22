@@ -23,6 +23,7 @@ pub const Position = struct {
 pub const Rotation = struct {
     rotation: @Vector(4, f32) = .{ 0, 0, 0, 1 },
     angle: f32 = 0,
+    mouse_moved: bool = false,
 };
 
 pub fn init() void {
