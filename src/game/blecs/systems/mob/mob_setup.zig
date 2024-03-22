@@ -29,6 +29,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const m: []components.mob.Mob = ecs.field(it, components.mob.Mob, 1) orelse return;
             ecs.remove(world, entity, components.mob.NeedsSetup);
             setupMob(world, entity, m[i].mob_id, m[i].data_entity) catch unreachable;
+            ecs.add(world, entity, components.mob.NeedsUpdate);
         }
     }
 }

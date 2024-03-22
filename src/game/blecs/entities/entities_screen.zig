@@ -234,6 +234,15 @@ pub fn getCurrentCamera() ecs.entity_t {
     return tpc;
 }
 
+pub fn setThirdPersonCamera() void {
+    const world = game.state.world;
+    const tpc = game.state.entities.third_person_camera;
+    const cc = getCurrentCamera();
+    if (cc == tpc) return;
+    ecs.remove(world, cc, components.screen.CurrentCamera);
+    ecs.add(world, tpc, components.screen.CurrentCamera);
+}
+
 pub fn clearWorld() void {
     const world = game.state.world;
     var it = ecs.children(world, game_data);
@@ -512,23 +521,42 @@ pub fn initDemoCharacter() void {
 }
 
 pub fn initPlayerCharacter() void {
-    var player_pos: data.Data.playerPosition = .{};
-    game.state.db.loadPlayerPosition(game.state.ui.data.world_loaded_id, &player_pos) catch unreachable;
-    std.debug.print("init player character\n", .{});
     const world = game.state.world;
-    if (game.state.entities.player == 0) {
-        game.state.entities.player = ecs.new_entity(game.state.world, "Player");
-        _ = ecs.set(world, game.state.entities.player, components.mob.Mob, .{
+    const world_id = game.state.ui.data.world_loaded_id;
+    const tpc = game.state.entities.third_person_camera;
+    if (game.state.entities.player != 0) return;
+    const player = ecs.new_entity(game.state.world, "Player");
+    game.state.entities.player = player;
+
+    var player_pos: data.Data.playerPosition = .{};
+    game.state.db.loadPlayerPosition(world_id, &player_pos) catch unreachable;
+    std.debug.print("init player character\n", .{});
+
+    const rotation: components.mob.Rotation = .{
+        .rotation = player_pos.rot,
+        .angle = player_pos.angle,
+    };
+    {
+        // Set player entity props.
+        _ = ecs.set(world, player, components.mob.Mob, .{
             .mob_id = 1,
             .data_entity = game_data,
         });
-        _ = ecs.set(world, game.state.entities.player, components.mob.Position, .{
+        _ = ecs.set(world, player, components.mob.Position, .{
             .position = player_pos.pos,
         });
-        _ = ecs.set(world, game.state.entities.player, components.mob.Rotation, .{
-            .rotation = player_pos.rot,
-            .angle = player_pos.angle,
-        });
+        _ = ecs.set(world, player, components.mob.Rotation, rotation);
+        ecs.add(world, player, components.mob.NeedsSetup);
     }
-    ecs.add(world, game.state.entities.player, components.mob.NeedsSetup);
+    {
+        // set up camera
+        setThirdPersonCamera();
+        var camera_rot: *components.screen.CameraRotation = ecs.get_mut(
+            world,
+            tpc,
+            components.screen.CameraRotation,
+        ) orelse std.debug.panic("expected camera rotation\n", .{});
+        camera_rot.yaw = rotation.angle * -180;
+        ecs.add(world, tpc, components.screen.Updated);
+    }
 }
