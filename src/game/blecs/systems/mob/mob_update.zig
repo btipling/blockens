@@ -7,6 +7,8 @@ const game = @import("../../../game.zig");
 const math = @import("../../../math/math.zig");
 const gfx = @import("../../../gfx/gfx.zig");
 
+const save_after_seconds: f64 = 5;
+
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "MobUpdateSystem", ecs.PreUpdate, @constCast(&s));
@@ -25,16 +27,22 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
+            const m: []components.mob.Mob = ecs.field(it, components.mob.Mob, 1) orelse return;
             var loc: @Vector(4, f32) = .{ 1, 1, 1, 1 };
             var rotation: @Vector(4, f32) = .{ 0, 0, 0, 1 };
+            var angle: f32 = 0;
             if (ecs.get(world, entity, components.mob.Position)) |p| {
                 loc = p.position;
             }
             if (ecs.get(world, entity, components.mob.Rotation)) |r| {
                 rotation = r.rotation;
+                angle = r.angle;
             }
             updateMob(world, entity, loc, rotation);
             updateThirdPersonCamera(world, loc, rotation);
+            if (m[i].last_saved + save_after_seconds < game.state.input.lastframe) {
+                _ = game.state.jobs.save();
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ const chunk_meshing = @import("jobs_chunk_meshing.zig");
 const chunk_copy = @import("jobs_copy_chunk.zig");
 const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
 const generate_world_chunk = @import("jobs_generate_world_chunk.zig");
+const save_job = @import("jobs_save.zig");
 
 // TODO: none of these jobs should be talking to ecs or changing global state
 // need to do a command buffer with locks and progress UI
@@ -84,6 +85,16 @@ pub const Jobs = struct {
             },
         ) catch |e| {
             std.debug.print("error scheduling gen world chunk job: {}\n", .{e});
+            return zjobs.JobId.none;
+        };
+    }
+
+    pub fn save(self: *Jobs) zjobs.JobId {
+        return self.jobs.schedule(
+            zjobs.JobId.none,
+            save_job.SaveJob{},
+        ) catch |e| {
+            std.debug.print("error scheduling save job: {}\n", .{e});
             return zjobs.JobId.none;
         };
     }

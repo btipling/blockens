@@ -198,9 +198,9 @@ pub const Game = struct {
         main_loop: while (!state.window.shouldClose()) {
             glfw.pollEvents();
             {
-                const currentFrame: f32 = @floatCast(glfw.getTime());
-                state.input.delta_time = currentFrame - state.input.lastframe;
-                state.input.lastframe = currentFrame;
+                const frame: f32 = @floatCast(glfw.getTime());
+                state.input.delta_time = frame - state.input.lastframe;
+                state.input.lastframe = frame;
             }
             if (state.quit) {
                 break :main_loop;

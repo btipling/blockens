@@ -5,6 +5,7 @@ const math = @import("../../math/math.zig");
 pub const Mob = struct {
     mob_id: i32 = 0,
     data_entity: ecs.entity_t,
+    last_saved: f32 = 0,
 };
 pub const Mesh = struct {
     mesh_id: usize = 0,

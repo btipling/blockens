@@ -39,7 +39,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
 fn handleSharedKeys() ?glfw.Key {
     if (input.keys.pressedKey(.q)) toggleCamera();
-    if (input.keys.pressedKey(.u)) savePlayerPosition();
     if (input.keys.holdKey(.F2)) {
         ecs.add(game.state.world, game.state.entities.ui, components.ui.Menu);
         return .F2;
@@ -54,26 +53,6 @@ fn unsetKeyState() ?glfw.Key {
         pressedKeyState = null;
     }
     return pressedKeyState;
-}
-
-fn savePlayerPosition() void {
-    std.debug.print("saving player position\n", .{});
-    const rotation: *const components.mob.Rotation = ecs.get(
-        game.state.world,
-        game.state.entities.player,
-        components.mob.Rotation,
-    ) orelse return;
-    const position: *const components.mob.Position = ecs.get(
-        game.state.world,
-        game.state.entities.player,
-        components.mob.Position,
-    ) orelse return;
-    game.state.db.updatePlayerPosition(
-        game.state.ui.data.world_loaded_id,
-        position.position,
-        rotation.rotation,
-        rotation.angle,
-    ) catch unreachable;
 }
 
 fn toggleCamera() void {
