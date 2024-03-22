@@ -288,14 +288,8 @@ fn updateChunkConfigFromPopup(updated_script_cfg: ?updateScriptConfigAt) !void {
         id = ch_cfg.id;
         cd = ch_cfg.chunkData;
     } else {
-        const p = wp.vecFromWorldPosition();
-        std.debug.print("wp not in world_chunk_table_data {d} {d} {d} {d}\n", .{
-            p[0],
-            p[1],
-            p[2],
-            p[3],
-        });
-        return;
+        cd = try game.state.allocator.alloc(u32, 1);
+        cd[0] = 0;
     }
     const ch_cfg: game_state.chunkConfig = .{
         .id = id,
@@ -303,6 +297,10 @@ fn updateChunkConfigFromPopup(updated_script_cfg: ?updateScriptConfigAt) !void {
         .chunkData = cd,
     };
     try game.state.ui.data.world_chunk_table_data.put(wp, ch_cfg);
+    var scriptData: data.chunkScript = undefined;
+    game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData) catch unreachable;
+    var ch_script = script.Script.dataScriptToScript(scriptData.script);
+    _ = game.state.jobs.generateWorldChunk(wp, &ch_script);
 }
 
 const chunkConfigInfo = struct {

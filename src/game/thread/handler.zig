@@ -39,7 +39,9 @@ fn handle_chunk_gen(msg: buffer.buffer_message) !void {
     const chunk_data = buffer.get_chunk_gen_data(msg).?;
     const wp = chunk_data.wp orelse return;
 
-    var ch_cfg = game.state.ui.data.world_chunk_table_data.get(wp) orelse return;
+    var ch_cfg = game.state.ui.data.world_chunk_table_data.get(wp) orelse {
+        std.debug.panic("handled chunk gen for non existent chunk in chunk table\n", .{});
+    };
     ch_cfg.chunkData = chunk_data.chunk_data;
     if (game.state.ui.data.world_chunk_table_data.get(wp)) |cd| {
         game.state.allocator.free(cd.chunkData);
