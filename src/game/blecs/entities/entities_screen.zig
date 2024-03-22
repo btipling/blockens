@@ -172,7 +172,7 @@ fn initCameras() void {
         game.state.world,
         tpc,
         components.screen.CameraRotation,
-        .{ .yaw = 0, .pitch = -10 },
+        .{ .yaw = 0, .pitch = 0 },
     );
     _ = ecs.set(game.state.world, tpc, components.screen.UpDirection, .{
         .up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 },
