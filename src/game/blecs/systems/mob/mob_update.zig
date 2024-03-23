@@ -56,7 +56,7 @@ fn updateMob(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), ro
 }
 
 fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: @Vector(4, f32)) void {
-    // The player's position is on the ground, we want the head position, which is about 2 world coordinates higher.
+    // The player's position is on the ground, we want the cursor position, which is off set up and to the right.
     const cursor_axis: f32 = 1.5;
     var cursor_axis_pos: @Vector(4, f32) = .{ loc[0], loc[1] + cursor_axis, loc[2], loc[3] };
 
