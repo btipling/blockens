@@ -34,6 +34,12 @@
             .path = "./libs/system-sdk",
         },
         .ztracy = .{ .path = "libs/tracy" },
+        .zmesh = .{ .path = "libs/zmesh" },
+        .zglfw = .{ .path = "libs/zglfw" },
+        .zgui = .{ .path = "libs/zgui" },
+        .zopengl = .{ .path = "libs/zopengl" },
+        .zjobs = .{ .path = "libs/zjobs" },
+        .zflecs = .{ .path = "libs/zflecs" },
     },
     .paths = .{
         "",
