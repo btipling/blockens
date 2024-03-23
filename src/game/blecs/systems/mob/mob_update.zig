@@ -60,10 +60,12 @@ fn updateMob(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), ro
     }
 }
 
+var prev_z: f32 = 0;
+
 fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: @Vector(4, f32)) void {
     // The player's position is on the ground, we want the head position, which is about 2 world coordinates higher.
-    const head_height: f32 = 2;
-    const player_head_pos: @Vector(4, f32) = .{ loc[0], loc[1] + head_height, loc[2], loc[3] };
+    const head_height: f32 = 1.5;
+    var player_head_pos: @Vector(4, f32) = .{ loc[0], loc[1] + head_height, loc[2], loc[3] };
 
     // Get a bunch of data.
     const tpc = game.state.entities.third_person_camera;
@@ -96,6 +98,41 @@ fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: 
             cf.front[2],
             1.0,
         };
+        player_head_pos = player_head_pos - cf.front;
+    }
+    {
+        var z: f32 = @ceil(cf.front[2]);
+        if (z == 0) z = -1;
+        if (prev_z != z) std.debug.print("\n", .{});
+        prev_z = z;
+        const z_sign: @Vector(4, f32) = @splat(z);
+        const left: @Vector(4, f32) = .{ -1, 0, 0, 0 };
+        var side_vector = zm.normalize4(zm.cross3(cf.front, left));
+        var y: f32 = @ceil(side_vector[1]);
+        if (y == 0) y = -1;
+        side_vector[1] = y;
+        const side_offset: @Vector(4, f32) = @splat(1);
+        var cf_front = zm.normalize3(cf.front);
+
+        var cf_z: f32 = @abs(cf_front[2]);
+        if (cf_z < 0.1) cf_z = 0.1;
+        if (@ceil(cf_front[2]) == 0) cf_z *= -1;
+        cf_front[2] = cf_z;
+
+        var cf_x: f32 = @abs(cf_front[0]);
+        if (cf_x > 0.9) cf_x = 0.9;
+        if (@ceil(cf_front[0]) == 0) cf_x *= -1;
+        cf_front[0] = cf_x;
+
+        const dir_vector = zm.normalize3(zm.cross3(cf_front, side_vector * z_sign));
+
+        const dv_hp: @Vector(4, f64) = @floatCast(dir_vector);
+        const so_hp: @Vector(4, f64) = @floatCast(side_offset);
+        const php_hp: @Vector(4, f64) = @floatCast(player_head_pos);
+        const offset_dir = dv_hp * so_hp;
+        const php_adjusted = php_hp - offset_dir;
+        player_head_pos[0] = @floatCast(php_adjusted[0]);
+        player_head_pos[2] = @floatCast(php_adjusted[2]);
     }
     {
         // ** This block of code positions the camera further back from the head than right behind it **
