@@ -64,16 +64,23 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         }
                         name[ii] = selectableName[ii];
                     }
+                    const loaded_world_id = game.state.ui.data.world_loaded_id;
                     if (i == 0) {
+                        var preview_name = &game.state.ui.data.world_loaded_name;
+                        if (loaded_world_id == 0 or loaded_world_id == 1) {
+                            default_world = worldOption.id;
+                            game.state.ui.data.world_loaded_id = default_world;
+                            preview_name = &name;
+                        }
                         combo = zgui.beginCombo("##listbox", .{
-                            .preview_value = &name,
+                            .preview_value = preview_name,
                         });
                         cw = zgui.beginPopupContextWindow();
-                        default_world = worldOption.id;
                     }
                     if (combo) {
-                        if (zgui.selectable(&name, .{})) {
-                            loadWorld(worldOption.id);
+                        const selected = worldOption.id == loaded_world_id;
+                        if (zgui.selectable(&name, .{ .selected = selected })) {
+                            loadWorld(worldOption.id, name);
                         }
                     }
                 }
@@ -104,8 +111,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     }
 }
 
-fn loadWorld(worldId: i32) void {
-    game.state.ui.data.world_loaded_id = worldId;
+fn loadWorld(world_id: i32, name: [game_state.max_world_name:0]u8) void {
+    std.debug.print("selecting world id: {d}\n", .{world_id});
+    game.state.ui.data.world_loaded_name = name;
+    game.state.ui.data.world_loaded_id = world_id;
 }
 
 fn centerNext(ww: f32) void {
