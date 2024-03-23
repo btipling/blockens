@@ -89,10 +89,12 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn save(self: *Jobs) zjobs.JobId {
+    pub fn save(self: *Jobs, data: save_job.SaveData) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
-            save_job.SaveJob{},
+            save_job.SaveJob{
+                .data = data,
+            },
         ) catch |e| {
             std.debug.print("error scheduling save job: {}\n", .{e});
             return zjobs.JobId.none;

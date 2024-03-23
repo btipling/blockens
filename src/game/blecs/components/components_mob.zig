@@ -16,6 +16,7 @@ pub const Health = struct {
 };
 pub const NeedsSetup = struct {};
 pub const NeedsUpdate = struct {};
+pub const DidUpdate = struct {};
 pub const Texture = struct {};
 pub const Walking = struct {};
 pub const Position = struct {
@@ -34,6 +35,7 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, Rotation);
     ecs.TAG(game.state.world, NeedsSetup);
     ecs.TAG(game.state.world, NeedsUpdate);
+    ecs.TAG(game.state.world, DidUpdate);
     ecs.TAG(game.state.world, Texture);
     ecs.TAG(game.state.world, Walking);
 }

@@ -5,7 +5,17 @@ const blecs = @import("../../blecs/blecs.zig");
 const buffer = @import("../buffer.zig");
 const config = @import("config");
 
+pub const PlayerPosition = struct {
+    loc: @Vector(4, f32),
+    rotation: @Vector(4, f32) = .{ 0, 0, 0, 1 },
+    angle: f32,
+};
+pub const SaveData = struct {
+    player_position: PlayerPosition,
+};
+
 pub const SaveJob = struct {
+    data: SaveData,
     pub fn exec(self: *@This()) void {
         if (config.use_tracy) {
             const ztracy = @import("ztracy");
@@ -19,23 +29,12 @@ pub const SaveJob = struct {
     }
 
     pub fn saveJob(self: *@This()) void {
-        self.savePlayerPosition() catch std.debug.print("unable o save player position\n", .{});
+        self.savePlayerPosition() catch std.debug.print("unable to save player position\n", .{});
     }
 
-    pub fn savePlayerPosition(_: *@This()) !void {
-        const world = game.state.world;
-        const player = game.state.entities.player;
+    pub fn savePlayerPosition(self: *@This()) !void {
         const loaded_world = game.state.ui.data.world_loaded_id;
-        var loc: @Vector(4, f32) = .{ 1, 1, 1, 1 };
-        var rotation: @Vector(4, f32) = .{ 0, 0, 0, 1 };
-        var angle: f32 = 0;
-        if (blecs.ecs.get(world, player, blecs.components.mob.Position)) |p| {
-            loc = p.position;
-        }
-        if (blecs.ecs.get(world, player, blecs.components.mob.Rotation)) |r| {
-            rotation = r.rotation;
-            angle = r.angle;
-        }
-        try game.state.db.updatePlayerPosition(loaded_world, loc, rotation, angle);
+        const pp = self.data.player_position;
+        try game.state.db.updatePlayerPosition(loaded_world, pp.loc, pp.rotation, pp.angle);
     }
 };
