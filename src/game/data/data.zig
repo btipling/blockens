@@ -8,6 +8,7 @@ const selectWorldByIdStmt = @embedFile("./sql/world/select_by_id.sql");
 const listWorldStmt = @embedFile("./sql/world/list.sql");
 const updateWorldStmt = @embedFile("./sql/world/update.sql");
 const deleteWorldStmt = @embedFile("./sql/world/delete.sql");
+const countWorldsStmt = @embedFile("./sql/world/count_worlds.sql");
 
 const createTextureScriptTable = @embedFile("./sql/texture_script/create.sql");
 const insertTextureScriptStmt = @embedFile("./sql/texture_script/insert.sql");
@@ -197,29 +198,11 @@ pub const Data = struct {
     }
 
     pub fn ensureDefaultWorld(self: *Data) !bool {
-        // query for the default world
-        var selectStmt = try self.db.prepare(
-            struct {
-                name: sqlite.Text,
-            },
-            struct {
-                name: sqlite.Text,
-            },
-            selectWorldByNameStmt,
-        );
-        defer selectStmt.deinit();
-
-        {
-            try selectStmt.bind(.{ .name = sqlite.text("default") });
-            defer selectStmt.reset();
-
-            while (try selectStmt.step()) |r| {
-                std.debug.print("Found default world: {s}\n", .{r.name.data});
-                return true;
-            }
+        if (try self.countWorlds() < 1) {
+            try saveWorld(self, "default");
+            return false;
         }
-        try saveWorld(self, "default");
-        return false;
+        return true;
     }
 
     pub fn saveWorld(self: *Data, name: []const u8) !void {
@@ -356,12 +339,31 @@ pub const Data = struct {
             deleteWorldStmt,
         );
 
-        deleteStmt.exec(
-            .{ .id = id },
-        ) catch |err| {
+        deleteStmt.exec(.{ .id = id }) catch |err| {
             std.log.err("Failed to delete world: {}", .{err});
             return err;
         };
+    }
+
+    pub fn countWorlds(self: *Data) !i32 {
+        var countStmt = try self.db.prepare(
+            struct {
+                id: i32,
+            },
+            struct {
+                count: i32,
+            },
+            countWorldsStmt,
+        );
+        defer countStmt.deinit();
+
+        try countStmt.bind(.{ .id = 0 });
+        defer countStmt.reset();
+        while (try countStmt.step()) |r| {
+            return r.count;
+        }
+
+        return 0;
     }
 
     fn sqlTextToScript(text: sqlite.Text) [360_001]u8 {

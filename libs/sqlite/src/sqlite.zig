@@ -57,18 +57,15 @@ pub const Database = struct {
         return try Statement(Params, Result).init(db, sql);
     }
 
+    pub fn get(db: Database, params: anytype, comptime Result: type, sql: []const u8) !Result {
+        return try Statement(@TypeOf(params), Result).init(db, sql);
+    }
+
     pub fn exec(db: Database, sql: []const u8, params: anytype) !void {
         const stmt = try Statement(@TypeOf(params), void).init(db, sql);
         defer stmt.deinit();
 
         try stmt.exec(params);
-    }
-
-    pub fn get(db: Database, comptime Params: type, comptime Result: type, sql: []const u8, params: Params) !?Result {
-        const stmt = try Statement(Params, Result).init(db, sql);
-        defer stmt.deinit();
-
-        return try stmt.get(params);
     }
 };
 
@@ -202,17 +199,6 @@ pub fn Statement(comptime Params: type, comptime Result: type) type {
             try stmt.bind(params);
             defer stmt.reset();
             try stmt.step() orelse {};
-        }
-
-        pub fn get(stmt: Self, params: Params) !?Result {
-            switch (@typeInfo(Result)) {
-                .Struct => {},
-                else => @compileError("only struct Result types can call .get"),
-            }
-
-            try stmt.bind(params);
-            defer stmt.reset();
-            return try stmt.step();
         }
 
         pub fn step(stmt: Self) !?Result {
