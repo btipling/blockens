@@ -112,6 +112,7 @@ fn deleteWorld() !void {
     const id = @as(i32, @intCast(game.state.ui.data.world_loaded_id));
     try game.state.db.deleteWorld(id);
     try game.state.db.deletePlayerPosition(id);
+    try game.state.db.deleteChunkData(id);
     try listWorlds();
     game.state.ui.data.world_loaded_id = 0;
 }
