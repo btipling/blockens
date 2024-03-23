@@ -55,8 +55,6 @@ fn updateMob(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), ro
     }
 }
 
-var prev_z: f32 = 0;
-
 fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: @Vector(4, f32)) void {
     // The player's position is on the ground, we want the head position, which is about 2 world coordinates higher.
     const cursor_axis: f32 = 1.5;
@@ -103,8 +101,6 @@ fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: 
         // ** This block block of code is trying to keep the cross hairs to the right of the character.
         var z: f32 = @ceil(cf.front[2]);
         if (z == 0) z = -1;
-        if (prev_z != z) std.debug.print("\n", .{});
-        prev_z = z;
 
         const side_offset: @Vector(4, f32) = @splat(1);
         const left: @Vector(4, f32) = .{ -1, 0, 0, 0 };
