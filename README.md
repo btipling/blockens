@@ -8,7 +8,7 @@
 
  I am developing this game using Windows 11 Pro NVDIA GeForce RTX 3060 Laptop GPU and a GeForce RTX 3070 Desktop GPU. 
 
- Currently using zig version 0.12.0-dev.2835+256c5934b to build.
+ Currently using zig version 0.12.0-dev.3428+d8bb139da to build.
 
 ## Running
 
