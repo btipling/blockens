@@ -259,6 +259,15 @@ fn drawChunkConfigPopup() !?updateScriptConfigAt {
     var rv: ?updateScriptConfigAt = null;
     if (zgui.beginPopup("ScriptsPicker", .{})) {
         zgui.text("Select a script for this chunk", .{});
+        if (zgui.smallButton("delete")) {
+            const wp = chunk.worldPosition.initFromPositionV(game.state.ui.data.world_current_chunk);
+            if (game.state.ui.data.world_chunk_table_data.get(wp)) |ch_cfg| {
+                try game.state.db.deleteChunkDataById(ch_cfg.id, game.state.ui.data.world_loaded_id);
+                _ = game.state.ui.data.world_chunk_table_data.remove(wp);
+            }
+            zgui.closeCurrentPopup();
+        }
+        zgui.sameLine(.{ .spacing = zgui.getStyle().item_spacing[0] });
         if (zgui.smallButton("x")) {
             zgui.closeCurrentPopup();
         }

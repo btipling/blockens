@@ -38,6 +38,7 @@ const selectChunkDataByIDStmt = @embedFile("./sql/chunk/select_by_id.sql");
 const selectChunkDataByCoordsStmt = @embedFile("./sql/chunk/select_by_coords.sql");
 const listChunkDataStmt = @embedFile("./sql/chunk/list.sql");
 const deleteChunkDataStmt = @embedFile("./sql/chunk/delete.sql");
+const delete_chunk_data_by_id_stmt = @embedFile("./sql/chunk/delete_by_id.sql");
 
 pub const DataErr = error{
     NotFound,
@@ -890,7 +891,7 @@ pub const Data = struct {
         return DataErr.NotFound;
     }
 
-    pub fn deleteChunkData(self: *Data, worldId: i32) !void {
+    pub fn deleteChunkData(self: *Data, world_id: i32) !void {
         var deleteStmt = try self.db.prepare(
             struct {
                 world_id: i32,
@@ -900,9 +901,27 @@ pub const Data = struct {
         );
 
         deleteStmt.exec(
-            .{ .world_id = worldId },
+            .{ .world_id = world_id },
         ) catch |err| {
             std.log.err("Failed to delete chunkdata: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn deleteChunkDataById(self: *Data, id: i32, world_id: i32) !void {
+        var deleteStmt = try self.db.prepare(
+            struct {
+                id: i32,
+                world_id: i32,
+            },
+            void,
+            delete_chunk_data_by_id_stmt,
+        );
+
+        deleteStmt.exec(
+            .{ .id = id, .world_id = world_id },
+        ) catch |err| {
+            std.log.err("Failed to delete data by id: {}", .{err});
             return err;
         };
     }
