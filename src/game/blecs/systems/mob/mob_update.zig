@@ -60,12 +60,13 @@ fn updateMob(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), ro
     }
 }
 
-var prev_z: f32 = 0;
+var prev_z: f64 = 0;
 
 fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: @Vector(4, f32)) void {
     // The player's position is on the ground, we want the head position, which is about 2 world coordinates higher.
-    const head_height: f32 = 1.5;
-    var player_head_pos: @Vector(4, f32) = .{ loc[0], loc[1] + head_height, loc[2], loc[3] };
+    const loc_hp: @Vector(4, f64) = @floatCast(loc);
+    const head_height: f64 = 1.5;
+    var player_head_pos: @Vector(4, f64) = .{ loc_hp[0], loc_hp[1] + head_height, loc_hp[2], loc_hp[3] };
 
     // Get a bunch of data.
     const tpc = game.state.entities.third_person_camera;
@@ -73,63 +74,56 @@ fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: 
     var cf: *components.screen.CameraFront = ecs.get_mut(world, tpc, components.screen.CameraFront) orelse return;
     const cr: *const components.screen.CameraRotation = ecs.get(world, tpc, components.screen.CameraRotation) orelse return;
 
+    var cf_front_hp: @Vector(4, f64) = @floatCast(zm.normalize3(cf.front));
     {
         // ** This block of code locks the third party's camera rotation to always be facing the same direction as the player. **
         // front_vector is the direction the player is facing, using the modified forward vec because of clft format specific adjustments.
-        const front_vector: @Vector(4, f32) = zm.rotate(rotation, gfx.cltf.forward_vec);
+        const front_vector: @Vector(4, f64) = @floatCast(zm.rotate(rotation, gfx.cltf.forward_vec));
         // This basically puts the third person camera directly behind the player's head at all times.
         const np = player_head_pos - front_vector;
         // We always normalize our front after changing it.
-        cf.front = zm.normalize4(player_head_pos - np);
+        cf_front_hp = hp_norm(player_head_pos - np);
     }
     {
         // ** This block of code gets us the pitch at which the third person camera front needs to be at **
         // The up vector
-        const up: @Vector(4, f32) = .{ 0, 1, 0, 0 };
+        const up: @Vector(4, f64) = .{ 0, 1, 0, 0 };
         // The horizontal axis, based on the camera front right behind player's head around which we rotate the pitch.
-        const horizontal_axis = zm.normalize4(zm.cross3(cf.front, up));
+        const horizontal_axis = hp_norm(hp_cross(cf_front_hp, up));
         const pitch = cr.pitch * (std.math.pi / 180.0);
         // rotateVector takes the front and horizontal axes, turns them into quaternions and appies rotation via pitch.
-        const rotated_front = math.vecs.rotateVector(cf.front, horizontal_axis, pitch);
+        const rotated_front: @Vector(4, f64) = @floatCast(math.vecs.rotateVector(
+            @floatCast(cf_front_hp),
+            @floatCast(horizontal_axis),
+            pitch,
+        ));
         // The only thing being updated here on the front is the Y, the pitch. The camera's front is already correct otherwise.
-        cf.front = @Vector(4, f32){
-            cf.front[0],
-            zm.normalize4(rotated_front)[1],
-            cf.front[2],
+        cf_front_hp = @Vector(4, f64){
+            cf_front_hp[0],
+            hp_norm(rotated_front)[1],
+            cf_front_hp[2],
             1.0,
         };
-        player_head_pos = player_head_pos - cf.front;
+        player_head_pos = player_head_pos - cf_front_hp;
     }
     {
-        var z: f32 = @ceil(cf.front[2]);
+        var z: f64 = @ceil(cf_front_hp[2]);
         if (z == 0) z = -1;
         if (prev_z != z) std.debug.print("\n", .{});
         prev_z = z;
-        const z_sign: @Vector(4, f32) = @splat(z);
-        const left: @Vector(4, f32) = .{ -1, 0, 0, 0 };
-        var side_vector = zm.normalize4(zm.cross3(cf.front, left));
-        var y: f32 = @ceil(side_vector[1]);
+
+        const side_offset: @Vector(4, f64) = @splat(1);
+        const z_sign: @Vector(4, f64) = @splat(z);
+        const left: @Vector(4, f64) = .{ -1, 0, 0, 0 };
+        var side_vector = hp_norm(hp_cross(cf_front_hp, left));
+        var y: f64 = @ceil(side_vector[1]);
         if (y == 0) y = -1;
         side_vector[1] = y;
-        const side_offset: @Vector(4, f32) = @splat(1);
-        var cf_front = zm.normalize3(cf.front);
 
-        var cf_z: f32 = @abs(cf_front[2]);
-        if (cf_z < 0.1) cf_z = 0.1;
-        if (@ceil(cf_front[2]) == 0) cf_z *= -1;
-        cf_front[2] = cf_z;
+        const dir_vector = hp_norm(hp_cross(cf_front_hp, side_vector * z_sign));
 
-        var cf_x: f32 = @abs(cf_front[0]);
-        if (cf_x > 0.9) cf_x = 0.9;
-        if (@ceil(cf_front[0]) == 0) cf_x *= -1;
-        cf_front[0] = cf_x;
-
-        const dir_vector = zm.normalize3(zm.cross3(cf_front, side_vector * z_sign));
-
-        const dv_hp: @Vector(4, f64) = @floatCast(dir_vector);
-        const so_hp: @Vector(4, f64) = @floatCast(side_offset);
         const php_hp: @Vector(4, f64) = @floatCast(player_head_pos);
-        const offset_dir = dv_hp * so_hp;
+        const offset_dir = dir_vector * side_offset;
         const php_adjusted = php_hp - offset_dir;
         player_head_pos[0] = @floatCast(php_adjusted[0]);
         player_head_pos[2] = @floatCast(php_adjusted[2]);
@@ -137,8 +131,28 @@ fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: 
     {
         // ** This block of code positions the camera further back from the head than right behind it **
         const camera_distance_scalar: f32 = 4.5;
-        const camera_distance: @Vector(4, f32) = @splat(camera_distance_scalar);
-        cp.pos = player_head_pos - cf.front * camera_distance;
+        const camera_distance: @Vector(4, f64) = @splat(camera_distance_scalar);
+        cp.pos = @floatCast(player_head_pos - cf_front_hp * camera_distance);
+        cf.front = @floatCast(cf_front_hp);
         // TODO: camera collision detection with world around so the camera doesn't pass through objects in the world and the ground.
     }
+}
+
+fn hp_cross(a: @Vector(4, f64), b: @Vector(4, f64)) @Vector(4, f64) {
+    return @Vector(4, f64){
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+        0,
+    };
+}
+
+fn hp_norm(v: @Vector(4, f64)) @Vector(4, f64) {
+    const magnitude = @sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3]);
+    return @Vector(4, f64){
+        v[0] / magnitude,
+        v[1] / magnitude,
+        v[2] / magnitude,
+        v[3] / magnitude,
+    };
 }
