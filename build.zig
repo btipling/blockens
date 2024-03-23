@@ -1,13 +1,5 @@
 const std = @import("std");
 const ztracy = @import("ztracy");
-const ui = @import("libs/ui/build.zig");
-const glfw = @import("libs/glfw/build.zig");
-const opengl = @import("libs/opengl/build.zig");
-const stbi = @import("libs/stbi/build.zig");
-const math = @import("libs/math/build.zig");
-const mesh = @import("libs/mesh/build.zig");
-const jobs = @import("libs/jobs/build.zig");
-const flecs = @import("libs/flecs/build.zig");
 const lua = @import("libs/lua/build.zig");
 const sqlite = @import("libs/sqlite/build.zig");
 
@@ -48,25 +40,40 @@ pub fn build(b: *std.Build) !void {
         run_cmd.addArgs(args);
     }
 
-    const glfw_pkg = glfw.package(b, target, optimize, .{});
-    const ui_pkg = ui.package(b, target, optimize, .{
-        .options = .{ .backend = .glfw_opengl3 },
-    });
-    const opengl_pkg = opengl.package(b, target, optimize, .{});
-    const stbi_pkg = stbi.package(b, target, optimize, .{});
-    const math_pkg = math.package(b, target, optimize, .{});
-    const mesh_pkg = mesh.package(b, target, optimize, .{});
-    const flecs_pkg = flecs.package(b, target, optimize, .{});
-    const jobs_pkg = jobs.package(b, target, optimize, .{});
+    const zmesh = b.dependency("zmesh", .{});
+    exe.root_module.addImport("zmesh", zmesh.module("root"));
+    exe.linkLibrary(zmesh.artifact("zmesh"));
 
-    glfw_pkg.link(exe);
-    opengl_pkg.link(exe);
-    stbi_pkg.link(exe);
-    math_pkg.link(exe);
-    ui_pkg.link(exe);
-    mesh_pkg.link(exe);
-    flecs_pkg.link(exe);
-    jobs_pkg.link(exe);
+    const zglfw = b.dependency("zglfw", .{});
+    exe.root_module.addImport("zglfw", zglfw.module("root"));
+    exe.linkLibrary(zglfw.artifact("glfw"));
+
+    const zgui = b.dependency("zgui", .{
+        .shared = false,
+        .with_implot = true,
+        .backend = .glfw_opengl3,
+    });
+    exe.root_module.addImport("zgui", zgui.module("root"));
+    exe.linkLibrary(zgui.artifact("imgui"));
+
+    const zopengl = b.dependency("zopengl", .{});
+    exe.root_module.addImport("zopengl", zopengl.module("root"));
+
+    const zjobs = b.dependency("zjobs", .{});
+    exe.root_module.addImport("zjobs", zjobs.module("root"));
+
+    const zflecs = b.dependency("zflecs", .{});
+    exe.root_module.addImport("zflecs", zflecs.module("root"));
+    exe.linkLibrary(zflecs.artifact("flecs"));
+
+    const zstbi = b.dependency("zstbi", .{});
+    exe.root_module.addImport("zstbi", zstbi.module("root"));
+    exe.linkLibrary(zstbi.artifact("zstbi"));
+
+    const zmath = b.dependency("zmath", .{});
+    exe.root_module.addImport("zmath", zmath.module("root"));
+
+    @import("system_sdk").addLibraryPathsTo(exe);
 
     const lua_module = lua.buildLibrary(
         b,
