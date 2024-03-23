@@ -121,7 +121,7 @@ fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: 
     }
     {
         // ** This block of code positions the camera further back from the head than right behind it **
-        const camera_distance_scalar: f32 = 4.5;
+        const camera_distance_scalar: f32 = 4.5; // TODO make this adjustable so we can look up at things better?
         const camera_distance: @Vector(4, f32) = @splat(camera_distance_scalar);
         cp.pos = cursor_axis_pos - cf.front * camera_distance;
         // TODO: camera collision detection with world around so the camera doesn't pass through objects in the world and the ground.
