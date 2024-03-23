@@ -99,20 +99,23 @@ fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: 
     }
     {
         // ** This block block of code is trying to keep the cross hairs to the right of the character.
+        // First we get the sign of z, to multiply against the y on the side vector.
         var z: f32 = @ceil(cf.front[2]);
         if (z == 0) z = -1;
-
-        const side_offset: @Vector(4, f32) = @splat(1);
+        // This gets a vector we can use to get place where the cursor will go with a cross product.
         const left: @Vector(4, f32) = .{ -1, 0, 0, 0 };
         var side_vector = zm.normalize3(zm.cross3(cf.front, left));
+        // Keep y to 1 or -1 depending on the sign of z to avoid jumpiness. The goal of here is
+        // to just keep the cursor to the right not adjust pitch. We did already.
         var y: f32 = @ceil(side_vector[1]);
         if (y == 0) y = -1;
         side_vector[1] = y * z;
 
+        // The side vector tells us where the cursor should be and now we use it to tell us where
+        // the camera will go relative to it.
         const dir_vector = zm.normalize3(zm.cross3(cf.front, side_vector));
-
-        const offset_dir = dir_vector * side_offset;
-        const cursor_axis_pos_adjusted = cursor_axis_pos - offset_dir;
+        const cursor_axis_pos_adjusted = cursor_axis_pos - dir_vector;
+        // Just updating x and z.
         cursor_axis_pos[0] = cursor_axis_pos_adjusted[0];
         cursor_axis_pos[2] = cursor_axis_pos_adjusted[2];
     }
