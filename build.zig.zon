@@ -40,6 +40,8 @@
         .zopengl = .{ .path = "libs/zopengl" },
         .zjobs = .{ .path = "libs/zjobs" },
         .zflecs = .{ .path = "libs/zflecs" },
+        .zstbi = .{ .path = "libs/zstbi" },
+        .zmath = .{ .path = "libs/zmath" },
     },
     .paths = .{
         "",

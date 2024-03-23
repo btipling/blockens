@@ -1,7 +1,5 @@
 const std = @import("std");
 const ztracy = @import("ztracy");
-const stbi = @import("libs/stbi/build.zig");
-const math = @import("libs/math/build.zig");
 const lua = @import("libs/lua/build.zig");
 const sqlite = @import("libs/sqlite/build.zig");
 
@@ -42,9 +40,6 @@ pub fn build(b: *std.Build) !void {
         run_cmd.addArgs(args);
     }
 
-    const stbi_pkg = stbi.package(b, target, optimize, .{});
-    const math_pkg = math.package(b, target, optimize, .{});
-
     const zmesh = b.dependency("zmesh", .{});
     exe.root_module.addImport("zmesh", zmesh.module("root"));
     exe.linkLibrary(zmesh.artifact("zmesh"));
@@ -71,10 +66,14 @@ pub fn build(b: *std.Build) !void {
     exe.root_module.addImport("zflecs", zflecs.module("root"));
     exe.linkLibrary(zflecs.artifact("flecs"));
 
-    @import("system_sdk").addLibraryPathsTo(exe);
+    const zstbi = b.dependency("zstbi", .{});
+    exe.root_module.addImport("zstbi", zstbi.module("root"));
+    exe.linkLibrary(zstbi.artifact("zstbi"));
 
-    stbi_pkg.link(exe);
-    math_pkg.link(exe);
+    const zmath = b.dependency("zmath", .{});
+    exe.root_module.addImport("zmath", zmath.module("root"));
+
+    @import("system_sdk").addLibraryPathsTo(exe);
 
     const lua_module = lua.buildLibrary(
         b,
