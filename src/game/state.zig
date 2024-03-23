@@ -69,7 +69,6 @@ pub const UIData = struct {
     chunk_loaded_script_id: i32 = 0,
     chunk_script_color: [3]f32 = [_]f32{0} ** 3,
     chunk_demo_data: ?[]u32 = null,
-    world_load_disabled: bool = false,
     world_name_buf: [max_world_name]u8 = [_]u8{0} ** max_world_name,
     world_options: std.ArrayList(data.worldOption) = undefined,
     world_chunk_table_data: std.AutoHashMap(chunk.worldPosition, chunkConfig) = undefined,

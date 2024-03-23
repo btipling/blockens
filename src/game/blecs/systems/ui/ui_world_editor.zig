@@ -192,25 +192,11 @@ fn drawWorldOptions() !void {
                 try saveChunkDatas();
             }
 
-            if (game.state.ui.data.world_load_disabled) {
-                zgui.text("Generate disabled", .{});
-            } else {
-                if (zgui.button("Generate chunks", .{
-                    .w = 500,
-                    .h = 100,
-                })) {
-                    try evalChunksFunc();
-                }
-            }
-            if (game.state.ui.data.world_load_disabled) {
-                zgui.text("Load disabled", .{});
-            } else {
-                if (zgui.button("Load world", .{
-                    .w = 500,
-                    .h = 100,
-                })) {
-                    helpers.loadChunksInWorld();
-                }
+            if (zgui.button("Generate chunks", .{
+                .w = 500,
+                .h = 100,
+            })) {
+                try evalChunksFunc();
             }
         }
         zgui.popStyleVar(.{ .count = 1 });
