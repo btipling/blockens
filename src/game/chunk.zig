@@ -32,6 +32,20 @@ pub const worldPosition = struct {
     }
 };
 
+pub fn positionFromWorldLocation(loc: @Vector(4, f32)) @Vector(4, f32) {
+    const cd: f32 = @floatFromInt(chunkDim);
+    const changer: @Vector(4, f32) = @splat(cd);
+    const p = loc / changer;
+    return @floor(p);
+}
+
+pub fn chunkPosFromWorldLocation(loc: @Vector(4, f32)) @Vector(4, f32) {
+    const cd: f32 = @floatFromInt(chunkDim);
+    const changer: @Vector(4, f32) = @splat(cd);
+    const p = @mod(loc, changer);
+    return @floor(p);
+}
+
 pub fn getPositionAtIndexV(i: usize) @Vector(4, f32) {
     const x = @as(f32, @floatFromInt(@mod(i, chunkDim)));
     const y = @as(f32, @floatFromInt(@mod(i / chunkDim, chunkDim)));
