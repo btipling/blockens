@@ -9,6 +9,7 @@ const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
 const game_state = @import("../../../state.zig");
+const mob = @import("../../../mob.zig");
 const chunk = @import("../../../chunk.zig");
 const gfx = @import("../../../gfx/gfx.zig");
 
@@ -303,8 +304,8 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     if (er.has_mob_texture) {
         const mesh_c: *const components.mob.Mesh = ecs.get(world, entity, components.mob.Mesh).?;
         const mob_c: *const components.mob.Mob = ecs.get(world, mesh_c.mob_entity, components.mob.Mob).?;
-        const mob_data: *game_state.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
-        const mesh: *game_state.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
+        const mob_data: *mob.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
+        const mesh: *mob.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
         texture = gfx.Gfx.initTextureFromImage(mesh.texture.?) catch unreachable;
     }
 

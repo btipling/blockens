@@ -8,6 +8,7 @@ const tags = @import("../../tags.zig");
 const game = @import("../../../game.zig");
 const chunk = @import("../../../chunk.zig");
 const game_state = @import("../../../state.zig");
+const game_mob = @import("../../../mob.zig");
 const math = @import("../../../math/math.zig");
 const gfx = @import("../../../gfx/gfx.zig");
 const components = @import("../../components/components.zig");
@@ -230,9 +231,9 @@ const extractions = struct {
         if (!ecs.has_id(world, mesh_c.mob_entity, ecs.id(components.mob.Mob))) return;
         const mob_c: *const components.mob.Mob = ecs.get(world, mesh_c.mob_entity, components.mob.Mob).?;
         if (!game.state.gfx.mob_data.contains(mob_c.mob_id)) return;
-        const mob_data: *game_state.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
+        const mob_data: *game_mob.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
         if (mob_data.meshes.items.len <= mesh_c.mesh_id) return;
-        const mesh: *game_state.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
+        const mesh: *game_mob.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
         e.has_mob_texture = mesh.texture != null;
         e.color = mesh.color;
         e.mob_id = mob_c.mob_id;
@@ -257,7 +258,7 @@ const extractions = struct {
         e: *extractions,
         world: *ecs.world_t,
         entity: ecs.entity_t,
-        cm: *game_state.MobMesh,
+        cm: *game_mob.MobMesh,
     ) void {
         if (!ecs.has_id(world, entity, ecs.id(components.gfx.AnimationSSBO))) {
             return;

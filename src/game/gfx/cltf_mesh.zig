@@ -4,7 +4,7 @@ const zmesh = @import("zmesh");
 const sampler = @import("./cltf_sampler.zig");
 const game = @import("../game.zig");
 const data = @import("../data/data.zig");
-const game_state = @import("../state.zig");
+const game_mob = @import("../mob.zig");
 const gltf = zmesh.io.zcgltf;
 
 pub const MeshErr = error{
@@ -17,9 +17,9 @@ pub const MeshErr = error{
 pub const forward_vec = @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 };
 
 pub const Mesh = struct {
-    mob: *game_state.Mob,
+    mob: *game_mob.Mob,
     file_data: *gltf.Data, // managed by zmesh.io
-    animation_map: std.AutoHashMap(usize, std.ArrayList(game_state.MobAnimation)),
+    animation_map: std.AutoHashMap(usize, std.ArrayList(game_mob.MobAnimation)),
 
     pub fn init(
         mob_id: i32,
@@ -29,9 +29,9 @@ pub const Mesh = struct {
         }
         const file_data = try zmesh.io.parseAndLoadFile("./src/game/assets/blender/char.glb");
         return .{
-            .mob = game_state.Mob.init(game.state.allocator, mob_id, file_data.meshes_count),
+            .mob = game_mob.Mob.init(game.state.allocator, mob_id, file_data.meshes_count),
             .file_data = file_data,
-            .animation_map = std.AutoHashMap(usize, std.ArrayList(game_state.MobAnimation)).init(
+            .animation_map = std.AutoHashMap(usize, std.ArrayList(game_mob.MobAnimation)).init(
                 game.state.allocator,
             ),
         };
@@ -81,7 +81,7 @@ pub const Mesh = struct {
             else => return, // unsupported
         }
         const c_data = camera.data.perspective;
-        var mc = game_state.MobCamera{
+        var mc = game_mob.MobCamera{
             .yfov = c_data.yfov,
             .znear = c_data.znear,
         };
@@ -125,7 +125,7 @@ pub const Mesh = struct {
                 defer s.deinit();
                 try s.build();
                 var al = self.animation_map.get(mesh_id) orelse blk: {
-                    var al = try std.ArrayList(game_state.MobAnimation).initCapacity(
+                    var al = try std.ArrayList(game_mob.MobAnimation).initCapacity(
                         game.state.allocator,
                         s.num_frames,
                     );
@@ -170,7 +170,7 @@ pub const Mesh = struct {
     pub fn buildNode(self: *Mesh, node: *gltf.Node, parent: ?usize) !void {
         const mesh = node.mesh orelse return;
         const id = self.meshIdForMesh(mesh);
-        const mob_mesh: *game_state.MobMesh = game_state.MobMesh.init(
+        const mob_mesh: *game_mob.MobMesh = game_mob.MobMesh.init(
             game.state.allocator,
             id,
             parent,
@@ -203,7 +203,7 @@ pub const Mesh = struct {
         }
     }
 
-    pub fn transformFromNode(_: *Mesh, node: *gltf.Node, mob_mesh: *game_state.MobMesh, parent: ?usize) !void {
+    pub fn transformFromNode(_: *Mesh, node: *gltf.Node, mob_mesh: *game_mob.MobMesh, parent: ?usize) !void {
         if (node.has_matrix == 1) {
             mob_mesh.transform = zm.matFromArr(node.matrix);
         }

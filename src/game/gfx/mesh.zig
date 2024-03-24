@@ -1,7 +1,7 @@
 const std = @import("std");
 const zmesh = @import("zmesh");
 const game = @import("../game.zig");
-const state = @import("../state.zig");
+const game_mob = @import("../mob.zig");
 const blecs = @import("../blecs/blecs.zig");
 
 pub const meshData = struct {
@@ -339,9 +339,9 @@ pub fn mob(world: *blecs.ecs.world_t, entity: blecs.ecs.entity_t) meshData {
     if (!blecs.ecs.has_id(world, mesh_c.mob_entity, blecs.ecs.id(blecs.components.mob.Mob))) return cube();
     const mob_c: *const blecs.components.mob.Mob = blecs.ecs.get(world, mesh_c.mob_entity, blecs.components.mob.Mob).?;
     if (!game.state.gfx.mob_data.contains(mob_c.mob_id)) return cube();
-    const mob_data: *state.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
+    const mob_data: *game_mob.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
     if (mob_data.meshes.items.len <= mesh_c.mesh_id) return cube();
-    const mesh: *state.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
+    const mesh: *game_mob.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
     const positions: [][3]f32 = game.state.allocator.alloc([3]f32, mesh.positions.items.len) catch unreachable;
     @memcpy(positions, mesh.positions.items);
     const indices: []u32 = game.state.allocator.alloc(u32, mesh.indices.items.len) catch unreachable;
