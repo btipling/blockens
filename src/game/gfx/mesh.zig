@@ -11,6 +11,15 @@ pub const meshData = struct {
     normals: ?[][3]f32 = null,
     edges: ?[][2]f32 = null,
     barycentric: ?[][3]f32 = null,
+
+    pub fn deinit(self: *meshData) void {
+        game.state.allocator.free(self.positions);
+        game.state.allocator.free(self.indices);
+        if (self.texcoords) |t| game.state.allocator.free(t);
+        if (self.normals) |n| game.state.allocator.free(n);
+        if (self.edges) |e| game.state.allocator.free(e);
+        if (self.barycentric) |b| game.state.allocator.free(b);
+    }
 };
 
 // :: Plane

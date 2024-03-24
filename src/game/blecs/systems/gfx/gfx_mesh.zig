@@ -66,12 +66,6 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     const parent = ecs.get_parent(world, entity);
     const vertexShader: [:0]const u8 = er.vertexShader;
     const fragmentShader: [:0]const u8 = er.fragmentShader;
-    const positions: [][3]f32 = er.positions;
-    const indices: []u32 = er.indices;
-    const texcoords: ?[][2]f32 = er.texcoords;
-    const normals: ?[][3]f32 = er.normals;
-    const edges: ?[][2]f32 = er.edges;
-    const barycentric: ?[][3]f32 = er.barycentric;
     const keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = er.keyframes;
     defer game.state.allocator.free(vertexShader);
     defer game.state.allocator.free(fragmentShader);
@@ -103,7 +97,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             ebo = gfx.Gfx.initEBO(ial.items) catch unreachable;
         }
     } else {
-        ebo = gfx.Gfx.initEBO(indices) catch unreachable;
+        ebo = gfx.Gfx.initEBO(er.mesh_data.indices) catch unreachable;
     }
     const vs = gfx.Gfx.initVertexShader(vertexShader) catch unreachable;
     const fs = gfx.Gfx.initFragmentShader(fragmentShader) catch unreachable;
@@ -117,7 +111,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         num_elements = c.?.elements.items.len;
     }
     builder.* = gfx.buffer_data.AttributeBuilder.init(
-        @intCast(positions.len * num_elements),
+        @intCast(er.mesh_data.positions.len * num_elements),
         vbo,
         gl.STATIC_DRAW,
     );
@@ -132,16 +126,16 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     var attr_trans_loc: u32 = 0;
     // same order as defined in shader gen
     pos_loc = builder.defineFloatAttributeValue(3);
-    if (texcoords) |_| {
+    if (er.mesh_data.texcoords) |_| {
         tc_loc = builder.defineFloatAttributeValue(2);
     }
-    if (normals) |_| {
+    if (er.mesh_data.normals) |_| {
         nor_loc = builder.defineFloatAttributeValue(3);
     }
-    if (edges) |_| {
+    if (er.mesh_data.edges) |_| {
         edge_loc = builder.defineFloatAttributeValue(2);
     }
-    if (barycentric) |_| {
+    if (er.mesh_data.barycentric) |_| {
         baryc_loc = builder.defineFloatAttributeValue(3);
     }
     if (er.has_block_texture_atlas) {
@@ -155,7 +149,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         if (c) |_c| {
             for (_c.elements.items, 0..) |e, ei| {
                 // if (ei != 0) break;
-                const vertex_offset = positions.len * ei;
+                const vertex_offset = er.mesh_data.positions.len * ei;
                 const md = e.mesh_data;
                 for (0..md.positions.len) |ii| {
                     var p = md.positions[ii];
@@ -193,22 +187,22 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             }
         }
     } else {
-        for (0..positions.len) |ii| {
-            var p = positions[ii];
+        for (0..er.mesh_data.positions.len) |ii| {
+            var p = er.mesh_data.positions[ii];
             builder.addFloatAtLocation(pos_loc, &p, ii);
-            if (texcoords) |tcs| {
+            if (er.mesh_data.texcoords) |tcs| {
                 var t = tcs[ii];
                 builder.addFloatAtLocation(tc_loc, &t, ii);
             }
-            if (normals) |ns| {
+            if (er.mesh_data.normals) |ns| {
                 var n = ns[ii];
                 builder.addFloatAtLocation(nor_loc, &n, ii);
             }
-            if (edges) |es| {
+            if (er.mesh_data.edges) |es| {
                 var ec = es[ii];
                 builder.addFloatAtLocation(edge_loc, &ec, ii);
             }
-            if (barycentric) |bs| {
+            if (er.mesh_data.barycentric) |bs| {
                 var bc = bs[@mod(ii, 3)]; // See "barycentric coordinates" above
                 builder.addFloatAtLocation(baryc_loc, &bc, ii);
             }
@@ -240,7 +234,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         }
         if (block_instance != null) {
             block_instance.?.vbo = gfx.Gfx.initTransformsUBO(
-                positions.len,
+                er.mesh_data.positions.len,
                 builder.get_location(),
             ) catch unreachable;
             ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
@@ -316,15 +310,8 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         .vbo = vbo,
         .ebo = ebo,
         .texture = texture,
-        .numIndices = @intCast(er.indices.len),
+        .numIndices = @intCast(er.mesh_data.indices.len),
     });
     ecs.add(world, entity, components.gfx.CanDraw);
-    if (deinit_mesh) {
-        defer game.state.allocator.free(positions);
-        defer game.state.allocator.free(indices);
-        defer if (texcoords) |t| game.state.allocator.free(t);
-        defer if (normals) |n| game.state.allocator.free(n);
-        defer if (edges) |e| game.state.allocator.free(e);
-        defer if (barycentric) |b| game.state.allocator.free(b);
-    }
+    if (deinit_mesh) er.mesh_data.deinit();
 }

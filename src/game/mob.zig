@@ -1,5 +1,7 @@
 const std = @import("std");
 const zm = @import("zmath");
+const gfx = @import("gfx/gfx.zig");
+const game = @import("game.zig");
 
 pub const MobCamera = struct {
     // TODO: add camera name and deinit
@@ -71,6 +73,7 @@ pub const MobMesh = struct {
 pub const Mob = struct {
     id: i32,
     meshes: std.ArrayList(*MobMesh) = undefined,
+    bounding_box: ?[][3]f32 = null,
     cameras: ?std.ArrayList(MobCamera) = null,
     pub fn init(allocator: std.mem.Allocator, id: i32, num_meshes: usize) *Mob {
         var m: *Mob = allocator.create(Mob) catch unreachable;
@@ -93,5 +96,11 @@ pub const Mob = struct {
             allocator.destroy(m);
         }
         self.meshes.deinit();
+        if (self.bounding_box) |b| allocator.free(b);
+    }
+
+    fn loadBoundingBox(self: *Mob) void {
+        const data: gfx.mesh.meshData = gfx.mesh.bounding_box(self.id);
+        data.deinit();
     }
 };
