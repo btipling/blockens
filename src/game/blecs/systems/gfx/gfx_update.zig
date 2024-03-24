@@ -24,7 +24,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse return;
+            const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse continue;
             const er = ers[i];
             if (!ecs.has_id(world, entity, ecs.id(components.gfx.NeedsUniformUpdate))) {
                 continue;

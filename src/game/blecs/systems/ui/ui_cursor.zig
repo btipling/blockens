@@ -22,7 +22,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     const world = it.world;
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
-            const ui: []components.ui.UI = ecs.field(it, components.ui.UI, 1) orelse return;
+            const ui: []components.ui.UI = ecs.field(it, components.ui.UI, 1) orelse continue;
             var has_cursor = ecs.has_id(
                 world,
                 game.state.entities.ui,

@@ -32,7 +32,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             ecs.remove(world, entity, components.gfx.NeedsDeletion);
-            const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse return;
+            const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse continue;
             const er = ers[i];
             if (ecs.has_id(world, entity, ecs.id(components.block.Instance))) {
                 const block: *const components.block.Block = ecs.get(

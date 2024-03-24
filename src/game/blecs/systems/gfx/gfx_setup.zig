@@ -19,7 +19,7 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
-            const br: []components.gfx.BaseRenderer = ecs.field(it, components.gfx.BaseRenderer, 1) orelse return;
+            const br: []components.gfx.BaseRenderer = ecs.field(it, components.gfx.BaseRenderer, 1) orelse continue;
             gl.clear(br[i].clear);
 
             gl.clearBufferfv(gl.COLOR, 0, &br[i].bgColor.arr);

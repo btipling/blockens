@@ -15,7 +15,7 @@ const components = @import("../../components/components.zig");
 
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "ShapeSetupSystem", ecs.OnUpdate, @constCast(&s));
+    ecs.SYSTEM(game.state.world, "ShapeSetupSystem", ecs.PreStore, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
@@ -31,7 +31,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            const sh: []components.shape.Shape = ecs.field(it, components.shape.Shape, 1) orelse return;
+            const sh: []components.shape.Shape = ecs.field(it, components.shape.Shape, 1) orelse continue;
             if (config.use_tracy) {
                 const tracy_zone = ztracy.ZoneNC(@src(), "ShapeSetupSystem", 0xff_00_ff_f0);
                 defer tracy_zone.End();

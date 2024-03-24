@@ -26,7 +26,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            const m: []components.mob.BoundingBox = ecs.field(it, components.mob.BoundingBox, 1) orelse return;
+            const m: []components.mob.BoundingBox = ecs.field(it, components.mob.BoundingBox, 1) orelse continue;
             ecs.remove(world, entity, components.mob.NeedsSetup);
             const ok = setupBoundingBox(world, entity, m[i].mob_entity) catch @panic("nope");
             if (!ok) std.debug.panic("unable to set up bounding box.\n", .{});

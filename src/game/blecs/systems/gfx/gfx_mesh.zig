@@ -15,7 +15,7 @@ const gfx = @import("../../../gfx/gfx.zig");
 
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "GfxMeshSystem", ecs.OnUpdate, @constCast(&s));
+    ecs.SYSTEM(game.state.world, "GfxMeshSystem", ecs.PreStore, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {

@@ -35,7 +35,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             const parent = ecs.get_parent(world, entity);
-            const c: []components.screen.Camera = ecs.field(it, components.screen.Camera, 1) orelse return;
+            const c: []components.screen.Camera = ecs.field(it, components.screen.Camera, 1) orelse continue;
             if (config.use_tracy) {
                 const tracy_zone = ztracy.ZoneNC(@src(), "ScreenCameraSystem", 0x00_33_ff_f0);
                 defer tracy_zone.End();

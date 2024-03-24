@@ -73,6 +73,12 @@ pub const MobMesh = struct {
 pub const Mob = struct {
     id: i32,
     meshes: std.ArrayList(*MobMesh) = undefined,
+    // 0 - 6 front
+    // 6 - 12 right
+    // 12 - 18 back
+    // 18 - 24 left
+    // 24 - 30 bottom
+    // 30 - 36 top
     bounding_box: ?[][3]f32 = null,
     cameras: ?std.ArrayList(MobCamera) = null,
     allocator: std.mem.Allocator,
@@ -108,5 +114,10 @@ pub const Mob = struct {
         const positions: [][3]f32 = game.state.allocator.alloc([3]f32, data.positions.len) catch unreachable;
         @memcpy(positions, data.positions);
         self.bounding_box = positions;
+    }
+
+    pub fn getBottomBounds(self: *const Mob) [][3]f32 {
+        // 24 - 30 bottom
+        return self.bounding_box.?[24..30];
     }
 };

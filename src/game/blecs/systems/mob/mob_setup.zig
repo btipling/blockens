@@ -26,9 +26,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            const m: []components.mob.Mob = ecs.field(it, components.mob.Mob, 1) orelse return;
+            const m: []components.mob.Mob = ecs.field(it, components.mob.Mob, 1) orelse continue;
             ecs.remove(world, entity, components.mob.NeedsSetup);
-            setupMob(world, entity, m[i].mob_id, m[i].data_entity) catch unreachable;
+            setupMob(world, entity, m[i].mob_id, m[i].data_entity) catch @panic("nope");
             ecs.add(world, entity, components.mob.NeedsUpdate);
         }
     }
@@ -37,9 +37,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 fn setupMob(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, data_entity: ecs.entity_t) !void {
     const is_demo = data_entity == entities.screen.settings_data;
     if (game.state.gfx.mob_data.get(mob_id) == null) {
-        var cm = cltf_mesh.Mesh.init(mob_id) catch unreachable;
+        var cm = cltf_mesh.Mesh.init(mob_id) catch @panic("nope");
         defer cm.deinit();
-        cm.build() catch unreachable;
+        cm.build() catch @panic("nope");
     }
     var loc: @Vector(4, f32) = .{ 1, 1, 1, 1 };
     var rotation: @Vector(4, f32) = .{ 0, 0, 0, 1 };

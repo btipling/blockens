@@ -26,7 +26,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            const m: []components.mob.Mob = ecs.field(it, components.mob.Mob, 1) orelse return;
+            const m: []components.mob.Mob = ecs.field(it, components.mob.Mob, 1) orelse continue;
             ecs.remove(world, entity, components.mob.DidUpdate);
             var loc: @Vector(4, f32) = .{ 1, 1, 1, 1 };
             var rotation: @Vector(4, f32) = .{ 0, 0, 0, 1 };

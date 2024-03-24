@@ -23,7 +23,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            const ch_c: []components.block.Chunk = ecs.field(it, components.block.Chunk, 1) orelse return;
+            const ch_c: []components.block.Chunk = ecs.field(it, components.block.Chunk, 1) orelse continue;
             const wp = ch_c[i].wp;
             const parent: ecs.entity_t = ecs.get_parent(world, entity);
             ecs.remove(world, entity, components.block.NeedsMeshing);
