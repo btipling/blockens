@@ -222,7 +222,7 @@ pub const Gfx = struct {
         self.settings_blocks.deinit();
         var mb_i = self.mob_data.valueIterator();
         while (mb_i.next()) |m| {
-            m.*.deinit(allocator);
+            m.*.deinit();
             allocator.destroy(m.*);
         }
         self.mob_data.deinit();

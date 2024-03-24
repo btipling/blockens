@@ -25,7 +25,7 @@ pub const Mesh = struct {
         mob_id: i32,
     ) !Mesh {
         if (game.state.gfx.mob_data.get(mob_id)) |m| {
-            m.deinit(game.state.allocator);
+            m.deinit();
         }
         const file_data = try zmesh.io.parseAndLoadFile("./src/game/assets/blender/char.glb");
         return .{
@@ -68,7 +68,7 @@ pub const Mesh = struct {
             }
         }
         if (game.state.gfx.mob_data.get(self.mob.id)) |m| {
-            m.deinit(game.state.allocator);
+            m.deinit();
         }
         try game.state.gfx.mob_data.put(self.mob.id, self.mob);
     }

@@ -75,6 +75,7 @@ pub const Mob = struct {
     meshes: std.ArrayList(*MobMesh) = undefined,
     bounding_box: ?[][3]f32 = null,
     cameras: ?std.ArrayList(MobCamera) = null,
+    allocator: std.mem.Allocator,
     pub fn init(allocator: std.mem.Allocator, id: i32, num_meshes: usize) *Mob {
         var m: *Mob = allocator.create(Mob) catch unreachable;
         _ = &m;
@@ -86,17 +87,18 @@ pub const Mob = struct {
         m.* = .{
             .id = id,
             .meshes = meshes,
+            .allocator = allocator,
         };
         return m;
     }
 
-    pub fn deinit(self: *Mob, allocator: std.mem.Allocator) void {
+    pub fn deinit(self: *Mob) void {
         for (self.meshes.items) |m| {
-            m.deinit(allocator);
-            allocator.destroy(m);
+            m.deinit(self.allocator);
+            self.allocator.destroy(m);
         }
         self.meshes.deinit();
-        if (self.bounding_box) |b| allocator.free(b);
+        if (self.bounding_box) |b| self.allocator.free(b);
     }
 
     fn loadBoundingBox(self: *Mob) void {
