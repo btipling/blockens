@@ -70,6 +70,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     const texcoords: ?[][2]f32 = er.texcoords;
     const normals: ?[][3]f32 = er.normals;
     const edges: ?[][2]f32 = er.edges;
+    const barycentric: ?[][3]f32 = er.barycentric;
     const keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = er.keyframes;
     defer game.state.allocator.free(vertexShader);
     defer game.state.allocator.free(fragmentShader);
@@ -125,6 +126,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     var tc_loc: u32 = 0;
     var nor_loc: u32 = 0;
     var edge_loc: u32 = 0;
+    var baryc_loc: u32 = 0;
     var block_data_loc: u32 = 0;
     var attr_trans_loc: u32 = 0;
     // same order as defined in shader gen
@@ -137,6 +139,9 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     }
     if (edges) |_| {
         edge_loc = builder.defineFloatAttributeValue(2);
+    }
+    if (barycentric) |_| {
+        baryc_loc = builder.defineFloatAttributeValue(3);
     }
     if (er.has_block_texture_atlas) {
         block_data_loc = builder.defineFloatAttributeValue(2);
@@ -164,8 +169,12 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
                         builder.addFloatAtLocation(nor_loc, &n, vertex_index);
                     }
                     if (md.edges) |es| {
-                        var ec = es[@mod(ii, 4)]; // Edges: there are only 4 edge values, only work for cuboids
+                        var ec = es[ii];
                         builder.addFloatAtLocation(edge_loc, &ec, vertex_index);
+                    }
+                    if (md.barycentric) |bs| {
+                        var bc = bs[@mod(ii, 3)]; // barycentric coordinates: there are only 3 values, only work for cuboids
+                        builder.addFloatAtLocation(baryc_loc, &bc, vertex_index);
                     }
                     if (er.has_block_texture_atlas) {
                         const bi = e.block_id;
@@ -195,8 +204,12 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
                 builder.addFloatAtLocation(nor_loc, &n, ii);
             }
             if (edges) |es| {
-                var ec = es[@mod(ii, 4)]; // See "Edges" above
+                var ec = es[ii];
                 builder.addFloatAtLocation(edge_loc, &ec, ii);
+            }
+            if (barycentric) |bs| {
+                var bc = bs[@mod(ii, 3)]; // See "barycentric coordinates" above
+                builder.addFloatAtLocation(baryc_loc, &bc, ii);
             }
             if (er.has_block_texture_atlas) {
                 var block_index: f32 = 0;
@@ -311,5 +324,6 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         defer if (texcoords) |t| game.state.allocator.free(t);
         defer if (normals) |n| game.state.allocator.free(n);
         defer if (edges) |e| game.state.allocator.free(e);
+        defer if (barycentric) |b| game.state.allocator.free(b);
     }
 }

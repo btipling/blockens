@@ -66,6 +66,7 @@ pub const FragmentShaderGen = struct {
             }
             if (r.cfg.outline_color != null) {
                 r.a("\nin vec2 bl_edge;\n");
+                r.a("\nin vec3 bl_baryc;\n");
             }
             if (r.cfg.is_meshed and r.cfg.has_block_data) {
                 r.a("flat in float bl_block_index;\n");

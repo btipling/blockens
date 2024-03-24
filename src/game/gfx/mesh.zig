@@ -10,6 +10,7 @@ pub const meshData = struct {
     texcoords: ?[][2]f32 = null,
     normals: ?[][3]f32 = null,
     edges: ?[][2]f32 = null,
+    barycentric: ?[][3]f32 = null,
 };
 
 // :: Plane
@@ -136,11 +137,55 @@ const cube_texcoords: [36][2]f32 = .{
     .{ 0, 0.333 },
 };
 
-const edges: [4][2]f32 = .{
+const edges: [36][2]f32 = .{
+    // front
+    .{ 0, 1 },
+    .{ 1, 1 },
+    .{ 1, 0 },
+    .{ 0, 1 },
+    .{ 1, 0 },
+    .{ 0, 0 },
+    // right
+    .{ 0, 1 },
+    .{ 1, 1 },
+    .{ 1, 0 },
+    .{ 0, 1 },
+    .{ 1, 0 },
+    .{ 0, 0 },
+    // back
+    .{ 0, 1 },
+    .{ 1, 1 },
+    .{ 1, 0 },
+    .{ 0, 1 },
+    .{ 1, 0 },
+    .{ 0, 0 },
+    // left
+    .{ 0, 1 },
+    .{ 1, 1 },
+    .{ 1, 0 },
+    .{ 0, 1 },
+    .{ 1, 0 },
+    .{ 0, 0 },
+    // bottom
     .{ 0, 0 },
     .{ 1, 0 },
     .{ 1, 1 },
+    .{ 0, 0 },
+    .{ 1, 1 },
     .{ 0, 1 },
+    // top
+    .{ 0, 0 },
+    .{ 1, 0 },
+    .{ 1, 1 },
+    .{ 0, 0 },
+    .{ 1, 1 },
+    .{ 0, 1 },
+};
+
+const barycentric_coordinates: [3][3]f32 = .{
+    .{ 1.0, 0.0, 0.0 },
+    .{ 0.0, 1.0, 0.0 },
+    .{ 0.0, 0.0, 1.0 },
 };
 
 const cube_normals: [36][3]f32 = .{
@@ -338,5 +383,7 @@ pub fn bounding_box(mob_id: i32) meshData {
     @memcpy(indices, &cube_indices);
     const e: [][2]f32 = game.state.allocator.alloc([2]f32, edges.len) catch unreachable;
     @memcpy(e, &edges);
-    return .{ .positions = positions, .indices = indices, .edges = e };
+    const bc: [][3]f32 = game.state.allocator.alloc([3]f32, barycentric_coordinates.len) catch unreachable;
+    @memcpy(bc, &barycentric_coordinates);
+    return .{ .positions = positions, .indices = indices, .edges = e, .barycentric = bc };
 }

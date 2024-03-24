@@ -104,6 +104,9 @@ pub const VertexShaderGen = struct {
                 line = try shader_helpers.attribute_location(r.location, "bl_edge_coord", .vec2);
                 r.l(&line);
                 r.location += 1;
+                line = try shader_helpers.attribute_location(r.location, "bl_barycentric_coord", .vec3);
+                r.l(&line);
+                r.location += 1;
             }
             if (r.cfg.has_block_data) {
                 line = try shader_helpers.attribute_location(r.location, "block_data", .vec2);
@@ -138,6 +141,7 @@ pub const VertexShaderGen = struct {
             }
             if (r.cfg.has_edges) {
                 r.a("out vec2 bl_edge;\n");
+                r.a("out vec3 bl_baryc;\n");
             }
 
             if (r.cfg.has_block_data) {
@@ -382,6 +386,7 @@ pub const VertexShaderGen = struct {
             }
             if (r.cfg.has_edges) {
                 r.a("    bl_edge = bl_edge_coord;\n");
+                r.a("    bl_baryc = bl_barycentric_coord;\n");
             }
             if (r.cfg.is_meshed) {
                 r.a("    bl_surface_height = ");

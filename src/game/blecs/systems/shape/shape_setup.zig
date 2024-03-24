@@ -80,6 +80,7 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         .texcoords = mesh_data.texcoords,
         .normals = mesh_data.normals,
         .edges = mesh_data.edges,
+        .barycentric = mesh_data.barycentric,
         .keyframes = e.keyframes,
         .animation_binding_point = e.animation_binding_point,
         .is_instanced = e.is_instanced,
