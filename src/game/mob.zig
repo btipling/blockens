@@ -89,6 +89,7 @@ pub const Mob = struct {
             .meshes = meshes,
             .allocator = allocator,
         };
+        m.loadBoundingBox();
         return m;
     }
 
@@ -102,7 +103,10 @@ pub const Mob = struct {
     }
 
     fn loadBoundingBox(self: *Mob) void {
-        const data: gfx.mesh.meshData = gfx.mesh.bounding_box(self.id);
-        data.deinit();
+        var data: gfx.mesh.meshData = gfx.mesh.bounding_box(self.id);
+        defer data.deinit();
+        const positions: [][3]f32 = game.state.allocator.alloc([3]f32, data.positions.len) catch unreachable;
+        @memcpy(positions, data.positions);
+        self.bounding_box = positions;
     }
 };
