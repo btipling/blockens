@@ -58,6 +58,12 @@ fn setupBoundingBox(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, pare
     }
     _ = ecs.set(world, entity, components.shape.Shape, .{ .shape_type = .bounding_box });
     {
+        std.debug.print("setting bb location to ({d}, {d}, {d}, {d})\n", .{
+            loc[0],
+            loc[1],
+            loc[2],
+            loc[3],
+        });
         _ = ecs.set(world, entity, components.screen.WorldLocation, .{ .loc = loc });
         _ = ecs.set(world, entity, components.screen.WorldRotation, .{ .rotation = rotation });
         if (is_demo) {
@@ -67,7 +73,7 @@ fn setupBoundingBox(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, pare
         }
     }
     ecs.add(world, entity, components.gfx.ManuallyHidden);
-    ecs.add(world, entity, components.Debug);
+    // ecs.add(world, entity, components.Debug);
     ecs.add(world, entity, components.shape.NeedsSetup);
     return true;
 }

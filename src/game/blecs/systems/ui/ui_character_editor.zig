@@ -52,32 +52,32 @@ fn drawControls() !void {
     if (zgui.beginChild(
         "Saved Worlds",
         .{
-            .w = 510,
+            .w = 610,
             .h = 2100,
             .border = true,
         },
     )) {
         zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
         if (zgui.button("Generate character", .{
-            .w = 500,
+            .w = 600,
             .h = 100,
         })) {
             try generateCharacter();
         }
         if (zgui.button("Toggle walking", .{
-            .w = 500,
+            .w = 600,
             .h = 100,
         })) {
             try toggleWalking();
         }
         if (zgui.button("Toggle Bounding Box", .{
-            .w = 500,
+            .w = 600,
             .h = 100,
         })) {
             try toggleBoundingBox();
         }
         if (zgui.button("Toggle Wireframe", .{
-            .w = 500,
+            .w = 600,
             .h = 100,
         })) {
             toggleWireframe();

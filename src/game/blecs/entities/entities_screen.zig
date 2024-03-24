@@ -589,4 +589,34 @@ pub fn initPlayerCharacter() void {
         camera_rot.yaw = rotation.angle * -180;
         ecs.add(world, tpc, components.screen.Updated);
     }
+    {
+        // setup the bounding box
+        const bounding_box = helpers.new_child(world, game_data);
+        ecs.add_pair(
+            world,
+            player,
+            mob_entities.HasBoundingBox,
+            bounding_box,
+        );
+        _ = ecs.set(
+            world,
+            bounding_box,
+            components.mob.BoundingBox,
+            .{ .mob_id = 1, .mob_entity = player },
+        );
+        const c = math.vecs.Vflx4.initBytes(255, 255, 255, 255);
+        _ = ecs.set(
+            world,
+            bounding_box,
+            components.shape.Outline,
+            .{ .color = c.value },
+        );
+        _ = ecs.set(
+            world,
+            bounding_box,
+            components.shape.Color,
+            .{ .color = .{ 0, 0, 0, 0 } },
+        );
+        ecs.add(world, bounding_box, components.mob.NeedsSetup);
+    }
 }

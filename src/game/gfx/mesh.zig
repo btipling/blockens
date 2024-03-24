@@ -367,7 +367,7 @@ pub fn bounding_box(mob_id: i32) meshData {
     switch (mob_id) {
         1 => {
             x_scale = 1;
-            y_scale = 2;
+            y_scale = 2.25;
             z_scale = 1;
         },
         else => std.debug.panic("Unexpected mob id in bounding box mesh lookup {d}\n", .{mob_id}),

@@ -12,6 +12,7 @@ pub const DemoChunk = struct {};
 pub const DemoCharacter = struct {};
 
 pub const GameChunksInfo = struct {};
+pub const GameMobInfo = struct {};
 
 pub fn init() void {
     const world = game.state.world;
@@ -23,4 +24,5 @@ pub fn init() void {
     ecs.TAG(world, DemoChunk);
     ecs.TAG(world, DemoCharacter);
     ecs.TAG(world, GameChunksInfo);
+    ecs.TAG(world, GameMobInfo);
 }
