@@ -6,6 +6,7 @@ const game = @import("../../game.zig");
 const game_state = @import("../../state.zig");
 const config = @import("../../config.zig");
 const components = @import("../components/components.zig");
+const mob_entities = @import("entities_mob.zig");
 const helpers = @import("../helpers.zig");
 const chunk = @import("../../chunk.zig");
 const gfx = @import("../../gfx/gfx.zig");
@@ -507,15 +508,31 @@ pub fn initDemoCharacter() void {
     clearDemoObjects();
     initDemoCharacterCamera();
     const world = game.state.world;
-    if (game.state.entities.demo_player == 0) {
-        game.state.entities.demo_player = ecs.new_entity(game.state.world, "DemoPlayer");
-        _ = ecs.set(world, game.state.entities.demo_player, components.mob.Mob, .{
+    var player = game.state.entities.demo_player;
+    if (player == 0) {
+        player = ecs.new_entity(game.state.world, "DemoPlayer");
+        game.state.entities.demo_player = player;
+        _ = ecs.set(world, player, components.mob.Mob, .{
             .mob_id = 1,
             .data_entity = settings_data,
         });
-        _ = ecs.set(world, game.state.entities.demo_player, components.mob.Position, .{
+        _ = ecs.set(world, player, components.mob.Position, .{
             .position = game.state.ui.data.demo_cube_translation,
         });
+        const bounding_box = helpers.new_child(world, settings_data);
+        ecs.add_pair(
+            world,
+            player,
+            mob_entities.HasBoundingBox,
+            bounding_box,
+        );
+        _ = ecs.set(
+            world,
+            bounding_box,
+            components.mob.BoundingBox,
+            .{ .mob_id = 1, .mob_entity = player },
+        );
+        ecs.add(world, bounding_box, components.mob.NeedsSetup);
     }
     ecs.add(world, game.state.entities.demo_player, components.mob.NeedsSetup);
 }

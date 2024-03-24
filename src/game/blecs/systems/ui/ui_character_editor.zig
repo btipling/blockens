@@ -96,7 +96,7 @@ fn toggleBoundingBox() !void {
     const world = game.state.world;
     const player = game.state.entities.demo_player;
 
-    var bounding_box = ecs.get_target(world, player, entities.mob.HasBoundingBox, 0);
+    const bounding_box = ecs.get_target(world, player, entities.mob.HasBoundingBox, 0);
     if (bounding_box != 0) {
         if (ecs.has_id(world, bounding_box, ecs.id(components.gfx.CanDraw))) {
             ecs.remove(world, bounding_box, components.gfx.CanDraw);
@@ -105,21 +105,4 @@ fn toggleBoundingBox() !void {
         ecs.add(world, bounding_box, components.gfx.CanDraw);
         return;
     }
-    bounding_box = ecs.new_id(world);
-
-    bounding_box = helpers.new_child(world, entities.screen.settings_data);
-    ecs.add_pair(
-        world,
-        player,
-        entities.mob.HasBoundingBox,
-        bounding_box,
-    );
-    _ = ecs.set(
-        world,
-        bounding_box,
-        components.mob.BoundingBox,
-        .{ .mob_id = 1, .mob_entity = player },
-    );
-    std.debug.print("added mob_id 1 for bounding box on entity: {d}\n", .{bounding_box});
-    ecs.add(world, bounding_box, components.mob.NeedsSetup);
 }

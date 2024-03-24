@@ -190,14 +190,11 @@ const extractions = struct {
     }
 
     fn extractBoundingBox(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
-        if (!ecs.has_id(world, entity, ecs.id(components.mob.BoundingBox))) {
-            std.debug.print("no bounding box! entity: {d}\n", .{entity});
-        }
+        if (!ecs.has_id(world, entity, ecs.id(components.mob.BoundingBox))) return;
         if (ecs.get_id(world, entity, ecs.id(components.mob.BoundingBox))) |opaque_ptr| {
             const bb: *const components.mob.BoundingBox = @ptrCast(@alignCast(opaque_ptr));
             e.mob_id = bb.mob_id;
             e.outline = true;
-            std.debug.print("extractBoundingBox up bounding box with mob id: {d} entity: {d}\n", .{ e.mob_id, entity });
         }
     }
 

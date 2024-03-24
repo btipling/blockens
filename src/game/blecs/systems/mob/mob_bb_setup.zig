@@ -27,15 +27,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             const m: []components.mob.BoundingBox = ecs.field(it, components.mob.BoundingBox, 1) orelse return;
-            std.debug.print("setting up bounding box with mob id: {d} entity: {d}\n", .{ m[i].mob_id, entity });
             ecs.remove(world, entity, components.mob.NeedsSetup);
-            const ok = setupBoundingBox(world, entity, m[i].mob_entity) catch @panic("nope");
+            const ok = setupBoundingBox(world, entity, m[i].mob_id, m[i].mob_entity) catch @panic("nope");
             if (!ok) std.debug.panic("unable to set up bounding box.\n", .{});
         }
     }
 }
 
-fn setupBoundingBox(world: *ecs.world_t, entity: ecs.entity_t, parent: ecs.entity_t) !bool {
+fn setupBoundingBox(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, parent: ecs.entity_t) !bool {
     const m: *const components.mob.Mob = ecs.get(world, parent, components.mob.Mob) orelse return false;
     const data_entity = m.data_entity;
 
@@ -48,6 +47,14 @@ fn setupBoundingBox(world: *ecs.world_t, entity: ecs.entity_t, parent: ecs.entit
     }
     if (ecs.get(world, entity, components.mob.Rotation)) |r| {
         rotation = r.rotation;
+    }
+    switch (mob_id) {
+        1 => {
+            _ = ecs.set(world, entity, components.shape.Translation, .{
+                .translation = .{ -0.5, 0, -0.5, 0 },
+            });
+        },
+        else => std.debug.panic("unexpected mob id bounding box in setup bounding box {d}\n", .{mob_id}),
     }
     _ = ecs.set(world, entity, components.shape.Shape, .{ .shape_type = .bounding_box });
     {
