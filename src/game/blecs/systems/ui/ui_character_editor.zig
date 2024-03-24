@@ -8,6 +8,7 @@ const helpers = @import("../../helpers.zig");
 const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
 const script = @import("../../../script/script.zig");
+const screen_helpers = @import("../screen_helpers.zig");
 
 pub fn init() void {
     const s = system();
@@ -75,6 +76,12 @@ fn drawControls() !void {
         })) {
             try toggleBoundingBox();
         }
+        if (zgui.button("Toggle Wireframe", .{
+            .w = 500,
+            .h = 100,
+        })) {
+            toggleWireframe();
+        }
         zgui.popStyleVar(.{ .count = 1 });
     }
     zgui.endChild();
@@ -105,4 +112,13 @@ fn toggleBoundingBox() !void {
         ecs.add(world, bounding_box, components.gfx.CanDraw);
         return;
     }
+}
+
+fn toggleWireframe() void {
+    const screen: *const components.screen.Screen = ecs.get(
+        game.state.world,
+        game.state.entities.screen,
+        components.screen.Screen,
+    ) orelse unreachable;
+    screen_helpers.toggleWireframe(screen.current);
 }

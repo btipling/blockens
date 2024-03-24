@@ -69,6 +69,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     const indices: []u32 = er.indices;
     const texcoords: ?[][2]f32 = er.texcoords;
     const normals: ?[][3]f32 = er.normals;
+    const edges: ?[][2]f32 = er.edges;
     const keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = er.keyframes;
     defer game.state.allocator.free(vertexShader);
     defer game.state.allocator.free(fragmentShader);
@@ -119,10 +120,11 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         gl.STATIC_DRAW,
     );
     defer builder.deinit();
-    // if (er.is_multi_draw) builder.debug = true;
+    // if (er.edges != null) builder.debug = true;
     var pos_loc: u32 = 0;
     var tc_loc: u32 = 0;
     var nor_loc: u32 = 0;
+    var edge_loc: u32 = 0;
     var block_data_loc: u32 = 0;
     var attr_trans_loc: u32 = 0;
     // same order as defined in shader gen
@@ -132,6 +134,9 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     }
     if (normals) |_| {
         nor_loc = builder.defineFloatAttributeValue(3);
+    }
+    if (edges) |_| {
+        edge_loc = builder.defineFloatAttributeValue(2);
     }
     if (er.has_block_texture_atlas) {
         block_data_loc = builder.defineFloatAttributeValue(2);
@@ -157,6 +162,10 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
                     if (md.normals) |ns| {
                         var n = ns[ii];
                         builder.addFloatAtLocation(nor_loc, &n, vertex_index);
+                    }
+                    if (md.edges) |es| {
+                        var ec = es[@mod(ii, 4)]; // Edges: there are only 4 edge values, only work for cuboids
+                        builder.addFloatAtLocation(edge_loc, &ec, vertex_index);
                     }
                     if (er.has_block_texture_atlas) {
                         const bi = e.block_id;
@@ -184,6 +193,10 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             if (normals) |ns| {
                 var n = ns[ii];
                 builder.addFloatAtLocation(nor_loc, &n, ii);
+            }
+            if (edges) |es| {
+                var ec = es[@mod(ii, 4)]; // See "Edges" above
+                builder.addFloatAtLocation(edge_loc, &ec, ii);
             }
             if (er.has_block_texture_atlas) {
                 var block_index: f32 = 0;
@@ -297,5 +310,6 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         defer game.state.allocator.free(indices);
         defer if (texcoords) |t| game.state.allocator.free(t);
         defer if (normals) |n| game.state.allocator.free(n);
+        defer if (edges) |e| game.state.allocator.free(e);
     }
 }

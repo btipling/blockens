@@ -532,6 +532,19 @@ pub fn initDemoCharacter() void {
             components.mob.BoundingBox,
             .{ .mob_id = 1, .mob_entity = player },
         );
+        const c = math.vecs.Vflx4.initBytes(255, 255, 255, 255);
+        _ = ecs.set(
+            world,
+            bounding_box,
+            components.shape.Outline,
+            .{ .color = c.value },
+        );
+        _ = ecs.set(
+            world,
+            bounding_box,
+            components.shape.Color,
+            .{ .color = .{ 0, 0, 0, 0 } },
+        );
         ecs.add(world, bounding_box, components.mob.NeedsSetup);
     }
     ecs.add(world, game.state.entities.demo_player, components.mob.NeedsSetup);

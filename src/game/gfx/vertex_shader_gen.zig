@@ -21,6 +21,7 @@ pub const VertexShaderGen = struct {
         animation_id: ?u32 = 0,
         num_animation_frames: u32 = 0,
         has_normals: bool = false,
+        has_edges: bool = false,
         has_block_data: bool = false,
         has_attr_translation: bool = false,
         scale: ?@Vector(4, f32) = null,
@@ -99,6 +100,11 @@ pub const VertexShaderGen = struct {
                 r.l(&line);
                 r.location += 1;
             }
+            if (r.cfg.has_edges) {
+                line = try shader_helpers.attribute_location(r.location, "bl_edge_coord", .vec2);
+                r.l(&line);
+                r.location += 1;
+            }
             if (r.cfg.has_block_data) {
                 line = try shader_helpers.attribute_location(r.location, "block_data", .vec2);
                 r.l(&line);
@@ -129,6 +135,9 @@ pub const VertexShaderGen = struct {
             }
             if (r.cfg.has_normals) {
                 r.a("flat out vec3 fragNormal;\n");
+            }
+            if (r.cfg.has_edges) {
+                r.a("out vec2 bl_edge;\n");
             }
 
             if (r.cfg.has_block_data) {
@@ -370,6 +379,9 @@ pub const VertexShaderGen = struct {
             r.a("    gl_Position = pos;\n");
             if (r.cfg.has_texture_coords) {
                 r.a("    TexCoord = eTexCoord;\n");
+            }
+            if (r.cfg.has_edges) {
+                r.a("    bl_edge = bl_edge_coord;\n");
             }
             if (r.cfg.is_meshed) {
                 r.a("    bl_surface_height = ");

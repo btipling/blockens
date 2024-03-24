@@ -157,6 +157,7 @@ pub const ElementsRendererConfig = struct {
     indices: []u32 = undefined,
     texcoords: ?[][2]f32 = null,
     normals: ?[][3]f32 = null,
+    edges: ?[][2]f32 = null,
     transform: ?zm.Mat = null,
     ubo_binding_point: ?u32 = null,
     demo_cube_texture: ?struct { usize, usize } = null,

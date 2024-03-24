@@ -79,6 +79,7 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         .demo_cube_texture = dc,
         .texcoords = mesh_data.texcoords,
         .normals = mesh_data.normals,
+        .edges = mesh_data.edges,
         .keyframes = e.keyframes,
         .animation_binding_point = e.animation_binding_point,
         .is_instanced = e.is_instanced,
@@ -107,6 +108,7 @@ const shaders = struct {
             .translation = e.translation,
             .has_texture_coords = mesh_data.texcoords != null,
             .has_normals = mesh_data.normals != null,
+            .has_edges = e.outline_color != null,
             .animation_block_index = e.animation_binding_point,
             .animation_id = e.animation_id,
             .is_instanced = e.is_instanced,
@@ -145,7 +147,7 @@ const shaders = struct {
             .has_normals = mesh_data.normals != null,
             .is_meshed = e.is_meshed,
             .has_block_data = e.has_texture_atlas,
-            .outline = e.outline,
+            .outline_color = e.outline_color,
         };
         return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;
     }
@@ -156,6 +158,7 @@ const extractions = struct {
     scale: ?@Vector(4, f32) = null,
     translation: ?@Vector(4, f32) = null,
     color: ?@Vector(4, f32) = null,
+    outline_color: ?@Vector(4, f32) = null,
     debug: bool = false,
     has_ubo: bool = false,
     ubo_binding_point: u32 = 0,
@@ -175,7 +178,6 @@ const extractions = struct {
     has_mob_texture: bool = false,
     mesh_transforms: ?std.ArrayList(gfx.shadergen.vertex.MeshTransforms) = null,
     is_multi_draw: bool = false,
-    outline: bool = false,
     mob_id: i32 = 0,
 
     fn deinit(self: *extractions) void {
@@ -194,7 +196,14 @@ const extractions = struct {
         if (ecs.get_id(world, entity, ecs.id(components.mob.BoundingBox))) |opaque_ptr| {
             const bb: *const components.mob.BoundingBox = @ptrCast(@alignCast(opaque_ptr));
             e.mob_id = bb.mob_id;
-            e.outline = true;
+        }
+    }
+
+    fn extractOutline(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
+        if (!ecs.has_id(world, entity, ecs.id(components.shape.Outline))) return;
+        if (ecs.get_id(world, entity, ecs.id(components.shape.Outline))) |opaque_ptr| {
+            const ol: *const components.shape.Outline = @ptrCast(@alignCast(opaque_ptr));
+            e.outline_color = ol.color;
         }
     }
 
@@ -382,6 +391,7 @@ const extractions = struct {
         extractAnimation(&e, world, entity);
         extractMultiDraw(&e, world, entity);
         extractBoundingBox(&e, world, entity);
+        extractOutline(&e, world, entity);
         return e;
     }
 };

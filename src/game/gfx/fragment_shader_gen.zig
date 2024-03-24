@@ -11,9 +11,9 @@ pub const FragmentShaderGen = struct {
         has_texture_coords: bool = false,
         has_normals: bool = false,
         color: ?@Vector(4, f32) = null,
+        outline_color: ?@Vector(4, f32) = null,
         is_meshed: bool = false,
         has_block_data: bool = false,
-        outline: bool = false,
     };
 
     // genFragmentShader - call ower owns the returned slice
@@ -64,6 +64,9 @@ pub const FragmentShaderGen = struct {
             if (r.cfg.has_normals) {
                 r.a("\nflat in vec3 fragNormal;\n");
             }
+            if (r.cfg.outline_color != null) {
+                r.a("\nin vec2 bl_edge;\n");
+            }
             if (r.cfg.is_meshed and r.cfg.has_block_data) {
                 r.a("flat in float bl_block_index;\n");
                 r.a("flat in float bl_num_blocks;\n");
@@ -76,7 +79,7 @@ pub const FragmentShaderGen = struct {
             // magenta to highlight shader without materials
             if (r.cfg.color) |c| {
                 const line = try shader_helpers.vec4_to_buf("    vec4 Color = vec4({d}, {d}, {d}, {d});\n", c[0], c[1], c[2], c[3]);
-                r.a(std.mem.sliceTo(&line, 0));
+                r.l(&line);
             } else {
                 r.a("    vec4 Color = vec4(1.0, 0.0, 1.0, 1.0);\n");
             }
@@ -90,6 +93,11 @@ pub const FragmentShaderGen = struct {
                     r.a("    textColor = vec4(1.0, 0.0, 1.0, 1.0);\n");
                 }
                 r.a("    Color = mix(Color, textColor, textColor.a);\n");
+            }
+            if (r.cfg.outline_color) |c| {
+                const line = try shader_helpers.vec4_to_buf("    vec4 bl_outline_c = vec4({d}, {d}, {d}, {d});\n", c[0], c[1], c[2], c[3]);
+                r.l(&line);
+                r.a(@embedFile("fragments/outline.fs.txt"));
             }
             r.a("    if (Color.a < 0.5) {\n");
             r.a("        discard;\n");
