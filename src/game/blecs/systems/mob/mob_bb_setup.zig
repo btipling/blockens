@@ -66,6 +66,7 @@ fn setupBoundingBox(world: *ecs.world_t, entity: ecs.entity_t, mob_id: i32, pare
             _ = ecs.set(world, entity, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
         }
     }
+    ecs.add(world, entity, components.gfx.ManuallyHidden);
     ecs.add(world, entity, components.Debug);
     ecs.add(world, entity, components.shape.NeedsSetup);
     return true;

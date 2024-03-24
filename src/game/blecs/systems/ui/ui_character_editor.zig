@@ -105,11 +105,11 @@ fn toggleBoundingBox() !void {
 
     const bounding_box = ecs.get_target(world, player, entities.mob.HasBoundingBox, 0);
     if (bounding_box != 0) {
-        if (ecs.has_id(world, bounding_box, ecs.id(components.gfx.CanDraw))) {
-            ecs.remove(world, bounding_box, components.gfx.CanDraw);
+        if (ecs.has_id(world, bounding_box, ecs.id(components.gfx.ManuallyHidden))) {
+            ecs.remove(world, bounding_box, components.gfx.ManuallyHidden);
             return;
         }
-        ecs.add(world, bounding_box, components.gfx.CanDraw);
+        ecs.add(world, bounding_box, components.gfx.ManuallyHidden);
         return;
     }
 }
