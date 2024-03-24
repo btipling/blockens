@@ -1,0 +1,16 @@
+    // bl_edge && bl_outline_c must be set. 
+    // this draws an outline.
+    float bl_baryc_threshold = 0.01;
+    float bl_edge_max_threshold = 0.99;
+    float bl_edge_min_threshold = 0.01;
+    if (bl_baryc.x < bl_baryc_threshold || bl_baryc.y < bl_baryc_threshold || bl_baryc.z < bl_baryc_threshold) {
+        if (bl_edge.s > bl_edge_max_threshold) {
+            Color = bl_outline_c;
+        } else if (bl_edge.t > bl_edge_max_threshold ) {
+            Color = bl_outline_c;
+        } else if (bl_edge.s < bl_edge_min_threshold) {
+            Color = bl_outline_c;
+        } else if (bl_edge.t < bl_edge_min_threshold) {
+            Color = bl_outline_c;
+        }
+    }

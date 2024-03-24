@@ -11,6 +11,7 @@ pub const Shape = struct {
         meshed_voxel,
         multidraw_voxel,
         mob,
+        bounding_box,
     };
 };
 
@@ -49,6 +50,10 @@ pub const Position = struct {
     position: @Vector(4, f32) = undefined,
 };
 
+pub const Outline = struct {
+    color: @Vector(4, f32) = undefined,
+};
+
 pub const DemoCubeTexture = struct {
     beg: usize,
     end: usize,
@@ -68,6 +73,7 @@ pub fn init() void {
     ecs.COMPONENT(world, Rotation);
     ecs.COMPONENT(world, Scale);
     ecs.COMPONENT(world, Translation);
+    ecs.COMPONENT(world, Outline);
     ecs.COMPONENT(world, UBO);
     ecs.COMPONENT(world, DemoCubeTexture);
     ecs.TAG(world, NeedsSetup);

@@ -4,9 +4,11 @@ const zgui = @import("zgui");
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
+const helpers = @import("../../helpers.zig");
 const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
 const script = @import("../../../script/script.zig");
+const screen_helpers = @import("../screen_helpers.zig");
 
 pub fn init() void {
     const s = system();
@@ -50,23 +52,35 @@ fn drawControls() !void {
     if (zgui.beginChild(
         "Saved Worlds",
         .{
-            .w = 510,
+            .w = 610,
             .h = 2100,
             .border = true,
         },
     )) {
         zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
         if (zgui.button("Generate character", .{
-            .w = 500,
+            .w = 600,
             .h = 100,
         })) {
             try generateCharacter();
         }
         if (zgui.button("Toggle walking", .{
-            .w = 500,
+            .w = 600,
             .h = 100,
         })) {
             try toggleWalking();
+        }
+        if (zgui.button("Toggle Bounding Box", .{
+            .w = 600,
+            .h = 100,
+        })) {
+            try toggleBoundingBox();
+        }
+        if (zgui.button("Toggle Wireframe", .{
+            .w = 600,
+            .h = 100,
+        })) {
+            toggleWireframe();
         }
         zgui.popStyleVar(.{ .count = 1 });
     }
@@ -83,4 +97,28 @@ fn toggleWalking() !void {
         return;
     }
     ecs.add(game.state.world, game.state.entities.demo_player, components.mob.Walking);
+}
+
+fn toggleBoundingBox() !void {
+    const world = game.state.world;
+    const player = game.state.entities.demo_player;
+
+    const bounding_box = ecs.get_target(world, player, entities.mob.HasBoundingBox, 0);
+    if (bounding_box != 0) {
+        if (ecs.has_id(world, bounding_box, ecs.id(components.gfx.ManuallyHidden))) {
+            ecs.remove(world, bounding_box, components.gfx.ManuallyHidden);
+            return;
+        }
+        ecs.add(world, bounding_box, components.gfx.ManuallyHidden);
+        return;
+    }
+}
+
+fn toggleWireframe() void {
+    const screen: *const components.screen.Screen = ecs.get(
+        game.state.world,
+        game.state.entities.screen,
+        components.screen.Screen,
+    ) orelse unreachable;
+    screen_helpers.toggleWireframe(screen.current);
 }

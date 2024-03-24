@@ -3,7 +3,10 @@ const ecs = @import("zflecs");
 const game = @import("../../game.zig");
 
 pub var HasMesh: ecs.entity_t = 0;
+pub var HasBoundingBox: ecs.entity_t = 0;
 
 pub fn init() void {
-    HasMesh = ecs.new_id(game.state.world);
+    const world = game.state.world;
+    HasMesh = ecs.new_id(world);
+    HasBoundingBox = ecs.new_id(world);
 }

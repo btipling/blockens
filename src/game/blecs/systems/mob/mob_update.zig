@@ -53,6 +53,15 @@ fn updateMob(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), ro
         ecs.add(world, child_entity, components.gfx.NeedsUniformUpdate);
         i += 1;
     }
+    i = 0;
+    while (true) {
+        const child_entity = ecs.get_target(world, entity, entities.mob.HasBoundingBox, i);
+        if (child_entity == 0) break;
+        _ = ecs.set(world, child_entity, components.screen.WorldRotation, .{ .rotation = rotation });
+        _ = ecs.set(world, child_entity, components.screen.WorldLocation, .{ .loc = loc });
+        ecs.add(world, child_entity, components.gfx.NeedsUniformUpdate);
+        i += 1;
+    }
 }
 
 fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: @Vector(4, f32)) void {

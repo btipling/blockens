@@ -70,6 +70,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     if (zgui.menuItem("Toogle Chunks Info", .{})) {
                         screen_helpers.toggleGameChunksInfo();
                     }
+                    if (zgui.menuItem("Toogle Mob Info", .{})) {
+                        screen_helpers.toggleGameMobInfo();
+                    }
                     zgui.endMenu();
                 }
                 const ww = zgui.getWindowWidth();
