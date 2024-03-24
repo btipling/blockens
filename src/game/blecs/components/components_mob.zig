@@ -14,6 +14,10 @@ pub const Mesh = struct {
 pub const Health = struct {
     health: u32 = 0,
 };
+pub const Falling = struct {
+    velocity: f32 = 0,
+    started: i64 = 0,
+};
 pub const NeedsSetup = struct {};
 pub const NeedsUpdate = struct {};
 pub const DidUpdate = struct {};
@@ -38,6 +42,7 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, Position);
     ecs.COMPONENT(game.state.world, Rotation);
     ecs.COMPONENT(game.state.world, BoundingBox);
+    ecs.COMPONENT(game.state.world, Falling);
     ecs.TAG(game.state.world, NeedsSetup);
     ecs.TAG(game.state.world, NeedsUpdate);
     ecs.TAG(game.state.world, DidUpdate);

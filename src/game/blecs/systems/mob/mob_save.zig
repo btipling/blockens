@@ -28,6 +28,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             const m: []components.mob.Mob = ecs.field(it, components.mob.Mob, 1) orelse continue;
             ecs.remove(world, entity, components.mob.DidUpdate);
+            if (ecs.has_id(world, entity, ecs.id(components.mob.Falling))) continue;
             var loc: @Vector(4, f32) = .{ 1, 1, 1, 1 };
             var rotation: @Vector(4, f32) = .{ 0, 0, 0, 1 };
             var angle: f32 = 0;

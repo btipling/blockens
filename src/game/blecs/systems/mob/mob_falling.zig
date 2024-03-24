@@ -26,10 +26,58 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             const m = ecs.field(it, components.mob.Mob, 1) orelse continue;
-            if (checkMob(world, entity, m[i])) return;
-            std.debug.print("mob is falling\n", .{});
+            if (checkMob(world, entity, m[i])) {
+                if (ecs.has_id(world, entity, ecs.id(components.mob.Falling))) {
+                    ecs.remove(world, entity, components.mob.Falling);
+                }
+                continue;
+            }
+            dropMob(world, entity);
         }
     }
+}
+
+const gravity: f32 = 1.0001;
+const starting_velocity: f32 = 0.0001;
+const max_velocity = 0.25;
+fn dropMob(world: *ecs.world_t, entity: ecs.entity_t) void {
+    const mp: *components.mob.Position = ecs.get_mut(
+        world,
+        entity,
+        components.mob.Position,
+    ) orelse std.debug.panic("No position for mob\n", .{});
+    ecs.add(world, entity, components.mob.NeedsUpdate);
+    if (!ecs.has_id(world, entity, ecs.id(components.mob.Falling))) {
+        var updated_pos = mp.position;
+        updated_pos[1] -= starting_velocity;
+        mp.position = updated_pos;
+        _ = ecs.set(
+            world,
+            entity,
+            components.mob.Falling,
+            .{
+                .velocity = starting_velocity,
+                .started = std.time.milliTimestamp(),
+            },
+        );
+        return;
+    }
+    const mf: *components.mob.Falling = ecs.get_mut(
+        world,
+        entity,
+        components.mob.Falling,
+    ) orelse std.debug.panic("expected falling to be present\n", .{});
+    const now: i64 = std.time.milliTimestamp();
+    var delta: f32 = @as(f32, @floatFromInt(now - mf.started)) / 1000;
+    if (delta < 1) return;
+    delta = @floor(delta);
+    const new_velocity = mf.velocity * gravity * delta;
+    var updated_pos = mp.position;
+    updated_pos[1] -= mf.velocity;
+    if (updated_pos[1] < 0) return;
+    mp.position = updated_pos;
+    if (new_velocity > max_velocity) return;
+    mf.velocity = new_velocity;
 }
 
 fn checkMob(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.Mob) bool {
@@ -38,6 +86,9 @@ fn checkMob(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.Mob) 
         loc = p.position;
     } else {
         return true;
+    }
+    if (loc[1] < 0) {
+        return false;
     }
     const mob_data: *const game_mob.Mob = game.state.gfx.mob_data.get(mob.mob_id) orelse return true;
     const bottom_bounds = mob_data.getBottomBounds();
