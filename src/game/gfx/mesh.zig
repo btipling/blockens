@@ -180,6 +180,52 @@ const cube_normals: [36][3]f32 = .{
     .{ 0.0, 1.0, 0.0 },
 };
 
+const bounding_box_positions: [36][3]f32 = .{
+    // front
+    .{ 0, 0, 1 },
+    .{ 1, 0, 1 },
+    .{ 1, 1, 1 },
+    .{ 0, 0, 1 },
+    .{ 1, 1, 1 },
+    .{ 0, 1, 1 },
+
+    // right
+    .{ 1, 0, 1 },
+    .{ 1, 0, 0 },
+    .{ 1, 1, 0 },
+    .{ 1, 0, 1 },
+    .{ 1, 1, 0 },
+    .{ 1, 1, 1 },
+    // back
+    .{ 1, 0, 0 },
+    .{ 0, 0, 0 },
+    .{ 0, 1, 0 },
+    .{ 1, 0, 0 },
+    .{ 0, 1, 0 },
+    .{ 1, 1, 0 },
+    // left
+    .{ 0, 0, 0 },
+    .{ 0, 0, 1 },
+    .{ 0, 1, 1 },
+    .{ 0, 0, 0 },
+    .{ 0, 1, 1 },
+    .{ 0, 1, 0 },
+    // bottom
+    .{ 0, 0, 0 },
+    .{ 1, 0, 0 },
+    .{ 1, 0, 1 },
+    .{ 0, 0, 0 },
+    .{ 1, 0, 1 },
+    .{ 0, 0, 1 },
+    // top
+    .{ 0, 1, 1 },
+    .{ 1, 1, 1 },
+    .{ 1, 1, 0 },
+    .{ 0, 1, 1 },
+    .{ 1, 1, 0 },
+    .{ 0, 1, 0 },
+};
+
 pub fn cube() meshData {
     const positions: [][3]f32 = game.state.allocator.alloc([3]f32, cube_positions.len) catch unreachable;
     @memcpy(positions, &cube_positions);
@@ -257,4 +303,30 @@ pub fn mob(world: *blecs.ecs.world_t, entity: blecs.ecs.entity_t) meshData {
     const normals: [][3]f32 = game.state.allocator.alloc([3]f32, mesh.normals.items.len) catch unreachable;
     @memcpy(normals, mesh.normals.items);
     return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
+}
+
+// bounding_box: just return positions and indicies and just draw box edges around a mob
+// Just cuboids atm, no complex bounding boxes.
+pub fn bounding_box(mob_id: i32) meshData {
+    var x_scale: f32 = 1;
+    var y_scale: f32 = 1;
+    var z_scale: f32 = 1;
+    switch (mob_id) {
+        1 => {
+            x_scale = 1;
+            y_scale = 2;
+            z_scale = 1;
+        },
+        else => std.debug.panic("Unexpected mob id in bounding box mesh lookup {d}\n", .{mob_id}),
+    }
+    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, bounding_box_positions.len) catch unreachable;
+    @memcpy(positions, &bounding_box_positions);
+    for (0..positions.len) |i| {
+        positions[i][0] *= x_scale;
+        positions[i][1] *= y_scale;
+        positions[i][2] *= z_scale;
+    }
+    const indices: []u32 = game.state.allocator.alloc(u32, cube_indices.len) catch unreachable;
+    @memcpy(indices, &cube_indices);
+    return .{ .positions = positions, .indices = indices };
 }

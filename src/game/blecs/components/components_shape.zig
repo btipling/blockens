@@ -11,6 +11,7 @@ pub const Shape = struct {
         meshed_voxel,
         multidraw_voxel,
         mob,
+        bounding_box,
     };
 };
 

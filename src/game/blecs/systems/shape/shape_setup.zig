@@ -43,14 +43,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 }
 
 fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Shape) void {
-    var e = extractions.extract(world, entity) catch unreachable;
+    var e = extractions.extract(world, entity) catch @panic("nope");
     defer e.deinit();
 
     const mesh_data: gfx.mesh.meshData = switch (sh.shape_type) {
         .plane => gfx.mesh.plane(),
         .cube => gfx.mesh.cube(),
         .meshed_voxel => blk: {
-            const data: *const components.block.BlockData = ecs.get(world, entity, components.block.BlockData) orelse unreachable;
+            const data: *const components.block.BlockData = ecs.get(world, entity, components.block.BlockData) orelse @panic("nope");
             var c: *chunk.Chunk = undefined;
             if (data.is_settings) {
                 c = game.state.gfx.settings_chunks.get(data.chunk_world_position).?;
@@ -61,9 +61,10 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         },
         .multidraw_voxel => gfx.mesh.cube(), // just to setup the positions
         .mob => gfx.mesh.mob(world, entity),
+        .bounding_box => gfx.mesh.bounding_box(e.mob_id), // just to setup the positions
     };
 
-    var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch unreachable;
+    var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch @panic("nope");
     var dc: ?struct { usize, usize } = null;
     if (e.has_demo_cube_texture) {
         dc = struct { usize, usize }{ e.dc_t_beg, e.dc_t_end };
@@ -144,6 +145,7 @@ const shaders = struct {
             .has_normals = mesh_data.normals != null,
             .is_meshed = e.is_meshed,
             .has_block_data = e.has_texture_atlas,
+            .outline = e.outline,
         };
         return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;
     }
@@ -173,6 +175,8 @@ const extractions = struct {
     has_mob_texture: bool = false,
     mesh_transforms: ?std.ArrayList(gfx.shadergen.vertex.MeshTransforms) = null,
     is_multi_draw: bool = false,
+    outline: bool = false,
+    mob_id: i32 = 0,
 
     fn deinit(self: *extractions) void {
         if (self.mesh_transforms) |mt| mt.deinit();
@@ -182,6 +186,18 @@ const extractions = struct {
         if (ecs.has_id(world, entity, ecs.id(components.block.UseMultiDraw))) {
             e.is_multi_draw = true;
             e.is_meshed = true;
+        }
+    }
+
+    fn extractBoundingBox(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
+        if (!ecs.has_id(world, entity, ecs.id(components.mob.BoundingBox))) {
+            std.debug.print("no bounding box! entity: {d}\n", .{entity});
+        }
+        if (ecs.get_id(world, entity, ecs.id(components.mob.BoundingBox))) |opaque_ptr| {
+            const bb: *const components.mob.BoundingBox = @ptrCast(@alignCast(opaque_ptr));
+            e.mob_id = bb.mob_id;
+            e.outline = true;
+            std.debug.print("extractBoundingBox up bounding box with mob id: {d} entity: {d}\n", .{ e.mob_id, entity });
         }
     }
 
@@ -212,6 +228,7 @@ const extractions = struct {
         const mesh: *game_state.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
         e.has_mob_texture = mesh.texture != null;
         e.color = mesh.color;
+        e.mob_id = mob_c.mob_id;
         var cm = mesh;
         while (true) {
             if (e.mesh_transforms == null) {
@@ -367,6 +384,7 @@ const extractions = struct {
         try extractMesh(&e, world, entity);
         extractAnimation(&e, world, entity);
         extractMultiDraw(&e, world, entity);
+        extractBoundingBox(&e, world, entity);
         return e;
     }
 };

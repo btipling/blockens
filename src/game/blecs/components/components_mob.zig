@@ -19,6 +19,10 @@ pub const NeedsUpdate = struct {};
 pub const DidUpdate = struct {};
 pub const Texture = struct {};
 pub const Walking = struct {};
+pub const BoundingBox = struct {
+    mob_id: i32 = 0,
+    mob_entity: ecs.entity_t = 0,
+};
 pub const Position = struct {
     position: @Vector(4, f32) = .{ 1, 1, 1, 1 },
 };
@@ -33,6 +37,7 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, Health);
     ecs.COMPONENT(game.state.world, Position);
     ecs.COMPONENT(game.state.world, Rotation);
+    ecs.COMPONENT(game.state.world, BoundingBox);
     ecs.TAG(game.state.world, NeedsSetup);
     ecs.TAG(game.state.world, NeedsUpdate);
     ecs.TAG(game.state.world, DidUpdate);

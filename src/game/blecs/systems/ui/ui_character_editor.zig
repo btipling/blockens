@@ -4,6 +4,7 @@ const zgui = @import("zgui");
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
+const helpers = @import("../../helpers.zig");
 const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
 const script = @import("../../../script/script.zig");
@@ -68,6 +69,12 @@ fn drawControls() !void {
         })) {
             try toggleWalking();
         }
+        if (zgui.button("Toggle Bounding Box", .{
+            .w = 500,
+            .h = 100,
+        })) {
+            try toggleBoundingBox();
+        }
         zgui.popStyleVar(.{ .count = 1 });
     }
     zgui.endChild();
@@ -83,4 +90,36 @@ fn toggleWalking() !void {
         return;
     }
     ecs.add(game.state.world, game.state.entities.demo_player, components.mob.Walking);
+}
+
+fn toggleBoundingBox() !void {
+    const world = game.state.world;
+    const player = game.state.entities.demo_player;
+
+    var bounding_box = ecs.get_target(world, player, entities.mob.HasBoundingBox, 0);
+    if (bounding_box != 0) {
+        if (ecs.has_id(world, bounding_box, ecs.id(components.gfx.CanDraw))) {
+            ecs.remove(world, bounding_box, components.gfx.CanDraw);
+            return;
+        }
+        ecs.add(world, bounding_box, components.gfx.CanDraw);
+        return;
+    }
+    bounding_box = ecs.new_id(world);
+
+    bounding_box = helpers.new_child(world, entities.screen.settings_data);
+    ecs.add_pair(
+        world,
+        player,
+        entities.mob.HasBoundingBox,
+        bounding_box,
+    );
+    _ = ecs.set(
+        world,
+        bounding_box,
+        components.mob.BoundingBox,
+        .{ .mob_id = 1, .mob_entity = player },
+    );
+    std.debug.print("added mob_id 1 for bounding box on entity: {d}\n", .{bounding_box});
+    ecs.add(world, bounding_box, components.mob.NeedsSetup);
 }
