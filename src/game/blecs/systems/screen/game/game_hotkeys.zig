@@ -164,9 +164,9 @@ fn playerB() void {
     const rot = rotation.rotation;
     const pos = position.position;
     const speed = 2.5 * game.state.input.delta_time;
-    const player_speed: @Vector(4, f32) = @splat(speed);
+    const player_speed: @Vector(4, f32) = @splat(-speed);
     const front_vector: @Vector(4, f32) = zm.rotate(rot, gfx.cltf.forward_vec);
-    const np = pos - front_vector * player_speed;
+    const np = pos + front_vector * player_speed;
     position.position = np;
     ecs.add(game.state.world, game.state.entities.player, components.mob.Walking);
     ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
