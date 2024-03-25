@@ -80,6 +80,7 @@ pub const Mob = struct {
     // 24 - 30 bottom
     // 30 - 36 top
     bounding_box: ?[][3]f32 = null,
+    bounding_box_uniques: ?[][3]f32 = null,
     cameras: ?std.ArrayList(MobCamera) = null,
     allocator: std.mem.Allocator,
     pub fn init(allocator: std.mem.Allocator, id: i32, num_meshes: usize) *Mob {
@@ -106,6 +107,7 @@ pub const Mob = struct {
         }
         self.meshes.deinit();
         if (self.bounding_box) |b| self.allocator.free(b);
+        if (self.bounding_box_uniques) |b| self.allocator.free(b);
     }
 
     fn loadBoundingBox(self: *Mob) void {
@@ -114,10 +116,29 @@ pub const Mob = struct {
         const positions: [][3]f32 = game.state.allocator.alloc([3]f32, data.positions.len) catch unreachable;
         @memcpy(positions, data.positions);
         self.bounding_box = positions;
+        const num_unique_vertices_in_cuboid = 8;
+        const unique_positions: [][3]f32 = game.state.allocator.alloc([3]f32, num_unique_vertices_in_cuboid) catch unreachable;
+        // just get unique bounds based on how they're defined in gfx/mesh.zig
+        // zig fmt: off
+        unique_positions[0] = .{ 0, 0, 0 };       // .{ 0, 0, 0 }
+        unique_positions[1] = data.positions[0];  // .{ 0, 0, n }
+        unique_positions[2] = data.positions[14]; // .{ 0, n, 0 }
+        unique_positions[3] = data.positions[5];  // .{ 0, n, n }
+        unique_positions[4] = data.positions[12]; // .{ n, 0, 0 }
+        unique_positions[5] = data.positions[1];  // .{ n, 0, n }
+        unique_positions[6] = data.positions[8];  // .{ n, n, 0 }
+        unique_positions[7] = data.positions[4];  // .{ n, n, n }
+        // zig fmt: on
+        self.bounding_box_uniques = unique_positions;
     }
 
     pub fn getBottomBounds(self: *const Mob) [][3]f32 {
+        const bb = self.bounding_box orelse @panic("nope");
         // 24 - 30 bottom
-        return self.bounding_box.?[24..30];
+        return bb[24..30];
+    }
+
+    pub fn getAllBounds(self: *const Mob) [][3]f32 {
+        return self.bounding_box_uniques orelse @panic("nope");
     }
 };
