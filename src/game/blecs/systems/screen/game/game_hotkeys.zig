@@ -79,11 +79,11 @@ fn toggleCamera() void {
 
 fn handleThirdPlayerCamKeys() ?glfw.Key {
     if (input.keys.holdKey(.w)) {
-        playerF();
+        playerF(input.keys.holdKey(.left_shift));
         return .w;
     }
     if (input.keys.holdKey(.s)) {
-        playerB();
+        playerB(input.keys.holdKey(.left_shift));
         return .w;
     }
     return null;
@@ -125,14 +125,15 @@ fn playerRR() void {
     ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
 }
 
-fn playerF() void {
+fn playerF(running: bool) void {
     const rotation: *const components.mob.Rotation = ecs.get(
         game.state.world,
         game.state.entities.player,
         components.mob.Rotation,
     ) orelse return;
     const rot = rotation.rotation;
-    const speed = 2.5 * game.state.input.delta_time;
+    const speed_delta: f32 = if (running) 5 else 2.5;
+    const speed = speed_delta * game.state.input.delta_time;
     const front_vector: @Vector(4, f32) = zm.rotate(rot, gfx.cltf.forward_vec);
     _ = ecs.set(
         game.state.world,
@@ -147,14 +148,15 @@ fn playerF() void {
     ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
 }
 
-fn playerB() void {
+fn playerB(running: bool) void {
     const rotation: *const components.mob.Rotation = ecs.get(
         game.state.world,
         game.state.entities.player,
         components.mob.Rotation,
     ) orelse return;
     const rot = rotation.rotation;
-    const speed = 2.5 * game.state.input.delta_time;
+    const speed_delta: f32 = if (running) 5 else 2.5;
+    const speed = speed_delta * game.state.input.delta_time;
     const inverse: @Vector(4, f32) = @splat(-1);
     const front_vector: @Vector(4, f32) = zm.rotate(rot, gfx.cltf.forward_vec);
     _ = ecs.set(
@@ -184,7 +186,7 @@ fn handleSkyCamKeys() ?glfw.Key {
     if (input.keys.holdKey(.space)) skyCamU();
     if (input.keys.holdKey(.left_shift)) skyCamD();
     if (input.keys.holdKey(.up)) {
-        playerF();
+        playerF(false);
         return .up;
     } else if (input.keys.holdKey(.left)) {
         playerRL();
