@@ -26,6 +26,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             if (ecs.has_id(world, entity, ecs.id(components.mob.Walking))) {
                 game.state.gfx.animations_running = game.state.gfx.animations_running | gfx.constants.DemoCharacterWalkingAnimationID;
+            } else if (ecs.has_id(world, entity, ecs.id(components.mob.Turning))) {
+                game.state.gfx.animations_running = game.state.gfx.animations_running | gfx.constants.DemoCharacterWalkingAnimationID;
             } else {
                 game.state.gfx.animations_running = game.state.gfx.animations_running & ~gfx.constants.DemoCharacterWalkingAnimationID;
             }

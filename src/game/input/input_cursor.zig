@@ -106,7 +106,7 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
     }
 
     if (is_game_camera and camera != game.state.entities.sky_camera) {
-        const rotation: *blecs.components.mob.Rotation = blecs.ecs.get_mut(
+        const rotation: *const blecs.components.mob.Rotation = blecs.ecs.get(
             game.state.world,
             game.state.entities.player,
             blecs.components.mob.Rotation,
@@ -116,8 +116,11 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
         const up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 };
         const turn = zm.quatFromNormAxisAngle(up, angle);
         const new_rot: @Vector(4, f32) = zm.rotate(rot, turn);
-        rotation.rotation = new_rot;
-        rotation.angle = angle;
+        _ = blecs.ecs.set(game.state.world, game.state.entities.player, blecs.components.mob.Turning, .{
+            .rotation = new_rot,
+            .angle = angle,
+            .last_moved = game.state.input.lastframe,
+        });
         blecs.ecs.add(game.state.world, game.state.entities.player, blecs.components.mob.NeedsUpdate);
     }
     camera_front.front = zm.normalize4(front);

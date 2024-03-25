@@ -9,7 +9,7 @@ const gfx = @import("../../../gfx/gfx.zig");
 
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "MobUpdateSystem", ecs.PreUpdate, @constCast(&s));
+    ecs.SYSTEM(game.state.world, "MobUpdateSystem", ecs.OnUpdate, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {

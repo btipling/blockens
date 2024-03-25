@@ -22,7 +22,16 @@ pub const NeedsSetup = struct {};
 pub const NeedsUpdate = struct {};
 pub const DidUpdate = struct {};
 pub const Texture = struct {};
-pub const Walking = struct {};
+pub const Walking = struct {
+    direction_vector: @Vector(4, f32) = .{ 0, 0, -1, 0 },
+    speed: f32 = 0,
+    last_moved: f32 = 0,
+};
+pub const Turning = struct {
+    rotation: @Vector(4, f32) = .{ 0, 0, 0, 0 },
+    angle: f32 = 0,
+    last_moved: f32 = 0,
+};
 pub const BoundingBox = struct {
     mob_id: i32 = 0,
     mob_entity: ecs.entity_t = 0,
@@ -43,9 +52,10 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, Rotation);
     ecs.COMPONENT(game.state.world, BoundingBox);
     ecs.COMPONENT(game.state.world, Falling);
+    ecs.COMPONENT(game.state.world, Walking);
+    ecs.COMPONENT(game.state.world, Turning);
     ecs.TAG(game.state.world, NeedsSetup);
     ecs.TAG(game.state.world, NeedsUpdate);
     ecs.TAG(game.state.world, DidUpdate);
     ecs.TAG(game.state.world, Texture);
-    ecs.TAG(game.state.world, Walking);
 }
