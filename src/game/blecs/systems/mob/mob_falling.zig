@@ -26,7 +26,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             const m = ecs.field(it, components.mob.Mob, 1) orelse continue;
-            if (checkMob(world, entity, m[i])) {
+            const not_falling = checkMob(world, entity, m[i]);
+            if (not_falling) {
                 if (ecs.has_id(world, entity, ecs.id(components.mob.Falling))) {
                     ecs.remove(world, entity, components.mob.Falling);
                 }
@@ -37,9 +38,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     }
 }
 
-const gravity: f32 = 1.0001;
-const starting_velocity: f32 = 0.0001;
-const max_velocity = 0.25;
+const gravity: f32 = 1;
+const starting_velocity: f32 = 0.25;
+const max_velocity = 0.75;
 fn dropMob(world: *ecs.world_t, entity: ecs.entity_t) void {
     const mp: *components.mob.Position = ecs.get_mut(
         world,
@@ -69,8 +70,7 @@ fn dropMob(world: *ecs.world_t, entity: ecs.entity_t) void {
     ) orelse std.debug.panic("expected falling to be present\n", .{});
     const now: i64 = std.time.milliTimestamp();
     var delta: f32 = @as(f32, @floatFromInt(now - mf.started)) / 1000;
-    if (delta < 1) return;
-    delta = @floor(delta);
+    delta += 1;
     const new_velocity = mf.velocity * gravity * delta;
     var updated_pos = mp.position;
     updated_pos[1] -= mf.velocity;

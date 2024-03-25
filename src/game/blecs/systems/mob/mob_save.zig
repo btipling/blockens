@@ -6,7 +6,7 @@ const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const save_job = @import("../../../thread/jobs/jobs_save.zig");
 
-const save_after_seconds: f64 = 5;
+const save_after_seconds: f64 = 15;
 
 pub fn init() void {
     const s = system();
