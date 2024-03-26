@@ -100,7 +100,9 @@ fn playerRL() void {
     const angle = rotation.angle + 0.025;
     const turn = zm.quatFromNormAxisAngle(up, angle * std.math.pi);
     const new_rot: @Vector(4, f32) = zm.rotate(rot, turn);
+    const front_vector: @Vector(4, f32) = zm.rotate(new_rot, gfx.cltf.forward_vec);
     _ = ecs.set(game.state.world, game.state.entities.player, components.mob.Turning, .{
+        .direction_vector = front_vector,
         .rotation = new_rot,
         .angle = angle,
     });
@@ -118,7 +120,9 @@ fn playerRR() void {
     const angle = rotation.angle - 0.025;
     const turn = zm.quatFromNormAxisAngle(up, angle * std.math.pi);
     const new_rot: @Vector(4, f32) = zm.rotate(rot, turn);
+    const front_vector: @Vector(4, f32) = zm.rotate(new_rot, gfx.cltf.forward_vec);
     _ = ecs.set(game.state.world, game.state.entities.player, components.mob.Turning, .{
+        .direction_vector = front_vector,
         .rotation = new_rot,
         .angle = angle,
     });

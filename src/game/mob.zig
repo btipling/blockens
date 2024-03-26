@@ -120,7 +120,7 @@ pub const Mob = struct {
         const unique_positions: [][3]f32 = game.state.allocator.alloc([3]f32, num_unique_vertices_in_cuboid) catch unreachable;
         // just get unique bounds based on how they're defined in gfx/mesh.zig
         // zig fmt: off
-        unique_positions[0] = .{ 0, 0, 0 };       // .{ 0, 0, 0 }
+        unique_positions[0] = data.positions[13]; // .{ 0, 0, 0 }
         unique_positions[1] = data.positions[0];  // .{ 0, 0, n }
         unique_positions[2] = data.positions[14]; // .{ 0, n, 0 }
         unique_positions[3] = data.positions[5];  // .{ 0, n, n }
@@ -132,13 +132,13 @@ pub const Mob = struct {
         self.bounding_box_uniques = unique_positions;
     }
 
-    pub fn getBottomBounds(self: *const Mob) [][3]f32 {
+    pub fn getBottomBounds(self: *const Mob) []const [3]f32 {
         const bb = self.bounding_box orelse @panic("nope");
         // 24 - 30 bottom
         return bb[24..30];
     }
 
-    pub fn getAllBounds(self: *const Mob) [][3]f32 {
+    pub fn getAllBounds(self: *const Mob) []const [3]f32 {
         return self.bounding_box_uniques orelse @panic("nope");
     }
 };

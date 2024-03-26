@@ -28,6 +28,7 @@ pub const Walking = struct {
     last_moved: f32 = 0,
 };
 pub const Turning = struct {
+    direction_vector: @Vector(4, f32) = .{ 0, 0, -1, 0 },
     rotation: @Vector(4, f32) = .{ 0, 0, 0, 0 },
     angle: f32 = 0,
     last_moved: f32 = 0,
