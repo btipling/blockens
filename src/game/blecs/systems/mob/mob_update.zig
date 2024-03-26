@@ -51,6 +51,7 @@ fn updateMob(world: *ecs.world_t, entity: ecs.entity_t, loc: @Vector(4, f32), ro
         _ = ecs.set(world, child_entity, components.screen.WorldRotation, .{ .rotation = rotation });
         _ = ecs.set(world, child_entity, components.screen.WorldLocation, .{ .loc = loc });
         ecs.add(world, child_entity, components.gfx.NeedsUniformUpdate);
+        game.state.ui.data.world_player_relocation = loc;
         i += 1;
     }
     i = 0;

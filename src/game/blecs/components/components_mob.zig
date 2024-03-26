@@ -16,7 +16,7 @@ pub const Health = struct {
 };
 pub const Falling = struct {
     velocity: f32 = 0,
-    started: i64 = 0,
+    started: f32 = 0,
 };
 pub const NeedsSetup = struct {};
 pub const NeedsUpdate = struct {};
