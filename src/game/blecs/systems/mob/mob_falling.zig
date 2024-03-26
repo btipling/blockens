@@ -30,31 +30,27 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const loc = p.position;
             var not_falling = checkMob(loc, m[i]);
             if (not_falling) {
-                if (ecs.has_id(world, entity, ecs.id(components.mob.Falling))) {
-                    const mp: *components.mob.Position = ecs.get_mut(
-                        world,
-                        entity,
-                        components.mob.Position,
-                    ) orelse std.debug.panic("No position for mob\n", .{});
-                    mp.position = .{ mp.position[0], @floor(mp.position[1]), mp.position[2], mp.position[3] };
-                    ecs.remove(world, entity, components.mob.Falling);
-                }
+                endFall(world, entity);
                 continue;
             }
             not_falling = dropMob(world, entity, m[i]);
             if (not_falling) {
-                if (ecs.has_id(world, entity, ecs.id(components.mob.Falling))) {
-                    const mp: *components.mob.Position = ecs.get_mut(
-                        world,
-                        entity,
-                        components.mob.Position,
-                    ) orelse std.debug.panic("No position for mob\n", .{});
-                    mp.position = .{ mp.position[0], @floor(mp.position[1]), mp.position[2], mp.position[3] };
-                    ecs.remove(world, entity, components.mob.Falling);
-                }
+                endFall(world, entity);
                 continue;
             }
         }
+    }
+}
+
+fn endFall(world: *ecs.world_t, entity: ecs.entity_t) void {
+    if (ecs.has_id(world, entity, ecs.id(components.mob.Falling))) {
+        const mp: *components.mob.Position = ecs.get_mut(
+            world,
+            entity,
+            components.mob.Position,
+        ) orelse std.debug.panic("No position for mob\n", .{});
+        mp.position = .{ mp.position[0], @floor(mp.position[1]), mp.position[2], mp.position[3] };
+        ecs.remove(world, entity, components.mob.Falling);
     }
 }
 
