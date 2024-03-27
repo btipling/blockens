@@ -3,13 +3,17 @@
     // into dimensions that increment the model space vertices via integers. To make the texture sprites
     // map and repeat correctly, the texture coordinates are scaled by the block type dimensions. This will
     // be done by reducing the fragPos to a 0-1 range, by removing the integer part of the position.
-    // Then the texture coordinates will be manually interpolated by the fragPos.
+    // Then the texture coordinates will be manually interpolated by the fragPos. The texture is part of
+    // a texture atlas.
 
     // `textColor`, `bl_surface_height` and `fragNormal` must predefined elsewhere.
     highp float surface_h = bl_surface_height;
     highp float surface_t = bl_surface_height * 2;
     highp float texture_start = surface_h * 3 * bl_block_index;
-    float top_offset = 0.001;
+    float top_offset = 0.0009;
+    if (bl_block_index == 0) {
+        top_offset = 0;
+    }
     float bot_offset = 0.00001;
     float threshold = 0.001;
     float bl_frag_x = fragPos.x + 0.5;
@@ -27,7 +31,7 @@
             if (surface_h - tc_pre < threshold) {
                 tc_pre = surface_h;
             }
-            textColor = texture(texture1, vec2(fract(bl_frag_z * -1.0), tc_pre + surface_t + texture_start));
+            textColor = texture(texture1, vec2(fract((bl_frag_z + 0.5) * -1.0), tc_pre + surface_t + texture_start));
         }
     } else if (abs(fragNormal.x) > 0.5) {
         // side of voxel
