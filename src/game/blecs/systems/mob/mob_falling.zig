@@ -121,6 +121,7 @@ fn onGround(bbc: [3]f32, mob_loc: @Vector(4, f32)) bool {
     var bbc_v: @Vector(4, f32) = .{ bbc[0], bbc[1], bbc[2], 1 };
     bbc_v[1] -= 0.1; // checking below
     const bbc_ws = zm.mul(bbc_v, zm.translationV(mob_loc));
+    if (bbc_ws[1] < 0) return true;
     const chunk_pos = chunk.positionFromWorldLocation(bbc_ws);
 
     const wp = chunk.worldPosition.initFromPositionV(chunk_pos);

@@ -43,8 +43,6 @@ fn move(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.Mob) void
                 const mob_speed: @Vector(4, f32) = @splat(walking.speed);
                 position.position += walking.direction_vector * mob_speed;
             }
-        } else {
-            ecs.remove(world, entity, components.mob.Jumping);
         }
         const now = game.state.input.lastframe;
         if (now - walking.last_moved > movement_duration) {

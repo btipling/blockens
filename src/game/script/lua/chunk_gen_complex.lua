@@ -42,6 +42,4 @@ function generate_chunk()
     return blocks
 end
 
--- Calling the function to generate the chunk
 chunk = generate_chunk()
--- chunk now contains a 64x64x64 chunk with a hole in the center

@@ -19,7 +19,7 @@ fn system() ecs.system_desc_t {
 }
 
 const jump_time: f32 = 0.4;
-const jump_velocity: f32 = 3;
+const jump_velocity: f32 = 4;
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
     const world = it.world;
