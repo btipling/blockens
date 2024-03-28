@@ -35,15 +35,21 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 const movement_duration: f32 = 0.1;
 
 fn move(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.Mob) void {
-    const walking: *const components.mob.Walking = ecs.get(world, entity, components.mob.Walking) orelse return;
     var position: *components.mob.Position = ecs.get_mut(world, entity, components.mob.Position) orelse return;
-    if (walking.speed > 0 and canMove(world, entity, mob, walking)) {
-        const mob_speed: @Vector(4, f32) = @splat(walking.speed);
-        position.position += walking.direction_vector * mob_speed;
-    }
-    const now = game.state.input.lastframe;
-    if (now - walking.last_moved > movement_duration) {
-        ecs.remove(world, entity, components.mob.Walking);
+
+    if (ecs.get(world, entity, components.mob.Walking)) |walking| {
+        if (canMove(world, entity, mob, walking.direction_vector)) {
+            if (walking.speed > 0) {
+                const mob_speed: @Vector(4, f32) = @splat(walking.speed);
+                position.position += walking.direction_vector * mob_speed;
+            }
+        } else {
+            ecs.remove(world, entity, components.mob.Jumping);
+        }
+        const now = game.state.input.lastframe;
+        if (now - walking.last_moved > movement_duration) {
+            ecs.remove(world, entity, components.mob.Walking);
+        }
     }
 }
 
@@ -58,7 +64,7 @@ fn turn(world: *ecs.world_t, entity: ecs.entity_t, _: components.mob.Mob) void {
     }
 }
 
-fn canMove(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.Mob, walking: *const components.mob.Walking) bool {
+fn canMove(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.Mob, direction_vector: @Vector(4, f32)) bool {
     var rot: @Vector(4, f32) = .{ 1, 0, 0, 0 };
     if (ecs.get(world, entity, components.mob.Rotation)) |r| {
         rot = r.rotation;
@@ -70,7 +76,7 @@ fn canMove(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.Mob, w
         entity,
         mob,
         rot,
-        walking.direction_vector,
+        direction_vector,
         0.05,
     );
     for (bounds_to_check) |bbc_ws| {

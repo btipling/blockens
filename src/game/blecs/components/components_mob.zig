@@ -27,6 +27,10 @@ pub const Walking = struct {
     speed: f32 = 0,
     last_moved: f32 = 0,
 };
+pub const Jumping = struct {
+    starting_position: @Vector(4, f32) = .{ 0, 0, 0, 0 },
+    jumped_at: f32 = 0,
+};
 pub const Turning = struct {
     direction_vector: @Vector(4, f32) = .{ 0, 0, -1, 0 },
     rotation: @Vector(4, f32) = .{ 0, 0, 0, 0 },
@@ -55,6 +59,7 @@ pub fn init() void {
     ecs.COMPONENT(game.state.world, Falling);
     ecs.COMPONENT(game.state.world, Walking);
     ecs.COMPONENT(game.state.world, Turning);
+    ecs.COMPONENT(game.state.world, Jumping);
     ecs.TAG(game.state.world, NeedsSetup);
     ecs.TAG(game.state.world, NeedsUpdate);
     ecs.TAG(game.state.world, DidUpdate);

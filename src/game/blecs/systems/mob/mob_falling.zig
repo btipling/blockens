@@ -33,7 +33,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 endFall(world, entity);
                 continue;
             }
-            not_falling = dropMob(world, entity, m[i]);
+            not_falling = dropMobAndEnd(world, entity, m[i]);
             if (not_falling) {
                 endFall(world, entity);
                 continue;
@@ -54,9 +54,10 @@ fn endFall(world: *ecs.world_t, entity: ecs.entity_t) void {
     }
 }
 
-const gravity: f32 = 1;
-const velocity: f32 = 0.001;
-fn dropMob(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.Mob) bool {
+const starting_velocity: f32 = 0.0005;
+const gravity: f32 = 0.01;
+const max_velocity: f32 = 2;
+fn dropMobAndEnd(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.Mob) bool {
     const mp: *components.mob.Position = ecs.get_mut(
         world,
         entity,
@@ -65,34 +66,46 @@ fn dropMob(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.Mob) b
     ecs.add(world, entity, components.mob.NeedsUpdate);
     if (!ecs.has_id(world, entity, ecs.id(components.mob.Falling))) {
         var updated_pos = mp.position;
-        updated_pos[1] -= velocity;
+        updated_pos[1] -= starting_velocity;
         mp.position = updated_pos;
         _ = ecs.set(
             world,
             entity,
             components.mob.Falling,
             .{
-                .velocity = velocity,
+                .velocity = starting_velocity,
                 .started = game.state.input.lastframe,
             },
         );
-        return true;
+        return false;
     }
     const mf: *components.mob.Falling = ecs.get_mut(
         world,
         entity,
         components.mob.Falling,
     ) orelse std.debug.panic("expected falling to be present\n", .{});
+    const velocity = mf.velocity;
     const now: f32 = game.state.input.lastframe;
-    var delta: f32 = now - mf.started;
-    delta += 1;
+    const delta: f32 = now - mf.started;
     var updated_pos = mp.position;
-    updated_pos[1] -= velocity * now;
-    if (updated_pos[1] < 0) return false;
-    if (checkMob(updated_pos, mob)) return false;
+    const max_change_per_check: f32 = 0.05;
+    var drop_change: f32 = max_change_per_check;
+    if (velocity < max_change_per_check) {
+        updated_pos[1] -= velocity;
+    } else {
+        while (drop_change < velocity) {
+            updated_pos[1] -= max_change_per_check;
+            drop_change += max_change_per_check;
+            if (checkMob(updated_pos, mob)) return true;
+        }
+    }
+    if (updated_pos[1] < 0) return true;
     mp.position = updated_pos;
-    mf.velocity = velocity;
-    return true;
+    const new_velocity = velocity + gravity * delta;
+    if (new_velocity < max_velocity) {
+        mf.velocity = new_velocity;
+    }
+    return false;
 }
 
 fn checkMob(loc: @Vector(4, f32), mob: components.mob.Mob) bool {
@@ -106,7 +119,7 @@ fn checkMob(loc: @Vector(4, f32), mob: components.mob.Mob) bool {
 
 fn onGround(bbc: [3]f32, mob_loc: @Vector(4, f32)) bool {
     var bbc_v: @Vector(4, f32) = .{ bbc[0], bbc[1], bbc[2], 1 };
-    bbc_v[1] -= 1; // checking below
+    bbc_v[1] -= 0.1; // checking below
     const bbc_ws = zm.mul(bbc_v, zm.translationV(mob_loc));
     const chunk_pos = chunk.positionFromWorldLocation(bbc_ws);
 
@@ -115,6 +128,5 @@ fn onGround(bbc: [3]f32, mob_loc: @Vector(4, f32)) bool {
     const chunk_local_pos = chunk.chunkPosFromWorldLocation(bbc_ws);
     const chunk_index = chunk.getIndexFromPositionV(chunk_local_pos);
     const block_id: u32 = chunk_data.data[chunk_index];
-
     return block_id != 0;
 }

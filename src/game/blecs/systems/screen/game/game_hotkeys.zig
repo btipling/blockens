@@ -78,12 +78,13 @@ fn toggleCamera() void {
 }
 
 fn handleThirdPlayerCamKeys() ?glfw.Key {
+    if (input.keys.holdKey(.space)) playerJ();
     if (input.keys.holdKey(.w)) {
         playerF(input.keys.holdKey(.left_shift));
         return .w;
     }
     if (input.keys.holdKey(.s)) {
-        playerB(input.keys.holdKey(.left_shift));
+        playerB();
         return .w;
     }
     return null;
@@ -152,14 +153,14 @@ fn playerF(running: bool) void {
     ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
 }
 
-fn playerB(running: bool) void {
+fn playerB() void {
     const rotation: *const components.mob.Rotation = ecs.get(
         game.state.world,
         game.state.entities.player,
         components.mob.Rotation,
     ) orelse return;
     const rot = rotation.rotation;
-    const speed_delta: f32 = if (running) 5 else 2.5;
+    const speed_delta: f32 = 2.5;
     const speed = speed_delta * game.state.input.delta_time;
     const inverse: @Vector(4, f32) = @splat(-1);
     const front_vector: @Vector(4, f32) = zm.rotate(rot, gfx.cltf.forward_vec);
@@ -174,6 +175,30 @@ fn playerB(running: bool) void {
         },
     );
     ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
+}
+
+fn playerJ() void {
+    const world = game.state.world;
+    const player = game.state.entities.player;
+    if (ecs.has_id(world, player, ecs.id(components.mob.Jumping))) {
+        return;
+    }
+    if (ecs.has_id(world, player, ecs.id(components.mob.Falling))) {
+        return;
+    }
+    var loc: @Vector(4, f32) = undefined;
+    if (ecs.get(world, player, components.mob.Position)) |p| {
+        loc = p.position;
+    } else std.debug.panic("expected a location when starting a jump\n", .{});
+    _ = ecs.set(
+        world,
+        game.state.entities.player,
+        components.mob.Jumping,
+        .{
+            .starting_position = loc,
+            .jumped_at = game.state.input.lastframe,
+        },
+    );
 }
 
 fn getSpeed() f32 {

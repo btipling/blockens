@@ -60,6 +60,12 @@ fn showMobActions() !void {
     })) {
         relocatePlayer();
     }
+    if (zgui.button("Move to Origin", .{
+        .w = 600,
+        .h = 100,
+    })) {
+        movePlayerToOrigin();
+    }
 }
 
 fn toggleBoundingBox() void {
@@ -86,5 +92,15 @@ fn relocatePlayer() void {
         components.mob.Position,
     ) orelse return;
     position.position = game.state.ui.data.world_player_relocation;
+    ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
+}
+
+fn movePlayerToOrigin() void {
+    var position: *components.mob.Position = ecs.get_mut(
+        game.state.world,
+        game.state.entities.player,
+        components.mob.Position,
+    ) orelse return;
+    position.position = .{ 32, 64, 32, 1 };
     ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
 }
