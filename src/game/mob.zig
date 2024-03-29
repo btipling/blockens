@@ -138,6 +138,12 @@ pub const Mob = struct {
         return bb[24..30];
     }
 
+    pub fn getTopBounds(self: *const Mob) []const [3]f32 {
+        const bb = self.bounding_box orelse @panic("nope");
+        // 30 - 36 top
+        return bb[30..36];
+    }
+
     pub fn getAllBounds(self: *const Mob) []const [3]f32 {
         return self.bounding_box_uniques orelse @panic("nope");
     }

@@ -148,12 +148,5 @@ fn aInFrontOfB(pa: @Vector(4, f32), pb: @Vector(4, f32), direction_vector: @Vect
 }
 
 fn hitObstacle(bbc_ws: @Vector(4, f32)) bool {
-    const chunk_pos = chunk.positionFromWorldLocation(bbc_ws);
-
-    const wp = chunk.worldPosition.initFromPositionV(chunk_pos);
-    const chunk_data = game.state.gfx.game_chunks.get(wp) orelse return false; // no chunk in that direction
-    const chunk_local_pos = chunk.chunkPosFromWorldLocation(bbc_ws);
-    const chunk_index = chunk.getIndexFromPositionV(chunk_local_pos);
-    const block_id: u32 = chunk_data.data[chunk_index];
-    return block_id != 0; // if not air, hit obstacle
+    return !chunk.isAir(bbc_ws);
 }

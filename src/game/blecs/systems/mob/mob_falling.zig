@@ -28,13 +28,13 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const m = ecs.field(it, components.mob.Mob, 1) orelse continue;
             const p = ecs.get(world, entity, components.mob.Position) orelse continue;
             const loc = p.position;
-            var not_falling = checkMob(loc, m[i]);
-            if (not_falling) {
+
+            if (checkMob(loc, m[i])) {
                 endFall(world, entity);
                 continue;
             }
-            not_falling = dropMobAndEnd(world, entity, m[i]);
-            if (not_falling) {
+            ecs.remove(world, entity, components.mob.Walking);
+            if (dropMobAndEnd(world, entity, m[i])) {
                 endFall(world, entity);
                 continue;
             }
@@ -111,6 +111,11 @@ fn dropMobAndEnd(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.
 fn checkMob(loc: @Vector(4, f32), mob: components.mob.Mob) bool {
     const mob_data: *const game_mob.Mob = game.state.gfx.mob_data.get(mob.mob_id) orelse return true;
     const bottom_bounds = mob_data.getBottomBounds();
+    var loc_test = loc;
+    loc_test[2] -= 0.5;
+    if (!chunk.isAir(loc_test)) {
+        return true;
+    }
     for (bottom_bounds) |coords| {
         if (onGround(coords, loc)) return true;
     }
@@ -122,12 +127,5 @@ fn onGround(bbc: [3]f32, mob_loc: @Vector(4, f32)) bool {
     bbc_v[1] -= 0.1; // checking below
     const bbc_ws = zm.mul(bbc_v, zm.translationV(mob_loc));
     if (bbc_ws[1] < 0) return true;
-    const chunk_pos = chunk.positionFromWorldLocation(bbc_ws);
-
-    const wp = chunk.worldPosition.initFromPositionV(chunk_pos);
-    const chunk_data = game.state.gfx.game_chunks.get(wp) orelse return false;
-    const chunk_local_pos = chunk.chunkPosFromWorldLocation(bbc_ws);
-    const chunk_index = chunk.getIndexFromPositionV(chunk_local_pos);
-    const block_id: u32 = chunk_data.data[chunk_index];
-    return block_id != 0;
+    return !chunk.isAir(bbc_ws);
 }

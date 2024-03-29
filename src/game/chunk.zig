@@ -4,6 +4,7 @@ const ztracy = @import("ztracy");
 const config = @import("config");
 const blecs = @import("blecs/blecs.zig");
 const gfx = @import("gfx/gfx.zig");
+const game = @import("game.zig");
 
 pub const chunkDim = 64;
 pub const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
@@ -31,6 +32,19 @@ pub const worldPosition = struct {
         return .{ x, y, z, 0 };
     }
 };
+
+pub fn isAir(pos: @Vector(4, f32)) bool {
+    return getBlockId(pos) == 0;
+}
+
+pub fn getBlockId(pos: @Vector(4, f32)) u8 {
+    const chunk_pos = positionFromWorldLocation(pos);
+    const wp = worldPosition.initFromPositionV(chunk_pos);
+    const chunk_data = game.state.gfx.game_chunks.get(wp) orelse return 0;
+    const chunk_local_pos = chunkPosFromWorldLocation(pos);
+    const chunk_index = getIndexFromPositionV(chunk_local_pos);
+    return @intCast(chunk_data.data[chunk_index]);
+}
 
 pub fn positionFromWorldLocation(loc: @Vector(4, f32)) @Vector(4, f32) {
     const cd: f32 = @floatFromInt(chunkDim);
