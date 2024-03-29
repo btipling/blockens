@@ -38,8 +38,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 continue;
             }
             var pos = p.position;
-            pos[1] = j[i].starting_position[1] + jump_duration * jump_velocity;
-            if (!checkMob(pos, m[i])) continue;
+            const done = j[i].starting_position[1] + jump_duration * jump_velocity;
+            while (pos[1] < done) {
+                pos[1] += 0.01;
+                if (!checkMob(pos, m[i])) {
+                    pos = p.position;
+                    break;
+                }
+            }
             p.position = pos;
             ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
         }
