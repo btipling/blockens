@@ -52,6 +52,7 @@ fn selectBlock(world: *ecs.world_t) !void {
     const step_size: f32 = 0.01;
     const max_distance: f32 = 100;
     var i: f32 = 5;
+    var prev_pos: ?@Vector(4, f32) = null;
     while (i < max_distance) : (i += step_size) {
         const distance: @Vector(4, f32) = @splat(i);
         const pos: @Vector(4, f32) = camera_pos + ray_direction * distance;
@@ -63,9 +64,13 @@ fn selectBlock(world: *ecs.world_t) !void {
                 removeBlock(world, pos);
                 return;
             }
+            if (wants_add and prev_pos != null) {
+                addBlock(world, prev_pos.?);
+            }
             highlightBlock(world, pos);
             return;
         }
+        prev_pos = pos;
     }
 }
 
@@ -91,5 +96,11 @@ fn highlightBlock(world: *ecs.world_t, pos: @Vector(4, f32)) void {
 fn removeBlock(world: *ecs.world_t, pos: @Vector(4, f32)) void {
     std.debug.print("removing block at {}\n", .{pos});
     chunk.removeBlock(world, pos);
+    return;
+}
+
+fn addBlock(world: *ecs.world_t, pos: @Vector(4, f32)) void {
+    std.debug.print("adding block\n", .{});
+    chunk.setBlockId(world, pos, 4);
     return;
 }

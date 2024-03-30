@@ -5,6 +5,7 @@ const config = @import("config");
 const blecs = @import("blecs/blecs.zig");
 const gfx = @import("gfx/gfx.zig");
 const game = @import("game.zig");
+const game_state = @import("state.zig");
 
 pub const chunkDim = 64;
 pub const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
@@ -49,9 +50,23 @@ pub fn removeBlock(world: *blecs.ecs.world_t, pos: @Vector(4, f32)) void {
 pub fn setBlockId(world: *blecs.ecs.world_t, pos: @Vector(4, f32), block_id: u8) void {
     const chunk_pos = positionFromWorldLocation(pos);
     const wp = worldPosition.initFromPositionV(chunk_pos);
-    var c = game.state.gfx.game_chunks.get(wp) orelse return;
     const chunk_local_pos = chunkPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
+    var c = game.state.gfx.game_chunks.get(wp) orelse {
+        var c: [chunkSize]u32 = [_]u32{0} ** chunkSize;
+        c[chunk_index] = block_id;
+        const cd: []u32 = game.state.allocator.alloc(u32, c.len) catch @panic("OOM");
+        @memcpy(cd, &c);
+        const ch_cfg: game_state.chunkConfig = .{
+            .id = 0,
+            .scriptId = 0,
+            .chunkData = cd,
+        };
+        game.state.ui.data.world_chunk_table_data.put(wp, ch_cfg) catch @panic("OOM");
+        _ = game.state.jobs.copyChunk(wp, blecs.ecs.new_id(game.state.world), false);
+        return;
+    };
+
     c.setDataAt(chunk_index, block_id);
     const render_entity = blecs.ecs.get_target(world, c.entity, blecs.entities.block.HasChunkRenderer, 0);
     _ = game.state.jobs.meshChunk(world, render_entity, c);
