@@ -30,12 +30,13 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             const c: []components.block.Chunk = ecs.field(it, components.block.Chunk, 1) orelse return;
             ecs.remove(world, entity, components.block.NeedsMeshRendering);
-            if (ecs.get(world, entity, components.gfx.ElementsRendererConfig)) |erc| {
+            if (ecs.get(world, entity, components.gfx.ElementsRenderer)) |erc| {
                 // clean up previously rendered chunk by creating a new entity to handle the deletion
                 const to_delete = ecs.new_id(world);
-                _ = ecs.set(world, to_delete, components.gfx.ElementsRendererConfig, .{ .id = erc.id });
+                std.debug.print("deleting chunk rendering {}\n", .{to_delete});
+                _ = ecs.set(world, to_delete, components.gfx.ElementsRenderer, erc.*);
                 ecs.add(world, to_delete, components.gfx.NeedsDeletion);
-                ecs.remove(world, entity, components.gfx.ElementsRendererConfig);
+                ecs.remove(world, entity, components.gfx.ElementsRenderer);
             }
             render_multidraw(world, entity, c[i].loc, c[i].wp);
             ecs.add(world, entity, components.block.NeedsInstanceRendering);

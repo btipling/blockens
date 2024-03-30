@@ -40,10 +40,10 @@ pub fn isAir(pos: @Vector(4, f32)) bool {
 pub fn getBlockId(pos: @Vector(4, f32)) u8 {
     const chunk_pos = positionFromWorldLocation(pos);
     const wp = worldPosition.initFromPositionV(chunk_pos);
-    const chunk_data = game.state.gfx.game_chunks.get(wp) orelse return 0;
+    const c = game.state.gfx.game_chunks.get(wp) orelse return 0;
     const chunk_local_pos = chunkPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
-    return @intCast(chunk_data.data[chunk_index]);
+    return @intCast(c.dataAt(chunk_index));
 }
 
 pub fn removeBlock(world: *blecs.ecs.world_t, pos: @Vector(4, f32)) void {
@@ -56,8 +56,9 @@ pub fn setBlockId(world: *blecs.ecs.world_t, pos: @Vector(4, f32), block_id: u8)
     var c = game.state.gfx.game_chunks.get(wp) orelse return;
     const chunk_local_pos = chunkPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
-    c.data[chunk_index] = block_id;
+    c.setDataAt(chunk_index, block_id);
     const render_entity = blecs.ecs.get_target(world, c.entity, blecs.entities.block.HasChunkRenderer, 0);
+    c.deinitRenderData();
     _ = game.state.jobs.meshChunk(world, render_entity, c);
 }
 
@@ -117,6 +118,7 @@ pub const Chunk = struct {
     draw_offsets_gl: ?[]?*const anyopaque = null,
     is_settings: bool = false,
     vbo: u32 = 0,
+    mutex: std.Thread.Mutex = .{},
     pub fn init(
         allocator: std.mem.Allocator,
         wp: worldPosition,
@@ -135,13 +137,31 @@ pub const Chunk = struct {
         return c;
     }
 
+    pub fn dataAt(self: *Chunk, i: usize) u32 {
+        self.mutex.lock();
+        defer self.mutex.unlock();
+        return self.data[i];
+    }
+
+    pub fn setDataAt(self: *Chunk, i: usize, v: u32) void {
+        self.mutex.lock();
+        defer self.mutex.unlock();
+        self.data[i] = v;
+    }
+
     pub fn deinit(self: *Chunk) void {
+        self.deinitRenderData();
+        self.elements.deinit();
         self.meshes.deinit();
+        self.allocator.free(self.data);
+    }
+
+    pub fn deinitRenderData(self: *Chunk) void {
+        self.meshes.clearAndFree();
         for (self.elements.items) |ce| {
             ce.deinit(self.allocator);
         }
-        self.elements.deinit();
-        self.allocator.free(self.data);
+        self.elements.clearAndFree();
         if (self.draws) |d| self.allocator.free(d);
         if (self.draw_offsets) |d| self.allocator.free(d);
         if (self.draw_offsets_gl) |d| self.allocator.free(d);
