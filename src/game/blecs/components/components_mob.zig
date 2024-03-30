@@ -48,20 +48,25 @@ pub const Rotation = struct {
     rotation: @Vector(4, f32) = .{ 0, 0, 0, 1 },
     angle: f32 = 0,
 };
+pub const AddAction = struct {};
+pub const RemoveAction = struct {};
 
 pub fn init() void {
-    ecs.COMPONENT(game.state.world, Mob);
-    ecs.COMPONENT(game.state.world, Mesh);
-    ecs.COMPONENT(game.state.world, Health);
-    ecs.COMPONENT(game.state.world, Position);
-    ecs.COMPONENT(game.state.world, Rotation);
-    ecs.COMPONENT(game.state.world, BoundingBox);
-    ecs.COMPONENT(game.state.world, Falling);
-    ecs.COMPONENT(game.state.world, Walking);
-    ecs.COMPONENT(game.state.world, Turning);
-    ecs.COMPONENT(game.state.world, Jumping);
-    ecs.TAG(game.state.world, NeedsSetup);
-    ecs.TAG(game.state.world, NeedsUpdate);
-    ecs.TAG(game.state.world, DidUpdate);
-    ecs.TAG(game.state.world, Texture);
+    const world = game.state.world;
+    ecs.COMPONENT(world, Mob);
+    ecs.COMPONENT(world, Mesh);
+    ecs.COMPONENT(world, Health);
+    ecs.COMPONENT(world, Position);
+    ecs.COMPONENT(world, Rotation);
+    ecs.COMPONENT(world, BoundingBox);
+    ecs.COMPONENT(world, Falling);
+    ecs.COMPONENT(world, Walking);
+    ecs.COMPONENT(world, Turning);
+    ecs.COMPONENT(world, Jumping);
+    ecs.TAG(world, NeedsSetup);
+    ecs.TAG(world, NeedsUpdate);
+    ecs.TAG(world, DidUpdate);
+    ecs.TAG(world, Texture);
+    ecs.TAG(world, AddAction);
+    ecs.TAG(world, RemoveAction);
 }
