@@ -16,10 +16,6 @@ const thread = @import("thread/thread.zig");
 const pressStart2PFont = @embedFile("assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
 const robotoMonoFont = @embedFile("assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
 
-fn cursorPosCallback(_: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) void {
-    input.cursor.cursorPosCallback(xpos, ypos);
-}
-
 fn framebufferSizeCallback(_: *glfw.Window, width: i32, height: i32) callconv(.C) void {
     std.debug.print("frame buffer resized {d} {d}", .{ width, height });
 }
@@ -148,7 +144,8 @@ pub const Game = struct {
 
         try initGL(gl_major, gl_minor, window);
 
-        _ = window.setCursorPosCallback(cursorPosCallback);
+        _ = window.setCursorPosCallback(input.cursor.cursorPosCallback);
+        _ = window.setMouseButtonCallback(input.mouse_button.mouseBtnCallback);
 
         zgui.init(allocator);
         errdefer zgui.deinit();

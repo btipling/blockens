@@ -1,11 +1,16 @@
 const std = @import("std");
 const zm = @import("zmath");
+const glfw = @import("zglfw");
 const game = @import("../game.zig");
 const blecs = @import("../blecs/blecs.zig");
 const zgui = @import("zgui");
 const gameState = @import("../state.zig");
 
-pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
+pub fn cursorPosCallback(_: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) void {
+    handleCursor(xpos, ypos);
+}
+
+fn handleCursor(xpos: f64, ypos: f64) void {
     const world = game.state.world;
     const x: f32 = @floatCast(xpos);
     const y: f32 = @floatCast(ypos);

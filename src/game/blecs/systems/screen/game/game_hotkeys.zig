@@ -85,7 +85,7 @@ fn handleThirdPlayerCamKeys() ?glfw.Key {
     }
     if (input.keys.holdKey(.s)) {
         playerB();
-        return .w;
+        return .s;
     }
     if (input.keys.holdKey(.d)) {
         playerL();
