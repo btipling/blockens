@@ -87,6 +87,14 @@ fn handleThirdPlayerCamKeys() ?glfw.Key {
         playerB();
         return .w;
     }
+    if (input.keys.holdKey(.d)) {
+        playerL();
+        return .a;
+    }
+    if (input.keys.holdKey(.a)) {
+        playerR();
+        return .d;
+    }
     return null;
 }
 
@@ -170,6 +178,63 @@ fn playerB() void {
         components.mob.Walking,
         .{
             .direction_vector = front_vector * inverse,
+            .speed = speed,
+            .last_moved = game.state.input.lastframe,
+        },
+    );
+    ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
+}
+
+fn playerL() void {
+    const rotation: *const components.mob.Rotation = ecs.get(
+        game.state.world,
+        game.state.entities.player,
+        components.mob.Rotation,
+    ) orelse return;
+    const camera_up: *const components.screen.UpDirection = ecs.get(
+        game.state.world,
+        game.state.entities.sky_camera,
+        components.screen.UpDirection,
+    ) orelse return;
+    const rot = rotation.rotation;
+    const speed_delta: f32 = 2.5;
+    const speed = speed_delta * game.state.input.delta_time;
+    const front_vector: @Vector(4, f32) = zm.rotate(rot, gfx.cltf.forward_vec);
+    _ = ecs.set(
+        game.state.world,
+        game.state.entities.player,
+        components.mob.Walking,
+        .{
+            .direction_vector = zm.normalize3(zm.cross3(front_vector, camera_up.up)),
+            .speed = speed,
+            .last_moved = game.state.input.lastframe,
+        },
+    );
+    ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
+}
+
+fn playerR() void {
+    const rotation: *const components.mob.Rotation = ecs.get(
+        game.state.world,
+        game.state.entities.player,
+        components.mob.Rotation,
+    ) orelse return;
+    const camera_up: *const components.screen.UpDirection = ecs.get(
+        game.state.world,
+        game.state.entities.sky_camera,
+        components.screen.UpDirection,
+    ) orelse return;
+    const rot = rotation.rotation;
+    const speed_delta: f32 = 2.5;
+    const speed = speed_delta * game.state.input.delta_time;
+    const inverse: @Vector(4, f32) = @splat(-1);
+    const front_vector: @Vector(4, f32) = zm.rotate(rot, gfx.cltf.forward_vec);
+    _ = ecs.set(
+        game.state.world,
+        game.state.entities.player,
+        components.mob.Walking,
+        .{
+            .direction_vector = zm.normalize3(zm.cross3(front_vector, camera_up.up)) * inverse,
             .speed = speed,
             .last_moved = game.state.input.lastframe,
         },

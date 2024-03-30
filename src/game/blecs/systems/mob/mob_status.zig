@@ -28,6 +28,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 game.state.gfx.animations_running = game.state.gfx.animations_running | gfx.constants.DemoCharacterWalkingAnimationID;
             } else if (ecs.has_id(world, entity, ecs.id(components.mob.Turning))) {
                 game.state.gfx.animations_running = game.state.gfx.animations_running | gfx.constants.DemoCharacterWalkingAnimationID;
+            } else if (ecs.has_id(world, entity, ecs.id(components.mob.Jumping))) {
+                game.state.gfx.animations_running = game.state.gfx.animations_running | gfx.constants.DemoCharacterWalkingAnimationID;
             } else {
                 game.state.gfx.animations_running = game.state.gfx.animations_running & ~gfx.constants.DemoCharacterWalkingAnimationID;
             }
