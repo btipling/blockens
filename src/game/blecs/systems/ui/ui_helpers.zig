@@ -66,6 +66,7 @@ pub fn loadChunksInWorld() void {
 
 pub fn loadCharacterInWorld() void {
     entities.screen.initPlayerCharacter();
+    entities.screen.initBlockHighlight();
 }
 
 pub fn loadChunkDatas() !void {

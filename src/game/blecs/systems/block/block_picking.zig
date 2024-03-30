@@ -37,17 +37,30 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 components.screen.CameraFront,
             ) orelse continue;
             const camera_pos: @Vector(4, f32) = cp.pos;
-            const ray_direction: @Vector(4, f32) = zm.normalize3(cf.front);
-            const step_size: f32 = 0.1;
+            const ray_direction = zm.normalize3(cf.front);
+            const step_size: f32 = 0.01;
             const max_distance: f32 = 100;
-            var i: f32 = 0;
+            var i: f32 = 5;
             while (i < max_distance) : (i += step_size) {
                 const distance: @Vector(4, f32) = @splat(i);
                 const pos: @Vector(4, f32) = camera_pos + ray_direction * distance;
                 const block_id = chunk.getBlockId(pos);
                 if (block_id != 0) {
-                    const block_pos: @Vector(4, f32) = @floor(pos);
-                    _ = ecs.set(world, entity, components.block.HighlightedBlock, .{ .pos = block_pos });
+                    const blh_e = game.state.entities.block_highlight;
+                    var block_pos: @Vector(4, f32) = @floor(pos);
+                    block_pos[3] = 0;
+                    const wl = ecs.get_mut(
+                        world,
+                        blh_e,
+                        components.screen.WorldLocation,
+                    ) orelse continue :outer;
+                    if (@reduce(.And, wl.loc == block_pos)) {
+                        continue :outer;
+                    }
+                    var og_pos = wl.loc;
+                    og_pos[3] = 0;
+                    wl.loc = block_pos;
+                    ecs.add(world, blh_e, components.gfx.NeedsUniformUpdate);
                     continue :outer;
                 }
             }

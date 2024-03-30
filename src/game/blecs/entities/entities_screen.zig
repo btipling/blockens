@@ -120,7 +120,6 @@ fn initFloor() void {
     _ = ecs.set(game.state.world, c_f, components.screen.WorldLocation, .{
         .loc = @Vector(4, f32){ -25, -25, -25, 0 },
     });
-    ecs.add(game.state.world, c_f, components.Debug);
     ecs.add(game.state.world, c_f, components.shape.NeedsSetup);
     ecs.add(game.state.world, c_f, components.shape.Permanent);
     ecs.add_pair(game.state.world, c_f, ecs.ChildOf, game_data);
@@ -323,7 +322,6 @@ pub fn initDemoCube() void {
     });
     _ = ecs.set(world, c_dc, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 * 3 });
     ecs.add(world, c_dc, components.shape.NeedsSetup);
-    ecs.add(world, c_dc, components.Debug);
     // Add animation to cube:
     const animation = helpers.new_child(world, c_dc);
     _ = ecs.set(world, animation, components.gfx.AnimationSSBO, .{
@@ -422,7 +420,6 @@ pub fn initDemoTextureAtlas() void {
     _ = ecs.set(world, c_atlas, components.shape.Scale, .{ .scale = game.state.ui.data.demo_atlas_scale });
     _ = ecs.set(world, c_atlas, components.shape.Translation, .{ .translation = game.state.ui.data.demo_atlas_translation });
     ecs.add(world, c_atlas, components.block.UseTextureAtlas);
-    ecs.add(world, c_atlas, components.Debug);
     ecs.add(world, c_atlas, components.shape.NeedsSetup);
 }
 
@@ -620,4 +617,26 @@ pub fn initPlayerCharacter() void {
         );
         ecs.add(world, bounding_box, components.mob.NeedsSetup);
     }
+}
+
+pub fn initBlockHighlight() void {
+    const world = game.state.world;
+    const bhl_e = helpers.new_child(world, game_data);
+    _ = ecs.set(world, bhl_e, components.shape.Shape, .{ .shape_type = .block_highlight });
+    const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
+    _ = ecs.set(world, bhl_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
+    _ = ecs.set(world, bhl_e, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
+    _ = ecs.set(game.state.world, bhl_e, components.screen.WorldLocation, .{
+        .loc = @Vector(4, f32){ 30, 63, 30, 0 },
+    });
+    const c = math.vecs.Vflx4.initBytes(255, 255, 255, 255);
+    _ = ecs.set(
+        world,
+        bhl_e,
+        components.shape.Outline,
+        .{ .color = c.value },
+    );
+    ecs.add(world, bhl_e, components.shape.NeedsSetup);
+    ecs.add(world, bhl_e, components.Debug);
+    game.state.entities.block_highlight = bhl_e;
 }

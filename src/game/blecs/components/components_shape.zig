@@ -12,6 +12,7 @@ pub const Shape = struct {
         multidraw_voxel,
         mob,
         bounding_box,
+        block_highlight,
     };
 };
 

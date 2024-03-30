@@ -29,6 +29,7 @@ pub const Entities = struct {
     ui: blecs.ecs.entity_t = 0,
     player: blecs.ecs.entity_t = 0,
     demo_player: blecs.ecs.entity_t = 0,
+    block_highlight: blecs.ecs.entity_t = 0,
 };
 
 pub const Cursor = struct {

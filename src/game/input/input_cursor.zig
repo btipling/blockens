@@ -121,7 +121,15 @@ pub fn cursorPosCallback(xpos: f64, ypos: f64) void {
             .angle = angle,
             .last_moved = game.state.input.lastframe,
         });
+        camera_rot.pitch = camera_rot_pitch;
+        camera_rot.yaw = camera_rot_yaw;
         blecs.ecs.add(game.state.world, game.state.entities.player, blecs.components.mob.NeedsUpdate);
+        blecs.ecs.add(
+            world,
+            camera,
+            blecs.components.screen.Updated,
+        );
+        return;
     }
     camera_front.front = zm.normalize4(front);
     camera_rot.pitch = camera_rot_pitch;

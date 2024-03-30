@@ -63,6 +63,7 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         .multidraw_voxel => gfx.mesh.cube(), // just to setup the positions
         .mob => gfx.mesh.mob(world, entity),
         .bounding_box => gfx.mesh.bounding_box(e.mob_id), // just to setup the positions
+        .block_highlight => gfx.mesh.block_highlight(),
     };
 
     var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch @panic("nope");

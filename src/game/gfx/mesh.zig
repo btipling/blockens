@@ -371,15 +371,37 @@ pub fn mob(world: *blecs.ecs.world_t, entity: blecs.ecs.entity_t) meshData {
 // Just cuboids atm, no complex bounding boxes.
 pub fn bounding_box(mob_id: i32) meshData {
     const scale: [3]f32 = switch (mob_id) {
+        0 => .{ 1, 1, 1 }, // bounding box for a cube
         1 => .{ 1, 2.25, 1 },
         else => std.debug.panic("Unexpected mob id in bounding box mesh lookup {d}\n", .{mob_id}),
     };
     const translate: [3]f32 = switch (mob_id) {
+        0 => .{ 0, 0, 0 }, // bounding box for a cube
         1 => .{ -0.5, 0, -0.5 },
         else => std.debug.panic("Unexpected mob id in bounding box mesh lookup {d}\n", .{mob_id}),
     };
     const positions: [][3]f32 = game.state.allocator.alloc([3]f32, bounding_box_positions.len) catch unreachable;
     @memcpy(positions, &bounding_box_positions);
+    for (0..positions.len) |i| {
+        for (0..positions[i].len) |ii| {
+            positions[i][ii] *= scale[ii];
+            positions[i][ii] += translate[ii];
+        }
+    }
+    const indices: []u32 = game.state.allocator.alloc(u32, cube_indices.len) catch unreachable;
+    @memcpy(indices, &cube_indices);
+    const e: [][2]f32 = game.state.allocator.alloc([2]f32, edges.len) catch unreachable;
+    @memcpy(e, &edges);
+    const bc: [][3]f32 = game.state.allocator.alloc([3]f32, barycentric_coordinates.len) catch unreachable;
+    @memcpy(bc, &barycentric_coordinates);
+    return .{ .positions = positions, .indices = indices, .edges = e, .barycentric = bc };
+}
+
+pub fn block_highlight() meshData {
+    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, cube_positions.len) catch unreachable;
+    @memcpy(positions, &cube_positions);
+    const scale: [3]f32 = .{ 1.1, 1.1, 1.1 };
+    const translate: [3]f32 = .{ 0.5, 0.5, 0.5 };
     for (0..positions.len) |i| {
         for (0..positions[i].len) |ii| {
             positions[i][ii] *= scale[ii];
