@@ -46,6 +46,21 @@ pub fn getBlockId(pos: @Vector(4, f32)) u8 {
     return @intCast(chunk_data.data[chunk_index]);
 }
 
+pub fn removeBlock(world: *blecs.ecs.world_t, pos: @Vector(4, f32)) void {
+    return setBlockId(world, pos, 0);
+}
+
+pub fn setBlockId(world: *blecs.ecs.world_t, pos: @Vector(4, f32), block_id: u8) void {
+    const chunk_pos = positionFromWorldLocation(pos);
+    const wp = worldPosition.initFromPositionV(chunk_pos);
+    var c = game.state.gfx.game_chunks.get(wp) orelse return;
+    const chunk_local_pos = chunkPosFromWorldLocation(pos);
+    const chunk_index = getIndexFromPositionV(chunk_local_pos);
+    c.data[chunk_index] = block_id;
+    const render_entity = blecs.ecs.get_target(world, c.entity, blecs.entities.block.HasChunkRenderer, 0);
+    _ = game.state.jobs.meshChunk(world, render_entity, c);
+}
+
 pub fn positionFromWorldLocation(loc: @Vector(4, f32)) @Vector(4, f32) {
     const cd: f32 = @floatFromInt(chunkDim);
     const changer: @Vector(4, f32) = @splat(cd);

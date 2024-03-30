@@ -87,7 +87,7 @@ fn highlightBlock(world: *ecs.world_t, pos: @Vector(4, f32)) void {
 }
 
 fn removeBlock(world: *ecs.world_t, pos: @Vector(4, f32)) void {
-    _ = world;
     std.debug.print("removing block at {}\n", .{pos});
+    chunk.removeBlock(world, pos);
     return;
 }
