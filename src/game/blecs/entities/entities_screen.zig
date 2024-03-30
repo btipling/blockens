@@ -636,6 +636,7 @@ pub fn initBlockHighlight() void {
         components.shape.Outline,
         .{ .color = c.value },
     );
+    ecs.add(world, bhl_e, components.block.HighlightedBlock);
     ecs.add(world, bhl_e, components.shape.NeedsSetup);
     ecs.add(world, bhl_e, components.Debug);
     game.state.entities.block_highlight = bhl_e;
