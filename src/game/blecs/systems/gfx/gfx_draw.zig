@@ -124,9 +124,33 @@ fn gfxDraw(
                 return;
             }
         }
-        if (c.draw_offsets_gl == null) return;
-        if (c.draws) |d| {
-            gl.multiDrawElements(gl.TRIANGLES, d.ptr, gl.UNSIGNED_INT, @ptrCast(c.draw_offsets_gl.?.ptr), @intCast(d.len));
+        var offsets = c.draw_offsets_gl;
+        if (offsets == null) {
+            offsets = c.prev_draw_offsets_gl;
+        }
+        if (offsets == null) {
+            return;
+        }
+        var draws = c.draws;
+        if (draws == null) {
+            draws = c.prev_draws;
+        }
+        if (draws) |d| {
+            gl.multiDrawElements(gl.TRIANGLES, d.ptr, gl.UNSIGNED_INT, @ptrCast(offsets.?.ptr), @intCast(d.len));
+        } else {
+            std.debug.print("cant draw the thing\n", .{});
+        }
+
+        if (ecs.has_id(world, entity, ecs.id(components.gfx.HasPreviousRenderer))) {
+            const pr = ecs.get(
+                world,
+                entity,
+                components.gfx.HasPreviousRenderer,
+            ) orelse @panic("nope");
+            gl.finish();
+            ecs.remove(world, pr.entity, components.gfx.CanDraw);
+            ecs.remove(world, entity, components.gfx.HasPreviousRenderer);
+            c.deinitRenderPreviousData();
         }
     }
 }

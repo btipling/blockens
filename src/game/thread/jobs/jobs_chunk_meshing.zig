@@ -28,6 +28,7 @@ pub const ChunkMeshJob = struct {
         var c = self.chunk;
         c.mutex.lock();
         defer c.mutex.unlock();
+        c.deinitMeshes();
         c.findMeshes() catch unreachable;
         var keys = c.meshes.keyIterator();
         var draws = std.ArrayList(c_int).init(game.state.allocator);
@@ -46,6 +47,8 @@ pub const ChunkMeshJob = struct {
             };
         }
         var index_offset: u32 = 0;
+
+        c.deinitRenderData();
         while (keys.next()) |_k| {
             const i: usize = _k.*;
             if (c.meshes.get(i)) |s| {

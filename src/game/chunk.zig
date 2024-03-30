@@ -54,7 +54,6 @@ pub fn setBlockId(world: *blecs.ecs.world_t, pos: @Vector(4, f32), block_id: u8)
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
     c.setDataAt(chunk_index, block_id);
     const render_entity = blecs.ecs.get_target(world, c.entity, blecs.entities.block.HasChunkRenderer, 0);
-    c.deinitRenderData();
     _ = game.state.jobs.meshChunk(world, render_entity, c);
 }
 
@@ -117,6 +116,8 @@ pub const Chunk = struct {
     draws: ?[]c_int = null,
     draw_offsets: ?[]c_int = null, // this only exists to hold the values that draw_offsets_gl points to...
     draw_offsets_gl: ?[]?*const anyopaque = null,
+    prev_draw_offsets_gl: ?[]?*const anyopaque = null,
+    prev_draws: ?[]c_int = null,
     is_settings: bool = false,
     vbo: u32 = 0,
     mutex: std.Thread.Mutex = .{},
@@ -153,24 +154,41 @@ pub const Chunk = struct {
     }
 
     pub fn deinit(self: *Chunk) void {
+        self.deinitMeshes();
         self.deinitRenderData();
+        self.deinitRenderPreviousData();
         self.elements.deinit();
         self.meshes.deinit();
         self.allocator.free(self.data);
     }
 
-    pub fn deinitRenderData(self: *Chunk) void {
+    pub fn backupDrawsData(self: *Chunk) void {
+        self.deinitRenderPreviousData();
+        self.prev_draws = self.draws;
+        self.prev_draw_offsets_gl = self.draw_offsets_gl;
+    }
+
+    pub fn deinitMeshes(self: *Chunk) void {
         self.meshes.clearAndFree();
+    }
+
+    pub fn deinitRenderData(self: *Chunk) void {
+        self.backupDrawsData();
         for (self.elements.items) |ce| {
             ce.deinit(self.allocator);
         }
         self.elements.clearAndFree();
-        if (self.draws) |d| self.allocator.free(d);
         if (self.draw_offsets) |d| self.allocator.free(d);
-        if (self.draw_offsets_gl) |d| self.allocator.free(d);
-        self.draws = null;
         self.draw_offsets = null;
+        self.draws = null;
         self.draw_offsets_gl = null;
+    }
+
+    pub fn deinitRenderPreviousData(self: *Chunk) void {
+        if (self.prev_draw_offsets_gl) |d| self.allocator.free(d);
+        self.prev_draw_offsets_gl = null;
+        if (self.prev_draws) |d| self.allocator.free(d);
+        self.prev_draws = null;
     }
 
     pub fn findMeshes(self: *Chunk) !void {

@@ -35,12 +35,17 @@ pub const AnimationKeyFrame = struct {
     rotation: @Vector(4, f32) = @Vector(4, f32){ 1, 0, 0, 0 },
     translation: @Vector(4, f32) = @Vector(4, f32){ 0, 0, 0, 0 },
 };
+pub const HasPreviousRenderer = struct {
+    ready_to_delete: bool = false,
+    entity: ecs.entity_t,
+};
 
 pub const CanDraw = struct {};
 pub const ManuallyHidden = struct {};
 pub const NeedsInstanceDataUpdate = struct {};
 pub const NeedsUniformUpdate = struct {};
 pub const NeedsDeletion = struct {};
+pub const IsPreviousRenderer = struct {};
 
 pub const Wireframe = struct {};
 
@@ -51,10 +56,12 @@ pub fn init() void {
     ecs.COMPONENT(world, ElementsRenderer);
     ecs.COMPONENT(world, AnimationSSBO);
     ecs.COMPONENT(world, AnimationKeyFrame);
+    ecs.COMPONENT(world, HasPreviousRenderer);
     ecs.TAG(world, CanDraw);
     ecs.TAG(world, ManuallyHidden);
     ecs.TAG(world, NeedsInstanceDataUpdate);
     ecs.TAG(world, NeedsUniformUpdate);
     ecs.TAG(world, NeedsDeletion);
     ecs.TAG(world, Wireframe);
+    ecs.TAG(world, IsPreviousRenderer);
 }

@@ -29,18 +29,27 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             const c: []components.block.Chunk = ecs.field(it, components.block.Chunk, 1) orelse return;
-            ecs.remove(world, entity, components.block.NeedsMeshRendering);
+            if (ecs.has_id(world, entity, ecs.id(components.gfx.HasPreviousRenderer))) continue;
             if (ecs.get(world, entity, components.gfx.ElementsRenderer)) |erc| {
                 // clean up previously rendered chunk by creating a new entity to handle the deletion
-                const to_delete = ecs.new_id(world);
+
+                const parent: ecs.entity_t = ecs.get_parent(world, entity);
+                const to_delete = helpers.new_child(world, parent);
                 std.debug.print("deleting chunk rendering {}\n", .{to_delete});
+
                 _ = ecs.set(world, to_delete, components.gfx.ElementsRenderer, erc.*);
-                ecs.add(world, to_delete, components.gfx.NeedsDeletion);
-                ecs.remove(world, entity, components.gfx.CanDraw);
+                _ = ecs.set(world, to_delete, components.block.Chunk, c[i]);
+                ecs.add(world, to_delete, components.gfx.IsPreviousRenderer);
+                ecs.add(world, to_delete, components.block.UseMultiDraw);
+                ecs.add(world, to_delete, components.gfx.CanDraw);
+
+                _ = ecs.set(world, entity, components.gfx.HasPreviousRenderer, .{
+                    .entity = to_delete,
+                });
                 ecs.remove(world, entity, components.gfx.ElementsRenderer);
             }
+            ecs.remove(world, entity, components.block.NeedsMeshRendering);
             render_multidraw(world, entity, c[i].loc, c[i].wp);
-            ecs.add(world, entity, components.block.NeedsInstanceRendering);
         }
     }
 }
