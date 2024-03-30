@@ -192,24 +192,25 @@ fn initCursor() void {
 }
 
 fn initSettingsCamera() void {
-    const camera = ecs.new_entity(game.state.world, "SettingsCamera");
+    const world = game.state.world;
+    const camera = ecs.new_entity(world, "SettingsCamera");
     game.state.entities.settings_camera = camera;
-    _ = ecs.set(game.state.world, camera, components.screen.Camera, .{ .ubo = gfx.constants.SettingsUBOBindingPoint });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, f32){ -8, 0, 0.0, 0.0 } });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraFront, .{ .front = @Vector(4, f32){ 1, 0, 0, 0.0 } });
-    _ = ecs.set(game.state.world, camera, components.screen.CameraRotation, .{ .yaw = 0, .pitch = 0 });
-    _ = ecs.set(game.state.world, camera, components.screen.UpDirection, .{ .up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 } });
+    _ = ecs.set(world, camera, components.screen.Camera, .{ .ubo = gfx.constants.SettingsUBOBindingPoint });
+    _ = ecs.set(world, camera, components.screen.CameraPosition, .{ .pos = @Vector(4, f32){ -8, 0, 0.0, 0.0 } });
+    _ = ecs.set(world, camera, components.screen.CameraFront, .{ .front = @Vector(4, f32){ 1, 0, 0, 0.0 } });
+    _ = ecs.set(world, camera, components.screen.CameraRotation, .{ .yaw = 0, .pitch = 0 });
+    _ = ecs.set(world, camera, components.screen.UpDirection, .{ .up = @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 } });
     const w: f32 = @floatFromInt(config.settings_windows_width);
     const h: f32 = @floatFromInt(config.settings_windows_height);
-    _ = ecs.set(game.state.world, camera, components.screen.Perspective, .{
+    _ = ecs.set(world, camera, components.screen.Perspective, .{
         .fovy = config.fov,
         .aspect = w / h,
         .near = config.near,
         .far = config.far,
     });
-    ecs.add(game.state.world, camera, components.screen.CurrentCamera);
-    ecs.add(game.state.world, camera, components.screen.Updated);
-    ecs.add_pair(game.state.world, camera, ecs.ChildOf, settings_data);
+    ecs.add(world, camera, components.screen.CurrentCamera);
+    ecs.add(world, camera, components.screen.Updated);
+    ecs.add_pair(world, camera, ecs.ChildOf, settings_data);
 }
 
 pub fn toggleCamera() void {
