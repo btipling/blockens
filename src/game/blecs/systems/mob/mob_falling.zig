@@ -113,7 +113,9 @@ fn checkMob(loc: @Vector(4, f32), mob: components.mob.Mob) bool {
     const bottom_bounds = mob_data.getBottomBounds();
     var loc_test = loc;
     loc_test[2] -= 0.5;
-    if (!chunk.isAir(loc_test)) {
+    const res = chunk.getBlockId(loc_test);
+    if (!res.read) return true;
+    if (res.data != 0) {
         return true;
     }
     for (bottom_bounds) |coords| {
@@ -127,5 +129,7 @@ fn onGround(bbc: [3]f32, mob_loc: @Vector(4, f32)) bool {
     bbc_v[1] -= 0.1; // checking below
     const bbc_ws = zm.mul(bbc_v, zm.translationV(mob_loc));
     if (bbc_ws[1] < 0) return true;
-    return !chunk.isAir(bbc_ws);
+    const res = chunk.getBlockId(bbc_ws);
+    if (!res.read) return true;
+    return res.data != 0;
 }

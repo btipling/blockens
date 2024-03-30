@@ -33,17 +33,13 @@ pub const worldPosition = struct {
     }
 };
 
-pub fn isAir(pos: @Vector(4, f32)) bool {
-    return getBlockId(pos) == 0;
-}
-
-pub fn getBlockId(pos: @Vector(4, f32)) u8 {
+pub fn getBlockId(pos: @Vector(4, f32)) dataAtRes {
     const chunk_pos = positionFromWorldLocation(pos);
     const wp = worldPosition.initFromPositionV(chunk_pos);
-    const c = game.state.gfx.game_chunks.get(wp) orelse return 0;
+    const c = game.state.gfx.game_chunks.get(wp) orelse return .{ .read = true, .data = 0 };
     const chunk_local_pos = chunkPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
-    return @intCast(c.dataAt(chunk_index));
+    return c.dataAt(chunk_index);
 }
 
 pub fn removeBlock(world: *blecs.ecs.world_t, pos: @Vector(4, f32)) void {
@@ -106,6 +102,11 @@ pub const ChunkElement = struct {
     }
 };
 
+pub const dataAtRes = struct {
+    read: bool = false,
+    data: u32 = 0,
+};
+
 pub const Chunk = struct {
     wp: worldPosition,
     entity: blecs.ecs.entity_t = 0,
@@ -137,10 +138,12 @@ pub const Chunk = struct {
         return c;
     }
 
-    pub fn dataAt(self: *Chunk, i: usize) u32 {
-        self.mutex.lock();
+    pub fn dataAt(self: *Chunk, i: usize) dataAtRes {
+        if (!self.mutex.tryLock()) {
+            return .{ .read = false, .data = 0 };
+        }
         defer self.mutex.unlock();
-        return self.data[i];
+        return .{ .read = true, .data = self.data[i] };
     }
 
     pub fn setDataAt(self: *Chunk, i: usize, v: u32) void {
@@ -165,6 +168,9 @@ pub const Chunk = struct {
         if (self.draws) |d| self.allocator.free(d);
         if (self.draw_offsets) |d| self.allocator.free(d);
         if (self.draw_offsets_gl) |d| self.allocator.free(d);
+        self.draws = null;
+        self.draw_offsets = null;
+        self.draw_offsets_gl = null;
     }
 
     pub fn findMeshes(self: *Chunk) !void {

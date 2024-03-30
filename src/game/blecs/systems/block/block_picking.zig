@@ -55,7 +55,9 @@ fn selectBlock(world: *ecs.world_t) !void {
     while (i < max_distance) : (i += step_size) {
         const distance: @Vector(4, f32) = @splat(i);
         const pos: @Vector(4, f32) = camera_pos + ray_direction * distance;
-        const block_id = chunk.getBlockId(pos);
+        const res = chunk.getBlockId(pos);
+        if (!res.read) return;
+        const block_id: u8 = @intCast(res.data);
         if (block_id != 0) {
             if (wants_remove) {
                 removeBlock(world, pos);

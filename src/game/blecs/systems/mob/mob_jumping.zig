@@ -64,5 +64,7 @@ fn checkMob(loc: @Vector(4, f32), mob: components.mob.Mob) bool {
 fn canJump(bbc: [3]f32, mob_loc: @Vector(4, f32)) bool {
     const bbc_v: @Vector(4, f32) = .{ bbc[0], bbc[1], bbc[2], 1 };
     const bbc_ws = zm.mul(bbc_v, zm.translationV(mob_loc));
-    return chunk.isAir(bbc_ws);
+    const res = chunk.getBlockId(bbc_ws);
+    if (!res.read) return true;
+    return res.data == 0;
 }

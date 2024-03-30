@@ -36,6 +36,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 std.debug.print("deleting chunk rendering {}\n", .{to_delete});
                 _ = ecs.set(world, to_delete, components.gfx.ElementsRenderer, erc.*);
                 ecs.add(world, to_delete, components.gfx.NeedsDeletion);
+                ecs.remove(world, entity, components.gfx.CanDraw);
                 ecs.remove(world, entity, components.gfx.ElementsRenderer);
             }
             render_multidraw(world, entity, c[i].loc, c[i].wp);

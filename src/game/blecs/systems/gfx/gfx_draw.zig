@@ -124,6 +124,7 @@ fn gfxDraw(
                 return;
             }
         }
+        if (c.draw_offsets_gl == null) return;
         if (c.draws) |d| {
             gl.multiDrawElements(gl.TRIANGLES, d.ptr, gl.UNSIGNED_INT, @ptrCast(c.draw_offsets_gl.?.ptr), @intCast(d.len));
         }
