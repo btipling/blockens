@@ -1,5 +1,4 @@
 const std = @import("std");
-const ztracy = @import("ztracy");
 const lua = @import("libs/lua/build.zig");
 const sqlite = @import("libs/sqlite/build.zig");
 
@@ -24,10 +23,12 @@ pub fn build(b: *std.Build) !void {
     const options = b.addOptions();
     const use_tracy = b.option(bool, "use_tracy", "enable profiling tracy") orelse false;
     if (use_tracy) {
-        const ztracy_pkg = ztracy.package(b, target, optimize, .{
-            .options = .{ .enable_ztracy = true },
+        const ztracy = b.dependency("ztracy", .{
+            .enable_ztracy = true,
+            .enable_fibers = true,
         });
-        ztracy_pkg.link(exe);
+        exe.root_module.addImport("ztracy", ztracy.module("root"));
+        exe.linkLibrary(ztracy.artifact("tracy"));
     }
     options.addOption(bool, "use_tracy", use_tracy);
     exe.root_module.addOptions("config", options);

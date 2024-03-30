@@ -253,7 +253,7 @@ const tracy_stub = struct {
 
 const tracy_full = struct {
     const c = @cImport({
-        @cDefine("TRACY_CALLSTACK", "8"); //Uncomment to enable callstacks. "8" is max depth (can be changed).
+        //@cDefine("TRACY_CALLSTACK", "8"); Uncomment to enable callstacks. "8" is max depth (can be changed).
         @cDefine("TRACY_ENABLE", "");
         @cInclude("TracyC.h");
     });
@@ -321,6 +321,13 @@ const tracy_full = struct {
         // struct.
         const static = struct {
             var loc: c.___tracy_source_location_data = undefined;
+
+            // Ensure that a unique struct type is generated for each unique `src`. See
+            // https://github.com/ziglang/zig/issues/18816
+            comptime {
+                // https://github.com/ziglang/zig/issues/19274
+                _ = @sizeOf(@TypeOf(src));
+            }
         };
         static.loc = .{
             .name = name,
@@ -596,13 +603,15 @@ const tracy_full = struct {
             new_len: usize,
             ra: usize,
         ) bool {
-            const prev_ptr = buf.ptr;
             const self: *TracyAllocator = @ptrCast(@alignCast(ctx));
             const result = self.child_allocator.rawResize(buf, log2_ptr_align, new_len, ra);
-            if (!result) {
-                if (@intFromPtr(prev_ptr) == @intFromPtr(buf.ptr)) return result;
-                Free(prev_ptr);
+            if (result) {
+                Free(buf.ptr);
                 Alloc(buf.ptr, new_len);
+            } else {
+                var buffer: [128]u8 = undefined;
+                const msg = std.fmt.bufPrint(&buffer, "resize failed requesting {d} -> {d}", .{ buf.len, new_len }) catch return result;
+                Message(msg);
             }
             return result;
         }

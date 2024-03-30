@@ -33,7 +33,7 @@
         .system_sdk = .{
             .path = "./libs/system-sdk",
         },
-        .ztracy = .{ .path = "libs/tracy" },
+        .ztracy = .{ .path = "libs/ztracy" },
         .zmesh = .{ .path = "libs/zmesh" },
         .zglfw = .{ .path = "libs/zglfw" },
         .zgui = .{ .path = "libs/zgui" },
