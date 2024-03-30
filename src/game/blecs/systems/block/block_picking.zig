@@ -31,6 +31,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
 fn selectBlock(world: *ecs.world_t) !void {
     const tpc = game.state.entities.third_person_camera;
+    const player = game.state.entities.player;
+    const wants_remove = ecs.has_id(world, player, ecs.id(components.mob.RemoveAction));
+    if (wants_remove) ecs.remove(world, player, components.mob.RemoveAction);
+    const wants_add = ecs.has_id(world, player, ecs.id(components.mob.AddAction));
+    if (wants_add) ecs.remove(world, player, components.mob.AddAction);
     if (!ecs.has_id(world, tpc, ecs.id(components.screen.CurrentCamera))) return;
     const cp: *const components.screen.CameraPosition = ecs.get(
         world,
@@ -52,6 +57,10 @@ fn selectBlock(world: *ecs.world_t) !void {
         const pos: @Vector(4, f32) = camera_pos + ray_direction * distance;
         const block_id = chunk.getBlockId(pos);
         if (block_id != 0) {
+            if (wants_remove) {
+                removeBlock(world, pos);
+                return;
+            }
             highlightBlock(world, pos);
             return;
         }
@@ -74,5 +83,11 @@ fn highlightBlock(world: *ecs.world_t, pos: @Vector(4, f32)) void {
     og_pos[3] = 0;
     wl.loc = block_pos;
     ecs.add(world, blh_e, components.gfx.NeedsUniformUpdate);
+    return;
+}
+
+fn removeBlock(world: *ecs.world_t, pos: @Vector(4, f32)) void {
+    _ = world;
+    std.debug.print("removing block at {}\n", .{pos});
     return;
 }

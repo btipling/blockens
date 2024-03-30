@@ -23,7 +23,6 @@ fn handleMouseBtn(btn: glfw.MouseButton, action: glfw.Action, mods: glfw.Mods) !
 fn handleGameMouseBtn(btn: glfw.MouseButton, action: glfw.Action, mods: glfw.Mods) !void {
     const world = game.state.world;
     const player = game.state.entities.player;
-    std.debug.print("handled mouse button in game {}, {}, {}\n", .{ btn, action, mods });
     if (action == .release) return;
     switch (btn) {
         .left => {
