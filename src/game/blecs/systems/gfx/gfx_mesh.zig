@@ -85,6 +85,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             c = game.state.gfx.settings_chunks.get(chunk_c.wp);
         }
     }
+    if (c) |_c| _c.mutex.lock();
     if (config.use_tracy) ztracy.Message("adding indexes to EBO");
     if (er.is_multi_draw) {
         if (c) |_c| {
@@ -100,8 +101,15 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     }
 
     if (config.use_tracy) ztracy.Message("setting up shaders");
-    const vs = gfx.Gfx.initVertexShader(vertexShader) catch @panic("nope");
-    const fs = gfx.Gfx.initFragmentShader(fragmentShader) catch @panic("nope");
+    var vs: u32 = 0;
+    var fs: u32 = 0;
+    if (er.is_multi_draw) {
+        vs = gfx.Gfx.initMultiDrawVertexShader(vertexShader) catch @panic("nope");
+        fs = gfx.Gfx.initMultiDrawFragmentShader(fragmentShader) catch @panic("nope");
+    } else {
+        vs = gfx.Gfx.initVertexShader(vertexShader) catch @panic("nope");
+        fs = gfx.Gfx.initFragmentShader(fragmentShader) catch @panic("nope");
+    }
     const program = gfx.Gfx.initProgram(&[_]u32{ vs, fs }) catch @panic("nope");
     gl.useProgram(program);
 
@@ -312,6 +320,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
 
     if (config.use_tracy) ztracy.Message("ready to draw");
     ecs.add(world, entity, components.gfx.CanDraw);
+    gl.finish();
 
     if (config.use_tracy) ztracy.Message("cleaning up memory");
     ecs.remove(world, entity, components.gfx.ElementsRendererConfig);
@@ -333,4 +342,5 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     builder.deinit();
     game.state.allocator.destroy(builder);
     if (config.use_tracy) ztracy.Message("gfx mesh system is done");
+    if (c) |_c| _c.mutex.unlock();
 }

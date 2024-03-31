@@ -26,6 +26,12 @@ pub fn deinit() void {
 }
 
 pub const Gfx = struct {
+    const Self = @This();
+    var gfx = Self{};
+
+    multi_draw_frag: u32 = 0,
+    multi_draw_ver: u32 = 0,
+
     pub fn initVAO() !u32 {
         var VAO: u32 = undefined;
         gl.genVertexArrays(1, &VAO);
@@ -57,6 +63,20 @@ pub const Gfx = struct {
 
     pub fn initFragmentShader(fragmentShaderSource: [:0]const u8) !u32 {
         return initShader(fragmentShaderSource, gl.FRAGMENT_SHADER);
+    }
+
+    pub fn initMultiDrawVertexShader(vertexShaderSource: [:0]const u8) !u32 {
+        if (gfx.multi_draw_ver != 0) return gfx.multi_draw_ver;
+        gfx.multi_draw_ver = try initShader(vertexShaderSource, gl.VERTEX_SHADER);
+        std.debug.print("creating new vertex multidraw shader {}\n", .{gfx.multi_draw_ver});
+        return gfx.multi_draw_ver;
+    }
+
+    pub fn initMultiDrawFragmentShader(fragmentShaderSource: [:0]const u8) !u32 {
+        if (gfx.multi_draw_frag != 0) return gfx.multi_draw_frag;
+        gfx.multi_draw_frag = try initShader(fragmentShaderSource, gl.FRAGMENT_SHADER);
+        std.debug.print("creating new fragment multidraw shader {}\n", .{gfx.multi_draw_frag});
+        return gfx.multi_draw_frag;
     }
 
     pub fn initShader(source: [:0]const u8, shaderType: c_uint) !u32 {
