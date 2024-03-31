@@ -49,6 +49,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 }
 
 fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const components.screen.Screen, erc: components.gfx.ElementsRendererConfig) void {
+    if (config.use_tracy) ztracy.Message("starting mesh system");
     const er: *game_state.ElementsRendererConfig = game.state.gfx.renderConfigs.get(erc.id) orelse {
         std.debug.print("couldn't find render config for {d}\n", .{erc.id});
         return;
@@ -67,16 +68,13 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     const vertexShader: [:0]const u8 = er.vertexShader;
     const fragmentShader: [:0]const u8 = er.fragmentShader;
     const keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = er.keyframes;
-    defer game.state.allocator.free(vertexShader);
-    defer game.state.allocator.free(fragmentShader);
-    defer if (keyframes) |kf| game.state.allocator.free(kf);
-    defer _ = game.state.gfx.renderConfigs.remove(erc.id);
-    defer game.state.allocator.destroy(er);
-    defer ecs.delete(world, erc.id);
 
-    const vao = gfx.Gfx.initVAO() catch unreachable;
-    const vbo = gfx.Gfx.initVBO() catch unreachable;
+    if (config.use_tracy) ztracy.Message("initing gfx");
+    const vao = gfx.Gfx.initVAO() catch @panic("nope");
+    const vbo = gfx.Gfx.initVBO() catch @panic("nope");
     var ebo: u32 = 0;
+
+    if (config.use_tracy) ztracy.Message("setting up chunk");
     var c: ?*chunk.Chunk = null;
     if (er.is_multi_draw) {
         const chunk_c: *const components.block.Chunk = ecs.get(world, entity, components.block.Chunk).?;
@@ -87,25 +85,30 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             c = game.state.gfx.settings_chunks.get(chunk_c.wp);
         }
     }
+    if (config.use_tracy) ztracy.Message("adding indexes to EBO");
     if (er.is_multi_draw) {
         if (c) |_c| {
             var ial = std.ArrayList(u32).init(game.state.allocator);
             defer ial.deinit();
             for (_c.elements.items) |e| {
-                ial.appendSlice(&e.mesh_data.indices) catch unreachable;
+                ial.appendSlice(&e.mesh_data.indices) catch @panic("OOM");
             }
-            ebo = gfx.Gfx.initEBO(ial.items) catch unreachable;
+            ebo = gfx.Gfx.initEBO(ial.items) catch @panic("nope");
         }
     } else {
-        ebo = gfx.Gfx.initEBO(er.mesh_data.indices[0..]) catch unreachable;
+        ebo = gfx.Gfx.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
     }
-    const vs = gfx.Gfx.initVertexShader(vertexShader) catch unreachable;
-    const fs = gfx.Gfx.initFragmentShader(fragmentShader) catch unreachable;
-    const program = gfx.Gfx.initProgram(&[_]u32{ vs, fs }) catch unreachable;
+
+    if (config.use_tracy) ztracy.Message("setting up shaders");
+    const vs = gfx.Gfx.initVertexShader(vertexShader) catch @panic("nope");
+    const fs = gfx.Gfx.initFragmentShader(fragmentShader) catch @panic("nope");
+    const program = gfx.Gfx.initProgram(&[_]u32{ vs, fs }) catch @panic("nope");
     gl.useProgram(program);
 
-    var builder: *gfx.buffer_data.AttributeBuilder = game.state.allocator.create(gfx.buffer_data.AttributeBuilder) catch unreachable;
-    defer game.state.allocator.destroy(builder);
+    if (config.use_tracy) ztracy.Message("building shader attribute variables");
+    var builder: *gfx.buffer_data.AttributeBuilder = game.state.allocator.create(
+        gfx.buffer_data.AttributeBuilder,
+    ) catch @panic("OOM");
     var num_elements: usize = 1;
     if (er.is_multi_draw) {
         num_elements = c.?.elements.items.len;
@@ -115,7 +118,8 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         vbo,
         gl.STATIC_DRAW,
     );
-    defer builder.deinit();
+
+    if (config.use_tracy) ztracy.Message("defining shader attribute variables");
     // if (er.edges != null) builder.debug = true;
     var pos_loc: u32 = 0;
     var tc_loc: u32 = 0;
@@ -144,43 +148,37 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     if (er.is_multi_draw and er.has_attr_translation) {
         attr_trans_loc = builder.defineFloatAttributeValue(4);
     }
+
+    if (config.use_tracy) ztracy.Message("initializing vbo buffer builder");
     builder.initBuffer();
     if (er.is_multi_draw) {
         if (c) |_c| {
             for (_c.elements.items, 0..) |e, ei| {
+                if (config.use_tracy) ztracy.Message("adding multidraw vertex to vbo buffer builder");
                 // if (ei != 0) break;
                 const vertex_offset = er.mesh_data.positions.len * ei;
-                var md = e.mesh_data.toMeshData();
-                defer md.deinit();
+                const md = e.mesh_data;
                 for (0..md.positions.len) |ii| {
-                    var p = md.positions[ii];
+                    const p = md.positions[ii];
                     const vertex_index: usize = ii + vertex_offset;
                     builder.addFloatAtLocation(pos_loc, &p, vertex_index);
-                    if (md.texcoords) |tcs| {
-                        var t = tcs[ii];
+                    {
+                        const t = md.texcoords[ii];
                         builder.addFloatAtLocation(tc_loc, &t, vertex_index);
                     }
-                    if (md.normals) |ns| {
-                        var n = ns[ii];
+                    {
+                        const n = md.normals[ii];
                         builder.addFloatAtLocation(nor_loc, &n, vertex_index);
-                    }
-                    if (md.edges) |es| {
-                        var ec = es[ii];
-                        builder.addFloatAtLocation(edge_loc, &ec, vertex_index);
-                    }
-                    if (md.barycentric) |bs| {
-                        var bc = bs[@mod(ii, 3)]; // barycentric coordinates: there are only 3 values, only work for cuboids
-                        builder.addFloatAtLocation(baryc_loc, &bc, vertex_index);
                     }
                     if (er.has_block_texture_atlas) {
                         const bi = e.block_id;
                         const block_index: f32 = @floatFromInt(game.state.ui.data.texture_atlas_block_index[@intCast(bi)]);
                         const num_blocks: f32 = @floatFromInt(game.state.ui.data.texture_atlas_num_blocks);
-                        var bd: [2]f32 = [_]f32{ block_index, num_blocks };
+                        const bd: [2]f32 = [_]f32{ block_index, num_blocks };
                         builder.addFloatAtLocation(block_data_loc, &bd, vertex_index);
                     }
                     if (er.has_attr_translation) {
-                        var atr_data: [4]f32 = e.translation;
+                        const atr_data: [4]f32 = e.translation;
                         builder.addFloatAtLocation(attr_trans_loc, &atr_data, vertex_index);
                     }
                     builder.nextVertex();
@@ -189,6 +187,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         }
     } else {
         for (0..er.mesh_data.positions.len) |ii| {
+            if (config.use_tracy) ztracy.Message("adding element vertex to vbo buffer builder");
             var p = er.mesh_data.positions[ii];
             builder.addFloatAtLocation(pos_loc, &p, ii);
             if (er.mesh_data.texcoords) |tcs| {
@@ -220,7 +219,11 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             builder.nextVertex();
         }
     }
+
+    if (config.use_tracy) ztracy.Message("writing vbo buffer to gpu");
     builder.write();
+
+    if (config.use_tracy) ztracy.Message("writing uniforms to gpu");
     if (er.is_instanced and er.block_id != null) {
         var block_instance: ?*game_state.BlockInstance = null;
         if (parent == screen.gameDataEntity) {
@@ -237,7 +240,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             block_instance.?.vbo = gfx.Gfx.initTransformsUBO(
                 er.mesh_data.positions.len,
                 builder.get_location(),
-            ) catch unreachable;
+            ) catch @panic("nope");
             ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
         }
     }
@@ -246,12 +249,13 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         gfx.Gfx.setUniformMat(gfx.constants.TransformMatName, program, t);
     }
 
+    if (config.use_tracy) ztracy.Message("writing uniform buffer objects to gpu");
     if (er.ubo_binding_point) |ubo_binding_point| {
         var ubo: u32 = 0;
         ubo = game.state.gfx.ubos.get(ubo_binding_point) orelse blk: {
             const m = zm.identity();
             const new_ubo = gfx.Gfx.initUniformBufferObject(m);
-            game.state.gfx.ubos.put(ubo_binding_point, new_ubo) catch unreachable;
+            game.state.gfx.ubos.put(ubo_binding_point, new_ubo) catch @panic("OOM");
             break :blk new_ubo;
         };
         gfx.Gfx.setUniformBufferObject(gfx.constants.UBOName, program, ubo, ubo_binding_point);
@@ -271,17 +275,19 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         );
     }
 
+    if (config.use_tracy) ztracy.Message("writing ssbos to gpu");
     if (er.animation_binding_point) |animation_binding_point| {
         if (er.keyframes) |k| {
             var ssbo: u32 = 0;
             ssbo = game.state.gfx.ssbos.get(animation_binding_point) orelse blk: {
                 const new_ssbo = gfx.Gfx.initAnimationShaderStorageBufferObject(animation_binding_point, k);
-                game.state.gfx.ssbos.put(animation_binding_point, new_ssbo) catch unreachable;
+                game.state.gfx.ssbos.put(animation_binding_point, new_ssbo) catch @panic("nope");
                 break :blk new_ssbo;
             };
         }
     }
 
+    if (config.use_tracy) ztracy.Message("writing textures to gpu");
     var texture: u32 = 0;
     if (er.demo_cube_texture) |dct| {
         if (game.state.ui.data.texture_rgba_data) |d| {
@@ -301,9 +307,13 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         const mob_c: *const components.mob.Mob = ecs.get(world, mesh_c.mob_entity, components.mob.Mob).?;
         const mob_data: *mob.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
         const mesh: *mob.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
-        texture = gfx.Gfx.initTextureFromImage(mesh.texture.?) catch unreachable;
+        texture = gfx.Gfx.initTextureFromImage(mesh.texture.?) catch @panic("nope");
     }
 
+    if (config.use_tracy) ztracy.Message("ready to draw");
+    ecs.add(world, entity, components.gfx.CanDraw);
+
+    if (config.use_tracy) ztracy.Message("cleaning up memory");
     ecs.remove(world, entity, components.gfx.ElementsRendererConfig);
     _ = ecs.set(world, entity, components.gfx.ElementsRenderer, .{
         .program = program,
@@ -313,6 +323,14 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         .texture = texture,
         .numIndices = @intCast(er.mesh_data.indices.len),
     });
-    ecs.add(world, entity, components.gfx.CanDraw);
+    game.state.allocator.free(vertexShader);
+    game.state.allocator.free(fragmentShader);
+    if (keyframes) |kf| game.state.allocator.free(kf);
+    _ = game.state.gfx.renderConfigs.remove(erc.id);
+    ecs.delete(world, erc.id);
     if (deinit_mesh) er.mesh_data.deinit();
+    game.state.allocator.destroy(er);
+    builder.deinit();
+    game.state.allocator.destroy(builder);
+    if (config.use_tracy) ztracy.Message("gfx mesh system is done");
 }
