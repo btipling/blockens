@@ -155,8 +155,8 @@ pub const ElementsRendererConfig = struct {
         mob_id: i32,
         mesh_id: u32,
     };
-    vertexShader: [:0]const u8 = undefined,
-    fragmentShader: [:0]const u8 = undefined,
+    vertexShader: ?[:0]const u8 = null,
+    fragmentShader: ?[:0]const u8 = null,
     mesh_data: gfx.mesh.meshData = undefined,
     transform: ?zm.Mat = null,
     ubo_binding_point: ?u32 = null,

@@ -65,8 +65,8 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         }
     }
     const parent = ecs.get_parent(world, entity);
-    const vertexShader: [:0]const u8 = er.vertexShader;
-    const fragmentShader: [:0]const u8 = er.fragmentShader;
+    const vertexShader: ?[:0]const u8 = er.vertexShader;
+    const fragmentShader: ?[:0]const u8 = er.fragmentShader;
     const keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = er.keyframes;
 
     if (config.use_tracy) ztracy.Message("initing gfx");
@@ -332,8 +332,8 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         .texture = texture,
         .numIndices = @intCast(er.mesh_data.indices.len),
     });
-    game.state.allocator.free(vertexShader);
-    game.state.allocator.free(fragmentShader);
+    if (vertexShader) |v| game.state.allocator.free(v);
+    if (fragmentShader) |f| game.state.allocator.free(f);
     if (keyframes) |kf| game.state.allocator.free(kf);
     _ = game.state.gfx.renderConfigs.remove(erc.id);
     ecs.delete(world, erc.id);

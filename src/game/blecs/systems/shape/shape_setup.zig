@@ -72,8 +72,6 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         dc = struct { usize, usize }{ e.dc_t_beg, e.dc_t_end };
     }
     erc.* = .{
-        .vertexShader = shaders.genVertexShader(&e, &mesh_data),
-        .fragmentShader = shaders.genFragmentShader(&e, &mesh_data),
         .mesh_data = mesh_data,
         .transform = null,
         .ubo_binding_point = null,
@@ -87,6 +85,10 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         .is_multi_draw = e.is_multi_draw,
         .has_attr_translation = e.is_multi_draw,
     };
+    if (!e.is_multi_draw or !gfx.Gfx.hasMultiDrawShaders()) {
+        erc.vertexShader = shaders.genVertexShader(&e, &mesh_data);
+        erc.fragmentShader = shaders.genFragmentShader(&e, &mesh_data);
+    }
     const erc_id = ecs.new_id(world);
     game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
     if (e.has_uniform_mat) erc.transform = e.uniform_mat;

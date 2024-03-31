@@ -124,6 +124,8 @@ fn gfxDraw(
                 return;
             }
         }
+        c.mutex.lock();
+        defer c.mutex.unlock();
         var offsets = c.draw_offsets_gl;
         if (offsets == null) {
             offsets = c.prev_draw_offsets_gl;
@@ -147,7 +149,6 @@ fn gfxDraw(
                 entity,
                 components.gfx.HasPreviousRenderer,
             ) orelse @panic("nope");
-            gl.finish();
             ecs.remove(world, pr.entity, components.gfx.CanDraw);
             ecs.remove(world, entity, components.gfx.HasPreviousRenderer);
             c.deinitRenderPreviousData();

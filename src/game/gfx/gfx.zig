@@ -57,24 +57,30 @@ pub const Gfx = struct {
         return EBO;
     }
 
-    pub fn initVertexShader(vertexShaderSource: [:0]const u8) !u32 {
-        return initShader(vertexShaderSource, gl.VERTEX_SHADER);
+    pub fn initVertexShader(vertexShaderSource: ?[:0]const u8) !u32 {
+        const vs = vertexShaderSource orelse std.debug.panic("expected a vertex shader\n", .{});
+        return initShader(vs, gl.VERTEX_SHADER);
     }
 
-    pub fn initFragmentShader(fragmentShaderSource: [:0]const u8) !u32 {
-        return initShader(fragmentShaderSource, gl.FRAGMENT_SHADER);
+    pub fn initFragmentShader(fragmentShaderSource: ?[:0]const u8) !u32 {
+        const fs = fragmentShaderSource orelse std.debug.panic("expected a vertex shader\n", .{});
+        return initShader(fs, gl.FRAGMENT_SHADER);
     }
 
-    pub fn initMultiDrawVertexShader(vertexShaderSource: [:0]const u8) !u32 {
+    pub fn hasMultiDrawShaders() bool {
+        return gfx.multi_draw_frag != 0 and gfx.multi_draw_ver != 0;
+    }
+
+    pub fn initMultiDrawVertexShader(vertexShaderSource: ?[:0]const u8) !u32 {
         if (gfx.multi_draw_ver != 0) return gfx.multi_draw_ver;
-        gfx.multi_draw_ver = try initShader(vertexShaderSource, gl.VERTEX_SHADER);
+        gfx.multi_draw_ver = try initVertexShader(vertexShaderSource);
         std.debug.print("creating new vertex multidraw shader {}\n", .{gfx.multi_draw_ver});
         return gfx.multi_draw_ver;
     }
 
-    pub fn initMultiDrawFragmentShader(fragmentShaderSource: [:0]const u8) !u32 {
+    pub fn initMultiDrawFragmentShader(fragmentShaderSource: ?[:0]const u8) !u32 {
         if (gfx.multi_draw_frag != 0) return gfx.multi_draw_frag;
-        gfx.multi_draw_frag = try initShader(fragmentShaderSource, gl.FRAGMENT_SHADER);
+        gfx.multi_draw_frag = try initFragmentShader(fragmentShaderSource);
         std.debug.print("creating new fragment multidraw shader {}\n", .{gfx.multi_draw_frag});
         return gfx.multi_draw_frag;
     }
