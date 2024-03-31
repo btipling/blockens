@@ -117,7 +117,6 @@ pub const Chunk = struct {
     wp: worldPosition,
     entity: blecs.ecs.entity_t = 0,
     data: []u32 = undefined,
-    meshes: std.AutoHashMap(usize, @Vector(4, f32)),
     allocator: std.mem.Allocator,
     attr_builder: ?*gfx.buffer_data.AttributeBuilder = null,
     indices: ?[]u32 = null,
@@ -140,7 +139,6 @@ pub const Chunk = struct {
         c.* = Chunk{
             .wp = wp,
             .entity = entity,
-            .meshes = std.AutoHashMap(usize, @Vector(4, f32)).init(allocator),
             .allocator = allocator,
             .is_settings = is_settings,
         };
@@ -163,10 +161,8 @@ pub const Chunk = struct {
     }
 
     pub fn deinit(self: *Chunk) void {
-        self.deinitMeshes();
         self.deinitRenderData();
         self.deinitRenderPreviousData();
-        self.meshes.deinit();
         self.allocator.free(self.data);
     }
 
@@ -174,10 +170,6 @@ pub const Chunk = struct {
         self.deinitRenderPreviousData();
         self.prev_draws = self.draws;
         self.prev_draw_offsets_gl = self.draw_offsets_gl;
-    }
-
-    pub fn deinitMeshes(self: *Chunk) void {
-        self.meshes.clearAndFree();
     }
 
     pub fn deinitRenderData(self: *Chunk) void {
@@ -195,17 +187,20 @@ pub const Chunk = struct {
         self.prev_draws = null;
     }
 
-    pub fn findMeshes(self: *Chunk) !void {
+    // findMeshes - calling context owns the resulting hash map and needs to free it.
+    pub fn findMeshes(self: *Chunk) !std.AutoHashMap(usize, @Vector(4, f32)) {
         if (config.use_tracy) {
             const tracy_zone = ztracy.ZoneNC(@src(), "ChunkMeshing", 0x00_00_f0_f0);
             defer tracy_zone.End();
             var chunker = try Chunker.init(self);
             defer chunker.deinit();
             try chunker.run();
+            return chunker.meshes;
         } else {
             var chunker = try Chunker.init(self);
             defer chunker.deinit();
             try chunker.run();
+            return chunker.meshes;
         }
     }
 };
@@ -218,6 +213,7 @@ pub const Chunker = struct {
     toBeMeshed: [minVoxelsInMesh]usize,
     cachingMeshed: bool,
     meshed: [chunkSize]bool,
+    meshes: std.AutoHashMap(usize, @Vector(4, f32)),
 
     pub fn init(chunk: *Chunk) !Chunker {
         // chunkSize
@@ -229,6 +225,7 @@ pub const Chunker = struct {
             .toBeMeshed = [_]usize{0} ** minVoxelsInMesh,
             .cachingMeshed = true,
             .meshed = [_]bool{false} ** chunkSize,
+            .meshes = std.AutoHashMap(usize, @Vector(4, f32)).init(chunk.allocator),
         };
     }
 
@@ -251,7 +248,7 @@ pub const Chunker = struct {
     }
 
     fn updateChunk(self: *Chunker) !void {
-        try self.chunk.meshes.put(self.currentVoxel, self.currentScale);
+        try self.meshes.put(self.currentVoxel, self.currentScale);
         self.toBeMeshed = [_]usize{0} ** minVoxelsInMesh;
         self.numVoxelsInMesh = 0;
         self.initScale();

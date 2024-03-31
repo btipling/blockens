@@ -27,19 +27,28 @@ pub const ChunkMeshJob = struct {
     pub fn mesh(self: *@This()) void {
         if (config.use_tracy) ztracy.Message("starting mesh");
         var c = self.chunk;
-        c.mutex.lock();
-        defer c.mutex.unlock();
-        c.deinitMeshes();
-        if (config.use_tracy) ztracy.Message("starting finding meshes");
-        c.findMeshes() catch unreachable;
-        if (config.use_tracy) ztracy.Message("done finding meshes");
-        var keys = c.meshes.keyIterator();
+        // Reduce the lock time to just when we read and write to chunks avoid blocking the draws
+        var is_settings: bool = false;
+        var meshes: std.AutoHashMap(usize, @Vector(4, f32)) = undefined;
+        var block_data: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
+        {
+            c.mutex.lock();
+            defer c.mutex.unlock();
+            @memcpy(&block_data, c.data);
+            is_settings = c.is_settings;
+            if (config.use_tracy) ztracy.Message("starting finding meshes");
+            c.deinitRenderData();
+            meshes = c.findMeshes() catch std.debug.panic("unabable to find meshes\n", .{});
+            if (config.use_tracy) ztracy.Message("done finding meshes");
+        }
+        defer meshes.deinit();
+        var keys = meshes.keyIterator();
         var draws: [chunk.chunkSize]c_int = std.mem.zeroes([chunk.chunkSize]c_int);
         var draw_offsets: [chunk.chunkSize]c_int = std.mem.zeroes([chunk.chunkSize]c_int);
         var draw_offsets_gl = std.ArrayList(?*const anyopaque).init(game.state.allocator);
         const cp = c.wp.vecFromWorldPosition();
         var loc: @Vector(4, f32) = undefined;
-        if (c.is_settings) {
+        if (is_settings) {
             loc = .{ -32, 0, -32, 0 };
         } else {
             loc = .{
@@ -50,7 +59,6 @@ pub const ChunkMeshJob = struct {
             };
         }
         const aloc: @Vector(4, f32) = loc - @as(@Vector(4, f32), @splat(0.5));
-        c.deinitRenderData();
         if (config.use_tracy) ztracy.Message("setting up attribute variable buffer");
 
         var builder = game.state.allocator.create(
@@ -86,8 +94,8 @@ pub const ChunkMeshJob = struct {
             const i: usize = _k.*;
 
             // Scale and block id are the magic that build chunks. Lighting, transparency and orientation will probably be needed too.
-            const s = c.meshes.get(i) orelse std.debug.panic("expected scale from mesh", .{});
-            const block_id: u8 = @intCast(c.data[i]);
+            const s = meshes.get(i) orelse std.debug.panic("expected scale from mesh", .{});
+            const block_id: u8 = @intCast(block_data[i]);
             if (block_id == 0) std.debug.panic("why are there air blocks being meshed >:|", .{});
 
             // Get the possibly cashed mesh data to build the buffer with.
@@ -141,29 +149,31 @@ pub const ChunkMeshJob = struct {
             }
             current_element += 1;
         }
-        // Attach buffer builder and indicies on chunk to pass on to gfx_mesh, which will clean it up.
-        c.attr_builder = builder;
-        c.indices = indices;
         if (config.use_tracy) ztracy.Message("done iterating through meshes");
 
         // The draws are attached to the chunk and used for drawing calls
         {
             const c_draws = game.state.allocator.alloc(c_int, current_element) catch @panic("OOM");
             @memcpy(c_draws, draws[0..current_element]);
-            c.draws = c_draws;
             const c_draws_offsets = game.state.allocator.alloc(c_int, current_element) catch @panic("OOM");
             @memcpy(c_draws_offsets, draw_offsets[0..current_element]);
-            c.draw_offsets = c_draws_offsets;
+            c.mutex.lock();
+            defer c.mutex.unlock();
             for (0..current_element) |i| {
-                if (c.draw_offsets.?[i] == 0) {
+                if (c_draws_offsets[i] == 0) {
                     draw_offsets_gl.append(null) catch @panic("OOM");
                 } else {
                     draw_offsets_gl.append(@as(
                         *anyopaque,
-                        @ptrFromInt(@as(usize, @intCast(c.draw_offsets.?[i]))),
+                        @ptrFromInt(@as(usize, @intCast(c_draws_offsets[i]))),
                     )) catch @panic("OOM");
                 }
             }
+            // Attach buffer builder and indicies on chunk to pass on to gfx_mesh, which will clean it up.
+            c.attr_builder = builder;
+            c.indices = indices;
+            c.draws = c_draws;
+            c.draw_offsets = c_draws_offsets;
             c.draw_offsets_gl = draw_offsets_gl.toOwnedSlice() catch @panic("OOM");
         }
 

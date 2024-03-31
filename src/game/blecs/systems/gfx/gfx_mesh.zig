@@ -85,18 +85,6 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             c = game.state.gfx.settings_chunks.get(chunk_c.wp);
         }
     }
-    if (c) |_c| _c.mutex.lock();
-    if (config.use_tracy) ztracy.Message("adding indexes to EBO");
-    if (er.is_multi_draw) {
-        if (c) |_c| {
-            const indices = _c.indices orelse std.debug.panic("expected indices from chunk\n", .{});
-            ebo = gfx.Gfx.initEBO(indices) catch @panic("nope");
-            game.state.allocator.free(indices);
-            _c.indices = null;
-        }
-    } else {
-        ebo = gfx.Gfx.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
-    }
 
     if (config.use_tracy) ztracy.Message("setting up shaders");
     var vs: u32 = 0;
@@ -111,15 +99,31 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     const program = gfx.Gfx.initProgram(&[_]u32{ vs, fs }) catch @panic("nope");
     gl.useProgram(program);
 
-    if (config.use_tracy) ztracy.Message("building shader attribute variables");
     var builder: *gfx.buffer_data.AttributeBuilder = undefined;
-    if (er.is_multi_draw and c != null) {
-        const _c = c.?;
-        builder = _c.attr_builder orelse std.debug.panic("expected attribuilder from chunk\n", .{});
-        builder.vbo = vbo;
-        builder.usage = gl.STATIC_DRAW;
-        _c.attr_builder = null;
+    if (er.is_multi_draw) {
+        if (c) |_c| {
+            // The only time we need to read from chunk data is in this block.
+            _c.mutex.lock();
+            defer _c.mutex.unlock();
+
+            if (config.use_tracy) ztracy.Message("adding indexes to EBO");
+            const indices = _c.indices orelse std.debug.panic("expected indices from chunk\n", .{});
+            ebo = gfx.Gfx.initEBO(indices) catch @panic("nope");
+            game.state.allocator.free(indices);
+            _c.indices = null;
+
+            if (config.use_tracy) ztracy.Message("building multidraw shader attribute variables");
+            builder = _c.attr_builder orelse std.debug.panic("expected attribuilder from chunk\n", .{});
+            builder.vbo = vbo;
+            builder.usage = gl.STATIC_DRAW;
+            _c.attr_builder = null;
+        }
     } else {
+        ebo = gfx.Gfx.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
+    }
+
+    if (!er.is_multi_draw) {
+        if (config.use_tracy) ztracy.Message("building non-multidraw shader attribute variables");
         builder = game.state.allocator.create(
             gfx.buffer_data.AttributeBuilder,
         ) catch @panic("OOM");
@@ -310,5 +314,4 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     builder.deinit();
     game.state.allocator.destroy(builder);
     if (config.use_tracy) ztracy.Message("gfx mesh system is done");
-    if (c) |_c| _c.mutex.unlock();
 }
