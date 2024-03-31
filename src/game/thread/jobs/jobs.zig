@@ -50,6 +50,7 @@ pub const Jobs = struct {
         wp: chunk.worldPosition,
         entity: blecs.ecs.entity_t,
         is_settings: bool,
+        schedule_save: bool,
     ) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
@@ -57,6 +58,7 @@ pub const Jobs = struct {
                 .wp = wp,
                 .entity = entity,
                 .is_settings = is_settings,
+                .schedule_save = schedule_save,
             },
         ) catch |e| {
             std.debug.print("error scheduling copy chunk job: {}\n", .{e});

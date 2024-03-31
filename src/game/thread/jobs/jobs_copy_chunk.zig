@@ -10,6 +10,7 @@ pub const CopyChunkJob = struct {
     wp: chunk.worldPosition,
     entity: blecs.ecs.entity_t,
     is_settings: bool,
+    schedule_save: bool,
 
     pub fn exec(self: *@This()) void {
         if (config.use_tracy) {
@@ -30,7 +31,7 @@ pub const CopyChunkJob = struct {
             self.entity,
             self.is_settings,
         ) catch unreachable;
-
+        c.updated = self.schedule_save;
         if (self.is_settings) {
             c.data = game.state.allocator.alloc(u32, game.state.ui.data.chunk_demo_data.?.len) catch unreachable;
             @memcpy(c.data, game.state.ui.data.chunk_demo_data.?);

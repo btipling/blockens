@@ -63,7 +63,12 @@ pub fn setBlockId(world: *blecs.ecs.world_t, pos: @Vector(4, f32), block_id: u8)
             .chunkData = cd,
         };
         game.state.ui.data.world_chunk_table_data.put(wp, ch_cfg) catch @panic("OOM");
-        _ = game.state.jobs.copyChunk(wp, blecs.ecs.new_id(game.state.world), false);
+        _ = game.state.jobs.copyChunk(
+            wp,
+            blecs.ecs.new_id(game.state.world),
+            false,
+            true,
+        );
         return;
     };
 

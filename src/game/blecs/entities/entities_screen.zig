@@ -466,6 +466,7 @@ pub fn initDemoChunk() void {
         chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 }),
         ecs.new_id(world),
         true,
+        false,
     );
     return;
 }
