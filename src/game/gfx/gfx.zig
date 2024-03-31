@@ -21,6 +21,10 @@ pub fn init() void {
     mesh.init();
 }
 
+pub fn deinit() void {
+    mesh.deinit();
+}
+
 pub const Gfx = struct {
     pub fn initVAO() !u32 {
         var VAO: u32 = undefined;

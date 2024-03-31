@@ -186,6 +186,7 @@ pub const Game = struct {
         zgui.deinit();
         state.window.destroy();
         glfw.terminate();
+        gfx.deinit();
         state.deinit();
         state.allocator.destroy(state);
         std.debug.print("\nGoodbye blockens!\n", .{});

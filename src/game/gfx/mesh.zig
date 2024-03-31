@@ -329,6 +329,9 @@ const vmc_k = struct {
 pub fn init() void {
     voxel_mesh_creator = VoxelMeshCreator.init();
 }
+pub fn deinit() void {
+    voxel_mesh_creator.deinit();
+}
 
 pub const VoxelMeshCreator = struct {
     cache: std.AutoHashMap(vmc_k, meshDataVoxels),
@@ -338,6 +341,9 @@ pub const VoxelMeshCreator = struct {
             .cache = std.AutoHashMap(vmc_k, meshDataVoxels).init(game.state.allocator),
             .mutex = .{},
         };
+    }
+    pub fn deinit(self: *VoxelMeshCreator) void {
+        self.cache.deinit();
     }
 
     fn scaleToKey(_: VoxelMeshCreator, scale: @Vector(4, f32)) vmc_k {
