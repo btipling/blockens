@@ -148,24 +148,30 @@ pub const AttributeBuilder = struct {
     ) void {
         const av = self.attr_vars.items[location - self.starting_location];
         const dataptr: []const u8 = std.mem.sliceAsBytes(data);
-        if (self.debug) std.debug.print("dataptr len: {d}\n", .{dataptr.len});
-        for (dataptr) |b| {
-            if (self.debug) std.debug.print("{d} ", .{b});
+        if (self.debug) {
+            std.debug.print("dataptr len: {d}\n", .{dataptr.len});
+            for (dataptr) |b| {
+                std.debug.print("{d} ", .{b});
+            }
+            std.debug.print("\n", .{});
         }
-        if (self.debug) std.debug.print("\n", .{});
         const stride: usize = @intCast(self.stride);
         const start = stride * vertex_index + av.offset;
-        if (self.debug) std.debug.print("addFloatAtLocation - loc: {d}, vertex: {d} av.offset: {d} \n", .{
-            location,
-            vertex_index,
-            av.offset,
-        });
-        for (0..dataptr.len) |i| {
-            const buf_i = start + i;
-            if (self.debug) std.debug.print(" {d} ,", .{buf_i});
-            self.buffer[buf_i] = dataptr[i];
+        if (self.debug) {
+            std.debug.print("addFloatAtLocation - loc: {d}, vertex: {d} av.offset: {d} \n", .{
+                location,
+                vertex_index,
+                av.offset,
+            });
+            for (0..dataptr.len) |i| {
+                const buf_i = start + i;
+                if (self.debug) std.debug.print(" {d} ,", .{buf_i});
+                self.buffer[buf_i] = dataptr[i];
+            }
+            std.debug.print("\n", .{});
+        } else {
+            for (0..dataptr.len) |i| self.buffer[start + i] = dataptr[i];
         }
-        if (self.debug) std.debug.print("\n", .{});
     }
 
     pub fn write(self: *AttributeBuilder) void {
