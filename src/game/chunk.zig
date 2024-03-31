@@ -134,6 +134,7 @@ pub const Chunk = struct {
     prev_draw_offsets_gl: ?[]?*const anyopaque = null,
     prev_draws: ?[]c_int = null,
     is_settings: bool = false,
+    updated: bool = false,
     vbo: u32 = 0,
     mutex: std.Thread.Mutex = .{},
     pub fn init(
@@ -166,6 +167,7 @@ pub const Chunk = struct {
         self.mutex.lock();
         defer self.mutex.unlock();
         self.data[i] = v;
+        self.updated = true;
     }
 
     pub fn deinit(self: *Chunk) void {

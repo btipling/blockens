@@ -3,6 +3,7 @@ const game = @import("../../game.zig");
 const chunk = @import("../../chunk.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const buffer = @import("../buffer.zig");
+const data = @import("../../data/data.zig");
 const config = @import("config");
 
 pub const PlayerPosition = struct {
@@ -12,6 +13,7 @@ pub const PlayerPosition = struct {
 };
 pub const SaveData = struct {
     player_position: PlayerPosition,
+    chunks_updated: [2]?*chunk.Chunk = undefined, // limit chunk saves per save
 };
 
 pub const SaveJob = struct {
@@ -29,12 +31,44 @@ pub const SaveJob = struct {
     }
 
     pub fn saveJob(self: *@This()) void {
+        std.debug.print("saving\n", .{});
         self.savePlayerPosition() catch std.debug.print("unable to save player position\n", .{});
+        for (self.data.chunks_updated) |mc| {
+            if (mc) |c| self.saveChunk(c) catch @panic("nope");
+        }
     }
 
-    pub fn savePlayerPosition(self: *@This()) !void {
+    fn savePlayerPosition(self: *@This()) !void {
         const loaded_world = game.state.ui.data.world_loaded_id;
         const pp = self.data.player_position;
         try game.state.db.updatePlayerPosition(loaded_world, pp.loc, pp.rotation, pp.angle);
+    }
+
+    fn saveChunk(_: *@This(), c: *chunk.Chunk) !void {
+        if (!c.mutex.tryLock()) return;
+        defer c.mutex.unlock();
+        if (!c.updated) return;
+        c.updated = false;
+        var c_cfg = game.state.ui.data.world_chunk_table_data.get(c.wp) orelse return;
+        const loaded_world = game.state.ui.data.world_loaded_id;
+        if (c_cfg.id == 0) {
+            // save new chunk
+            const p = chunk.worldPosition.vecFromWorldPosition(c.wp);
+            const x: i32 = @intFromFloat(@floor(p[0]));
+            const y: i32 = @intFromFloat(@floor(p[1]));
+            const z: i32 = @intFromFloat(@floor(p[2]));
+            try game.state.db.saveChunkData(loaded_world, x, y, z, c_cfg.scriptId, c.data);
+            var db_chunk_data: data.chunkData = .{};
+            try game.state.db.loadChunkData(loaded_world, x, y, z, &db_chunk_data);
+            c_cfg.id = db_chunk_data.id;
+            game.state.allocator.free(c_cfg.chunkData);
+            c_cfg.chunkData = db_chunk_data.voxels;
+            try game.state.ui.data.world_chunk_table_data.put(c.wp, c_cfg);
+            std.debug.print("new chunk saved\n", .{});
+        } else {
+            // update existing chunk
+            try game.state.db.updateChunkData(c_cfg.id, c_cfg.scriptId, c.data);
+            std.debug.print("updated chunk saved\n", .{});
+        }
     }
 };

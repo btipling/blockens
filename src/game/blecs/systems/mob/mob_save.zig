@@ -26,7 +26,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            const m: []components.mob.Mob = ecs.field(it, components.mob.Mob, 1) orelse continue;
+            const m: *components.mob.Mob = ecs.get_mut(world, entity, components.mob.Mob) orelse continue;
             ecs.remove(world, entity, components.mob.DidUpdate);
             if (ecs.has_id(world, entity, ecs.id(components.mob.Falling))) continue;
             var loc: @Vector(4, f32) = .{ 1, 1, 1, 1 };
@@ -39,15 +39,27 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 rotation = r.rotation;
                 angle = r.angle;
             }
-            if (m[i].last_saved + save_after_seconds < game.state.input.lastframe) {
-                const data = save_job.SaveData{
+            if (m.last_saved + save_after_seconds < game.state.input.lastframe) {
+                var data = save_job.SaveData{
                     .player_position = .{
                         .loc = loc,
                         .rotation = rotation,
                         .angle = angle,
                     },
                 };
+
+                var cs = game.state.gfx.game_chunks.valueIterator();
+                var to_save: usize = 0;
+                while (cs.next()) |cc| {
+                    if (cc.*.updated) {
+                        std.debug.print("adding block to save\n", .{});
+                        data.chunks_updated[to_save] = cc.*;
+                        to_save += 1;
+                        if (to_save >= data.chunks_updated.len) break;
+                    }
+                }
                 _ = game.state.jobs.save(data);
+                m.last_saved = game.state.input.lastframe;
             }
         }
     }
