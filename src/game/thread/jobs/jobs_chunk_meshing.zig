@@ -25,11 +25,14 @@ pub const ChunkMeshJob = struct {
     }
 
     pub fn mesh(self: *@This()) void {
+        if (config.use_tracy) ztracy.Message("starting mesh");
         var c = self.chunk;
         c.mutex.lock();
         defer c.mutex.unlock();
         c.deinitMeshes();
+        if (config.use_tracy) ztracy.Message("starting finding meshes");
         c.findMeshes() catch unreachable;
+        if (config.use_tracy) ztracy.Message("done finding meshes");
         var keys = c.meshes.keyIterator();
         var draws = std.ArrayList(c_int).init(game.state.allocator);
         var draw_offsets = std.ArrayList(c_int).init(game.state.allocator);
@@ -47,9 +50,11 @@ pub const ChunkMeshJob = struct {
             };
         }
         var index_offset: u32 = 0;
-
+        const aloc: @Vector(4, f32) = loc - @as(@Vector(4, f32), @splat(0.5));
         c.deinitRenderData();
+        if (config.use_tracy) ztracy.Message("iterating through meshes");
         while (keys.next()) |_k| {
+            if (config.use_tracy) ztracy.Message("iterating through a mesh");
             const i: usize = _k.*;
             if (c.meshes.get(i)) |s| {
                 const block_id: u8 = @intCast(c.data[i]);
@@ -64,10 +69,10 @@ pub const ChunkMeshJob = struct {
                 index_offset += @intCast(mesh_data.indices.len);
                 const p: @Vector(4, f32) = chunk.getPositionAtIndexV(i);
                 const fp: @Vector(4, f32) = .{
-                    p[0] + loc[0] - 0.5,
-                    p[1] + loc[1] - 0.5,
-                    p[2] + loc[2] - 0.5,
-                    p[3] + loc[3],
+                    p[0] + aloc[0],
+                    p[1] + aloc[1],
+                    p[2] + aloc[2],
+                    p[3],
                 };
                 const e: chunk.ChunkElement = .{
                     .chunk_index = i,
@@ -78,6 +83,7 @@ pub const ChunkMeshJob = struct {
                 c.elements.append(e) catch unreachable;
             }
         }
+        if (config.use_tracy) ztracy.Message("done iterating through meshes");
         self.chunk.draws = draws.toOwnedSlice() catch unreachable;
         self.chunk.draw_offsets = draw_offsets.toOwnedSlice() catch unreachable;
         for (0..self.chunk.draw_offsets.?.len) |i| {
@@ -99,5 +105,6 @@ pub const ChunkMeshJob = struct {
             .chunk = self.chunk,
         }) catch unreachable;
         buffer.write_message(msg) catch unreachable;
+        if (config.use_tracy) ztracy.Message("done with mesh job");
     }
 };
