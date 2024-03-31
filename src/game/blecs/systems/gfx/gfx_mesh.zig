@@ -92,12 +92,12 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             var ial = std.ArrayList(u32).init(game.state.allocator);
             defer ial.deinit();
             for (_c.elements.items) |e| {
-                ial.appendSlice(e.mesh_data.indices) catch unreachable;
+                ial.appendSlice(&e.mesh_data.indices) catch unreachable;
             }
             ebo = gfx.Gfx.initEBO(ial.items) catch unreachable;
         }
     } else {
-        ebo = gfx.Gfx.initEBO(er.mesh_data.indices) catch unreachable;
+        ebo = gfx.Gfx.initEBO(er.mesh_data.indices[0..]) catch unreachable;
     }
     const vs = gfx.Gfx.initVertexShader(vertexShader) catch unreachable;
     const fs = gfx.Gfx.initFragmentShader(fragmentShader) catch unreachable;
@@ -150,7 +150,8 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             for (_c.elements.items, 0..) |e, ei| {
                 // if (ei != 0) break;
                 const vertex_offset = er.mesh_data.positions.len * ei;
-                const md = e.mesh_data;
+                var md = e.mesh_data.toMeshData();
+                defer md.deinit();
                 for (0..md.positions.len) |ii| {
                     var p = md.positions[ii];
                     const vertex_index: usize = ii + vertex_offset;

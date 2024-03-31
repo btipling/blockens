@@ -111,14 +111,9 @@ pub fn getIndexFromPositionV(p: @Vector(4, f32)) usize {
 pub const ChunkElement = struct {
     chunk_index: usize = 0,
     block_id: u8 = 0,
-    mesh_data: gfx.mesh.meshData,
+    mesh_data: gfx.mesh.meshDataVoxels,
     translation: @Vector(4, f32) = .{ 0, 0, 0, 0 },
-    fn deinit(self: ChunkElement, allocator: std.mem.Allocator) void {
-        allocator.free(self.mesh_data.positions);
-        allocator.free(self.mesh_data.normals.?);
-        allocator.free(self.mesh_data.indices);
-        allocator.free(self.mesh_data.texcoords.?);
-    }
+    fn deinit(_: ChunkElement, _: std.mem.Allocator) void {}
 };
 
 pub const dataAtRes = struct {

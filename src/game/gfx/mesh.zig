@@ -22,23 +22,42 @@ pub const meshData = struct {
     }
 };
 
+pub const meshDataVoxels = struct {
+    positions: [36][3]f32,
+    indices: [36]u32,
+    texcoords: [36][2]f32,
+    normals: [36][3]f32,
+
+    pub fn toMeshData(self: meshDataVoxels) meshData {
+        const positions: [][3]f32 = game.state.allocator.alloc([3]f32, self.positions.len) catch @panic("OOM");
+        @memcpy(positions, &self.positions);
+        const indices: []u32 = game.state.allocator.alloc(u32, self.indices.len) catch @panic("OOM");
+        @memcpy(indices, &self.indices);
+        const texcoords: [][2]f32 = game.state.allocator.alloc([2]f32, self.texcoords.len) catch @panic("OOM");
+        @memcpy(texcoords, &self.texcoords);
+        const normals: [][3]f32 = game.state.allocator.alloc([3]f32, self.normals.len) catch @panic("OOM");
+        @memcpy(normals, &self.normals);
+        return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
+    }
+};
+
 // :: Plane
 pub fn plane() meshData {
     var p = zmesh.Shape.initPlane(1, 1);
     defer p.deinit();
-    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, p.positions.len) catch unreachable;
+    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, p.positions.len) catch @panic("OOM");
     @memcpy(positions, p.positions);
-    const indices: []u32 = game.state.allocator.alloc(u32, p.indices.len) catch unreachable;
+    const indices: []u32 = game.state.allocator.alloc(u32, p.indices.len) catch @panic("OOM");
     @memcpy(indices, p.indices);
     var texcoords: ?[][2]f32 = null;
     if (p.texcoords) |_| {
-        const tc: [][2]f32 = game.state.allocator.alloc([2]f32, p.texcoords.?.len) catch unreachable;
+        const tc: [][2]f32 = game.state.allocator.alloc([2]f32, p.texcoords.?.len) catch @panic("OOM");
         @memcpy(tc, p.texcoords.?);
         texcoords = tc;
     }
     var normals: ?[][3]f32 = null;
     if (p.normals) |_| {
-        const ns: [][3]f32 = game.state.allocator.alloc([3]f32, p.normals.?.len) catch unreachable;
+        const ns: [][3]f32 = game.state.allocator.alloc([3]f32, p.normals.?.len) catch @panic("OOM");
         @memcpy(ns, p.normals.?);
         normals = ns;
     }
@@ -289,58 +308,95 @@ const bounding_box_positions: [36][3]f32 = .{
 };
 
 pub fn cube() meshData {
-    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, cube_positions.len) catch unreachable;
+    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, cube_positions.len) catch @panic("OOM");
     @memcpy(positions, &cube_positions);
-    const indices: []u32 = game.state.allocator.alloc(u32, cube_indices.len) catch unreachable;
+    const indices: []u32 = game.state.allocator.alloc(u32, cube_indices.len) catch @panic("OOM");
     @memcpy(indices, &cube_indices);
-    const texcoords: [][2]f32 = game.state.allocator.alloc([2]f32, cube_texcoords.len) catch unreachable;
+    const texcoords: [][2]f32 = game.state.allocator.alloc([2]f32, cube_texcoords.len) catch @panic("OOM");
     @memcpy(texcoords, &cube_texcoords);
-    const normals: [][3]f32 = game.state.allocator.alloc([3]f32, cube_normals.len) catch unreachable;
+    const normals: [][3]f32 = game.state.allocator.alloc([3]f32, cube_normals.len) catch @panic("OOM");
     @memcpy(normals, &cube_normals);
     return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
 }
 
-pub fn voxel(scale: @Vector(4, f32)) !meshData {
-    const allocator = game.state.allocator;
-    var indicesAL = std.ArrayList(u32).init(allocator);
+pub var voxel_mesh_creator: VoxelMeshCreator = undefined;
+const vmc_k = struct {
+    x: usize,
+    y: usize,
+    z: usize,
+};
 
-    defer indicesAL.deinit();
-    var _i = cube_indices;
-    try indicesAL.appendSlice(&_i);
-
-    var positionsAL = std.ArrayList([3]f32).init(allocator);
-    defer positionsAL.deinit();
-    var _p = cube_positions;
-    try positionsAL.appendSlice(&_p);
-
-    var normalsAL = std.ArrayList([3]f32).init(allocator);
-    defer normalsAL.deinit();
-    var _n = cube_normals;
-    try normalsAL.appendSlice(&_n);
-
-    var texcoordsAL = std.ArrayList([2]f32).init(allocator);
-    defer texcoordsAL.deinit();
-    var _t = cube_texcoords;
-    try texcoordsAL.appendSlice(&_t);
-
-    var v = zmesh.Shape.init(indicesAL, positionsAL, normalsAL, texcoordsAL);
-    defer v.deinit();
-
-    // voxel meshes are centered around origin and range fro -0.5 to 0.5 so need a translation
-    v.translate(0.5, 0.5, 0.5);
-    v.scale(scale[0], scale[1], scale[2]);
-    v.translate(0.5, 0.5, 0.5);
-
-    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, v.positions.len) catch unreachable;
-    @memcpy(positions, v.positions);
-    const indices: []u32 = game.state.allocator.alloc(u32, v.indices.len) catch unreachable;
-    @memcpy(indices, v.indices);
-    const texcoords: [][2]f32 = game.state.allocator.alloc([2]f32, v.texcoords.?.len) catch unreachable;
-    @memcpy(texcoords, v.texcoords.?);
-    const normals: [][3]f32 = game.state.allocator.alloc([3]f32, v.normals.?.len) catch unreachable;
-    @memcpy(normals, v.normals.?);
-    return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
+pub fn init() void {
+    voxel_mesh_creator = VoxelMeshCreator.init();
 }
+
+pub const VoxelMeshCreator = struct {
+    cache: std.AutoHashMap(vmc_k, meshDataVoxels),
+    mutex: std.Thread.Mutex,
+    pub fn init() VoxelMeshCreator {
+        return .{
+            .cache = std.AutoHashMap(vmc_k, meshDataVoxels).init(game.state.allocator),
+            .mutex = .{},
+        };
+    }
+
+    fn scaleToKey(_: VoxelMeshCreator, scale: @Vector(4, f32)) vmc_k {
+        const uis: @Vector(4, u32) = @intFromFloat(scale);
+        return .{
+            .x = uis[0],
+            .y = uis[1],
+            .z = uis[2],
+        };
+    }
+
+    pub fn voxel(self: *VoxelMeshCreator, scale: @Vector(4, f32)) !meshDataVoxels {
+        self.mutex.lock();
+        defer self.mutex.unlock();
+        const k = self.scaleToKey(scale);
+        if (self.cache.get(k)) |mdv| return mdv;
+        const allocator = game.state.allocator;
+        var indicesAL = std.ArrayList(u32).init(allocator);
+
+        defer indicesAL.deinit();
+        var _i = cube_indices;
+        try indicesAL.appendSlice(&_i);
+
+        var positionsAL = std.ArrayList([3]f32).init(allocator);
+        defer positionsAL.deinit();
+        var _p = cube_positions;
+        try positionsAL.appendSlice(&_p);
+
+        var normalsAL = std.ArrayList([3]f32).init(allocator);
+        defer normalsAL.deinit();
+        var _n = cube_normals;
+        try normalsAL.appendSlice(&_n);
+
+        var texcoordsAL = std.ArrayList([2]f32).init(allocator);
+        defer texcoordsAL.deinit();
+        var _t = cube_texcoords;
+        try texcoordsAL.appendSlice(&_t);
+
+        var v = zmesh.Shape.init(indicesAL, positionsAL, normalsAL, texcoordsAL);
+        defer v.deinit();
+
+        // voxel meshes are centered around origin and range fro -0.5 to 0.5 so need a translation
+        v.translate(0.5, 0.5, 0.5);
+        v.scale(scale[0], scale[1], scale[2]);
+        v.translate(0.5, 0.5, 0.5);
+
+        var positions: [36][3]f32 = std.mem.zeroes([36][3]f32);
+        @memcpy(&positions, v.positions);
+        var indices: [36]u32 = std.mem.zeroes([36]u32);
+        @memcpy(&indices, v.indices);
+        var texcoords: [36][2]f32 = std.mem.zeroes([36][2]f32);
+        @memcpy(&texcoords, v.texcoords.?);
+        var normals: [36][3]f32 = std.mem.zeroes([36][3]f32);
+        @memcpy(&normals, v.normals.?);
+        const rv: meshDataVoxels = .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
+        self.cache.put(k, rv) catch @panic("OOM");
+        return rv;
+    }
+};
 
 pub fn mob(world: *blecs.ecs.world_t, entity: blecs.ecs.entity_t) meshData {
     if (!blecs.ecs.has_id(world, entity, blecs.ecs.id(blecs.components.mob.Mesh))) return cube();
@@ -351,18 +407,18 @@ pub fn mob(world: *blecs.ecs.world_t, entity: blecs.ecs.entity_t) meshData {
     const mob_data: *game_mob.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
     if (mob_data.meshes.items.len <= mesh_c.mesh_id) return cube();
     const mesh: *game_mob.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
-    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, mesh.positions.items.len) catch unreachable;
+    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, mesh.positions.items.len) catch @panic("OOM");
     @memcpy(positions, mesh.positions.items);
-    const indices: []u32 = game.state.allocator.alloc(u32, mesh.indices.items.len) catch unreachable;
+    const indices: []u32 = game.state.allocator.alloc(u32, mesh.indices.items.len) catch @panic("OOM");
     @memcpy(indices, mesh.indices.items);
     var texcoords: ?[][2]f32 = null;
     if (mesh.texture != null) {
-        var tc = game.state.allocator.alloc([2]f32, mesh.textcoords.items.len) catch unreachable;
+        var tc = game.state.allocator.alloc([2]f32, mesh.textcoords.items.len) catch @panic("OOM");
         _ = &tc;
         @memcpy(tc, mesh.textcoords.items);
         texcoords = tc;
     }
-    const normals: [][3]f32 = game.state.allocator.alloc([3]f32, mesh.normals.items.len) catch unreachable;
+    const normals: [][3]f32 = game.state.allocator.alloc([3]f32, mesh.normals.items.len) catch @panic("OOM");
     @memcpy(normals, mesh.normals.items);
     return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
 }
@@ -380,7 +436,7 @@ pub fn bounding_box(mob_id: i32) meshData {
         1 => .{ -0.5, 0, -0.5 },
         else => std.debug.panic("Unexpected mob id in bounding box mesh lookup {d}\n", .{mob_id}),
     };
-    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, bounding_box_positions.len) catch unreachable;
+    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, bounding_box_positions.len) catch @panic("OOM");
     @memcpy(positions, &bounding_box_positions);
     for (0..positions.len) |i| {
         for (0..positions[i].len) |ii| {
@@ -388,17 +444,17 @@ pub fn bounding_box(mob_id: i32) meshData {
             positions[i][ii] += translate[ii];
         }
     }
-    const indices: []u32 = game.state.allocator.alloc(u32, cube_indices.len) catch unreachable;
+    const indices: []u32 = game.state.allocator.alloc(u32, cube_indices.len) catch @panic("OOM");
     @memcpy(indices, &cube_indices);
-    const e: [][2]f32 = game.state.allocator.alloc([2]f32, edges.len) catch unreachable;
+    const e: [][2]f32 = game.state.allocator.alloc([2]f32, edges.len) catch @panic("OOM");
     @memcpy(e, &edges);
-    const bc: [][3]f32 = game.state.allocator.alloc([3]f32, barycentric_coordinates.len) catch unreachable;
+    const bc: [][3]f32 = game.state.allocator.alloc([3]f32, barycentric_coordinates.len) catch @panic("OOM");
     @memcpy(bc, &barycentric_coordinates);
     return .{ .positions = positions, .indices = indices, .edges = e, .barycentric = bc };
 }
 
 pub fn block_highlight() meshData {
-    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, cube_positions.len) catch unreachable;
+    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, cube_positions.len) catch @panic("OOM");
     @memcpy(positions, &cube_positions);
     const scale: [3]f32 = .{ 1.1, 1.1, 1.1 };
     const translate: [3]f32 = .{ 0.5, 0.5, 0.5 };
@@ -408,11 +464,11 @@ pub fn block_highlight() meshData {
             positions[i][ii] += translate[ii];
         }
     }
-    const indices: []u32 = game.state.allocator.alloc(u32, cube_indices.len) catch unreachable;
+    const indices: []u32 = game.state.allocator.alloc(u32, cube_indices.len) catch @panic("OOM");
     @memcpy(indices, &cube_indices);
-    const e: [][2]f32 = game.state.allocator.alloc([2]f32, edges.len) catch unreachable;
+    const e: [][2]f32 = game.state.allocator.alloc([2]f32, edges.len) catch @panic("OOM");
     @memcpy(e, &edges);
-    const bc: [][3]f32 = game.state.allocator.alloc([3]f32, barycentric_coordinates.len) catch unreachable;
+    const bc: [][3]f32 = game.state.allocator.alloc([3]f32, barycentric_coordinates.len) catch @panic("OOM");
     @memcpy(bc, &barycentric_coordinates);
     return .{ .positions = positions, .indices = indices, .edges = e, .barycentric = bc };
 }

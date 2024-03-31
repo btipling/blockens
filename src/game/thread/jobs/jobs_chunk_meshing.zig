@@ -62,7 +62,7 @@ pub const ChunkMeshJob = struct {
             if (c.meshes.get(i)) |s| {
                 const block_id: u8 = @intCast(c.data[i]);
                 if (block_id == 0) std.debug.panic("why are there air blocks being meshed >:|", .{});
-                const mesh_data: gfx.mesh.meshData = gfx.mesh.voxel(s) catch @panic("nope");
+                var mesh_data: gfx.mesh.meshDataVoxels = gfx.mesh.voxel_mesh_creator.voxel(s) catch @panic("nope");
                 for (mesh_data.indices, 0..) |index, ii| {
                     mesh_data.indices[ii] = index + index_offset;
                 }

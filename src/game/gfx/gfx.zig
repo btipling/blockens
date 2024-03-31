@@ -17,6 +17,10 @@ pub const GfxErr = error{
     RenderError,
 };
 
+pub fn init() void {
+    mesh.init();
+}
+
 pub const Gfx = struct {
     pub fn initVAO() !u32 {
         var VAO: u32 = undefined;
