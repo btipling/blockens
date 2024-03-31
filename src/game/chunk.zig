@@ -108,14 +108,6 @@ pub fn getIndexFromPositionV(p: @Vector(4, f32)) usize {
     );
 }
 
-pub const ChunkElement = struct {
-    chunk_index: usize = 0,
-    block_id: u8 = 0,
-    mesh_data: gfx.mesh.meshDataVoxels,
-    translation: @Vector(4, f32) = .{ 0, 0, 0, 0 },
-    fn deinit(_: ChunkElement, _: std.mem.Allocator) void {}
-};
-
 pub const dataAtRes = struct {
     read: bool = false,
     data: u32 = 0,
@@ -127,7 +119,8 @@ pub const Chunk = struct {
     data: []u32 = undefined,
     meshes: std.AutoHashMap(usize, @Vector(4, f32)),
     allocator: std.mem.Allocator,
-    elements: std.ArrayList(ChunkElement) = undefined,
+    attr_builder: ?*gfx.buffer_data.AttributeBuilder = null,
+    indices: ?[]u32 = null,
     draws: ?[]c_int = null,
     draw_offsets: ?[]c_int = null, // this only exists to hold the values that draw_offsets_gl points to...
     draw_offsets_gl: ?[]?*const anyopaque = null,
@@ -148,7 +141,6 @@ pub const Chunk = struct {
             .wp = wp,
             .entity = entity,
             .meshes = std.AutoHashMap(usize, @Vector(4, f32)).init(allocator),
-            .elements = std.ArrayList(ChunkElement).init(allocator),
             .allocator = allocator,
             .is_settings = is_settings,
         };
@@ -174,7 +166,6 @@ pub const Chunk = struct {
         self.deinitMeshes();
         self.deinitRenderData();
         self.deinitRenderPreviousData();
-        self.elements.deinit();
         self.meshes.deinit();
         self.allocator.free(self.data);
     }
@@ -191,10 +182,6 @@ pub const Chunk = struct {
 
     pub fn deinitRenderData(self: *Chunk) void {
         self.backupDrawsData();
-        for (self.elements.items) |ce| {
-            ce.deinit(self.allocator);
-        }
-        self.elements.clearAndFree();
         if (self.draw_offsets) |d| self.allocator.free(d);
         self.draw_offsets = null;
         self.draws = null;

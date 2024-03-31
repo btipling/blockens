@@ -58,7 +58,7 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
             } else {
                 c = game.state.gfx.game_chunks.get(data.chunk_world_position).?;
             }
-            break :blk c.elements.items[data.element_index].mesh_data.toMeshData();
+            break :blk .{};
         },
         .multidraw_voxel => gfx.mesh.cube(), // just to setup the positions
         .mob => gfx.mesh.mob(world, entity),

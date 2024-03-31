@@ -89,12 +89,10 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     if (config.use_tracy) ztracy.Message("adding indexes to EBO");
     if (er.is_multi_draw) {
         if (c) |_c| {
-            var ial = std.ArrayList(u32).init(game.state.allocator);
-            defer ial.deinit();
-            for (_c.elements.items) |e| {
-                ial.appendSlice(&e.mesh_data.indices) catch @panic("OOM");
-            }
-            ebo = gfx.Gfx.initEBO(ial.items) catch @panic("nope");
+            const indices = _c.indices orelse std.debug.panic("expected indices from chunk\n", .{});
+            ebo = gfx.Gfx.initEBO(indices) catch @panic("nope");
+            game.state.allocator.free(indices);
+            _c.indices = null;
         }
     } else {
         ebo = gfx.Gfx.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
@@ -114,86 +112,56 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     gl.useProgram(program);
 
     if (config.use_tracy) ztracy.Message("building shader attribute variables");
-    var builder: *gfx.buffer_data.AttributeBuilder = game.state.allocator.create(
-        gfx.buffer_data.AttributeBuilder,
-    ) catch @panic("OOM");
-    var num_elements: usize = 1;
-    if (er.is_multi_draw) {
-        num_elements = c.?.elements.items.len;
-    }
-    builder.* = gfx.buffer_data.AttributeBuilder.init(
-        @intCast(er.mesh_data.positions.len * num_elements),
-        vbo,
-        gl.STATIC_DRAW,
-    );
-
-    if (config.use_tracy) ztracy.Message("defining shader attribute variables");
-    // if (er.edges != null) builder.debug = true;
-    var pos_loc: u32 = 0;
-    var tc_loc: u32 = 0;
-    var nor_loc: u32 = 0;
-    var edge_loc: u32 = 0;
-    var baryc_loc: u32 = 0;
-    var block_data_loc: u32 = 0;
-    var attr_trans_loc: u32 = 0;
-    // same order as defined in shader gen
-    pos_loc = builder.defineFloatAttributeValue(3);
-    if (er.mesh_data.texcoords) |_| {
-        tc_loc = builder.defineFloatAttributeValue(2);
-    }
-    if (er.mesh_data.normals) |_| {
-        nor_loc = builder.defineFloatAttributeValue(3);
-    }
-    if (er.mesh_data.edges) |_| {
-        edge_loc = builder.defineFloatAttributeValue(2);
-    }
-    if (er.mesh_data.barycentric) |_| {
-        baryc_loc = builder.defineFloatAttributeValue(3);
-    }
-    if (er.has_block_texture_atlas) {
-        block_data_loc = builder.defineFloatAttributeValue(2);
-    }
-    if (er.is_multi_draw and er.has_attr_translation) {
-        attr_trans_loc = builder.defineFloatAttributeValue(4);
-    }
-
-    if (config.use_tracy) ztracy.Message("initializing vbo buffer builder");
-    builder.initBuffer();
-    if (er.is_multi_draw) {
-        if (c) |_c| {
-            for (_c.elements.items, 0..) |e, ei| {
-                if (config.use_tracy) ztracy.Message("adding multidraw vertex to vbo buffer builder");
-                // if (ei != 0) break;
-                const vertex_offset = er.mesh_data.positions.len * ei;
-                const md = e.mesh_data;
-                for (0..md.positions.len) |ii| {
-                    const p = md.positions[ii];
-                    const vertex_index: usize = ii + vertex_offset;
-                    builder.addFloatAtLocation(pos_loc, &p, vertex_index);
-                    {
-                        const t = md.texcoords[ii];
-                        builder.addFloatAtLocation(tc_loc, &t, vertex_index);
-                    }
-                    {
-                        const n = md.normals[ii];
-                        builder.addFloatAtLocation(nor_loc, &n, vertex_index);
-                    }
-                    if (er.has_block_texture_atlas) {
-                        const bi = e.block_id;
-                        const block_index: f32 = @floatFromInt(game.state.ui.data.texture_atlas_block_index[@intCast(bi)]);
-                        const num_blocks: f32 = @floatFromInt(game.state.ui.data.texture_atlas_num_blocks);
-                        const bd: [2]f32 = [_]f32{ block_index, num_blocks };
-                        builder.addFloatAtLocation(block_data_loc, &bd, vertex_index);
-                    }
-                    if (er.has_attr_translation) {
-                        const atr_data: [4]f32 = e.translation;
-                        builder.addFloatAtLocation(attr_trans_loc, &atr_data, vertex_index);
-                    }
-                    builder.nextVertex();
-                }
-            }
-        }
+    var builder: *gfx.buffer_data.AttributeBuilder = undefined;
+    if (er.is_multi_draw and c != null) {
+        const _c = c.?;
+        builder = _c.attr_builder orelse std.debug.panic("expected attribuilder from chunk\n", .{});
+        builder.vbo = vbo;
+        builder.usage = gl.STATIC_DRAW;
+        _c.attr_builder = null;
     } else {
+        builder = game.state.allocator.create(
+            gfx.buffer_data.AttributeBuilder,
+        ) catch @panic("OOM");
+        const num_elements: usize = 1;
+        builder.* = gfx.buffer_data.AttributeBuilder.init(
+            @intCast(er.mesh_data.positions.len * num_elements),
+            vbo,
+            gl.STATIC_DRAW,
+        );
+
+        if (config.use_tracy) ztracy.Message("defining shader attribute variables");
+        // if (er.edges != null) builder.debug = true;
+        var pos_loc: u32 = 0;
+        var tc_loc: u32 = 0;
+        var nor_loc: u32 = 0;
+        var edge_loc: u32 = 0;
+        var baryc_loc: u32 = 0;
+        var block_data_loc: u32 = 0;
+        var attr_trans_loc: u32 = 0;
+        // same order as defined in shader gen
+        pos_loc = builder.defineFloatAttributeValue(3);
+        if (er.mesh_data.texcoords) |_| {
+            tc_loc = builder.defineFloatAttributeValue(2);
+        }
+        if (er.mesh_data.normals) |_| {
+            nor_loc = builder.defineFloatAttributeValue(3);
+        }
+        if (er.mesh_data.edges) |_| {
+            edge_loc = builder.defineFloatAttributeValue(2);
+        }
+        if (er.mesh_data.barycentric) |_| {
+            baryc_loc = builder.defineFloatAttributeValue(3);
+        }
+        if (er.has_block_texture_atlas) {
+            block_data_loc = builder.defineFloatAttributeValue(2);
+        }
+        if (er.has_attr_translation) {
+            attr_trans_loc = builder.defineFloatAttributeValue(4);
+        }
+
+        if (config.use_tracy) ztracy.Message("initializing vbo buffer builder");
+        builder.initBuffer();
         for (0..er.mesh_data.positions.len) |ii| {
             if (config.use_tracy) ztracy.Message("adding element vertex to vbo buffer builder");
             var p = er.mesh_data.positions[ii];

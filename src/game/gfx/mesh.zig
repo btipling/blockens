@@ -5,8 +5,8 @@ const game_mob = @import("../mob.zig");
 const blecs = @import("../blecs/blecs.zig");
 
 pub const meshData = struct {
-    positions: [][3]f32,
-    indices: []u32,
+    positions: [][3]f32 = undefined,
+    indices: []u32 = undefined,
     texcoords: ?[][2]f32 = null,
     normals: ?[][3]f32 = null,
     edges: ?[][2]f32 = null,
