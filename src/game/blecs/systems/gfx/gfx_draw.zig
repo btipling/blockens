@@ -126,16 +126,16 @@ fn gfxDraw(
         }
         c.mutex.lock();
         defer c.mutex.unlock();
-        var offsets = c.draw_offsets_gl;
+        var offsets = c.prev_draw_offsets_gl;
         if (offsets == null) {
-            offsets = c.prev_draw_offsets_gl;
+            offsets = c.draw_offsets_gl;
         }
         if (offsets == null) {
             return;
         }
-        var draws = c.draws;
+        var draws = c.prev_draws;
         if (draws == null) {
-            draws = c.prev_draws;
+            draws = c.draws;
         }
         if (draws) |d| {
             gl.multiDrawElements(gl.TRIANGLES, d.ptr, gl.UNSIGNED_INT, @ptrCast(offsets.?.ptr), @intCast(d.len));
