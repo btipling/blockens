@@ -36,7 +36,6 @@ pub const AnimationKeyFrame = struct {
     translation: @Vector(4, f32) = @Vector(4, f32){ 0, 0, 0, 0 },
 };
 pub const HasPreviousRenderer = struct {
-    draws: usize = 0,
     entity: ecs.entity_t,
 };
 
