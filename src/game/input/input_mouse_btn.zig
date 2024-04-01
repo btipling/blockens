@@ -31,6 +31,7 @@ fn handleGameMouseBtn(btn: glfw.MouseButton, action: glfw.Action, mods: glfw.Mod
             } else {
                 blecs.ecs.add(world, player, blecs.components.mob.AddAction);
             }
+            blecs.ecs.add(world, player, blecs.components.mob.DidUpdate);
         },
         else => {},
     }

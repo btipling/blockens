@@ -19,6 +19,10 @@ pub const BlockData = struct {
 pub const Meshscale = struct {
     scale: @Vector(4, f32) = undefined,
 };
+pub const ChunkUpdate = struct {
+    pos: @Vector(4, f32),
+    block_id: u8,
+};
 pub const HighlightedBlock = struct {};
 pub const Instance = struct {};
 pub const NeedsMeshing = struct {};
@@ -33,6 +37,7 @@ pub fn init() void {
     ecs.COMPONENT(world, Block);
     ecs.COMPONENT(world, BlockData);
     ecs.COMPONENT(world, Meshscale);
+    ecs.COMPONENT(world, ChunkUpdate);
     ecs.TAG(world, HighlightedBlock);
     ecs.TAG(world, Instance);
     ecs.TAG(world, NeedsMeshing);

@@ -60,6 +60,14 @@ fn glErrorCallbackfn(
         131218 => return, // fragment shader recompiled
         else => {},
     }
+    switch (error_type) {
+        33356 => {
+            // oom, I think it's lying
+            std.debug.print("opengl oom error.\n", .{});
+            return;
+        },
+        else => {},
+    }
     const errorMessage: [:0]const u8 = std.mem.sliceTo(message, 0);
     std.debug.print("\n:::GL Error:::\n", .{});
     std.debug.print("\n\t - source: {d}\n", .{source});

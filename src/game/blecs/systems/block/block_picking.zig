@@ -2,7 +2,6 @@ const std = @import("std");
 const ecs = @import("zflecs");
 const zm = @import("zmath");
 const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const chunk = @import("../../../chunk.zig");
 
@@ -94,13 +93,13 @@ fn highlightBlock(world: *ecs.world_t, pos: @Vector(4, f32)) void {
 }
 
 fn removeBlock(world: *ecs.world_t, pos: @Vector(4, f32)) void {
-    std.debug.print("removing block at {}\n", .{pos});
-    chunk.removeBlock(world, pos);
+    const cu_entity = ecs.new_id(world);
+    _ = ecs.set(world, cu_entity, components.block.ChunkUpdate, .{ .pos = pos, .block_id = 0 });
     return;
 }
 
 fn addBlock(world: *ecs.world_t, pos: @Vector(4, f32)) void {
-    std.debug.print("adding block\n", .{});
-    chunk.setBlockId(world, pos, 4);
+    const cu_entity = ecs.new_id(world);
+    _ = ecs.set(world, cu_entity, components.block.ChunkUpdate, .{ .pos = pos, .block_id = 4 });
     return;
 }

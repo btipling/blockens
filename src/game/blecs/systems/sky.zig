@@ -19,9 +19,13 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     const world = it.world;
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
-            const s: []components.Sky = ecs.field(it, components.Sky, 1) orelse return;
-            const t: *components.Time = ecs.get_mut(world, game.state.entities.clock, components.Time) orelse return;
-            const br: *components.gfx.BaseRenderer = ecs.get_mut(world, game.state.entities.gfx, components.gfx.BaseRenderer) orelse return;
+            const s: []components.Sky = ecs.field(it, components.Sky, 1) orelse continue;
+            const t: *components.Time = ecs.get_mut(world, game.state.entities.clock, components.Time) orelse continue;
+            const br: *components.gfx.BaseRenderer = ecs.get_mut(
+                world,
+                game.state.entities.gfx,
+                components.gfx.BaseRenderer,
+            ) orelse continue;
             var brightness = br.bgColor.getBrightness();
             if (s[i].lastSet == 0) {
                 s[i].lastSet = t.currentTime;

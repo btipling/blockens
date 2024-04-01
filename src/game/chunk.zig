@@ -32,6 +32,9 @@ pub const worldPosition = struct {
         const z = @as(f32, @bitCast(self.z));
         return .{ x, y, z, 0 };
     }
+    pub fn equal(self: worldPosition, other: worldPosition) bool {
+        return self.x == other.x and self.y == other.y and self.x == other.x;
+    }
 };
 
 pub fn getBlockId(pos: @Vector(4, f32)) dataAtRes {
@@ -43,38 +46,37 @@ pub fn getBlockId(pos: @Vector(4, f32)) dataAtRes {
     return c.dataAt(chunk_index);
 }
 
-pub fn removeBlock(world: *blecs.ecs.world_t, pos: @Vector(4, f32)) void {
-    return setBlockId(world, pos, 0);
-}
-
-pub fn setBlockId(world: *blecs.ecs.world_t, pos: @Vector(4, f32), block_id: u8) void {
+// setBlockId is not perfectly thread safe as chunk configs are not locked. So
+// game.state.ui.data.world_chunk_table_data should not be written to by another thread.
+// The copy job does read from this table. Should be fine? :O
+// Any updates must trigger an update within the same thread when done setting block ids on chunks.
+pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
     const chunk_pos = positionFromWorldLocation(pos);
     const wp = worldPosition.initFromPositionV(chunk_pos);
     const chunk_local_pos = chunkPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
+    // Get chunk from chunk state map:
     var c = game.state.gfx.game_chunks.get(wp) orelse {
-        var c: [chunkSize]u32 = [_]u32{0} ** chunkSize;
-        c[chunk_index] = block_id;
-        const cd: []u32 = game.state.allocator.alloc(u32, c.len) catch @panic("OOM");
-        @memcpy(cd, &c);
-        const ch_cfg: game_state.chunkConfig = .{
-            .id = 0,
-            .scriptId = 0,
-            .chunkData = cd,
+        // Chunk not previously generated, but maybe we already updated it before generating:
+        var ch_cfg: game_state.chunkConfig = game.state.ui.data.world_chunk_table_data.get(wp) orelse {
+            var cr: [chunkSize]u32 = [_]u32{0} ** chunkSize;
+            cr[chunk_index] = block_id;
+            const cd: []u32 = game.state.allocator.alloc(u32, cr.len) catch @panic("OOM");
+            @memcpy(cd, &cr);
+            const new_ch_cfg: game_state.chunkConfig = .{
+                .id = 0,
+                .scriptId = 0,
+                .chunkData = cd,
+            };
+            game.state.ui.data.world_chunk_table_data.put(wp, new_ch_cfg) catch @panic("OOM");
+            return wp;
         };
-        game.state.ui.data.world_chunk_table_data.put(wp, ch_cfg) catch @panic("OOM");
-        _ = game.state.jobs.copyChunk(
-            wp,
-            blecs.ecs.new_id(game.state.world),
-            false,
-            true,
-        );
-        return;
+        // Was previously updated, but not generated, just update the table.
+        ch_cfg.chunkData[chunk_index] = block_id;
+        return wp;
     };
-
     c.setDataAt(chunk_index, block_id);
-    const render_entity = blecs.ecs.get_target(world, c.entity, blecs.entities.block.HasChunkRenderer, 0);
-    _ = game.state.jobs.meshChunk(world, render_entity, c);
+    return wp;
 }
 
 pub fn positionFromWorldLocation(loc: @Vector(4, f32)) @Vector(4, f32) {
@@ -151,6 +153,16 @@ pub const Chunk = struct {
         }
         defer self.mutex.unlock();
         return .{ .read = true, .data = self.data[i] };
+    }
+
+    pub fn refreshRender(self: *Chunk, world: *blecs.ecs.world_t) void {
+        const render_entity = blecs.ecs.get_target(
+            world,
+            self.entity,
+            blecs.entities.block.HasChunkRenderer,
+            0,
+        );
+        _ = game.state.jobs.meshChunk(world, render_entity, self);
     }
 
     pub fn setDataAt(self: *Chunk, i: usize, v: u32) void {
