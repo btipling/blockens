@@ -14,6 +14,8 @@ pub const ChunkMeshJob = struct {
     world: *blecs.ecs.world_t,
 
     pub fn exec(self: *@This()) void {
+        self.chunk.mesh_mutex.lock();
+        defer self.chunk.mesh_mutex.unlock();
         if (config.use_tracy) {
             ztracy.SetThreadName("ChunkMeshJob");
             const tracy_zone = ztracy.ZoneNC(@src(), "ChunkMeshJob", 0x00_00_ff_f0);

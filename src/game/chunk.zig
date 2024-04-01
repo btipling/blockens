@@ -131,6 +131,8 @@ pub const Chunk = struct {
     updated: bool = false,
     vbo: u32 = 0,
     mutex: std.Thread.Mutex = .{},
+    // Lock mesh jobs from spawning while one is on going.
+    mesh_mutex: std.Thread.Mutex = .{},
     pub fn init(
         allocator: std.mem.Allocator,
         wp: worldPosition,
