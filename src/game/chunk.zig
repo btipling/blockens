@@ -346,6 +346,7 @@ pub const Chunker = struct {
                 } else if (numDimsTravelled == 2) {
                     // doing y here, only add if all x along the y are the same
                     if (blockId != self.chunk.data[ii] or self.meshed[ii]) {
+                        p[0] = op[0];
                         p[1] = op[1];
                         p[2] += 1;
                         numDimsTravelled += 1;
