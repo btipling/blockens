@@ -268,7 +268,9 @@ fn cullChunks(camera_position: @Vector(4, f32), view: zm.Mat, perspective: zm.Ma
                     entities.block.HasChunkRenderer,
                     0,
                 );
-                ecs.add(world, renderer_entity, components.gfx.CanDraw);
+                if (renderer_entity != 0 and ecs.is_alive(world, renderer_entity)) {
+                    ecs.add(world, renderer_entity, components.gfx.CanDraw);
+                }
                 continue :outer;
             }
         }
