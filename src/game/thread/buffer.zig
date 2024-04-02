@@ -34,6 +34,7 @@ pub const chunk_gen_data = struct {
 pub const chunk_mesh_data = struct {
     world: ?*blecs.ecs.world_t = null,
     entity: ?blecs.ecs.entity_t = null,
+    empty: bool = false,
     chunk: *chunk.Chunk,
 };
 

@@ -66,17 +66,49 @@ fn handle_chunk_mesh(msg: buffer.buffer_message) void {
     const mesh_data = buffer.get_chunk_mesh_data(msg) orelse return;
     const world = mesh_data.world orelse return;
     const entity = mesh_data.entity orelse return;
-    blecs.ecs.add(world, entity, blecs.components.block.NeedsMeshRendering);
+    if (mesh_data.empty) {
+        if (blecs.ecs.has_id(world, entity, blecs.ecs.id(blecs.components.gfx.ElementsRenderer))) {
+            blecs.ecs.add(world, entity, blecs.components.gfx.NeedsDeletion);
+        }
+        return;
+    }
+    if (entity != 0 and blecs.ecs.is_alive(world, entity)) {
+        blecs.ecs.add(world, entity, blecs.components.block.NeedsMeshRendering);
+        return;
+    }
+    const chunk_entity = init_chunk_entity(world, mesh_data.chunk);
+    blecs.ecs.add(world, chunk_entity, blecs.components.block.NeedsMeshRendering);
 }
 
 fn handle_copy_chunk(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
-    const copy_data = buffer.get_chunk_copy_data(msg) orelse return;
-    const wp = copy_data.chunk.wp;
-    const p = wp.vecFromWorldPosition();
     const world = game.state.world;
-    var chunk_entity: blecs.ecs.entity_t = 0;
+    const copy_data = buffer.get_chunk_copy_data(msg) orelse return;
+    const chunk_entity = init_chunk_entity(world, copy_data.chunk);
+
+    blecs.ecs.add(world, chunk_entity, blecs.components.block.NeedsMeshing);
+
+    const wp = copy_data.chunk.wp;
     if (copy_data.chunk.is_settings) {
+        if (game.state.gfx.settings_chunks.get(wp)) |c| {
+            c.deinit();
+            game.state.allocator.destroy(c);
+        }
+        game.state.gfx.settings_chunks.put(wp, copy_data.chunk) catch unreachable;
+    } else {
+        if (game.state.gfx.game_chunks.get(wp)) |c| {
+            c.deinit();
+            game.state.allocator.destroy(c);
+        }
+        game.state.gfx.game_chunks.put(wp, copy_data.chunk) catch unreachable;
+    }
+}
+
+fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entity_t {
+    const wp = c.wp;
+    const p = wp.vecFromWorldPosition();
+    var chunk_entity: blecs.ecs.entity_t = 0;
+    if (c.is_settings) {
         chunk_entity = helpers.new_child(world, blecs.entities.screen.settings_data);
     } else {
         chunk_entity = helpers.new_child(world, blecs.entities.screen.game_data);
@@ -84,12 +116,12 @@ fn handle_copy_chunk(msg: buffer.buffer_message) void {
 
     blecs.ecs.add_pair(
         world,
-        copy_data.chunk.entity,
+        c.entity,
         blecs.entities.block.HasChunkRenderer,
         chunk_entity,
     );
     var loc: @Vector(4, f32) = undefined;
-    if (copy_data.chunk.is_settings) {
+    if (c.is_settings) {
         loc = .{ -32, 0, -32, 0 };
     } else {
         loc = .{
@@ -104,18 +136,5 @@ fn handle_copy_chunk(msg: buffer.buffer_message) void {
         .wp = wp,
     });
     blecs.ecs.add(world, chunk_entity, blecs.components.block.UseMultiDraw);
-    blecs.ecs.add(world, chunk_entity, blecs.components.block.NeedsMeshing);
-    if (copy_data.chunk.is_settings) {
-        if (game.state.gfx.settings_chunks.get(wp)) |c| {
-            c.deinit();
-            game.state.allocator.destroy(c);
-        }
-        game.state.gfx.settings_chunks.put(wp, copy_data.chunk) catch unreachable;
-    } else {
-        if (game.state.gfx.game_chunks.get(wp)) |c| {
-            c.deinit();
-            game.state.allocator.destroy(c);
-        }
-        game.state.gfx.game_chunks.put(wp, copy_data.chunk) catch unreachable;
-    }
+    return chunk_entity;
 }
