@@ -144,6 +144,7 @@ fn gfxDraw(
         }
 
         if (ecs.has_id(world, entity, ecs.id(components.gfx.HasPreviousRenderer))) {
+            if (config.use_tracy) ztracy.MessageC("deleting previous render", 0xFFFF00);
             const pr = ecs.get(
                 world,
                 entity,

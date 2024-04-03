@@ -37,9 +37,13 @@ pub const worldPosition = struct {
     }
 };
 
-pub fn getBlockId(pos: @Vector(4, f32)) dataAtRes {
+pub fn getWorldPositionForWorldLocation(pos: @Vector(4, f32)) worldPosition {
     const chunk_pos = positionFromWorldLocation(pos);
-    const wp = worldPosition.initFromPositionV(chunk_pos);
+    return worldPosition.initFromPositionV(chunk_pos);
+}
+
+pub fn getBlockId(pos: @Vector(4, f32)) dataAtRes {
+    const wp = getWorldPositionForWorldLocation(pos);
     const c = game.state.gfx.game_chunks.get(wp) orelse return .{ .read = true, .data = 0 };
     const chunk_local_pos = chunkPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
@@ -51,8 +55,7 @@ pub fn getBlockId(pos: @Vector(4, f32)) dataAtRes {
 // The copy job does read from this table. Should be fine? :O
 // Any updates must trigger an update within the same thread when done setting block ids on chunks.
 pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
-    const chunk_pos = positionFromWorldLocation(pos);
-    const wp = worldPosition.initFromPositionV(chunk_pos);
+    const wp = getWorldPositionForWorldLocation(pos);
     const chunk_local_pos = chunkPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
     // Get chunk from chunk state map:

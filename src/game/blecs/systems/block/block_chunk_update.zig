@@ -1,6 +1,8 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const zm = @import("zmath");
+const ztracy = @import("ztracy");
+const config = @import("config");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
 const chunk = @import("../../../chunk.zig");
@@ -26,8 +28,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             if (has_reached_max_chunks) continue; // Really unlikely to update 10! chunks, but will handle the rest later.
+
             const entity = it.entities()[i];
             const cu: []components.block.ChunkUpdate = ecs.field(it, components.block.ChunkUpdate, 1) orelse continue;
+
+            const wp = chunk.getWorldPositionForWorldLocation(cu[i].pos);
+            if (game.state.gfx.game_chunks.get(wp)) |c| {
+                if (ecs.is_alive(world, c.entity) and ecs.has_id(world, c.entity, ecs.id(components.gfx.HasPreviousRenderer))) continue;
+            }
             const updated_index = updateChunk(
                 world,
                 entity,
@@ -59,6 +67,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 "expected chunk at this point\n",
                 .{},
             );
+            if (config.use_tracy) ztracy.MessageC("refresh rendering chunk", 0xFF0000);
             c.refreshRender(world);
             continue;
         }
