@@ -35,7 +35,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
                 const parent: ecs.entity_t = ecs.get_parent(world, entity);
                 const to_delete = helpers.new_child(world, parent);
-                std.debug.print("deleting chunk rendering {}\n", .{to_delete});
 
                 _ = ecs.set(world, to_delete, components.gfx.ElementsRenderer, erc.*);
                 _ = ecs.set(world, to_delete, components.block.Chunk, c[i]);

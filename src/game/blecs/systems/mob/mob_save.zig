@@ -52,7 +52,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 var to_save: usize = 0;
                 while (cs.next()) |cc| {
                     if (cc.*.updated) {
-                        std.debug.print("adding block to save\n", .{});
                         data.chunks_updated[to_save] = cc.*;
                         to_save += 1;
                         if (to_save >= data.chunks_updated.len) break;
