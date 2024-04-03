@@ -293,7 +293,7 @@ pub const Gfx = struct {
         return texture;
     }
 
-    pub fn initTransformsUBO(num_vertices: usize, attrib_var_loc: u32) !u32 {
+    pub fn initTransformsVBO(num_vertices: usize, attrib_var_loc: u32) !u32 {
         const instance_vbo = try initVBO();
         var instance_builder: *buffer_data.AttributeBuilder = try game.state.allocator.create(buffer_data.AttributeBuilder);
         defer game.state.allocator.destroy(instance_builder);

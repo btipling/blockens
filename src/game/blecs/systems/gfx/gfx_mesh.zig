@@ -217,7 +217,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             }
         }
         if (block_instance != null) {
-            block_instance.?.vbo = gfx.Gfx.initTransformsUBO(
+            block_instance.?.vbo = gfx.Gfx.initTransformsVBO(
                 er.mesh_data.positions.len,
                 builder.get_location(),
             ) catch @panic("nope");

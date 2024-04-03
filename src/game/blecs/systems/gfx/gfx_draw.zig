@@ -151,6 +151,7 @@ fn gfxDraw(
                 components.gfx.HasPreviousRenderer,
             ) orelse @panic("nope");
             ecs.remove(world, pr.entity, components.gfx.CanDraw);
+            ecs.add(world, pr.entity, components.gfx.NeedsDeletion);
             ecs.remove(world, entity, components.gfx.HasPreviousRenderer);
             c.deinitRenderPreviousData();
         }
