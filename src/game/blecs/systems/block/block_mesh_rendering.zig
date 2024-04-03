@@ -29,7 +29,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
             const c: []components.block.Chunk = ecs.field(it, components.block.Chunk, 1) orelse return;
-            if (ecs.has_id(world, entity, ecs.id(components.gfx.HasPreviousRenderer))) continue;
             if (ecs.get(world, entity, components.gfx.ElementsRenderer)) |erc| {
                 // clean up previously rendered chunk by creating a new entity to handle the deletion
 
