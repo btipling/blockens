@@ -13,7 +13,7 @@ pub const PlayerPosition = struct {
 };
 pub const SaveData = struct {
     player_position: PlayerPosition,
-    chunks_updated: [2]?*chunk.Chunk = undefined, // limit chunk saves per save
+    chunks_updated: [2]?*chunk.Chunk = [2]?*chunk.Chunk{ null, null }, // limit chunk saves per save
 };
 
 pub const SaveJob = struct {
@@ -44,7 +44,7 @@ pub const SaveJob = struct {
     }
 
     fn saveChunk(_: *@This(), c: *chunk.Chunk) !void {
-        if (!c.mutex.tryLock()) return;
+        c.mutex.lock();
         defer c.mutex.unlock();
         if (!c.updated) return;
         c.updated = false;

@@ -85,6 +85,19 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             c = game.state.gfx.settings_chunks.get(chunk_c.wp);
         }
     }
+    if (c) |_c| {
+        if (_c.indices == null) {
+            ecs.delete(world, entity);
+            if (vertexShader) |v| game.state.allocator.free(v);
+            if (fragmentShader) |f| game.state.allocator.free(f);
+            if (keyframes) |kf| game.state.allocator.free(kf);
+            _ = game.state.gfx.renderConfigs.remove(erc.id);
+            ecs.delete(world, erc.id);
+            if (deinit_mesh) er.mesh_data.deinit();
+            game.state.allocator.destroy(er);
+            return;
+        }
+    }
 
     if (config.use_tracy) ztracy.Message("setting up shaders");
     var vs: u32 = 0;
