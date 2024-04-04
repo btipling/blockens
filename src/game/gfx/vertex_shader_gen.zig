@@ -294,7 +294,7 @@ pub const VertexShaderGen = struct {
                 r.a("    );\n");
             }
             for (0..mts.len) |i| {
-                if (i == 0) {
+                if (r.cfg.animation_block_index != null and i == 0) {
                     const animation = r.cfg.animation orelse continue;
                     const ai = animation.animation_id;
                     if (ai != 0) {
