@@ -8,7 +8,7 @@ const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
 const chunk = @import("../../../chunk.zig");
-const game_state = @import("../../../state.zig");
+const gfx = @import("../../../gfx/gfx.zig");
 
 pub fn init() void {
     const s = system();
@@ -89,7 +89,7 @@ fn gfxDraw(
         // draw instances
         const block: ?*const components.block.Block = ecs.get(world, entity, components.block.Block);
         if (block == null) return;
-        var block_instance: ?*game_state.BlockInstance = null;
+        var block_instance: ?*gfx.BlockInstance = null;
         if (parent == screen.gameDataEntity) {
             block_instance = game.state.gfx.game_blocks.get(block.?.block_id);
         }

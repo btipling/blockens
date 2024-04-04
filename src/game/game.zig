@@ -12,7 +12,6 @@ const gameState = @import("state.zig");
 const blecs = @import("blecs/blecs.zig");
 const input = @import("input/input.zig");
 const thread = @import("thread/thread.zig");
-const gfx = @import("gfx/gfx.zig");
 
 const pressStart2PFont = @embedFile("assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
 const robotoMonoFont = @embedFile("assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
@@ -173,7 +172,6 @@ pub const Game = struct {
         try state.initInternals();
 
         blecs.init();
-        gfx.init();
 
         return .{};
     }
@@ -186,7 +184,6 @@ pub const Game = struct {
         zgui.deinit();
         state.window.destroy();
         glfw.terminate();
-        gfx.deinit();
         state.deinit();
         state.allocator.destroy(state);
         std.debug.print("\nGoodbye blockens!\n", .{});

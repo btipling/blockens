@@ -2,7 +2,7 @@ const std = @import("std");
 const zm = @import("zmath");
 const gl = @import("zopengl").bindings;
 const zstbi = @import("zstbi");
-const game_state = @import("../state.zig");
+const gfx = @import("gfx.zig");
 const game = @import("../game.zig");
 const buffer_data = @import("buffer_data.zig");
 
@@ -14,7 +14,7 @@ pub const GlErr = error{
 
 pub const Gl = struct {
     const Self = @This();
-    var gfx = Self{};
+    var _gl = Self{};
 
     multi_draw_frag: u32 = 0,
     multi_draw_ver: u32 = 0,
@@ -55,21 +55,21 @@ pub const Gl = struct {
     }
 
     pub fn hasMultiDrawShaders() bool {
-        return gfx.multi_draw_frag != 0 and gfx.multi_draw_ver != 0;
+        return _gl.multi_draw_frag != 0 and _gl.multi_draw_ver != 0;
     }
 
     pub fn initMultiDrawVertexShader(vertexShaderSource: ?[:0]const u8) !u32 {
-        if (gfx.multi_draw_ver != 0) return gfx.multi_draw_ver;
-        gfx.multi_draw_ver = try initVertexShader(vertexShaderSource);
-        std.debug.print("creating new vertex multidraw shader {}\n", .{gfx.multi_draw_ver});
-        return gfx.multi_draw_ver;
+        if (_gl.multi_draw_ver != 0) return _gl.multi_draw_ver;
+        _gl.multi_draw_ver = try initVertexShader(vertexShaderSource);
+        std.debug.print("creating new vertex multidraw shader {}\n", .{_gl.multi_draw_ver});
+        return _gl.multi_draw_ver;
     }
 
     pub fn initMultiDrawFragmentShader(fragmentShaderSource: ?[:0]const u8) !u32 {
-        if (gfx.multi_draw_frag != 0) return gfx.multi_draw_frag;
-        gfx.multi_draw_frag = try initFragmentShader(fragmentShaderSource);
-        std.debug.print("creating new fragment multidraw shader {}\n", .{gfx.multi_draw_frag});
-        return gfx.multi_draw_frag;
+        if (_gl.multi_draw_frag != 0) return _gl.multi_draw_frag;
+        _gl.multi_draw_frag = try initFragmentShader(fragmentShaderSource);
+        std.debug.print("creating new fragment multidraw shader {}\n", .{_gl.multi_draw_frag});
+        return _gl.multi_draw_frag;
     }
 
     pub fn initShader(source: [:0]const u8, shaderType: c_uint) !u32 {
@@ -186,7 +186,7 @@ pub const Gl = struct {
 
     pub fn initAnimationShaderStorageBufferObject(
         block_binding_point: u32,
-        data: []game_state.ElementsRendererConfig.AnimationKeyFrame,
+        data: []gfx.ElementsRendererConfig.AnimationKeyFrame,
     ) u32 {
         // _ = data;
         const kf = struct {

@@ -7,7 +7,6 @@ const config = @import("config");
 const tags = @import("../../tags.zig");
 const game = @import("../../../game.zig");
 const chunk = @import("../../../chunk.zig");
-const game_state = @import("../../../state.zig");
 const game_mob = @import("../../../mob.zig");
 const math = @import("../../../math/math.zig");
 const gfx = @import("../../../gfx/gfx.zig");
@@ -66,7 +65,7 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         .block_highlight => gfx.mesh.block_highlight(),
     };
 
-    var erc: *game_state.ElementsRendererConfig = game.state.allocator.create(game_state.ElementsRendererConfig) catch @panic("nope");
+    var erc: *gfx.ElementsRendererConfig = game.state.allocator.create(gfx.ElementsRendererConfig) catch @panic("nope");
     var dc: ?struct { usize, usize } = null;
     if (e.has_demo_cube_texture) {
         dc = struct { usize, usize }{ e.dc_t_beg, e.dc_t_end };
@@ -171,7 +170,7 @@ const extractions = struct {
     has_animation_block: bool = false,
     animation_binding_point: ?u32 = null,
     animation_id: ?u32 = null,
-    keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = null,
+    keyframes: ?[]gfx.ElementsRendererConfig.AnimationKeyFrame = null,
     is_instanced: bool = false,
     block_id: ?u8 = null,
     is_meshed: bool = false,
@@ -272,14 +271,14 @@ const extractions = struct {
             animation_id = a.animation_id;
         }
         var ar = std.ArrayListUnmanaged(
-            game_state.ElementsRendererConfig.AnimationKeyFrame,
+            gfx.ElementsRendererConfig.AnimationKeyFrame,
         ){};
         defer ar.deinit(game.state.allocator);
         for (0..cm.animations.?.items.len) |i| {
             const akf = cm.animations.?.items[i];
             ar.append(
                 game.state.allocator,
-                game_state.ElementsRendererConfig.AnimationKeyFrame{
+                gfx.ElementsRendererConfig.AnimationKeyFrame{
                     .frame = akf.frame,
                     .scale = akf.scale orelse @Vector(4, f32){ 1, 1, 1, 1 },
                     .rotation = akf.rotation orelse @Vector(4, f32){ 0, 0, 0, 1 },
@@ -304,7 +303,7 @@ const extractions = struct {
                     continue;
                 }
                 var ar = std.ArrayListUnmanaged(
-                    game_state.ElementsRendererConfig.AnimationKeyFrame,
+                    gfx.ElementsRendererConfig.AnimationKeyFrame,
                 ){};
                 var ssbo: u32 = 0;
                 if (ecs.get_id(world, child_entity, ecs.id(components.gfx.AnimationSSBO))) |opaque_ptr| {
@@ -321,7 +320,7 @@ const extractions = struct {
                                 const akf: *const components.gfx.AnimationKeyFrame = @ptrCast(@alignCast(opaque_ptr));
                                 ar.append(
                                     game.state.allocator,
-                                    game_state.ElementsRendererConfig.AnimationKeyFrame{
+                                    gfx.ElementsRendererConfig.AnimationKeyFrame{
                                         .frame = akf.frame,
                                         .scale = akf.scale,
                                         .rotation = akf.rotation,

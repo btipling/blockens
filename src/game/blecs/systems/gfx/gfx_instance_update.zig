@@ -5,7 +5,6 @@ const zm = @import("zmath");
 const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
-const game_data = @import("../../../state.zig");
 const screen_entity = @import("../../entities/entities_screen.zig");
 const gfx = @import("../../../gfx/gfx.zig");
 
@@ -42,7 +41,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 components.block.Block,
             ) orelse unreachable;
             const parent = ecs.get_parent(world, entity);
-            var block_instance: ?*game_data.BlockInstance = null;
+            var block_instance: ?*gfx.BlockInstance = null;
             if (parent == screen.gameDataEntity and game.state.gfx.game_blocks.contains(block.block_id)) {
                 block_instance = game.state.gfx.game_blocks.get(block.block_id);
             }

@@ -6,7 +6,7 @@ const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
-const game_state = @import("../../../state.zig");
+const gfx = @import("../../../gfx/gfx.zig");
 const script = @import("../../../script/script.zig");
 
 pub fn init() void {
@@ -78,7 +78,7 @@ fn saveBlock() !void {
 }
 
 fn loadBlock(block_id: u8) !void {
-    const block: *game_state.Block = game.state.gfx.blocks.get(block_id) orelse {
+    const block: *gfx.Block = game.state.gfx.blocks.get(block_id) orelse {
         std.debug.print("block with id {d} was not found\n", .{block_id});
         return;
     };

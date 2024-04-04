@@ -3,7 +3,6 @@ const ecs = @import("zflecs");
 const zm = @import("zmath");
 const math = @import("../../math/math.zig");
 const game = @import("../../game.zig");
-const game_state = @import("../../state.zig");
 const config = @import("../../config.zig");
 const components = @import("../components/components.zig");
 const mob_entities = @import("entities_mob.zig");
@@ -261,7 +260,7 @@ pub fn clearWorld() void {
             }
             const block: ?*const components.block.Block = ecs.get(world, entity, components.block.Block);
             if (block == null) continue;
-            const bi: ?*game_state.BlockInstance = game.state.gfx.game_blocks.get(block.?.block_id);
+            const bi: ?*gfx.BlockInstance = game.state.gfx.game_blocks.get(block.?.block_id);
             if (bi == null) continue;
             bi.?.transforms.clearAndFree();
             ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
@@ -284,7 +283,7 @@ pub fn clearDemoObjects() void {
             }
             const block: ?*const components.block.Block = ecs.get(world, entity, components.block.Block);
             if (block == null) continue;
-            const bi: ?*game_state.BlockInstance = game.state.gfx.settings_blocks.get(block.?.block_id);
+            const bi: ?*gfx.BlockInstance = game.state.gfx.settings_blocks.get(block.?.block_id);
             if (bi == null) continue;
             bi.?.transforms.clearAndFree();
             ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);

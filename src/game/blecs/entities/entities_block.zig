@@ -1,7 +1,7 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 const game = @import("../../game.zig");
-const game_state = @import("../../state.zig");
+const gfx = @import("../../gfx/gfx.zig");
 const data = @import("../../data/data.zig");
 const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
@@ -41,7 +41,7 @@ pub fn initBlock(block_id: u8) void {
     // those are for blocks that weren't meshed, to avoid extra draw calls.
     // The settings views block instances aren't stored this way as they are view only and are cleared on every
     // render of the settings page.
-    const block: *game_state.Block = game.state.allocator.create(game_state.Block) catch unreachable;
+    const block: *gfx.Block = game.state.allocator.create(gfx.Block) catch unreachable;
     block.* = .{
         .id = block_id,
         .data = block_data,

@@ -8,7 +8,6 @@ const config = @import("config");
 const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
-const game_state = @import("../../../state.zig");
 const mob = @import("../../../mob.zig");
 const chunk = @import("../../../chunk.zig");
 const gfx = @import("../../../gfx/gfx.zig");
@@ -50,7 +49,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
 fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const components.screen.Screen, erc: components.gfx.ElementsRendererConfig) void {
     if (config.use_tracy) ztracy.Message("starting mesh system");
-    const er: *game_state.ElementsRendererConfig = game.state.gfx.renderConfigs.get(erc.id) orelse {
+    const er: *gfx.ElementsRendererConfig = game.state.gfx.renderConfigs.get(erc.id) orelse {
         std.debug.print("couldn't find render config for {d}\n", .{erc.id});
         return;
     };
@@ -67,7 +66,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     const parent = ecs.get_parent(world, entity);
     const vertexShader: ?[:0]const u8 = er.vertexShader;
     const fragmentShader: ?[:0]const u8 = er.fragmentShader;
-    const keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = er.keyframes;
+    const keyframes: ?[]gfx.ElementsRendererConfig.AnimationKeyFrame = er.keyframes;
 
     if (config.use_tracy) ztracy.Message("initing gfx");
     const vao = gfx.gl.Gl.initVAO() catch @panic("nope");
@@ -218,7 +217,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
 
     if (config.use_tracy) ztracy.Message("writing uniforms to gpu");
     if (er.is_instanced and er.block_id != null) {
-        var block_instance: ?*game_state.BlockInstance = null;
+        var block_instance: ?*gfx.BlockInstance = null;
         if (parent == screen.gameDataEntity) {
             if (game.state.gfx.game_blocks.get(er.block_id.?)) |b| {
                 if (b.vbo == 0) block_instance = b;
