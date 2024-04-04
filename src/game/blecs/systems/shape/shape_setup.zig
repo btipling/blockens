@@ -308,7 +308,7 @@ const extractions = struct {
 
                 const a: *const components.gfx.AnimationMesh = ecs.get(
                     world,
-                    entity,
+                    child_entity,
                     components.gfx.AnimationMesh,
                 ) orelse continue;
 
