@@ -85,7 +85,7 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         .is_multi_draw = e.is_multi_draw,
         .has_attr_translation = e.is_multi_draw,
     };
-    if (!e.is_multi_draw or !gfx.Gfx.hasMultiDrawShaders()) {
+    if (!e.is_multi_draw or !gfx.gl.Gl.hasMultiDrawShaders()) {
         erc.vertexShader = shaders.genVertexShader(&e, &mesh_data);
         erc.fragmentShader = shaders.genFragmentShader(&e, &mesh_data);
     }

@@ -70,8 +70,8 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     const keyframes: ?[]game_state.ElementsRendererConfig.AnimationKeyFrame = er.keyframes;
 
     if (config.use_tracy) ztracy.Message("initing gfx");
-    const vao = gfx.Gfx.initVAO() catch @panic("nope");
-    const vbo = gfx.Gfx.initVBO() catch @panic("nope");
+    const vao = gfx.gl.Gl.initVAO() catch @panic("nope");
+    const vbo = gfx.gl.Gl.initVBO() catch @panic("nope");
     var ebo: u32 = 0;
 
     if (config.use_tracy) ztracy.Message("setting up chunk");
@@ -103,13 +103,13 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     var vs: u32 = 0;
     var fs: u32 = 0;
     if (er.is_multi_draw) {
-        vs = gfx.Gfx.initMultiDrawVertexShader(vertexShader) catch @panic("nope");
-        fs = gfx.Gfx.initMultiDrawFragmentShader(fragmentShader) catch @panic("nope");
+        vs = gfx.gl.Gl.initMultiDrawVertexShader(vertexShader) catch @panic("nope");
+        fs = gfx.gl.Gl.initMultiDrawFragmentShader(fragmentShader) catch @panic("nope");
     } else {
-        vs = gfx.Gfx.initVertexShader(vertexShader) catch @panic("nope");
-        fs = gfx.Gfx.initFragmentShader(fragmentShader) catch @panic("nope");
+        vs = gfx.gl.Gl.initVertexShader(vertexShader) catch @panic("nope");
+        fs = gfx.gl.Gl.initFragmentShader(fragmentShader) catch @panic("nope");
     }
-    const program = gfx.Gfx.initProgram(&[_]u32{ vs, fs }) catch @panic("nope");
+    const program = gfx.gl.Gl.initProgram(&[_]u32{ vs, fs }) catch @panic("nope");
     gl.useProgram(program);
 
     var builder: *gfx.buffer_data.AttributeBuilder = undefined;
@@ -121,7 +121,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
 
             if (config.use_tracy) ztracy.Message("adding indexes to EBO");
             const indices = _c.indices orelse std.debug.panic("expected indices from chunk\n", .{});
-            ebo = gfx.Gfx.initEBO(indices) catch @panic("nope");
+            ebo = gfx.gl.Gl.initEBO(indices) catch @panic("nope");
             game.state.allocator.free(indices);
             _c.indices = null;
 
@@ -132,7 +132,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             _c.attr_builder = null;
         }
     } else {
-        ebo = gfx.Gfx.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
+        ebo = gfx.gl.Gl.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
     }
 
     if (!er.is_multi_draw) {
@@ -230,7 +230,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             }
         }
         if (block_instance != null) {
-            block_instance.?.vbo = gfx.Gfx.initTransformsVBO(
+            block_instance.?.vbo = gfx.gl.Gl.initTransformsVBO(
                 er.mesh_data.positions.len,
                 builder.get_location(),
             ) catch @panic("nope");
@@ -239,7 +239,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     }
 
     if (er.transform) |t| {
-        gfx.Gfx.setUniformMat(gfx.constants.TransformMatName, program, t);
+        gfx.gl.Gl.setUniformMat(gfx.constants.TransformMatName, program, t);
     }
 
     if (config.use_tracy) ztracy.Message("writing uniform buffer objects to gpu");
@@ -247,11 +247,11 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         var ubo: u32 = 0;
         ubo = game.state.gfx.ubos.get(ubo_binding_point) orelse blk: {
             const m = zm.identity();
-            const new_ubo = gfx.Gfx.initUniformBufferObject(m);
+            const new_ubo = gfx.gl.Gl.initUniformBufferObject(m);
             game.state.gfx.ubos.put(ubo_binding_point, new_ubo) catch @panic("OOM");
             break :blk new_ubo;
         };
-        gfx.Gfx.setUniformBufferObject(gfx.constants.UBOName, program, ubo, ubo_binding_point);
+        gfx.gl.Gl.setUniformBufferObject(gfx.constants.UBOName, program, ubo, ubo_binding_point);
 
         var camera: ecs.entity_t = 0;
         if (parent == screen.gameDataEntity) {
@@ -273,7 +273,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         if (er.keyframes) |k| {
             var ssbo: u32 = 0;
             ssbo = game.state.gfx.ssbos.get(animation_binding_point) orelse blk: {
-                const new_ssbo = gfx.Gfx.initAnimationShaderStorageBufferObject(animation_binding_point, k);
+                const new_ssbo = gfx.gl.Gl.initAnimationShaderStorageBufferObject(animation_binding_point, k);
                 game.state.gfx.ssbos.put(animation_binding_point, new_ssbo) catch @panic("nope");
                 break :blk new_ssbo;
             };
@@ -284,23 +284,23 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     var texture: u32 = 0;
     if (er.demo_cube_texture) |dct| {
         if (game.state.ui.data.texture_rgba_data) |d| {
-            texture = gfx.Gfx.initTextureFromColors(d[dct[0]..dct[1]]);
+            texture = gfx.gl.Gl.initTextureFromColors(d[dct[0]..dct[1]]);
         }
     }
     if (er.has_block_texture_atlas) {
         if (game.state.ui.data.texture_atlas_rgba_data) |d| {
-            texture = gfx.Gfx.initTextureAtlasFromColors(d);
+            texture = gfx.gl.Gl.initTextureAtlasFromColors(d);
         }
     } else if (er.block_id != null and game.state.gfx.blocks.contains(er.block_id.?)) {
         const block = game.state.gfx.blocks.get(er.block_id.?).?;
-        texture = gfx.Gfx.initTextureFromColors(block.data.texture);
+        texture = gfx.gl.Gl.initTextureFromColors(block.data.texture);
     }
     if (er.has_mob_texture) {
         const mesh_c: *const components.mob.Mesh = ecs.get(world, entity, components.mob.Mesh).?;
         const mob_c: *const components.mob.Mob = ecs.get(world, mesh_c.mob_entity, components.mob.Mob).?;
         const mob_data: *mob.Mob = game.state.gfx.mob_data.get(mob_c.mob_id).?;
         const mesh: *mob.MobMesh = mob_data.meshes.items[mesh_c.mesh_id];
-        texture = gfx.Gfx.initTextureFromImage(mesh.texture.?) catch @panic("nope");
+        texture = gfx.gl.Gl.initTextureFromImage(mesh.texture.?) catch @panic("nope");
     }
 
     if (config.use_tracy) ztracy.Message("ready to draw");

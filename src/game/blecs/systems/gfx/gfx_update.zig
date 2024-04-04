@@ -37,7 +37,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (ecs.get(world, entity, components.screen.WorldLocation)) |p| {
                 m = zm.mul(m, zm.translationV(p.loc));
             }
-            gfx.Gfx.setUniformMat(gfx.constants.TransformMatName, er.program, m);
+            gfx.gl.Gl.setUniformMat(gfx.constants.TransformMatName, er.program, m);
         }
     }
 }

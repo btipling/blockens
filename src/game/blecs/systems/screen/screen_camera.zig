@@ -159,7 +159,7 @@ fn screenCameraSystem(
         components.screen.Camera,
     ) orelse return;
     mut_camera.elapsedTime += it.delta_time;
-    gfx.Gfx.updateUniformBufferObject(
+    gfx.gl.Gl.updateUniformBufferObject(
         m,
         mut_camera.elapsedTime,
         game.state.gfx.animations_running,

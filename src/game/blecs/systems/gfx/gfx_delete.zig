@@ -57,7 +57,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             gl.deleteBuffers(1, &er.vbo);
             gl.deleteBuffers(1, &er.ebo);
             if (er.texture != 0) {
-                if (gfx.atlas_texture) |at| {
+                if (gfx.gl.atlas_texture) |at| {
                     if (er.texture != at) gl.deleteTextures(1, &er.texture);
                 } else {
                     gl.deleteTextures(1, &er.texture);

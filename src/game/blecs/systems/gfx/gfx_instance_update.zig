@@ -59,7 +59,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 const r = zm.matToArr(m);
                 data.appendSliceAssumeCapacity(&r);
             }
-            gfx.Gfx.updateInstanceData(
+            gfx.gl.Gl.updateInstanceData(
                 er.program,
                 er.vao,
                 block_instance.?.vbo,
