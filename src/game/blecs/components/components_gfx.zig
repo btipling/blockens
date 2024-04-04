@@ -24,9 +24,9 @@ pub const ElementsRenderer = struct {
     enableDepthTest: bool = true,
 };
 
-pub const AnimationSSBO = struct {
-    ssbo: u32 = 0,
+pub const AnimationMesh = struct {
     animation_id: u32 = 0,
+    mesh_id: u8 = 0,
 };
 
 pub const AnimationKeyFrame = struct {
@@ -53,7 +53,7 @@ pub fn init() void {
     ecs.COMPONENT(world, BaseRenderer);
     ecs.COMPONENT(world, ElementsRendererConfig);
     ecs.COMPONENT(world, ElementsRenderer);
-    ecs.COMPONENT(world, AnimationSSBO);
+    ecs.COMPONENT(world, AnimationMesh);
     ecs.COMPONENT(world, AnimationKeyFrame);
     ecs.COMPONENT(world, HasPreviousRenderer);
     ecs.TAG(world, CanDraw);

@@ -75,8 +75,6 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         .transform = null,
         .ubo_binding_point = null,
         .demo_cube_texture = dc,
-        .keyframes = e.keyframes,
-        .animation_binding_point = e.animation_binding_point,
         .is_instanced = e.is_instanced,
         .block_id = e.block_id,
         .has_mob_texture = e.has_mob_texture,
@@ -98,6 +96,8 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
 
 const shaders = struct {
     fn genVertexShader(e: *const extractions, mesh_data: *const gfx.mesh.meshData) [:0]const u8 {
+        var animation_block_index: ?u32 = null;
+        if (e.animation != null) animation_block_index = game.state.gfx.animation_data.animation_binding_point;
         const v_cfg = gfx.shadergen.vertex.VertexShaderGen.vertexShaderConfig{
             .debug = e.debug,
             .has_uniform_mat = e.has_uniform_mat,
@@ -108,8 +108,8 @@ const shaders = struct {
             .has_texture_coords = mesh_data.texcoords != null,
             .has_normals = mesh_data.normals != null,
             .has_edges = e.outline_color != null,
-            .animation_block_index = e.animation_binding_point,
-            .animation_id = e.animation_id,
+            .animation_block_index = animation_block_index,
+            .animation = e.animation,
             .is_instanced = e.is_instanced,
             .is_multi_draw = e.is_multi_draw,
             .is_meshed = e.is_meshed,
@@ -119,10 +119,7 @@ const shaders = struct {
                 if (e.mesh_transforms) |mt| break :blk mt.items;
                 break :blk null;
             },
-            .num_animation_frames = blk: {
-                if (e.keyframes) |akf| break :blk @intCast(akf.len);
-                break :blk 0;
-            },
+            .num_animation_frames = game.state.gfx.animation_data.num_frames,
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
     }
@@ -167,10 +164,7 @@ const extractions = struct {
     has_texture_atlas: bool = false,
     dc_t_beg: usize = 0,
     dc_t_end: usize = 0,
-    has_animation_block: bool = false,
-    animation_binding_point: ?u32 = null,
-    animation_id: ?u32 = null,
-    keyframes: ?[]gfx.ElementsRendererConfig.AnimationKeyFrame = null,
+    animation: ?*gfx.Animation = null,
     is_instanced: bool = false,
     block_id: ?u8 = null,
     is_meshed: bool = false,
@@ -257,41 +251,53 @@ const extractions = struct {
         entity: ecs.entity_t,
         cm: *game_mob.MobMesh,
     ) void {
-        if (!ecs.has_id(world, entity, ecs.id(components.gfx.AnimationSSBO))) {
+        if (!ecs.has_id(world, entity, ecs.id(components.gfx.AnimationMesh))) {
             return;
         }
         if (cm.animations == null or cm.animations.?.items.len < 1) {
             return;
         }
-        var ssbo: u32 = 0;
-        var animation_id: u32 = 0;
-        if (ecs.get_id(world, entity, ecs.id(components.gfx.AnimationSSBO))) |opaque_ptr| {
-            const a: *const components.gfx.AnimationSSBO = @ptrCast(@alignCast(opaque_ptr));
-            ssbo = a.ssbo;
-            animation_id = a.animation_id;
+        const a: *const components.gfx.AnimationMesh = ecs.get(
+            world,
+            entity,
+            components.gfx.AnimationMesh,
+        ) orelse return;
+        const akr: gfx.AnimationData.AnimationRefKey = .{
+            .animation_id = a.animation_id,
+            .animation_mesh_id = a.mesh_id,
+        };
+
+        // Check if we already have the animation:
+        if (game.state.gfx.animation_data.data.get(akr)) |ad| {
+            e.animation = ad;
+            return;
         }
+
+        // Add new animation:
         var ar = std.ArrayListUnmanaged(
-            gfx.ElementsRendererConfig.AnimationKeyFrame,
+            gfx.Animation.AnimationKeyFrame,
         ){};
         defer ar.deinit(game.state.allocator);
         for (0..cm.animations.?.items.len) |i| {
             const akf = cm.animations.?.items[i];
             ar.append(
                 game.state.allocator,
-                gfx.ElementsRendererConfig.AnimationKeyFrame{
+                gfx.Animation.AnimationKeyFrame{
                     .frame = akf.frame,
                     .scale = akf.scale orelse @Vector(4, f32){ 1, 1, 1, 1 },
                     .rotation = akf.rotation orelse @Vector(4, f32){ 0, 0, 0, 1 },
                     .translation = akf.translation orelse @Vector(4, f32){ 0, 0, 0, 0 },
                 },
-            ) catch unreachable;
+            ) catch @panic("OOM");
         }
-        if (ar.items.len > 0) {
-            e.animation_binding_point = ssbo;
-            e.animation_id = animation_id;
-            e.has_animation_block = true;
-            e.keyframes = ar.toOwnedSlice(game.state.allocator) catch unreachable;
-        }
+        if (ar.items.len < 1) return;
+        const animation: *gfx.Animation = game.state.allocator.create(gfx.Animation) catch @panic("OOM");
+        animation.* = .{
+            .animation_id = akr.animation_id,
+            .keyframes = ar.toOwnedSlice(game.state.allocator) catch @panic("OOM"),
+        };
+        game.state.gfx.animation_data.add(akr, animation);
+        e.animation = animation;
     }
 
     fn extractAnimation(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
@@ -299,43 +305,51 @@ const extractions = struct {
         while (ecs.children_next(&it)) {
             for (0..it.count()) |i| {
                 const child_entity = it.entities()[i];
-                if (!ecs.has_id(world, child_entity, ecs.id(components.gfx.AnimationSSBO))) {
+
+                const a: *const components.gfx.AnimationMesh = ecs.get(
+                    world,
+                    entity,
+                    components.gfx.AnimationMesh,
+                ) orelse continue;
+
+                const akr: gfx.AnimationData.AnimationRefKey = .{
+                    .animation_id = a.animation_id,
+                    .animation_mesh_id = a.mesh_id,
+                };
+
+                if (game.state.gfx.animation_data.data.get(akr)) |ad| {
+                    e.animation = ad;
                     continue;
                 }
                 var ar = std.ArrayListUnmanaged(
-                    gfx.ElementsRendererConfig.AnimationKeyFrame,
+                    gfx.Animation.AnimationKeyFrame,
                 ){};
-                var ssbo: u32 = 0;
-                if (ecs.get_id(world, child_entity, ecs.id(components.gfx.AnimationSSBO))) |opaque_ptr| {
-                    const a: *const components.gfx.AnimationSSBO = @ptrCast(@alignCast(opaque_ptr));
-                    ssbo = a.ssbo;
-                }
                 defer ar.deinit(game.state.allocator);
                 var cit = ecs.children(world, child_entity);
                 while (ecs.children_next(&cit)) {
                     for (0..cit.count()) |ii| {
                         const subchild_entity = cit.entities()[ii];
-                        if (ecs.has_id(world, subchild_entity, ecs.id(components.gfx.AnimationKeyFrame))) {
-                            if (ecs.get_id(world, subchild_entity, ecs.id(components.gfx.AnimationKeyFrame))) |opaque_ptr| {
-                                const akf: *const components.gfx.AnimationKeyFrame = @ptrCast(@alignCast(opaque_ptr));
-                                ar.append(
-                                    game.state.allocator,
-                                    gfx.ElementsRendererConfig.AnimationKeyFrame{
-                                        .frame = akf.frame,
-                                        .scale = akf.scale,
-                                        .rotation = akf.rotation,
-                                        .translation = akf.translation,
-                                    },
-                                ) catch unreachable;
-                            }
+                        if (ecs.get(world, subchild_entity, components.gfx.AnimationKeyFrame)) |akf| {
+                            ar.append(
+                                game.state.allocator,
+                                gfx.Animation.AnimationKeyFrame{
+                                    .frame = akf.frame,
+                                    .scale = akf.scale,
+                                    .rotation = akf.rotation,
+                                    .translation = akf.translation,
+                                },
+                            ) catch @panic("OOM");
                         }
                     }
                 }
-                if (ar.items.len > 0) {
-                    e.animation_binding_point = ssbo;
-                    e.has_animation_block = true;
-                    e.keyframes = ar.toOwnedSlice(game.state.allocator) catch unreachable;
-                }
+                if (ar.items.len < 1) continue;
+                const animation: *gfx.Animation = game.state.allocator.create(gfx.Animation) catch @panic("OOM");
+                animation.* = .{
+                    .animation_id = akr.animation_id,
+                    .keyframes = ar.toOwnedSlice(game.state.allocator) catch @panic("OOM"),
+                };
+                game.state.gfx.animation_data.add(akr, animation);
+                e.animation = animation;
             }
         }
     }

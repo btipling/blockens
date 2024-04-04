@@ -184,21 +184,21 @@ pub const Gl = struct {
         gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
     }
 
+    const animationKeyFrame = struct {
+        data: [4]f32,
+        scale: [4]f32,
+        rotation: [4]f32,
+        translation: [4]f32,
+    };
+
     pub fn initAnimationShaderStorageBufferObject(
         block_binding_point: u32,
-        data: []gfx.ElementsRendererConfig.AnimationKeyFrame,
+        data: []gfx.Animation.AnimationKeyFrame,
     ) u32 {
-        // _ = data;
-        const kf = struct {
-            data: [4]f32,
-            scale: [4]f32,
-            rotation: [4]f32,
-            translation: [4]f32,
-        };
-        var ar = std.ArrayListUnmanaged(kf){};
+        var ar = std.ArrayListUnmanaged(animationKeyFrame){};
         defer ar.deinit(game.state.allocator);
         for (data) |d| {
-            ar.append(game.state.allocator, kf{
+            ar.append(game.state.allocator, animationKeyFrame{
                 .data = [4]f32{ d.frame, 0, 0, 0 },
                 .scale = d.scale,
                 .rotation = d.rotation,
@@ -210,12 +210,50 @@ pub const Gl = struct {
         gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
 
         const data_ptr: *const anyopaque = ar.items.ptr;
-
-        const size = @as(isize, @intCast(ar.items.len * @sizeOf(kf)));
+        const struct_size = @sizeOf(animationKeyFrame);
+        const size = @as(isize, @intCast(ar.items.len * struct_size));
         gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, data_ptr, gl.STATIC_DRAW);
         gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, block_binding_point, ssbo);
         gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, 0);
         return ssbo;
+    }
+
+    pub fn resizeAnimationShaderStorageBufferObject(ssbo: u32, num_frames: usize) void {
+        const struct_size = @sizeOf(animationKeyFrame);
+        const size = @as(isize, @intCast(num_frames * struct_size));
+        const empty_frame: animationKeyFrame = .{
+            .data = std.mem.zeroes([4]f32),
+            .scale = std.mem.zeroes([4]f32),
+            .rotation = std.mem.zeroes([4]f32),
+            .translation = std.mem.zeroes([4]f32),
+        };
+        gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
+        gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, &empty_frame, gl.STATIC_DRAW);
+    }
+
+    pub fn addAnimationShaderStorageBufferData(
+        ssbo: u32,
+        offset: usize,
+        data: []gfx.Animation.AnimationKeyFrame,
+    ) void {
+        var ar = std.ArrayListUnmanaged(animationKeyFrame){};
+        defer ar.deinit(game.state.allocator);
+        for (data) |d| {
+            ar.append(game.state.allocator, animationKeyFrame{
+                .data = [4]f32{ d.frame, 0, 0, 0 },
+                .scale = d.scale,
+                .rotation = d.rotation,
+                .translation = d.translation,
+            }) catch unreachable;
+        }
+        gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
+
+        const data_ptr: *const anyopaque = ar.items.ptr;
+
+        const struct_size = @sizeOf(animationKeyFrame);
+        const size: isize = @intCast(ar.items.len * struct_size);
+        const buffer_offset: isize = @intCast(offset * struct_size);
+        gl.bufferSubData(gl.SHADER_STORAGE_BUFFER, buffer_offset, size, data_ptr);
     }
 
     pub fn initTextureFromColors(texture_data: []const u32) u32 {
