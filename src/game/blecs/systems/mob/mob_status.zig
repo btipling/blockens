@@ -24,14 +24,15 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
+            const current_ar: u32 = game.state.gfx.animation_data.animations_running;
             if (ecs.has_id(world, entity, ecs.id(components.mob.Walking))) {
-                game.state.gfx.animations_running = game.state.gfx.animations_running | gfx.constants.DemoCharacterWalkingAnimationID;
+                game.state.gfx.animation_data.animations_running = current_ar | gfx.constants.DemoCharacterWalkingAnimationID;
             } else if (ecs.has_id(world, entity, ecs.id(components.mob.Turning))) {
-                game.state.gfx.animations_running = game.state.gfx.animations_running | gfx.constants.DemoCharacterWalkingAnimationID;
+                game.state.gfx.animation_data.animations_running = current_ar | gfx.constants.DemoCharacterWalkingAnimationID;
             } else if (ecs.has_id(world, entity, ecs.id(components.mob.Jumping))) {
-                game.state.gfx.animations_running = game.state.gfx.animations_running | gfx.constants.DemoCharacterWalkingAnimationID;
+                game.state.gfx.animation_data.animations_running = current_ar | gfx.constants.DemoCharacterWalkingAnimationID;
             } else {
-                game.state.gfx.animations_running = game.state.gfx.animations_running & ~gfx.constants.DemoCharacterWalkingAnimationID;
+                game.state.gfx.animation_data.animations_running = current_ar & ~gfx.constants.DemoCharacterWalkingAnimationID;
             }
         }
     }

@@ -4,6 +4,7 @@ const math = @import("../math/math.zig");
 const constants = @import("gfx_constants.zig");
 const shader_helpers = @import("shader_helpers.zig");
 const game = @import("../game.zig");
+const gfx = @import("gfx.zig");
 
 pub const MeshTransforms = struct {
     scale: ?@Vector(4, f32),
@@ -17,9 +18,8 @@ pub const VertexShaderGen = struct {
         has_uniform_mat: bool = false,
         has_ubo: bool = false,
         has_texture_coords: bool = false,
-        animation_block_index: ?u32 = null,
-        animation_id: ?u32 = 0,
-        num_animation_frames: u32 = 0,
+        animation_block_index: ?u32,
+        animation: ?*gfx.Animation,
         has_normals: bool = false,
         has_edges: bool = false,
         has_block_data: bool = false,
@@ -31,6 +31,7 @@ pub const VertexShaderGen = struct {
         is_multi_draw: bool = false,
         is_meshed: bool = false,
         mesh_transforms: ?[]MeshTransforms,
+        num_animation_frames: usize,
     };
 
     // genVertexShader - call ower owns the returned slice and must free it
@@ -175,10 +176,20 @@ pub const VertexShaderGen = struct {
         }
 
         fn gen_animation_block(r: *runner) !void {
+            const animation = r.cfg.animation orelse return;
+            const kf = animation.keyframes orelse return;
             var line = try shader_helpers.scalar(
                 usize,
+                // TODO: num_animation_frames is hard coded to one animation per mesh, which is wrong
                 "\nuint num_animation_frames = {d};\n",
-                r.cfg.num_animation_frames,
+                kf.len,
+            );
+            r.l(&line);
+            line = try shader_helpers.scalar(
+                usize,
+                // TODO: num_animation_frames is hard coded to one animation per mesh, which is wrong
+                "\nuint bl_ani_offset = {d};\n",
+                animation.animation_offset,
             );
             r.l(&line);
             if (r.cfg.animation_block_index) |bi| {
@@ -215,18 +226,18 @@ pub const VertexShaderGen = struct {
 
         fn gen_animation_frames(r: *runner) !void {
             if (r.cfg.animation_block_index == null) return;
-            if (r.cfg.animation_id) |ai| {
-                if (ai != 0) {
-                    r.a("   bool isAnimationRunning = (");
-                    r.a(constants.UBOGFXDataName);
-                    const line = try shader_helpers.scalar(usize, "[0] & 0x{X}u) != 0u;\n", ai);
-                    r.l(&line);
-                    r.a("   if(isAnimationRunning) {\n");
-                }
+            const animation = r.cfg.animation orelse return;
+            const ai = animation.animation_id;
+            if (ai != 0) {
+                r.a("   bool isAnimationRunning = (");
+                r.a(constants.UBOGFXDataName);
+                const line = try shader_helpers.scalar(usize, "[0] & 0x{X}u) != 0u;\n", ai);
+                r.l(&line);
+                r.a("   if(isAnimationRunning) {\n");
             }
             r.a("    AnimationFrameIndices indices = get_frame_indices();\n");
-            r.a("    key_frame kf = frames[indices.index1];\n");
-            r.a("    key_frame sf = frames[indices.index2];\n");
+            r.a("    key_frame kf = frames[bl_ani_offset + indices.index1];\n");
+            r.a("    key_frame sf = frames[bl_ani_offset + indices.index2];\n");
             r.a("    vec4 traq = linear_interpolate(kf.translation, sf.translation, indices.t);\n");
             r.a("    vec4 kft0 = vec4(1, 0, 0, 0);\n");
             r.a("    vec4 kft1 = vec4(0, 1, 0, 0);\n");
@@ -239,10 +250,8 @@ pub const VertexShaderGen = struct {
             if (r.cfg.mesh_transforms != null) r.a("    pos = scam * pos;\n");
             r.a("    pos = rot * pos;\n");
             r.a("    pos = bl_trans * pos;\n");
-            if (r.cfg.animation_id) |ai| {
-                if (ai != 0) {
-                    r.a("   }\n");
-                }
+            if (ai != 0) {
+                r.a("   }\n");
             }
         }
 
@@ -286,7 +295,9 @@ pub const VertexShaderGen = struct {
             }
             for (0..mts.len) |i| {
                 if (r.cfg.animation_block_index != null and i == 0) {
-                    if (r.cfg.animation_id != null and r.cfg.animation_id != 0) {
+                    const animation = r.cfg.animation orelse continue;
+                    const ai = animation.animation_id;
+                    if (ai != 0) {
                         r.a("   if(!isAnimationRunning) {\n");
                         var line = try shader_helpers.scalar(usize, "       pos = mesh_transforms[{d}] * pos;\n", i);
                         r.l(&line);
@@ -406,7 +417,7 @@ pub const VertexShaderGen = struct {
         }
 
         fn gen_math(r: *runner) !void {
-            if (r.cfg.animation_block_index != null) {
+            if (r.cfg.animation != null) {
                 r.a("\n");
                 r.a(@embedFile("fragments/q_to_mat.vs.txt"));
                 r.a("\n\n");
@@ -418,7 +429,7 @@ pub const VertexShaderGen = struct {
         }
 
         fn gen_animation_functions(r: *runner) !void {
-            if (r.cfg.animation_block_index != null) {
+            if (r.cfg.animation != null) {
                 r.a("\n");
                 r.a(@embedFile("fragments/frame_from_time.vs.txt"));
                 r.a("\n\n");

@@ -14,8 +14,8 @@ pub const AnimationBlockName: []const u8 = "animation_block";
 // Binding points
 pub const GameUBOBindingPoint: u32 = 0;
 pub const SettingsUBOBindingPoint: u32 = 1;
-pub const DemoCubeAnimationBindingPoint: u32 = 2;
-pub const CharacterAnimationBindingPoint: u32 = 3;
+pub const AnimationBindingPoint: u32 = 2;
 
 // Animations
 pub const DemoCharacterWalkingAnimationID: u32 = 0x01;
+pub const DemoCubeAnimationID: u32 = 0x02;

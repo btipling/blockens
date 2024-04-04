@@ -66,7 +66,6 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     const parent = ecs.get_parent(world, entity);
     const vertexShader: ?[:0]const u8 = er.vertexShader;
     const fragmentShader: ?[:0]const u8 = er.fragmentShader;
-    const keyframes: ?[]gfx.ElementsRendererConfig.AnimationKeyFrame = er.keyframes;
 
     if (config.use_tracy) ztracy.Message("initing gfx");
     const vao = gfx.gl.Gl.initVAO() catch @panic("nope");
@@ -89,7 +88,6 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             ecs.delete(world, entity);
             if (vertexShader) |v| game.state.allocator.free(v);
             if (fragmentShader) |f| game.state.allocator.free(f);
-            if (keyframes) |kf| game.state.allocator.free(kf);
             _ = game.state.gfx.renderConfigs.remove(erc.id);
             ecs.delete(world, erc.id);
             if (deinit_mesh) er.mesh_data.deinit();
@@ -267,18 +265,6 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         );
     }
 
-    if (config.use_tracy) ztracy.Message("writing ssbos to gpu");
-    if (er.animation_binding_point) |animation_binding_point| {
-        if (er.keyframes) |k| {
-            var ssbo: u32 = 0;
-            ssbo = game.state.gfx.ssbos.get(animation_binding_point) orelse blk: {
-                const new_ssbo = gfx.gl.Gl.initAnimationShaderStorageBufferObject(animation_binding_point, k);
-                game.state.gfx.ssbos.put(animation_binding_point, new_ssbo) catch @panic("nope");
-                break :blk new_ssbo;
-            };
-        }
-    }
-
     if (config.use_tracy) ztracy.Message("writing textures to gpu");
     var texture: u32 = 0;
     if (er.demo_cube_texture) |dct| {
@@ -318,7 +304,6 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     });
     if (vertexShader) |v| game.state.allocator.free(v);
     if (fragmentShader) |f| game.state.allocator.free(f);
-    if (keyframes) |kf| game.state.allocator.free(kf);
     _ = game.state.gfx.renderConfigs.remove(erc.id);
     ecs.delete(world, erc.id);
     if (deinit_mesh) er.mesh_data.deinit();

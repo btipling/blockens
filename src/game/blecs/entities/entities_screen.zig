@@ -323,8 +323,8 @@ pub fn initDemoCube() void {
     ecs.add(world, c_dc, components.shape.NeedsSetup);
     // Add animation to cube:
     const animation = helpers.new_child(world, c_dc);
-    _ = ecs.set(world, animation, components.gfx.AnimationSSBO, .{
-        .ssbo = gfx.constants.DemoCubeAnimationBindingPoint,
+    _ = ecs.set(world, animation, components.gfx.AnimationMesh, .{
+        .animation_id = gfx.constants.DemoCubeAnimationID,
     });
 
     const kf0 = ecs.new_id(world);
