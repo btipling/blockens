@@ -31,7 +31,6 @@ pub const VertexShaderGen = struct {
         is_multi_draw: bool = false,
         is_meshed: bool = false,
         mesh_transforms: ?[]MeshTransforms,
-        num_animation_frames: usize,
     };
 
     // genVertexShader - call ower owns the returned slice and must free it
@@ -203,8 +202,7 @@ pub const VertexShaderGen = struct {
                 line = try shader_helpers.ssbo_binding(bi, constants.AnimationBlockName);
                 r.l(&line);
                 r.a("{\n");
-                line = try shader_helpers.scalar(usize, "    key_frame frames[{d}];\n", r.cfg.num_animation_frames);
-                r.l(&line);
+                r.a("    key_frame frames[];\n");
                 r.a("};\n\n");
             }
         }
@@ -236,8 +234,8 @@ pub const VertexShaderGen = struct {
                 r.a("   if(isAnimationRunning) {\n");
             }
             r.a("    AnimationFrameIndices indices = get_frame_indices();\n");
-            r.a("    key_frame kf = frames[bl_ani_offset + indices.index1];\n");
-            r.a("    key_frame sf = frames[bl_ani_offset + indices.index2];\n");
+            r.a("    key_frame kf = frames[indices.index1];\n");
+            r.a("    key_frame sf = frames[indices.index2];\n");
             r.a("    vec4 traq = linear_interpolate(kf.translation, sf.translation, indices.t);\n");
             r.a("    vec4 kft0 = vec4(1, 0, 0, 0);\n");
             r.a("    vec4 kft1 = vec4(0, 1, 0, 0);\n");

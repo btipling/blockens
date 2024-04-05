@@ -97,7 +97,9 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
 const shaders = struct {
     fn genVertexShader(e: *const extractions, mesh_data: *const gfx.mesh.meshData) [:0]const u8 {
         var animation_block_index: ?u32 = null;
-        if (e.animation != null) animation_block_index = game.state.gfx.animation_data.animation_binding_point;
+        if (e.animation != null) {
+            animation_block_index = game.state.gfx.animation_data.animation_binding_point;
+        }
         const v_cfg = gfx.shadergen.vertex.VertexShaderGen.vertexShaderConfig{
             .debug = e.debug,
             .has_uniform_mat = e.has_uniform_mat,
@@ -119,7 +121,6 @@ const shaders = struct {
                 if (e.mesh_transforms) |mt| break :blk mt.items;
                 break :blk null;
             },
-            .num_animation_frames = game.state.gfx.animation_data.num_frames,
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
     }

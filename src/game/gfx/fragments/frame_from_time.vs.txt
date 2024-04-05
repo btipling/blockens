@@ -4,15 +4,16 @@ struct AnimationFrameIndices {
     float t;
 };
 
-// num_animation_frames must be set
+// num_animation_frames, frames and bl_ani_offset must be set
 AnimationFrameIndices get_frame_indices() {
     float time = shader_data.x;
     AnimationFrameIndices indices = AnimationFrameIndices(-1, -1, 0.0);
 
-    float bl_max = frames[num_animation_frames - 1].data[0];
+    float bl_max = frames[bl_ani_offset + num_animation_frames - 1].data[0];
     float current_t = mod(time, bl_max); 
+    int bl_i = int(bl_ani_offset);
     for (int i = 0; i < num_animation_frames; i++) {
-        if (frames[i].data[0] > current_t) {
+        if (frames[bl_i + i].data[0] > current_t) {
             indices.index1 = max(0, i - 1);
             indices.index2 = i;
             break;
@@ -24,8 +25,8 @@ AnimationFrameIndices get_frame_indices() {
         indices.index2 = 0;
     }
 
-    float frame1_time = frames[indices.index1].data[0];
-    float frame2_time = frames[indices.index2].data[0];
+    float frame1_time = frames[bl_ani_offset + indices.index1].data[0];
+    float frame2_time = frames[bl_ani_offset + indices.index2].data[0];
     float frame_duration = frame2_time - frame1_time;
 
     if (frame_duration > 0.0) {
@@ -34,5 +35,7 @@ AnimationFrameIndices get_frame_indices() {
         indices.t = 0.0;
     }
 
+    indices.index1 = bl_i + indices.index1;
+    indices.index2 = bl_i + indices.index2;
     return indices;
 }

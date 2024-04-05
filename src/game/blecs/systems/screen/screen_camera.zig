@@ -179,9 +179,11 @@ fn euclideanDistance(v1: @Vector(4, f32), v2: @Vector(4, f32)) f32 {
 fn cullChunks(camera_position: @Vector(4, f32), view: zm.Mat, perspective: zm.Mat) void {
     const world = game.state.world;
     var it = game.state.gfx.game_chunks.iterator();
-    outer: while (it.next()) |e| {
+    while (it.next()) |e| {
         const wp: chunk.worldPosition = e.key_ptr.*;
         const c: *chunk.Chunk = e.value_ptr.*;
+        var remove = true;
+
         const p = wp.vecFromWorldPosition();
         const loc: @Vector(4, f32) = .{
             p[0] * chunk.chunkDim,
@@ -245,33 +247,16 @@ fn cullChunks(camera_position: @Vector(4, f32), view: zm.Mat, perspective: zm.Ma
         for (to_check) |coordinates| {
             const distance_from_camera = euclideanDistance(camera_position, coordinates);
             if (distance_from_camera <= chunk.chunkDim) {
-                const renderer_entity = ecs.get_target(
-                    world,
-                    c.entity,
-                    entities.block.HasChunkRenderer,
-                    0,
-                );
-                if (renderer_entity != 0 and ecs.is_alive(world, renderer_entity)) {
-                    ecs.add(world, renderer_entity, components.gfx.CanDraw);
+                remove = false;
+            } else {
+                const ca_s: @Vector(4, f32) = zm.mul(coordinates, view);
+                const clip_space: @Vector(4, f32) = zm.mul(ca_s, perspective);
+                if (-clip_space[3] <= clip_space[0] and clip_space[0] <= clip_space[3] and
+                    -clip_space[3] <= clip_space[1] and clip_space[1] <= clip_space[3] and
+                    -clip_space[3] <= clip_space[2] and clip_space[2] <= clip_space[3])
+                {
+                    remove = false;
                 }
-                continue :outer;
-            }
-            const ca_s: @Vector(4, f32) = zm.mul(coordinates, view);
-            const clip_space: @Vector(4, f32) = zm.mul(ca_s, perspective);
-            if (-clip_space[3] <= clip_space[0] and clip_space[0] <= clip_space[3] and
-                -clip_space[3] <= clip_space[1] and clip_space[1] <= clip_space[3] and
-                -clip_space[3] <= clip_space[2] and clip_space[2] <= clip_space[3])
-            {
-                const renderer_entity = ecs.get_target(
-                    world,
-                    c.entity,
-                    entities.block.HasChunkRenderer,
-                    0,
-                );
-                if (renderer_entity != 0 and ecs.is_alive(world, renderer_entity)) {
-                    ecs.add(world, renderer_entity, components.gfx.CanDraw);
-                }
-                continue :outer;
             }
         }
         const renderer_entity = ecs.get_target(
@@ -280,6 +265,12 @@ fn cullChunks(camera_position: @Vector(4, f32), view: zm.Mat, perspective: zm.Ma
             entities.block.HasChunkRenderer,
             0,
         );
-        ecs.remove(world, renderer_entity, components.gfx.CanDraw);
+        if (renderer_entity != 0 and ecs.is_alive(world, renderer_entity)) {
+            if (remove) {
+                ecs.remove(world, renderer_entity, components.gfx.CanDraw);
+            } else {
+                ecs.add(world, renderer_entity, components.gfx.CanDraw);
+            }
+        }
     }
 }
