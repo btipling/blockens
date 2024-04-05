@@ -106,6 +106,8 @@ pub const blockSQL = struct {
     id: i32,
     name: sqlite.Text,
     texture: sqlite.Blob,
+    light_level: i32,
+    transparent: i32,
 };
 
 pub const blockOption = struct {
@@ -117,6 +119,8 @@ pub const block = struct {
     id: u8 = 0,
     name: [21]u8 = [_]u8{0} ** 21,
     texture: []u32 = undefined,
+    light_level: u8 = 0,
+    transparent: bool = false,
 };
 
 pub const chunkScriptOptionSQL = struct {
@@ -629,11 +633,13 @@ pub const Data = struct {
         return rv;
     }
 
-    pub fn saveBlock(self: *Data, name: []const u8, texture: []u32) !void {
+    pub fn saveBlock(self: *Data, name: []const u8, texture: []u32, light_level: u8, transparent: bool) !void {
         var insertStmt = try self.db.prepare(
             struct {
                 name: sqlite.Text,
                 texture: sqlite.Blob,
+                light_level: i32,
+                transparent: i32,
             },
             void,
             insertBlockStmt,
@@ -641,10 +647,14 @@ pub const Data = struct {
         defer insertStmt.deinit();
 
         var t = textureToBlob(texture);
+        var t_int: i32 = 0;
+        if (transparent) t_int = 1;
         insertStmt.exec(
             .{
                 .name = sqlite.text(name),
                 .texture = sqlite.blob(&t),
+                .light_level = @intCast(light_level),
+                .transparent = t_int,
             },
         ) catch |err| {
             std.log.err("Failed to insert block: {}", .{err});
@@ -652,12 +662,14 @@ pub const Data = struct {
         };
     }
 
-    pub fn updateBlock(self: *Data, id: i32, name: []const u8, texture: []u32) !void {
+    pub fn updateBlock(self: *Data, id: i32, name: []const u8, texture: []u32, light_level: u8, transparent: bool) !void {
         var updateStmt = try self.db.prepare(
             struct {
                 id: i32,
                 name: sqlite.Text,
                 texture: sqlite.Blob,
+                light_level: i32,
+                transparent: i32,
             },
             void,
             updateBlockStmt,
@@ -665,11 +677,15 @@ pub const Data = struct {
         defer updateStmt.deinit();
 
         var t = textureToBlob(texture);
+        var t_int: i32 = 0;
+        if (transparent) t_int = 1;
         updateStmt.exec(
             .{
                 .id = id,
                 .name = sqlite.text(name),
                 .texture = sqlite.blob(&t),
+                .light_level = @intCast(light_level),
+                .transparent = t_int,
             },
         ) catch |err| {
             std.log.err("Failed to update block: {}", .{err});
@@ -711,6 +727,8 @@ pub const Data = struct {
                 id: i32,
                 name: sqlite.Text,
                 texture: sqlite.Blob,
+                light_level: i32,
+                transparent: i32,
             },
             selectBlockStmt,
         );
@@ -724,6 +742,8 @@ pub const Data = struct {
                 data.id = @intCast(r.id);
                 data.name = sqlNameToArray(r.name);
                 data.texture = try self.blobToTexture(r.texture);
+                data.light_level = @intCast(r.light_level);
+                data.transparent = r.transparent == 0;
                 return;
             }
         }

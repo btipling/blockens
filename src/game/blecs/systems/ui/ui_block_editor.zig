@@ -73,7 +73,12 @@ fn saveBlock() !void {
         }
     }
     var emptyText = [_]u32{0} ** data.RGBAColorTextureSize;
-    try game.state.db.saveBlock(&game.state.ui.data.block_create_name_buf, @ptrCast(&emptyText));
+    try game.state.db.saveBlock(
+        &game.state.ui.data.block_create_name_buf,
+        @ptrCast(&emptyText),
+        0,
+        false,
+    );
     try listBlocks();
 }
 
@@ -131,7 +136,13 @@ fn updateBlock() !void {
     }
 
     const texture_colors = game.state.ui.data.texture_rgba_data orelse return;
-    try game.state.db.updateBlock(game.state.ui.data.block_loaded_block_id, &game.state.ui.data.block_create_name_buf, texture_colors);
+    try game.state.db.updateBlock(
+        game.state.ui.data.block_loaded_block_id,
+        &game.state.ui.data.block_create_name_buf,
+        texture_colors,
+        0,
+        false,
+    );
     // Need to update the game state blocks:
     entities.block.initBlock(game.state.ui.data.block_loaded_block_id);
     try listBlocks();

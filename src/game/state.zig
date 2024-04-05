@@ -212,8 +212,8 @@ pub const Game = struct {
         }
         const grass_texture = try self.script.evalTextureFunc(grass_texture_script);
         if (dirt_texture == null or grass_texture == null) std.debug.panic("couldn't generate lua textures!\n", .{});
-        try self.db.saveBlock("dirt", @ptrCast(dirt_texture.?));
-        try self.db.saveBlock("grass", @ptrCast(grass_texture.?));
+        try self.db.saveBlock("dirt", @ptrCast(dirt_texture.?), 0, false);
+        try self.db.saveBlock("grass", @ptrCast(grass_texture.?), 0, false);
         const default_chunk_script: []const u8 = @embedFile("script/lua/chunk_gen_default.lua");
         try self.db.saveChunkScript("default", default_chunk_script, .{ 0, 1, 0 });
         const chunk_data = try self.script.evalChunkFunc(default_chunk_script);
