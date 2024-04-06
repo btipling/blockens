@@ -76,6 +76,7 @@ pub const ChunkEditor = struct {};
 pub const CharacterEditor = struct {};
 pub const WorldEditor = struct {};
 pub const TitleScreen = struct {};
+pub const LightingEditor = struct {};
 
 pub fn init() void {
     ecs.COMPONENT(game.state.world, Mob);

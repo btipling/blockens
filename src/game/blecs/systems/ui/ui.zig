@@ -12,6 +12,7 @@ const demo_character = @import("ui_demo_character.zig");
 const settings_camera = @import("ui_settings_camera.zig");
 const game_chunks_info = @import("ui_game_chunks_info.zig");
 const game_mob_info = @import("ui_game_mob_info.zig");
+const lighting_controls = @import("ui_game_lighting_controls.zig");
 const cursor = @import("ui_cursor.zig");
 
 pub fn init() void {
@@ -29,5 +30,6 @@ pub fn init() void {
     settings_camera.init();
     game_chunks_info.init();
     game_mob_info.init();
+    lighting_controls.init();
     cursor.init();
 }

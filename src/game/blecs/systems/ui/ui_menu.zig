@@ -73,6 +73,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     if (zgui.menuItem("Toogle Mob Info", .{})) {
                         screen_helpers.toggleGameMobInfo();
                     }
+                    if (zgui.menuItem("Toogle Lighting Controls", .{})) {
+                        screen_helpers.toggleLightingControls();
+                    }
                     zgui.endMenu();
                 }
                 const ww = zgui.getWindowWidth();

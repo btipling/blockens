@@ -365,4 +365,20 @@ pub const Gl = struct {
         gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, 0);
         return ssbo;
     }
+
+    pub fn updateLightingShaderStorageBufferObject(
+        ssbo: u32,
+        offset: usize,
+        data: @Vector(4, f32),
+    ) void {
+        const ld: lightingData = .{
+            .ambient = data,
+        };
+        gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
+
+        const struct_size = @sizeOf(lightingData);
+        const size: isize = @intCast(struct_size);
+        const buffer_offset: isize = @intCast(offset * struct_size);
+        gl.bufferSubData(gl.SHADER_STORAGE_BUFFER, buffer_offset, size, &ld);
+    }
 };

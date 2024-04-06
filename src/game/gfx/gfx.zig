@@ -155,6 +155,20 @@ pub const Gfx = struct {
     game_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
     animation_data: AnimationData = undefined,
     lighting_ssbo: u32 = 0,
+    ambient_lighting: f32 = 1,
+
+    pub fn update_lighting(self: *Gfx) void {
+        gl.Gl.updateLightingShaderStorageBufferObject(
+            self.lighting_ssbo,
+            0,
+            .{
+                self.ambient_lighting,
+                self.ambient_lighting,
+                self.ambient_lighting,
+                1,
+            },
+        );
+    }
 
     fn deinit(self: *Gfx, allocator: std.mem.Allocator) void {
         self.animation_data.deinit(allocator);
