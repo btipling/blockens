@@ -53,9 +53,9 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
             const data: *const components.block.BlockData = ecs.get(world, entity, components.block.BlockData) orelse @panic("nope");
             var c: *chunk.Chunk = undefined;
             if (data.is_settings) {
-                c = game.state.gfx.settings_chunks.get(data.chunk_world_position).?;
+                c = game.state.blocks.settings_chunks.get(data.chunk_world_position).?;
             } else {
-                c = game.state.gfx.game_chunks.get(data.chunk_world_position).?;
+                c = game.state.blocks.game_chunks.get(data.chunk_world_position).?;
             }
             break :blk .{};
         },
@@ -75,7 +75,6 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         .transform = null,
         .ubo_binding_point = null,
         .demo_cube_texture = dc,
-        .is_instanced = e.is_instanced,
         .block_id = e.block_id,
         .has_mob_texture = e.has_mob_texture,
         .has_block_texture_atlas = e.has_texture_atlas,
@@ -112,7 +111,6 @@ const shaders = struct {
             .has_edges = e.outline_color != null,
             .animation_block_index = animation_block_index,
             .animation = e.animation,
-            .is_instanced = e.is_instanced,
             .is_multi_draw = e.is_multi_draw,
             .is_meshed = e.is_meshed,
             .has_block_data = e.has_texture_atlas,
@@ -167,7 +165,6 @@ const extractions = struct {
     dc_t_beg: usize = 0,
     dc_t_end: usize = 0,
     animation: ?*gfx.Animation = null,
-    is_instanced: bool = false,
     block_id: ?u8 = null,
     is_meshed: bool = false,
     has_mob_texture: bool = false,
@@ -214,10 +211,6 @@ const extractions = struct {
             const b: *const components.block.Block = @ptrCast(@alignCast(opaque_ptr));
             if (e.debug) std.debug.print("extractBlock: has block\n", .{});
             e.block_id = b.block_id;
-            if (ecs.has_id(world, entity, ecs.id(components.block.Instance))) {
-                if (e.debug) std.debug.print("extractBlock: has instances\n", .{});
-                e.is_instanced = true;
-            }
             if (ecs.has_id(world, entity, ecs.id(components.block.BlockData))) {
                 if (e.debug) std.debug.print("extractBlock: is meshed\n", .{});
                 e.is_meshed = true;

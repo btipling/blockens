@@ -21,12 +21,7 @@ pub fn init(allocator: std.mem.Allocator) *Gfx {
         .ubos = std.AutoHashMap(u32, u32).init(allocator),
         .ssbos = std.AutoHashMap(u32, u32).init(allocator),
         .renderConfigs = std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig).init(allocator),
-        .game_blocks = std.AutoHashMap(u8, *BlockInstance).init(allocator),
-        .settings_blocks = std.AutoHashMap(u8, *BlockInstance).init(allocator),
-        .settings_chunks = std.AutoHashMap(chunk.worldPosition, *chunk.Chunk).init(allocator),
-        .game_chunks = std.AutoHashMap(chunk.worldPosition, *chunk.Chunk).init(allocator),
         .mob_data = std.AutoHashMap(i32, *mob.Mob).init(allocator),
-        .blocks = std.AutoHashMap(u8, *Block).init(allocator),
         .animation_data = AnimationData.init(allocator),
         .lighting_ssbo = gl.Gl.initLightingShaderStorageBufferObject(constants.LightingBindingPoint),
     };
@@ -123,7 +118,6 @@ pub const ElementsRendererConfig = struct {
     transform: ?zm.Mat = null,
     ubo_binding_point: ?u32 = null,
     demo_cube_texture: ?struct { usize, usize } = null,
-    is_instanced: bool = false,
     block_id: ?u8 = 0,
     has_mob_texture: bool = false,
     has_block_texture_atlas: bool = false,
@@ -132,33 +126,14 @@ pub const ElementsRendererConfig = struct {
     mob: ?MobRef = null,
 };
 
-pub const Block = struct {
-    id: u8,
-    data: data.block,
-};
-
-pub const BlockInstance = struct {
-    entity_id: blecs.ecs.entity_t = 0,
-    vbo: u32 = 0,
-    transforms: std.ArrayList(zm.Mat) = undefined,
-};
-
 pub const Gfx = struct {
     ubos: std.AutoHashMap(u32, u32) = undefined,
     ssbos: std.AutoHashMap(u32, u32) = undefined,
     renderConfigs: std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig) = undefined,
     mob_data: std.AutoHashMap(i32, *mob.Mob) = undefined,
-    game_blocks: std.AutoHashMap(u8, *BlockInstance) = undefined,
-    settings_blocks: std.AutoHashMap(u8, *BlockInstance) = undefined,
     animation_data: AnimationData = undefined,
     lighting_ssbo: u32 = 0,
-
-    // TODO: I think these belong in some other object, not Gfx:
-    game_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
-    blocks: std.AutoHashMap(u8, *Block) = undefined,
     ambient_lighting: f32 = 1,
-    settings_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
-    selected_block: u8 = 4,
 
     pub fn update_lighting(self: *Gfx) void {
         gl.Gl.updateLightingShaderStorageBufferObject(
@@ -182,41 +157,11 @@ pub const Gfx = struct {
             allocator.destroy(rcfg);
         }
         self.renderConfigs.deinit();
-        var blocks = self.blocks.valueIterator();
-        while (blocks.next()) |b| {
-            allocator.free(b.*.data.texture);
-            allocator.destroy(b.*);
-        }
-        self.blocks.deinit();
-        var blocks_i = self.game_blocks.valueIterator();
-        while (blocks_i.next()) |b| {
-            b.*.transforms.deinit();
-            allocator.destroy(b.*);
-        }
-        self.game_blocks.deinit();
-        blocks_i = self.settings_blocks.valueIterator();
-        while (blocks_i.next()) |b| {
-            b.*.transforms.deinit();
-            allocator.destroy(b.*);
-        }
-        self.settings_blocks.deinit();
         var mb_i = self.mob_data.valueIterator();
         while (mb_i.next()) |m| {
             m.*.deinit();
             allocator.destroy(m.*);
         }
         self.mob_data.deinit();
-        var sc_i = self.settings_chunks.valueIterator();
-        while (sc_i.next()) |ce| {
-            ce.*.deinit();
-            allocator.destroy(ce.*);
-        }
-        self.settings_chunks.deinit();
-        var gc_i = self.game_chunks.valueIterator();
-        while (gc_i.next()) |ce| {
-            ce.*.deinit();
-            allocator.destroy(ce.*);
-        }
-        self.game_chunks.deinit();
     }
 };

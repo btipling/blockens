@@ -27,7 +27,6 @@ pub const VertexShaderGen = struct {
         scale: ?@Vector(4, f32) = null,
         rotation: ?@Vector(4, f32) = null,
         translation: ?@Vector(4, f32) = null,
-        is_instanced: bool = false,
         is_multi_draw: bool = false,
         is_meshed: bool = false,
         mesh_transforms: ?[]MeshTransforms,
@@ -72,7 +71,6 @@ pub const VertexShaderGen = struct {
         fn run(r: *runner) ![:0]const u8 {
             r.a("#version 450 core\n");
             try r.gen_attribute_vars();
-            try r.gen_instanced_vars();
             try r.gen_out_vars();
             try r.gen_mesh_transforms_decls();
             try r.gen_uniforms();
@@ -118,13 +116,6 @@ pub const VertexShaderGen = struct {
                 r.l(&line);
                 r.location += 1;
             }
-        }
-
-        fn gen_instanced_vars(r: *runner) !void {
-            if (!r.cfg.is_instanced) return;
-            var line = try shader_helpers.attribute_location(r.location, "attribTransform", .mat4);
-            r.l(&line);
-            r.location += 1;
         }
 
         fn gen_out_vars(r: *runner) !void {
@@ -345,11 +336,6 @@ pub const VertexShaderGen = struct {
             }
         }
 
-        fn gen_instance_mat(r: *runner) !void {
-            if (!r.cfg.is_instanced) return;
-            r.a("    pos = attribTransform * pos;\n");
-        }
-
         fn gen_inline_mesh_transforms(r: *runner) !void {
             if (r.cfg.mesh_transforms == null) return;
             var m = zm.identity();
@@ -378,7 +364,6 @@ pub const VertexShaderGen = struct {
             r.a("    pos = vec4(position.xyz, 1.0);\n");
             try r.gen_inline_mesh_transforms();
             try r.gen_attr_translation();
-            try r.gen_instance_mat();
             try r.gen_inline_mat();
             try r.gen_animation_frames();
             try r.gen_mesh_transforms();

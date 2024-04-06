@@ -41,7 +41,6 @@ pub const HasPreviousRenderer = struct {
 
 pub const CanDraw = struct {};
 pub const ManuallyHidden = struct {};
-pub const NeedsInstanceDataUpdate = struct {};
 pub const NeedsUniformUpdate = struct {};
 pub const NeedsDeletion = struct {};
 pub const IsPreviousRenderer = struct {};
@@ -58,7 +57,6 @@ pub fn init() void {
     ecs.COMPONENT(world, HasPreviousRenderer);
     ecs.TAG(world, CanDraw);
     ecs.TAG(world, ManuallyHidden);
-    ecs.TAG(world, NeedsInstanceDataUpdate);
     ecs.TAG(world, NeedsUniformUpdate);
     ecs.TAG(world, NeedsDeletion);
     ecs.TAG(world, Wireframe);

@@ -29,9 +29,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             ecs.remove(world, entity, components.block.NeedsMeshing);
             var c: *chunk.Chunk = undefined;
             if (parent == entities.screen.game_data) {
-                c = game.state.gfx.game_chunks.get(wp) orelse continue;
+                c = game.state.blocks.game_chunks.get(wp) orelse continue;
             } else {
-                c = game.state.gfx.settings_chunks.get(wp) orelse continue;
+                c = game.state.blocks.settings_chunks.get(wp) orelse continue;
             }
             _ = game.state.jobs.meshChunk(world, entity, c);
         }

@@ -44,7 +44,7 @@ pub fn getWorldPositionForWorldLocation(pos: @Vector(4, f32)) worldPosition {
 
 pub fn getBlockId(pos: @Vector(4, f32)) dataAtRes {
     const wp = getWorldPositionForWorldLocation(pos);
-    const c = game.state.gfx.game_chunks.get(wp) orelse return .{ .read = true, .data = 0 };
+    const c = game.state.blocks.game_chunks.get(wp) orelse return .{ .read = true, .data = 0 };
     const chunk_local_pos = chunkPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
     return c.dataAt(chunk_index);
@@ -59,7 +59,7 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
     const chunk_local_pos = chunkPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
     // Get chunk from chunk state map:
-    var c = game.state.gfx.game_chunks.get(wp) orelse {
+    var c = game.state.blocks.game_chunks.get(wp) orelse {
         // Chunk not previously generated, but maybe we already updated it before generating:
         var ch_cfg: game_state.chunkConfig = game.state.ui.data.world_chunk_table_data.get(wp) orelse {
             var cr: [chunkSize]u32 = [_]u32{0} ** chunkSize;

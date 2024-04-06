@@ -48,7 +48,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     },
                 };
 
-                var cs = game.state.gfx.game_chunks.valueIterator();
+                var cs = game.state.blocks.game_chunks.valueIterator();
                 var to_save: usize = 0;
                 while (cs.next()) |cc| {
                     if (cc.*.updated) {

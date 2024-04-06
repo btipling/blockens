@@ -90,17 +90,17 @@ fn handle_copy_chunk(msg: buffer.buffer_message) void {
 
     const wp = copy_data.chunk.wp;
     if (copy_data.chunk.is_settings) {
-        if (game.state.gfx.settings_chunks.get(wp)) |c| {
+        if (game.state.blocks.settings_chunks.get(wp)) |c| {
             c.deinit();
             game.state.allocator.destroy(c);
         }
-        game.state.gfx.settings_chunks.put(wp, copy_data.chunk) catch unreachable;
+        game.state.blocks.settings_chunks.put(wp, copy_data.chunk) catch unreachable;
     } else {
-        if (game.state.gfx.game_chunks.get(wp)) |c| {
+        if (game.state.blocks.game_chunks.get(wp)) |c| {
             c.deinit();
             game.state.allocator.destroy(c);
         }
-        game.state.gfx.game_chunks.put(wp, copy_data.chunk) catch unreachable;
+        game.state.blocks.game_chunks.put(wp, copy_data.chunk) catch unreachable;
     }
 }
 

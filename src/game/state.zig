@@ -6,6 +6,7 @@ const zmesh = @import("zmesh");
 const blecs = @import("blecs/blecs.zig");
 const data = @import("data/data.zig");
 const gfx = @import("gfx/gfx.zig");
+const block = @import("block.zig");
 const script = @import("script/script.zig");
 const chunk = @import("chunk.zig");
 const mob = @import("mob.zig");
@@ -158,12 +159,14 @@ pub const Game = struct {
     input: Input = .{},
     ui: UI = .{},
     gfx: *gfx.Gfx = undefined,
+    blocks: *block.Blocks = undefined,
     jobs: thread.jobs.Jobs = .{},
     quit: bool = false,
 
     pub fn initInternals(self: *Game) !void {
         try self.initUIData();
         self.gfx = gfx.init(self.allocator);
+        self.blocks = block.init(self.allocator);
         try self.initScript();
         try self.initDb();
         try self.populateUIOptions();
@@ -180,6 +183,7 @@ pub const Game = struct {
         self.ui.data.deinit(self.allocator);
         self.allocator.destroy(self.ui.data);
         gfx.deinit(self.allocator);
+        block.deinit(self.allocator);
         thread.buffer.deinit();
         thread.handler.deinit();
     }

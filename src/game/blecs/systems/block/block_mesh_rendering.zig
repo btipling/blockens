@@ -57,11 +57,11 @@ fn render_multidraw(world: *ecs.world_t, entity: ecs.entity_t, _: @Vector(4, f32
     var c: *chunk.Chunk = undefined;
     const parent: ecs.entity_t = ecs.get_parent(world, entity);
     if (parent == entities.screen.game_data) {
-        c = game.state.gfx.game_chunks.get(wp) orelse return;
+        c = game.state.blocks.game_chunks.get(wp) orelse return;
         _ = ecs.set(world, entity, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
     } else {
         _ = ecs.set(world, entity, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
-        c = game.state.gfx.settings_chunks.get(wp) orelse return;
+        c = game.state.blocks.settings_chunks.get(wp) orelse return;
     }
     const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
     _ = ecs.set(world, entity, components.shape.Color, components.shape.Color.fromVec(cr_c));

@@ -24,7 +24,6 @@ pub const ChunkUpdate = struct {
     block_id: u8,
 };
 pub const HighlightedBlock = struct {};
-pub const Instance = struct {};
 pub const NeedsMeshing = struct {};
 pub const NeedsMeshRendering = struct {};
 pub const NeedsInstanceRendering = struct {};
@@ -39,7 +38,6 @@ pub fn init() void {
     ecs.COMPONENT(world, Meshscale);
     ecs.COMPONENT(world, ChunkUpdate);
     ecs.TAG(world, HighlightedBlock);
-    ecs.TAG(world, Instance);
     ecs.TAG(world, NeedsMeshing);
     ecs.TAG(world, NeedsMeshRendering);
     ecs.TAG(world, NeedsInstanceRendering);

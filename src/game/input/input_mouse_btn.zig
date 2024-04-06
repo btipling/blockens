@@ -34,7 +34,7 @@ fn handleGameMouseBtn(btn: glfw.MouseButton, action: glfw.Action, mods: glfw.Mod
                     player,
                     blecs.components.mob.AddAction,
                     .{
-                        .block_id = game.state.gfx.selected_block,
+                        .block_id = game.state.blocks.selected_block,
                     },
                 );
             }

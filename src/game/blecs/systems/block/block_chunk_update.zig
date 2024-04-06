@@ -33,7 +33,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const cu: []components.block.ChunkUpdate = ecs.field(it, components.block.ChunkUpdate, 1) orelse continue;
 
             const wp = chunk.getWorldPositionForWorldLocation(cu[i].pos);
-            if (game.state.gfx.game_chunks.get(wp)) |c| {
+            if (game.state.blocks.game_chunks.get(wp)) |c| {
                 if (ecs.is_alive(world, c.entity) and ecs.has_id(world, c.entity, ecs.id(components.gfx.HasPreviousRenderer))) continue;
             }
             const updated_index = updateChunk(
@@ -63,7 +63,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 );
                 continue;
             }
-            const c = game.state.gfx.game_chunks.get(wp) orelse std.debug.panic(
+            const c = game.state.blocks.game_chunks.get(wp) orelse std.debug.panic(
                 "expected chunk at this point\n",
                 .{},
             );

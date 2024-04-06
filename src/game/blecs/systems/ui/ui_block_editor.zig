@@ -6,7 +6,7 @@ const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
-const gfx = @import("../../../gfx/gfx.zig");
+const block = @import("../../../block.zig");
 const script = @import("../../../script/script.zig");
 
 pub fn init() void {
@@ -56,7 +56,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 fn listBlocks() !void {
     try game.state.db.listBlocks(&game.state.ui.data.block_options);
     for (game.state.ui.data.block_options.items) |bo| {
-        if (!game.state.gfx.blocks.contains(bo.id)) {
+        if (!game.state.blocks.blocks.contains(bo.id)) {
             // detected a new block to load:
             entities.block.initBlock(bo.id);
         }
@@ -90,27 +90,27 @@ fn saveBlock() !void {
 }
 
 fn loadBlock(block_id: u8) !void {
-    const block: *gfx.Block = game.state.gfx.blocks.get(block_id) orelse {
+    const b: *block.Block = game.state.blocks.blocks.get(block_id) orelse {
         std.debug.print("block with id {d} was not found\n", .{block_id});
         return;
     };
     var nameBuf = [_]u8{0} ** data.maxBlockSizeName;
-    for (block.data.name, 0..) |c, i| {
+    for (b.data.name, 0..) |c, i| {
         if (i >= data.maxBlockSizeName) {
             break;
         }
         nameBuf[i] = c;
     }
     // Settings texture data needs to be copied as it's owned separately
-    const texture_rgba_data: []u32 = try game.state.allocator.alloc(u32, block.data.texture.len);
-    @memcpy(texture_rgba_data, block.data.texture);
+    const texture_rgba_data: []u32 = try game.state.allocator.alloc(u32, b.data.texture.len);
+    @memcpy(texture_rgba_data, b.data.texture);
 
     game.state.ui.data.block_emits_light = false;
-    if (block.data.light_level > 0) game.state.ui.data.block_emits_light = true;
-    game.state.ui.data.block_transparent = block.data.transparent;
+    if (b.data.light_level > 0) game.state.ui.data.block_emits_light = true;
+    game.state.ui.data.block_transparent = b.data.transparent;
     std.debug.print("light: {d} transparent: {}\n", .{
-        block.data.light_level,
-        block.data.transparent,
+        b.data.light_level,
+        b.data.transparent,
     });
     game.state.ui.data.block_create_name_buf = nameBuf;
     game.state.ui.data.block_loaded_block_id = block_id;

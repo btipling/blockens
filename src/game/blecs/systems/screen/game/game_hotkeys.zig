@@ -107,24 +107,24 @@ fn handleThirdPlayerCamKeys() ?glfw.Key {
 }
 
 fn changeBlock(direction: isize) void {
-    var it = game.state.gfx.blocks.iterator();
+    var it = game.state.blocks.blocks.iterator();
     if (direction > 0) {
-        game.state.gfx.selected_block += 1;
+        game.state.blocks.selected_block += 1;
         while (it.next()) |e| {
             const block = e.value_ptr.*;
-            if (block.id == game.state.gfx.selected_block) return;
+            if (block.id == game.state.blocks.selected_block) return;
         }
-        game.state.gfx.selected_block = 1;
+        game.state.blocks.selected_block = 1;
         return;
     }
-    game.state.gfx.selected_block -= 1;
+    game.state.blocks.selected_block -= 1;
     var last_block_id: u8 = 0;
     while (it.next()) |e| {
         const block = e.value_ptr.*;
-        if (block.id == game.state.gfx.selected_block) return;
+        if (block.id == game.state.blocks.selected_block) return;
         last_block_id = block.id;
     }
-    game.state.gfx.selected_block = last_block_id;
+    game.state.blocks.selected_block = last_block_id;
 }
 
 fn playerRL() void {

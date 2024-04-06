@@ -77,10 +77,10 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     if (er.is_multi_draw) {
         const chunk_c: *const components.block.Chunk = ecs.get(world, entity, components.block.Chunk).?;
         if (parent == screen.gameDataEntity) {
-            c = game.state.gfx.game_chunks.get(chunk_c.wp);
+            c = game.state.blocks.game_chunks.get(chunk_c.wp);
         }
         if (parent == screen.settingDataEntity) {
-            c = game.state.gfx.settings_chunks.get(chunk_c.wp);
+            c = game.state.blocks.settings_chunks.get(chunk_c.wp);
         }
     }
     if (c) |_c| {
@@ -214,27 +214,6 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     builder.write();
 
     if (config.use_tracy) ztracy.Message("writing uniforms to gpu");
-    if (er.is_instanced and er.block_id != null) {
-        var block_instance: ?*gfx.BlockInstance = null;
-        if (parent == screen.gameDataEntity) {
-            if (game.state.gfx.game_blocks.get(er.block_id.?)) |b| {
-                if (b.vbo == 0) block_instance = b;
-            }
-        }
-        if (parent == screen.settingDataEntity) {
-            if (game.state.gfx.settings_blocks.get(er.block_id.?)) |b| {
-                if (b.vbo == 0) block_instance = b;
-            }
-        }
-        if (block_instance != null) {
-            block_instance.?.vbo = gfx.gl.Gl.initTransformsVBO(
-                er.mesh_data.positions.len,
-                builder.get_location(),
-            ) catch @panic("nope");
-            ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
-        }
-    }
-
     if (er.transform) |t| {
         gfx.gl.Gl.setUniformMat(gfx.constants.TransformMatName, program, t);
     }
@@ -276,8 +255,8 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         if (game.state.ui.data.texture_atlas_rgba_data) |d| {
             texture = gfx.gl.Gl.initTextureAtlasFromColors(d);
         }
-    } else if (er.block_id != null and game.state.gfx.blocks.contains(er.block_id.?)) {
-        const block = game.state.gfx.blocks.get(er.block_id.?).?;
+    } else if (er.block_id != null and game.state.blocks.blocks.contains(er.block_id.?)) {
+        const block = game.state.blocks.blocks.get(er.block_id.?).?;
         texture = gfx.gl.Gl.initTextureFromColors(block.data.texture);
     }
     if (er.has_mob_texture) {

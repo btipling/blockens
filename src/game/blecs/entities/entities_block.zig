@@ -3,6 +3,7 @@ const ecs = @import("zflecs");
 const game = @import("../../game.zig");
 const gfx = @import("../../gfx/gfx.zig");
 const data = @import("../../data/data.zig");
+const block = @import("../../block.zig");
 const components = @import("../components/components.zig");
 const helpers = @import("../helpers.zig");
 const entities_screen = @import("entities_screen.zig");
@@ -41,21 +42,21 @@ pub fn initBlock(block_id: u8) void {
     // those are for blocks that weren't meshed, to avoid extra draw calls.
     // The settings views block instances aren't stored this way as they are view only and are cleared on every
     // render of the settings page.
-    const block: *gfx.Block = game.state.allocator.create(gfx.Block) catch unreachable;
-    block.* = .{
+    const b: *block.Block = game.state.allocator.create(block.Block) catch unreachable;
+    b.* = .{
         .id = block_id,
         .data = block_data,
     };
-    if (game.state.gfx.blocks.get(block_id)) |b| {
-        game.state.allocator.free(b.data.texture);
-        game.state.allocator.destroy(b);
+    if (game.state.blocks.blocks.get(block_id)) |_b| {
+        game.state.allocator.free(_b.data.texture);
+        game.state.allocator.destroy(_b);
     }
-    game.state.gfx.blocks.put(block_id, block) catch unreachable;
+    game.state.blocks.blocks.put(block_id, b) catch unreachable;
     loadTextureAtlas();
 }
 
 pub fn deinitBlock(block_id: u8) void {
-    if (game.state.gfx.blocks.get(block_id)) |b| {
+    if (game.state.blocks.blocks.get(block_id)) |b| {
         game.state.allocator.free(b.data.texture);
         game.state.allocator.destroy(b);
     }
@@ -65,12 +66,12 @@ pub fn loadTextureAtlas() void {
     var ta = std.ArrayList(u32).init(game.state.allocator);
     defer ta.deinit();
     game.state.ui.data.texture_atlas_block_index = [_]usize{0} ** MaxBlocks;
-    var it = game.state.gfx.blocks.valueIterator();
+    var it = game.state.blocks.blocks.valueIterator();
     var i: usize = 0;
-    while (it.next()) |b| {
-        const block = b.*;
-        ta.appendSlice(block.data.texture) catch unreachable;
-        game.state.ui.data.texture_atlas_block_index[@intCast(block.id)] = i;
+    while (it.next()) |_b| {
+        const b = _b.*;
+        ta.appendSlice(b.data.texture) catch unreachable;
+        game.state.ui.data.texture_atlas_block_index[@intCast(b.id)] = i;
         i += 1;
     }
     game.state.ui.data.texture_atlas_num_blocks = i;

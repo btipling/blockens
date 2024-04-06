@@ -178,7 +178,7 @@ fn euclideanDistance(v1: @Vector(4, f32), v2: @Vector(4, f32)) f32 {
 
 fn cullChunks(camera_position: @Vector(4, f32), view: zm.Mat, perspective: zm.Mat) void {
     const world = game.state.world;
-    var it = game.state.gfx.game_chunks.iterator();
+    var it = game.state.blocks.game_chunks.iterator();
     while (it.next()) |e| {
         const wp: chunk.worldPosition = e.key_ptr.*;
         const c: *chunk.Chunk = e.value_ptr.*;

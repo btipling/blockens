@@ -79,7 +79,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 const fps: u32 = @intFromFloat((1 / (it.delta_time)));
                 zgui.text(" fps: {d}", .{fps});
                 zgui.sameLine(.{});
-                zgui.text(" selected block id: {d}", .{game.state.gfx.selected_block});
+                zgui.text(" selected block id: {d}", .{game.state.blocks.selected_block});
 
                 zgui.text("F1 for settings and F2 for the menu", .{});
 

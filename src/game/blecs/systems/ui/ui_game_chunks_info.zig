@@ -64,7 +64,7 @@ fn showChunkList() !void {
         zgui.tableSetupColumn("Visibility", .{});
         zgui.tableSetupColumn("Toggle", .{});
         zgui.tableHeadersRow();
-        var it = game.state.gfx.game_chunks.iterator();
+        var it = game.state.blocks.game_chunks.iterator();
         var i: usize = 0;
         while (it.next()) |kv| {
             const wp = kv.key_ptr.*;

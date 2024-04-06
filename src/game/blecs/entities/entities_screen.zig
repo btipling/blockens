@@ -255,15 +255,7 @@ pub fn clearWorld() void {
             if (!ecs.has_id(world, entity, ecs.id(components.shape.Shape))) {
                 continue;
             }
-            if (!ecs.has_id(world, entity, ecs.id(components.block.Instance))) {
-                ecs.add(world, entity, components.gfx.NeedsDeletion);
-            }
-            const block: ?*const components.block.Block = ecs.get(world, entity, components.block.Block);
-            if (block == null) continue;
-            const bi: ?*gfx.BlockInstance = game.state.gfx.game_blocks.get(block.?.block_id);
-            if (bi == null) continue;
-            bi.?.transforms.clearAndFree();
-            ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
+            ecs.add(world, entity, components.gfx.NeedsDeletion);
         }
     }
     ecs.remove(world, game.state.entities.sky_camera, components.screen.WorldTranslation);
@@ -278,15 +270,7 @@ pub fn clearDemoObjects() void {
     while (ecs.iter_next(&it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
-            if (!ecs.has_id(world, entity, ecs.id(components.block.Instance))) {
-                ecs.add(world, entity, components.gfx.NeedsDeletion);
-            }
-            const block: ?*const components.block.Block = ecs.get(world, entity, components.block.Block);
-            if (block == null) continue;
-            const bi: ?*gfx.BlockInstance = game.state.gfx.settings_blocks.get(block.?.block_id);
-            if (bi == null) continue;
-            bi.?.transforms.clearAndFree();
-            ecs.add(world, entity, components.gfx.NeedsInstanceDataUpdate);
+            ecs.add(world, entity, components.gfx.NeedsDeletion);
         }
     }
     ecs.remove(world, game.state.entities.settings_camera, components.screen.WorldTranslation);

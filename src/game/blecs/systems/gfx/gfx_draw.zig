@@ -79,46 +79,24 @@ fn gfxDraw(
         gl.bindTexture(gl.TEXTURE_2D, er.texture);
     }
     gl.bindVertexArray(er.vao);
-    const has_instance = ecs.has_id(world, entity, ecs.id(components.block.Instance));
     const use_multidraw = ecs.has_id(world, entity, ecs.id(components.block.UseMultiDraw));
-    if (!has_instance and !use_multidraw) {
+    if (!use_multidraw) {
         gl.drawElements(gl.TRIANGLES, er.numIndices, gl.UNSIGNED_INT, null);
         return;
-    }
-    if (has_instance) {
-        // draw instances
-        const block: ?*const components.block.Block = ecs.get(world, entity, components.block.Block);
-        if (block == null) return;
-        var block_instance: ?*gfx.BlockInstance = null;
-        if (parent == screen.gameDataEntity) {
-            block_instance = game.state.gfx.game_blocks.get(block.?.block_id);
-        }
-        if (parent == screen.settingDataEntity) {
-            block_instance = game.state.gfx.settings_blocks.get(block.?.block_id);
-        }
-        if (block_instance == null) return;
-        if (block_instance.?.transforms.items.len < 1) return;
-        gl.drawElementsInstanced(
-            gl.TRIANGLES,
-            er.numIndices,
-            gl.UNSIGNED_INT,
-            null,
-            @intCast(block_instance.?.transforms.items.len),
-        );
     }
     if (use_multidraw) {
         const chunk_c: ?*const components.block.Chunk = ecs.get(world, entity, components.block.Chunk);
         if (chunk_c == null) return;
         var c: *chunk.Chunk = undefined;
         if (parent == screen.gameDataEntity) {
-            if (game.state.gfx.game_chunks.get(chunk_c.?.wp)) |c_| {
+            if (game.state.blocks.game_chunks.get(chunk_c.?.wp)) |c_| {
                 c = c_;
             } else {
                 return;
             }
         }
         if (parent == screen.settingDataEntity) {
-            if (game.state.gfx.settings_chunks.get(chunk_c.?.wp)) |c_| {
+            if (game.state.blocks.settings_chunks.get(chunk_c.?.wp)) |c_| {
                 c = c_;
             } else {
                 return;
