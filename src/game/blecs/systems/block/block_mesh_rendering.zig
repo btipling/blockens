@@ -23,6 +23,8 @@ fn system() ecs.system_desc_t {
     return desc;
 }
 
+var did_debug: bool = false;
+
 fn run(it: *ecs.iter_t) callconv(.C) void {
     const world = it.world;
     while (ecs.iter_next(it)) {
@@ -69,5 +71,8 @@ fn render_multidraw(world: *ecs.world_t, entity: ecs.entity_t, _: @Vector(4, f32
     _ = ecs.set(world, entity, components.shape.Lighting, .{ .ssbo = gfx.constants.LightingBindingPoint });
     ecs.add(world, entity, components.block.UseTextureAtlas);
     ecs.add(world, entity, components.shape.NeedsSetup);
-    // ecs.add(world, entity, components.Debug);
+    if (!did_debug) {
+        ecs.add(world, entity, components.Debug);
+        did_debug = true;
+    }
 }
