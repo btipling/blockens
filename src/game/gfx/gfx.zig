@@ -147,15 +147,18 @@ pub const Gfx = struct {
     ubos: std.AutoHashMap(u32, u32) = undefined,
     ssbos: std.AutoHashMap(u32, u32) = undefined,
     renderConfigs: std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig) = undefined,
-    blocks: std.AutoHashMap(u8, *Block) = undefined,
+    mob_data: std.AutoHashMap(i32, *mob.Mob) = undefined,
     game_blocks: std.AutoHashMap(u8, *BlockInstance) = undefined,
     settings_blocks: std.AutoHashMap(u8, *BlockInstance) = undefined,
-    mob_data: std.AutoHashMap(i32, *mob.Mob) = undefined,
-    settings_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
-    game_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
     animation_data: AnimationData = undefined,
     lighting_ssbo: u32 = 0,
+
+    // TODO: I think these belong in some other object, not Gfx:
+    game_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
+    blocks: std.AutoHashMap(u8, *Block) = undefined,
     ambient_lighting: f32 = 1,
+    settings_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
+    selected_block: u8 = 4,
 
     pub fn update_lighting(self: *Gfx) void {
         gl.Gl.updateLightingShaderStorageBufferObject(

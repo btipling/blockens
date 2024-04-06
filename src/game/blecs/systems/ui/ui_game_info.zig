@@ -78,15 +78,21 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 zgui.sameLine(.{});
                 const fps: u32 = @intFromFloat((1 / (it.delta_time)));
                 zgui.text(" fps: {d}", .{fps});
-                zgui.text("F1 for settings", .{});
+                zgui.sameLine(.{});
+                zgui.text(" selected block id: {d}", .{game.state.gfx.selected_block});
+
+                zgui.text("F1 for settings and F2 for the menu", .{});
+
                 const x: i32 = @intFromFloat(camera_pos.pos[0]);
                 const y: i32 = @intFromFloat(camera_pos.pos[1]);
                 const z: i32 = @intFromFloat(camera_pos.pos[2]);
                 zgui.text("x: {d}, y: {d}, z: {d}.", .{ x, y, z });
+
                 const cfX = camera_front.front[0];
                 const cfY = camera_front.front[1];
                 const cfZ = camera_front.front[2];
                 zgui.text("cfX: {e:.2}, cfY: {e:.2}, cfZ: {e:.2}.", .{ cfX, cfY, cfZ });
+
                 const yaw = camera_rot.yaw;
                 const pitch = camera_rot.pitch;
                 zgui.text("yaw: {e:.2}, pitch: {e:.2}.", .{ yaw, pitch });

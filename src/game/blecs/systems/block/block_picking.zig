@@ -33,7 +33,12 @@ fn selectBlock(world: *ecs.world_t) !void {
     const player = game.state.entities.player;
     const wants_remove = ecs.has_id(world, player, ecs.id(components.mob.RemoveAction));
     if (wants_remove) ecs.remove(world, player, components.mob.RemoveAction);
-    const wants_add = ecs.has_id(world, player, ecs.id(components.mob.AddAction));
+    var wants_add = false;
+    var new_block_id: u8 = 0;
+    if (ecs.get(world, player, components.mob.AddAction)) |aa| {
+        wants_add = true;
+        new_block_id = aa.block_id;
+    }
     if (wants_add) ecs.remove(world, player, components.mob.AddAction);
     if (!ecs.has_id(world, tpc, ecs.id(components.screen.CurrentCamera))) return;
     const cp: *const components.screen.CameraPosition = ecs.get(
@@ -64,7 +69,7 @@ fn selectBlock(world: *ecs.world_t) !void {
                 return;
             }
             if (wants_add and prev_pos != null) {
-                addBlock(world, prev_pos.?);
+                addBlock(world, prev_pos.?, new_block_id);
             }
             highlightBlock(world, pos);
             return;
@@ -98,8 +103,8 @@ fn removeBlock(world: *ecs.world_t, pos: @Vector(4, f32)) void {
     return;
 }
 
-fn addBlock(world: *ecs.world_t, pos: @Vector(4, f32)) void {
+fn addBlock(world: *ecs.world_t, pos: @Vector(4, f32), new_block_id: u8) void {
     const cu_entity = ecs.new_id(world);
-    _ = ecs.set(world, cu_entity, components.block.ChunkUpdate, .{ .pos = pos, .block_id = 4 });
+    _ = ecs.set(world, cu_entity, components.block.ChunkUpdate, .{ .pos = pos, .block_id = new_block_id });
     return;
 }

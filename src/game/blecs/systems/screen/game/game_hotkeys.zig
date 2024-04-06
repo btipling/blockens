@@ -95,7 +95,36 @@ fn handleThirdPlayerCamKeys() ?glfw.Key {
         playerR();
         return .d;
     }
+    if (input.keys.pressedKey(.right)) {
+        changeBlock(1);
+        return .d;
+    }
+    if (input.keys.pressedKey(.left)) {
+        changeBlock(-1);
+        return .d;
+    }
     return null;
+}
+
+fn changeBlock(direction: isize) void {
+    var it = game.state.gfx.blocks.iterator();
+    if (direction > 0) {
+        game.state.gfx.selected_block += 1;
+        while (it.next()) |e| {
+            const block = e.value_ptr.*;
+            if (block.id == game.state.gfx.selected_block) return;
+        }
+        game.state.gfx.selected_block = 1;
+        return;
+    }
+    game.state.gfx.selected_block -= 1;
+    var last_block_id: u8 = 0;
+    while (it.next()) |e| {
+        const block = e.value_ptr.*;
+        if (block.id == game.state.gfx.selected_block) return;
+        last_block_id = block.id;
+    }
+    game.state.gfx.selected_block = last_block_id;
 }
 
 fn playerRL() void {

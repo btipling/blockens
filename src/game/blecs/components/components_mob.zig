@@ -48,7 +48,9 @@ pub const Rotation = struct {
     rotation: @Vector(4, f32) = .{ 0, 0, 0, 1 },
     angle: f32 = 0,
 };
-pub const AddAction = struct {};
+pub const AddAction = struct {
+    block_id: u8,
+};
 pub const RemoveAction = struct {};
 
 pub fn init() void {
@@ -67,6 +69,6 @@ pub fn init() void {
     ecs.TAG(world, NeedsUpdate);
     ecs.TAG(world, DidUpdate);
     ecs.TAG(world, Texture);
-    ecs.TAG(world, AddAction);
+    ecs.COMPONENT(world, AddAction);
     ecs.TAG(world, RemoveAction);
 }

@@ -29,7 +29,14 @@ fn handleGameMouseBtn(btn: glfw.MouseButton, action: glfw.Action, mods: glfw.Mod
             if (mods.control) {
                 blecs.ecs.add(world, player, blecs.components.mob.RemoveAction);
             } else {
-                blecs.ecs.add(world, player, blecs.components.mob.AddAction);
+                _ = blecs.ecs.set(
+                    world,
+                    player,
+                    blecs.components.mob.AddAction,
+                    .{
+                        .block_id = game.state.gfx.selected_block,
+                    },
+                );
             }
             blecs.ecs.add(world, player, blecs.components.mob.DidUpdate);
         },
