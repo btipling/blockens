@@ -30,7 +30,11 @@ pub fn ssbo_binding(
     comptime name: []const u8,
 ) ![250:0]u8 {
     var buffer: [250:0]u8 = [_:0]u8{0} ** 250;
-    _ = try std.fmt.bufPrint(&buffer, "layout (std430, binding = {d}) buffer {s} ", .{ binding_point, name });
+    _ = try std.fmt.bufPrint(
+        &buffer,
+        "layout (binding = {d}, std430) buffer {s} ",
+        .{ binding_point, name },
+    );
     return buffer;
 }
 

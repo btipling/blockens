@@ -145,7 +145,7 @@ const shaders = struct {
             .is_meshed = e.is_meshed,
             .has_block_data = e.has_texture_atlas,
             .outline_color = e.outline_color,
-            .has_lighting = e.has_lighting,
+            .lighting_block_index = e.lighting_block_index,
         };
         return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;
     }
@@ -171,7 +171,7 @@ const extractions = struct {
     block_id: ?u8 = null,
     is_meshed: bool = false,
     has_mob_texture: bool = false,
-    has_lighting: bool = false,
+    lighting_block_index: ?u32 = null,
     mesh_transforms: ?std.ArrayList(gfx.shadergen.vertex.MeshTransforms) = null,
     is_multi_draw: bool = false,
     mob_id: i32 = 0,
@@ -188,8 +188,8 @@ const extractions = struct {
     }
 
     fn extractLighting(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
-        if (ecs.has_id(world, entity, ecs.id(components.shape.Lighting))) {
-            e.has_lighting = true;
+        if (ecs.get(world, entity, components.shape.Lighting)) |l| {
+            e.lighting_block_index = l.ssbo;
         }
     }
 

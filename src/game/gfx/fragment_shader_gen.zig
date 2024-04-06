@@ -2,6 +2,7 @@ const std = @import("std");
 const zm = @import("zmath");
 const math = @import("../math/math.zig");
 const game = @import("../game.zig");
+const constants = @import("gfx_constants.zig");
 const shader_helpers = @import("shader_helpers.zig");
 
 pub const FragmentShaderGen = struct {
@@ -14,7 +15,7 @@ pub const FragmentShaderGen = struct {
         outline_color: ?@Vector(4, f32) = null,
         is_meshed: bool = false,
         has_block_data: bool = false,
-        has_lighting: bool = false,
+        lighting_block_index: ?u32 = null,
     };
 
     // genFragmentShader - call ower owns the returned slice
@@ -53,7 +54,7 @@ pub const FragmentShaderGen = struct {
         }
 
         fn run(r: *runner) ![:0]const u8 {
-            r.a("#version 330 core\n");
+            r.a("#version 450 core\n");
             r.a("out vec4 FragColor;\n");
             if (r.cfg.is_meshed) {
                 r.a("\nin vec3 fragPos;\n");
@@ -74,7 +75,17 @@ pub const FragmentShaderGen = struct {
                 r.a("flat in float bl_num_blocks;\n");
             }
             if (r.cfg.has_texture) {
-                r.a("\nuniform sampler2D texture1;\n");
+                r.a("\nuniform sampler2D texture1;\n\n");
+            }
+            if (r.cfg.lighting_block_index) |bi| {
+                const line = try shader_helpers.ssbo_binding(
+                    bi,
+                    constants.LightingBlockName,
+                );
+                r.l(&line);
+                r.a("\n{\n");
+                r.a("    vec4 bl_ambient;\n");
+                r.a("};\n\n");
             }
             r.a("\nvoid main()\n");
             r.a("{\n");
@@ -101,9 +112,8 @@ pub const FragmentShaderGen = struct {
                 r.l(&line);
                 r.a(@embedFile("fragments/outline.fs.txt"));
             }
-            if (r.cfg.has_lighting) {
-                r.a("   vec4 bl_ambient_light = vec4(0.5, 0.5, 0.5, 1);\n");
-                r.a("   Color = min(Color * bl_ambient_light, vec4(1.0));\n");
+            if (r.cfg.lighting_block_index != null) {
+                r.a("   Color = min(Color * bl_ambient, vec4(1.0));\n");
             }
             r.a("    if (Color.a < 0.5) {\n");
             r.a("        discard;\n");

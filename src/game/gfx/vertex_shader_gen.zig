@@ -199,7 +199,10 @@ pub const VertexShaderGen = struct {
                 r.a("    vec4 translation;\n");
                 r.a("};\n\n");
                 r.a("\n");
-                line = try shader_helpers.ssbo_binding(bi, constants.AnimationBlockName);
+                line = try shader_helpers.ssbo_binding(
+                    bi,
+                    constants.AnimationBlockName,
+                );
                 r.l(&line);
                 r.a("{\n");
                 r.a("    key_frame frames[];\n");

@@ -9,7 +9,8 @@ pub const UBOGFXDataName: []const u8 = "gfx_data";
 // - index 0 - a current time frame
 // - index 1 - the current texture s value for a cube surface height 0.333/num_blocks
 pub const UBOShaderDataName: []const u8 = "shader_data";
-pub const AnimationBlockName: []const u8 = "animation_block";
+pub const AnimationBlockName: []const u8 = "bl_animation_block";
+pub const LightingBlockName: []const u8 = "bl_lighting_block";
 
 // Binding points
 pub const GameUBOBindingPoint: u32 = 0;
