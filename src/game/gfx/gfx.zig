@@ -28,6 +28,7 @@ pub fn init(allocator: std.mem.Allocator) *Gfx {
         .mob_data = std.AutoHashMap(i32, *mob.Mob).init(allocator),
         .blocks = std.AutoHashMap(u8, *Block).init(allocator),
         .animation_data = AnimationData.init(allocator),
+        .lighting_ssbo = gl.Gl.initLightingShaderStorageBufferObject(constants.LightingBindingPoint),
     };
 
     return gfx;
@@ -153,6 +154,7 @@ pub const Gfx = struct {
     settings_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
     game_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
     animation_data: AnimationData = undefined,
+    lighting_ssbo: u32 = 0,
 
     fn deinit(self: *Gfx, allocator: std.mem.Allocator) void {
         self.animation_data.deinit(allocator);

@@ -212,7 +212,7 @@ pub const Gl = struct {
         const data_ptr: *const anyopaque = ar.items.ptr;
         const struct_size = @sizeOf(animationKeyFrame);
         const size = @as(isize, @intCast(ar.items.len * struct_size));
-        gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, data_ptr, gl.STATIC_DRAW);
+        gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, data_ptr, gl.DYNAMIC_DRAW);
         gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, block_binding_point, ssbo);
         gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, 0);
         return ssbo;
@@ -228,7 +228,7 @@ pub const Gl = struct {
             .translation = std.mem.zeroes([4]f32),
         };
         gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
-        gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, &empty_frame, gl.STATIC_DRAW);
+        gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, &empty_frame, gl.DYNAMIC_DRAW);
     }
 
     pub fn addAnimationShaderStorageBufferData(
@@ -342,5 +342,27 @@ pub const Gl = struct {
         instance_builder.nextVertex();
         instance_builder.write();
         return instance_vbo;
+    }
+
+    const lightingData = struct {
+        ambient: [4]f32,
+    };
+
+    pub fn initLightingShaderStorageBufferObject(
+        block_binding_point: u32,
+    ) u32 {
+        const ld: lightingData = .{
+            .ambient = .{ 1, 1, 1, 1 },
+        };
+        var ssbo: u32 = undefined;
+        gl.genBuffers(1, &ssbo);
+        gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
+
+        const struct_size = @sizeOf(lightingData);
+        const size = @as(isize, @intCast(struct_size));
+        gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, &ld, gl.DYNAMIC_DRAW);
+        gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, block_binding_point, ssbo);
+        gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, 0);
+        return ssbo;
     }
 };
