@@ -107,7 +107,7 @@ pub const VertexShaderGen = struct {
                 r.location += 1;
             }
             if (r.cfg.has_block_data) {
-                line = try shader_helpers.attribute_location(r.location, "block_data", .vec2);
+                line = try shader_helpers.attribute_location(r.location, "block_data", .vec4);
                 r.l(&line);
                 r.location += 1;
             }
@@ -137,6 +137,9 @@ pub const VertexShaderGen = struct {
 
             if (r.cfg.has_block_data) {
                 r.a("flat out float bl_block_index;\n");
+                r.a("flat out float bl_num_blocks;\n");
+                r.a("flat out uint bl_block_ambient;\n");
+                r.a("flat out uint bl_block_lighting;\n");
             }
         }
 
@@ -393,6 +396,9 @@ pub const VertexShaderGen = struct {
                 r.a("    fragPos = vec3(fragPos.x + 0.5, fragPos.y + 0.5, fragPos.z + 0.5);");
                 if (r.cfg.has_block_data) {
                     r.a("    bl_block_index = block_data[0];\n");
+                    r.a("    bl_num_blocks = block_data[1];\n");
+                    r.a("    bl_block_ambient = floatBitsToUint(block_data[2]);\n");
+                    r.a("    bl_block_lighting = floatBitsToUint(block_data[3]);\n");
                 }
             }
             if (r.cfg.has_normals) {

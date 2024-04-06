@@ -73,6 +73,8 @@ pub const FragmentShaderGen = struct {
             if (r.cfg.is_meshed and r.cfg.has_block_data) {
                 r.a("flat in float bl_block_index;\n");
                 r.a("flat in float bl_num_blocks;\n");
+                r.a("flat in uint bl_block_ambient;\n");
+                r.a("flat in uint bl_block_lighting;\n");
             }
             if (r.cfg.has_texture) {
                 r.a("\nuniform sampler2D texture1;\n\n");

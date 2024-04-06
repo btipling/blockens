@@ -88,7 +88,7 @@ pub const ChunkMeshJob = struct {
             const pos_loc: u32 = builder.defineFloatAttributeValue(3);
             const tc_loc: u32 = builder.defineFloatAttributeValue(2);
             const nor_loc: u32 = builder.defineFloatAttributeValue(3);
-            const block_data_loc: u32 = builder.defineFloatAttributeValue(2);
+            const block_data_loc: u32 = builder.defineFloatAttributeValue(4);
             const attr_trans_loc: u32 = builder.defineFloatAttributeValue(4);
             builder.initBuffer();
 
@@ -140,9 +140,11 @@ pub const ChunkMeshJob = struct {
                     }
                     {
                         const bi = bd.block_id;
+                        const ambient: f32 = @bitCast(@as(u32, @intCast(bd.ambient)));
+                        const lighting: f32 = @bitCast(@as(u32, @intCast(bd.lighting)));
                         const block_index: f32 = @floatFromInt(game.state.ui.data.texture_atlas_block_index[@intCast(bi)]);
                         const num_blocks: f32 = @floatFromInt(game.state.ui.data.texture_atlas_num_blocks);
-                        const _bd: [2]f32 = [_]f32{ block_index, num_blocks };
+                        const _bd: [4]f32 = [_]f32{ block_index, num_blocks, ambient, lighting };
                         builder.addFloatAtLocation(block_data_loc, &_bd, vertex_index);
                     }
                     {
