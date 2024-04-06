@@ -62,6 +62,8 @@ pub const UIData = struct {
     block_options: std.ArrayList(data.blockOption) = undefined,
     block_create_name_buf: [data.maxBlockSizeName]u8 = std.mem.zeroes([data.maxBlockSizeName]u8),
     block_update_name_buf: [data.maxBlockSizeName]u8 = std.mem.zeroes([data.maxBlockSizeName]u8),
+    block_emits_light: bool = false,
+    block_transparent: bool = false,
     block_loaded_block_id: u8 = 0,
     chunk_name_buf: [script.maxLuaScriptNameSize]u8 = std.mem.zeroes([script.maxLuaScriptNameSize]u8),
     chunk_buf: [script.maxLuaScriptSize]u8 = std.mem.zeroes([script.maxLuaScriptSize]u8),
@@ -212,8 +214,8 @@ pub const Game = struct {
         }
         const grass_texture = try self.script.evalTextureFunc(grass_texture_script);
         if (dirt_texture == null or grass_texture == null) std.debug.panic("couldn't generate lua textures!\n", .{});
-        try self.db.saveBlock("dirt", @ptrCast(dirt_texture.?), 0, false);
-        try self.db.saveBlock("grass", @ptrCast(grass_texture.?), 0, false);
+        try self.db.saveBlock("dirt", @ptrCast(dirt_texture.?), false, 0);
+        try self.db.saveBlock("grass", @ptrCast(grass_texture.?), false, 0);
         const default_chunk_script: []const u8 = @embedFile("script/lua/chunk_gen_default.lua");
         try self.db.saveChunkScript("default", default_chunk_script, .{ 0, 1, 0 });
         const chunk_data = try self.script.evalChunkFunc(default_chunk_script);

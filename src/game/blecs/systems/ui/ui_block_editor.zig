@@ -42,6 +42,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     drawBlockEditor() catch |e| {
                         std.debug.print("error with drawBlockEditor: {}\n", .{e});
                     };
+                    zgui.sameLine(.{});
+                    drawBlockConfig() catch |e| {
+                        std.debug.print("error with drawBlockConfig: {}\n", .{e});
+                    };
                 }
             }
             zgui.end();
@@ -72,12 +76,15 @@ fn saveBlock() !void {
             return;
         }
     }
+    // Reset these on save.
+    game.state.ui.data.block_emits_light = false;
+    game.state.ui.data.block_transparent = false;
     var emptyText = [_]u32{0} ** data.RGBAColorTextureSize;
     try game.state.db.saveBlock(
         &game.state.ui.data.block_create_name_buf,
         @ptrCast(&emptyText),
-        0,
         false,
+        0,
     );
     try listBlocks();
 }
@@ -98,6 +105,13 @@ fn loadBlock(block_id: u8) !void {
     const texture_rgba_data: []u32 = try game.state.allocator.alloc(u32, block.data.texture.len);
     @memcpy(texture_rgba_data, block.data.texture);
 
+    game.state.ui.data.block_emits_light = false;
+    if (block.data.light_level > 0) game.state.ui.data.block_emits_light = true;
+    game.state.ui.data.block_transparent = block.data.transparent;
+    std.debug.print("light: {d} transparent: {}\n", .{
+        block.data.light_level,
+        block.data.transparent,
+    });
     game.state.ui.data.block_create_name_buf = nameBuf;
     game.state.ui.data.block_loaded_block_id = block_id;
     if (game.state.ui.data.texture_rgba_data) |d| game.state.allocator.free(d);
@@ -135,13 +149,19 @@ fn updateBlock() !void {
         }
     }
 
+    std.debug.print("light: {} transparent: {}\n", .{
+        game.state.ui.data.block_emits_light,
+        game.state.ui.data.block_transparent,
+    });
     const texture_colors = game.state.ui.data.texture_rgba_data orelse return;
+    var light_level: u8 = 0;
+    if (game.state.ui.data.block_emits_light) light_level = 1;
     try game.state.db.updateBlock(
         game.state.ui.data.block_loaded_block_id,
         &game.state.ui.data.block_create_name_buf,
         texture_colors,
-        0,
-        false,
+        game.state.ui.data.block_transparent,
+        light_level,
     );
     // Need to update the game state blocks:
     entities.block.initBlock(game.state.ui.data.block_loaded_block_id);
@@ -169,6 +189,35 @@ fn drawBlockOptions() !void {
         try drawCreateForm();
     }
     zgui.endChild();
+}
+
+fn drawBlockConfig() !void {
+    if (zgui.beginChild(
+        "Configure Block",
+        .{
+            .w = 1800,
+            .h = 1800,
+            .border = true,
+        },
+    )) {
+        if (zgui.checkbox("transparent", .{
+            .v = &game.state.ui.data.block_transparent,
+        })) {
+            std.debug.print("transparent toggled light: {} transparent: {}\n", .{
+                game.state.ui.data.block_emits_light,
+                game.state.ui.data.block_transparent,
+            });
+        }
+        if (zgui.checkbox("emits light", .{
+            .v = &game.state.ui.data.block_emits_light,
+        })) {
+            std.debug.print("emits light toggled, light: {} transparent: {}\n", .{
+                game.state.ui.data.block_emits_light,
+                game.state.ui.data.block_transparent,
+            });
+        }
+        zgui.endChild();
+    }
 }
 
 fn drawBlockEditor() !void {

@@ -633,7 +633,7 @@ pub const Data = struct {
         return rv;
     }
 
-    pub fn saveBlock(self: *Data, name: []const u8, texture: []u32, light_level: u8, transparent: bool) !void {
+    pub fn saveBlock(self: *Data, name: []const u8, texture: []u32, transparent: bool, light_level: u8) !void {
         var insertStmt = try self.db.prepare(
             struct {
                 name: sqlite.Text,
@@ -662,7 +662,7 @@ pub const Data = struct {
         };
     }
 
-    pub fn updateBlock(self: *Data, id: i32, name: []const u8, texture: []u32, light_level: u8, transparent: bool) !void {
+    pub fn updateBlock(self: *Data, id: i32, name: []const u8, texture: []u32, transparent: bool, light_level: u8) !void {
         var updateStmt = try self.db.prepare(
             struct {
                 id: i32,
@@ -743,7 +743,7 @@ pub const Data = struct {
                 data.name = sqlNameToArray(r.name);
                 data.texture = try self.blobToTexture(r.texture);
                 data.light_level = @intCast(r.light_level);
-                data.transparent = r.transparent == 0;
+                data.transparent = r.transparent == 1;
                 return;
             }
         }
