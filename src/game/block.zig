@@ -11,10 +11,8 @@ pub const Block = struct {
 
 pub const BlockData = packed struct {
     block_id: u8,
-    data: u8,
-    ambient: u6,
-    lighting: u6,
-    direction: u4,
+    ambient: u12,
+    lighting: u12,
     pub fn fromId(id: u32) BlockData {
         const bytes: []align(4) const u8 = std.mem.sliceAsBytes(([_]u32{id})[0..]);
         return std.mem.bytesToValue(BlockData, bytes);
