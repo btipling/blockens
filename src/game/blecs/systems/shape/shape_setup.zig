@@ -145,6 +145,7 @@ const shaders = struct {
             .is_meshed = e.is_meshed,
             .has_block_data = e.has_texture_atlas,
             .outline_color = e.outline_color,
+            .has_lighting = e.has_lighting,
         };
         return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;
     }
@@ -170,6 +171,7 @@ const extractions = struct {
     block_id: ?u8 = null,
     is_meshed: bool = false,
     has_mob_texture: bool = false,
+    has_lighting: bool = false,
     mesh_transforms: ?std.ArrayList(gfx.shadergen.vertex.MeshTransforms) = null,
     is_multi_draw: bool = false,
     mob_id: i32 = 0,
@@ -182,6 +184,12 @@ const extractions = struct {
         if (ecs.has_id(world, entity, ecs.id(components.block.UseMultiDraw))) {
             e.is_multi_draw = true;
             e.is_meshed = true;
+        }
+    }
+
+    fn extractLighting(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
+        if (ecs.has_id(world, entity, ecs.id(components.shape.Lighting))) {
+            e.has_lighting = true;
         }
     }
 
@@ -406,6 +414,7 @@ const extractions = struct {
         extractMultiDraw(&e, world, entity);
         extractBoundingBox(&e, world, entity);
         extractOutline(&e, world, entity);
+        extractLighting(&e, world, entity);
         return e;
     }
 };

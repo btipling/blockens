@@ -66,6 +66,7 @@ pub const UBO = struct {
 
 pub const NeedsSetup = struct {};
 pub const Permanent = struct {};
+pub const Lighting = struct {};
 
 pub fn init() void {
     const world = game.state.world;
@@ -77,6 +78,7 @@ pub fn init() void {
     ecs.COMPONENT(world, Outline);
     ecs.COMPONENT(world, UBO);
     ecs.COMPONENT(world, DemoCubeTexture);
+    ecs.TAG(world, Lighting);
     ecs.TAG(world, NeedsSetup);
     ecs.TAG(world, Permanent);
 

@@ -14,6 +14,7 @@ pub const FragmentShaderGen = struct {
         outline_color: ?@Vector(4, f32) = null,
         is_meshed: bool = false,
         has_block_data: bool = false,
+        has_lighting: bool = false,
     };
 
     // genFragmentShader - call ower owns the returned slice
@@ -99,6 +100,10 @@ pub const FragmentShaderGen = struct {
                 const line = try shader_helpers.vec4_to_buf("    vec4 bl_outline_c = vec4({d}, {d}, {d}, {d});\n", c[0], c[1], c[2], c[3]);
                 r.l(&line);
                 r.a(@embedFile("fragments/outline.fs.txt"));
+            }
+            if (r.cfg.has_lighting) {
+                r.a("   vec4 bl_ambient_light = vec4(0.5, 0.5, 0.5, 1);\n");
+                r.a("   Color = min(Color * bl_ambient_light, vec4(1.0));\n");
             }
             r.a("    if (Color.a < 0.5) {\n");
             r.a("        discard;\n");
