@@ -3,6 +3,7 @@ const zm = @import("zmath");
 const ztracy = @import("ztracy");
 const config = @import("config");
 const chunk = @import("../../chunk.zig");
+const block = @import("../../block.zig");
 const game = @import("../../game.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const buffer = @import("../buffer.zig");
@@ -98,8 +99,8 @@ pub const ChunkMeshJob = struct {
 
                 // Scale and block id are the magic that build chunks. Lighting, transparency and orientation will probably be needed too.
                 const s = meshes.get(i) orelse std.debug.panic("expected scale from mesh", .{});
-                const block_id: u8 = @intCast(block_data[i]);
-                if (block_id == 0) std.debug.panic("why are there air blocks being meshed >:|", .{});
+                const bd: block.BlockData = block.BlockData.fromId(block_data[i]);
+                if (bd.block_id == 0) std.debug.panic("why are there air blocks being meshed >:|", .{});
 
                 // Get the possibly cashed mesh data to build the buffer with.
                 const mesh_data: gfx.mesh.meshDataVoxels = gfx.mesh.voxel_mesh_creator.voxel(s) catch @panic("nope");
@@ -138,11 +139,11 @@ pub const ChunkMeshJob = struct {
                         builder.addFloatAtLocation(nor_loc, &n, vertex_index);
                     }
                     {
-                        const bi = block_id;
+                        const bi = bd.block_id;
                         const block_index: f32 = @floatFromInt(game.state.ui.data.texture_atlas_block_index[@intCast(bi)]);
                         const num_blocks: f32 = @floatFromInt(game.state.ui.data.texture_atlas_num_blocks);
-                        const bd: [2]f32 = [_]f32{ block_index, num_blocks };
-                        builder.addFloatAtLocation(block_data_loc, &bd, vertex_index);
+                        const _bd: [2]f32 = [_]f32{ block_index, num_blocks };
+                        builder.addFloatAtLocation(block_data_loc, &_bd, vertex_index);
                     }
                     {
                         const atr_data: [4]f32 = translation;

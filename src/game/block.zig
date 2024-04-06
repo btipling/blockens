@@ -9,6 +9,22 @@ pub const Block = struct {
     data: data.block,
 };
 
+pub const BlockData = packed struct {
+    block_id: u8,
+    data: u8,
+    lighting: u6,
+    ambient: u6,
+    direction: u4,
+    pub fn fromId(id: u32) BlockData {
+        const bytes: []align(4) const u8 = std.mem.sliceAsBytes(([_]u32{id})[0..]);
+        return std.mem.bytesToValue(BlockData, bytes);
+    }
+    pub fn toId(self: BlockData) u32 {
+        const bytes: []u8 = std.mem.sliceAsBytes(([_]BlockData{self})[0..]);
+        return std.mem.bytesToValue(u32, bytes);
+    }
+};
+
 pub fn init(allocator: std.mem.Allocator) *Blocks {
     blocks = allocator.create(Blocks) catch @panic("OMM");
     blocks.* = .{
