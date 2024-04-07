@@ -157,6 +157,18 @@ fn setSurroundingAmbience(c_data: *[chunk.chunkSize]u32, i: usize, level: block.
         level,
         .right,
     );
+    setAmbient(
+        c_data,
+        .{ block_index[0], block_index[1] - 1, block_index[2], block_index[3] },
+        level,
+        .top,
+    );
+    setAmbient(
+        c_data,
+        .{ block_index[0], block_index[1] + 1, block_index[2], block_index[3] },
+        level,
+        .bottom,
+    );
 }
 
 fn isAmbientSource(c_data: *[chunk.chunkSize]u32, pos: @Vector(4, f32), debug: bool) bool {
