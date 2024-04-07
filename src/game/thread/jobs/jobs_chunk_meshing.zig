@@ -189,6 +189,7 @@ pub const ChunkMeshJob = struct {
                 defer c.mutex.unlock();
                 if (c.attr_builder) |b| b.deinit();
                 c.attr_builder = builder;
+                if (c.indices) |i| game.state.allocator.free(i);
                 c.indices = indices;
                 c.draws = c_draws;
                 c.draw_offsets = c_draws_offsets;

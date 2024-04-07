@@ -102,17 +102,34 @@ pub const LightingJob = struct {
         }
         transferAmbianceToBelow(&t_block_data, &bt_block_data);
         {
+            const world = game.state.world;
             {
                 t_c.mutex.lock();
                 defer t_c.mutex.unlock();
                 @memcpy(t_c.data, &t_block_data);
                 renderChunk(t_c);
+
+                const render_entity = blecs.ecs.get_target(
+                    world,
+                    t_c.entity,
+                    blecs.entities.block.HasChunkRenderer,
+                    0,
+                );
+                _ = game.state.jobs.meshChunk(world, render_entity, t_c);
             }
             {
                 b_c.mutex.lock();
                 defer b_c.mutex.unlock();
                 @memcpy(b_c.data, &bt_block_data);
                 renderChunk(b_c);
+
+                const render_entity = blecs.ecs.get_target(
+                    world,
+                    b_c.entity,
+                    blecs.entities.block.HasChunkRenderer,
+                    0,
+                );
+                _ = game.state.jobs.meshChunk(world, render_entity, b_c);
             }
         }
     }
@@ -245,99 +262,3 @@ fn renderChunk(c: *chunk.Chunk) void {
     );
     _ = game.state.jobs.meshChunk(world, render_entity, c);
 }
-
-// fn checkPosition(
-//     block_data: *[chunk.chunkSize]u32,
-//     x: isize,
-//     y: isize,
-//     z: isize,
-//     distance: isize,
-// ) void {
-//     if (x < 0 or x >= chunk.chunkDim) return;
-//     if (y < 0 or y >= chunk.chunkDim) return;
-//     if (z < 0 or z >= chunk.chunkDim) return;
-//     if (distance >= 10) return;
-//     {
-//         // front: z+
-//         const _z = z + distance;
-//         const chunk_index: usize = @intCast(x + y * 64 + _z * 64 * 64);
-//         if (_z < chunk.chunkDim and chunk_index < chunk.chunkSize) {
-//             var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
-//             if (bd.block_id != air) {
-//                 switch (distance) {
-//                     1 => bd.setAmbient(.front, .full),
-//                     2 => bd.setAmbient(.front, .bright),
-//                     else => bd.setAmbient(.front, .dark),
-//                 }
-//                 block_data[chunk_index] = bd.toId();
-//             }
-//         }
-//     }
-//     {
-//         // back: z- only for distance 1:
-//         const _z = z - distance;
-//         const ci: isize = x + y * 64 + _z * 64 * 64;
-//         if (_z >= 0 and ci >= 0) {
-//             const chunk_index: usize = @intCast(ci);
-//             var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
-//             if (bd.block_id != air) {
-//                 switch (distance) {
-//                     1 => bd.setAmbient(.back, .full),
-//                     2 => bd.setAmbient(.back, .bright),
-//                     else => bd.setAmbient(.back, .dark),
-//                 }
-//                 block_data[chunk_index] = bd.toId();
-//             }
-//         }
-//     }
-//     {
-//         // left: x+
-//         const _x = x + distance;
-//         const chunk_index: usize = @intCast(_x + y * 64 + z * 64 * 64);
-//         if (_x < chunk.chunkDim and chunk_index < chunk.chunkSize) {
-//             var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
-//             if (bd.block_id != air) {
-//                 switch (distance) {
-//                     1 => bd.setAmbient(.left, .full),
-//                     2 => bd.setAmbient(.left, .bright),
-//                     else => bd.setAmbient(.left, .dark),
-//                 }
-//                 block_data[chunk_index] = bd.toId();
-//             }
-//         }
-//     }
-//     {
-//         // right: x-
-//         const _x = x - distance;
-//         const ci: isize = _x + y * 64 + z * 64 * 64;
-//         if (_x >= 0 and ci >= 0) {
-//             const chunk_index: usize = @intCast(ci);
-//             var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
-//             if (bd.block_id != air) {
-//                 switch (distance) {
-//                     1 => bd.setAmbient(.right, .full),
-//                     2 => bd.setAmbient(.right, .bright),
-//                     else => bd.setAmbient(.right, .dark),
-//                 }
-//                 block_data[chunk_index] = bd.toId();
-//             }
-//         }
-//     }
-//     {
-//         // below: y-
-//         const _y = y - distance;
-//         const ci: isize = x + _y * 64 + z * 64 * 64;
-//         if (_y >= 0 and ci >= 0) {
-//             const chunk_index: usize = @intCast(ci);
-//             var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
-//             if (bd.block_id != air) {
-//                 switch (distance) {
-//                     1 => bd.setAmbient(.top, .full),
-//                     2 => bd.setAmbient(.top, .bright),
-//                     else => bd.setAmbient(.top, .dark),
-//                 }
-//                 block_data[chunk_index] = bd.toId();
-//             }
-//         }
-//     }
-// }

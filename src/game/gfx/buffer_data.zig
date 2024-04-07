@@ -55,6 +55,7 @@ pub const AttributeBuilder = struct {
     pub fn deinit(self: *AttributeBuilder) void {
         self.attr_vars.deinit(game.state.allocator);
         game.state.allocator.free(self.buffer);
+        game.state.allocator.destroy(self);
     }
 
     pub fn get_location(self: AttributeBuilder) u32 {

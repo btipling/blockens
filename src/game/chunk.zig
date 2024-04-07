@@ -181,6 +181,8 @@ pub const Chunk = struct {
         self.deinitRenderData();
         self.deinitRenderPreviousData();
         self.allocator.free(self.data);
+        if (self.attr_builder) |b| b.deinit();
+        if (self.indices) |i| self.allocator.free(i);
     }
 
     pub fn backupDrawsData(self: *Chunk) void {
