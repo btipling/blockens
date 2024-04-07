@@ -66,5 +66,5 @@ fn canJump(bbc: [3]f32, mob_loc: @Vector(4, f32)) bool {
     const bbc_ws = zm.mul(bbc_v, zm.translationV(mob_loc));
     const res = chunk.getBlockId(bbc_ws);
     if (!res.read) return true;
-    return res.data == 0;
+    return res.data & 0x0F == 0;
 }

@@ -288,6 +288,5 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     if (deinit_mesh) er.mesh_data.deinit();
     game.state.allocator.destroy(er);
     builder.deinit();
-    game.state.allocator.destroy(builder);
     if (config.use_tracy) ztracy.Message("gfx mesh system is done");
 }

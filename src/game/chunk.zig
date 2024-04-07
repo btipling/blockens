@@ -181,6 +181,8 @@ pub const Chunk = struct {
         self.deinitRenderData();
         self.deinitRenderPreviousData();
         self.allocator.free(self.data);
+        if (self.attr_builder) |b| b.deinit();
+        if (self.indices) |i| self.allocator.free(i);
     }
 
     pub fn backupDrawsData(self: *Chunk) void {
@@ -310,7 +312,7 @@ pub const Chunker = struct {
                 continue;
             }
             const blockId = self.chunk.data[i];
-            if (blockId == 0) {
+            if (blockId & 0x00_000_00F == 0) {
                 continue :outer;
             }
             if (self.meshed[i]) {

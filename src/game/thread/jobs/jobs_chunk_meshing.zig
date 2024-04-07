@@ -140,15 +140,16 @@ pub const ChunkMeshJob = struct {
                     }
                     {
                         const bi = bd.block_id;
-                        var av = bd.ambient;
-                        const top = 0x03 << 10;
-                        const bot = 0x03 << 8;
-                        const front = 0x03 << 6;
-                        const back = 0x03 << 4;
-                        const left = 0x03 << 2;
-                        const right = 0x03;
-                        av = top | bot | front | back | left | right;
-                        const ambient: f32 = @bitCast(@as(u32, @intCast(av)));
+                        // var av = bd.ambient;
+                        // const top = 0x03 << 10;
+                        // const bot = 0x03 << 8;
+                        // const front = 0x03 << 6;
+                        // const back = 0x03 << 4;
+                        // const left = 0x03 << 2;
+                        // const right = 0x03;
+                        // av = top | bot | front | back | left | right;
+                        // const ambient: f32 = @bitCast(@as(u32, @intCast(av)));
+                        const ambient: f32 = @bitCast(@as(u32, @intCast(bd.ambient)));
                         const lighting: f32 = @bitCast(@as(u32, @intCast(bd.lighting)));
                         const block_index: f32 = @floatFromInt(game.state.ui.data.texture_atlas_block_index[@intCast(bi)]);
                         const num_blocks: f32 = @floatFromInt(game.state.ui.data.texture_atlas_num_blocks);
@@ -186,7 +187,9 @@ pub const ChunkMeshJob = struct {
                 // Attach buffer builder and indicies on chunk to pass on to gfx_mesh, which will clean it up.
                 c.mutex.lock();
                 defer c.mutex.unlock();
+                if (c.attr_builder) |b| b.deinit();
                 c.attr_builder = builder;
+                if (c.indices) |i| game.state.allocator.free(i);
                 c.indices = indices;
                 c.draws = c_draws;
                 c.draw_offsets = c_draws_offsets;

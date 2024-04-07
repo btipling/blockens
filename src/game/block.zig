@@ -9,6 +9,22 @@ pub const Block = struct {
     data: data.block,
 };
 
+pub const BlockLighingLevel = enum {
+    full,
+    bright,
+    dark,
+    none,
+};
+
+pub const BlockSurface = enum {
+    top,
+    bottom,
+    front,
+    back,
+    left,
+    right,
+};
+
 pub const BlockData = packed struct {
     block_id: u8,
     ambient: u12,
@@ -18,8 +34,62 @@ pub const BlockData = packed struct {
         return std.mem.bytesToValue(BlockData, bytes);
     }
     pub fn toId(self: BlockData) u32 {
-        const bytes: []u8 = std.mem.sliceAsBytes(([_]BlockData{self})[0..]);
+        const bytes: []align(4) const u8 = std.mem.sliceAsBytes(([_]BlockData{self})[0..]);
         return std.mem.bytesToValue(u32, bytes);
+    }
+
+    pub fn clearAmbient(self: *BlockData) void {
+        self.ambient = 0;
+    }
+
+    // Full ambiance is an transparent block thing. Air blocks, and transparent blocks
+    // propagate ambiant light.
+    pub fn setFullAmbiance(self: *BlockData, level: BlockLighingLevel) void {
+        if (self.block_id != 0) return;
+        self.ambient = switch (level) {
+            .full => 0xFFF,
+            .bright => 0x0FF,
+            .dark => 0x00F,
+            .none => 0x000,
+        };
+    }
+
+    pub fn getFullAmbiance(self: BlockData) BlockLighingLevel {
+        if (self.block_id != 0) return .none;
+        switch (self.ambient) {
+            0xFFF => return .full,
+            0x0FF => return .bright,
+            0x00F => return .dark,
+            else => return .none,
+        }
+    }
+
+    pub fn setAmbient(self: *BlockData, surface: BlockSurface, level: BlockLighingLevel) void {
+        var l: u12 = switch (level) {
+            .full => 0x03,
+            .bright => 0x02,
+            .dark => 0x01,
+            .none => 0x00,
+        };
+        switch (surface) {
+            .top => {
+                l = l << 10;
+            },
+            .bottom => {
+                l = l << 8;
+            },
+            .front => {
+                l = l << 6;
+            },
+            .back => {
+                l = l << 4;
+            },
+            .left => {
+                l = l << 2;
+            },
+            .right => {},
+        }
+        self.ambient = self.ambient | l;
     }
 };
 

@@ -150,5 +150,5 @@ fn aInFrontOfB(pa: @Vector(4, f32), pb: @Vector(4, f32), direction_vector: @Vect
 fn hitObstacle(bbc_ws: @Vector(4, f32)) bool {
     const res = chunk.getBlockId(bbc_ws);
     if (!res.read) return true;
-    return res.data != 0;
+    return res.data & 0x0F != 0;
 }

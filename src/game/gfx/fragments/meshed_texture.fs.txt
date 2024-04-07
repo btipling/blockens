@@ -74,4 +74,8 @@
             bl_as = float((bl_block_ambient & 0xC0u) >> 6)/3;
         }
     } 
+    float bl_as_min = 0.15;
+    if (bl_as < bl_as_min) {
+        bl_as = bl_as_min; // Don't want completely black.
+    }
     bl_amb_frag = bl_amb_frag * vec4(bl_as, bl_as, bl_as, 1);

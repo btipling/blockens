@@ -115,7 +115,7 @@ fn checkMob(loc: @Vector(4, f32), mob: components.mob.Mob) bool {
     loc_test[2] -= 0.5;
     const res = chunk.getBlockId(loc_test);
     if (!res.read) return true;
-    if (res.data != 0) {
+    if (res.data & 0x0F != 0) {
         return true;
     }
     for (bottom_bounds) |coords| {
@@ -131,5 +131,5 @@ fn onGround(bbc: [3]f32, mob_loc: @Vector(4, f32)) bool {
     if (bbc_ws[1] < 0) return true;
     const res = chunk.getBlockId(bbc_ws);
     if (!res.read) return true;
-    return res.data != 0;
+    return res.data & 0x0F != 0;
 }
