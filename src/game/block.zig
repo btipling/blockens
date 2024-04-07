@@ -54,7 +54,7 @@ pub const BlockData = packed struct {
         };
     }
 
-    pub fn getFullAmbiance(self: *BlockData) BlockLighingLevel {
+    pub fn getFullAmbiance(self: BlockData) BlockLighingLevel {
         if (self.block_id != 0) return .none;
         switch (self.ambient) {
             0xFFF => return .full,

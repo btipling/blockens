@@ -80,6 +80,27 @@ pub const LightingJob = struct {
                 }
             }
         }
+        var y: i8 = 1;
+        while (y >= 0) : (y -= 1) {
+            var level: block.BlockLighingLevel = .full;
+            while (level != .none) {
+                var i: usize = 0;
+                while (i < chunk.chunkDim) : (i += 1) {
+                    if (y == 1) {
+                        setAirBasedOnSurroundings(&t_block_data, i, level);
+                    } else {
+                        setAirBasedOnSurroundings(&bt_block_data, i, level);
+                    }
+                }
+                level = switch (level) {
+                    .full => .bright,
+                    .bright => .dark,
+                    .dark => .none,
+                    .none => .none,
+                };
+            }
+        }
+
         {
             {
                 t_c.mutex.lock();
@@ -97,15 +118,87 @@ pub const LightingJob = struct {
     }
 };
 
-fn runY(cdata: *[chunk.chunkSize]u32, x: isize, y: isize, z: isize) bool {
+fn setAirBasedOnSurroundings(c_data: *[chunk.chunkSize]u32, i: usize, level: block.BlockLighingLevel) void {
+    var bd: block.BlockData = block.BlockData.fromId(c_data[i]);
+    if (bd.block_id != air) return;
+    if (bd.getFullAmbiance() != .none) return;
+    const block_index = chunk.getPositionAtIndexV(i);
+    var light_up = false;
+    if (isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2], block_index[3] + 1 })) light_up = true;
+    if (isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2], block_index[3] - 1 })) light_up = true;
+    if (isAmbientSource(c_data, .{ block_index[0] + 1, block_index[1], block_index[2], block_index[3] })) light_up = true;
+    if (isAmbientSource(c_data, .{ block_index[0] - 1, block_index[1], block_index[2], block_index[3] })) light_up = true;
+    if (light_up) {
+        bd.setFullAmbiance(level);
+        c_data[i] = bd.toId();
+        setSurroundingAmbience(c_data, i, level);
+    }
+    return;
+}
+
+fn setSurroundingAmbience(c_data: *[chunk.chunkSize]u32, i: usize, level: block.BlockLighingLevel) void {
+    const block_index = chunk.getPositionAtIndexV(i);
+    setAmbient(
+        c_data,
+        .{ block_index[0], block_index[1], block_index[2], block_index[3] - 1 },
+        level,
+        .front,
+    );
+    setAmbient(
+        c_data,
+        .{ block_index[0], block_index[1], block_index[2], block_index[3] + 1 },
+        level,
+        .back,
+    );
+    setAmbient(
+        c_data,
+        .{ block_index[0] + 1, block_index[1], block_index[2], block_index[3] },
+        level,
+        .left,
+    );
+    setAmbient(
+        c_data,
+        .{ block_index[0] - 1, block_index[1], block_index[2], block_index[3] },
+        level,
+        .right,
+    );
+}
+
+fn isAmbientSource(c_data: *[chunk.chunkSize]u32, pos: @Vector(4, f32)) bool {
+    if (pos[0] < 0) return false;
+    if (pos[1] < 0) return false;
+    if (pos[2] < 0) return false;
+    const i = chunk.getIndexFromPositionV(pos);
+    const bd = block.BlockData.fromId(c_data[i]);
+    return bd.block_id == air and bd.getFullAmbiance() != .none;
+}
+
+fn setAmbient(
+    c_data: *[chunk.chunkSize]u32,
+    pos: @Vector(4, f32),
+    level: block.BlockLighingLevel,
+    surface: block.BlockSurface,
+) void {
+    if (pos[0] < 0) return;
+    if (pos[1] < 0) return;
+    if (pos[2] < 0) return;
+    const i = chunk.getIndexFromPositionV(pos);
+    var bd = block.BlockData.fromId(c_data[i]);
+    if (bd.block_id == air) return;
+    bd.setAmbient(surface, level);
+    c_data[i] = bd.toId();
+}
+
+fn runY(c_data: *[chunk.chunkSize]u32, x: isize, y: isize, z: isize) bool {
     const chunk_index: usize = @intCast(x + y * 64 + z * 64 * 64);
     // check below, if hit, stop checking for this y.
-    var bd: block.BlockData = block.BlockData.fromId(cdata[chunk_index]);
+    var bd: block.BlockData = block.BlockData.fromId(c_data[chunk_index]);
     if (bd.block_id == air) {
         bd.setFullAmbiance(.full);
+        setSurroundingAmbience(c_data, chunk_index, .full);
     } else {
         bd.setAmbient(.top, .full);
-        cdata[chunk_index] = bd.toId();
+        c_data[chunk_index] = bd.toId();
         return false;
     }
     return true;
