@@ -61,14 +61,12 @@ pub const Gl = struct {
     pub fn initMultiDrawVertexShader(vertexShaderSource: ?[:0]const u8) !u32 {
         if (_gl.multi_draw_ver != 0) return _gl.multi_draw_ver;
         _gl.multi_draw_ver = try initVertexShader(vertexShaderSource);
-        std.debug.print("creating new vertex multidraw shader {}\n", .{_gl.multi_draw_ver});
         return _gl.multi_draw_ver;
     }
 
     pub fn initMultiDrawFragmentShader(fragmentShaderSource: ?[:0]const u8) !u32 {
         if (_gl.multi_draw_frag != 0) return _gl.multi_draw_frag;
         _gl.multi_draw_frag = try initFragmentShader(fragmentShaderSource);
-        std.debug.print("creating new fragment multidraw shader {}\n", .{_gl.multi_draw_frag});
         return _gl.multi_draw_frag;
     }
 

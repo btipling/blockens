@@ -542,7 +542,6 @@ pub fn initPlayerCharacter() void {
 
     var player_pos: data.Data.playerPosition = .{};
     game.state.db.loadPlayerPosition(world_id, &player_pos) catch unreachable;
-    std.debug.print("init player character\n", .{});
 
     const rotation: components.mob.Rotation = .{
         .rotation = player_pos.rot,

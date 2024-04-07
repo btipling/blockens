@@ -94,9 +94,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 })) {
                     if (game.state.ui.data.world_loaded_id == 0) game.state.ui.data.world_loaded_id = default_world;
                     screen_helpers.showGameScreen();
-                    helpers.loadChunkDatas() catch unreachable;
-                    helpers.loadChunksInWorld();
-                    helpers.loadCharacterInWorld();
+                    const loadedGame = game.state.ui.data.world_chunk_table_data.count() > 0;
+                    if (!loadedGame) {
+                        helpers.loadChunkDatas() catch unreachable;
+                        helpers.loadChunksInWorld();
+                        helpers.loadCharacterInWorld();
+                    }
                 }
                 centerNext(ww);
                 if (zgui.button("Exit", .{

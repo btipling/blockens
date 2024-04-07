@@ -55,4 +55,15 @@ fn showLightingControls() !void {
     })) {
         game.state.gfx.update_lighting();
     }
+    if (zgui.button("Run lighting", .{
+        .w = 600,
+        .h = 100,
+    })) {
+        runLighting();
+    }
+}
+
+fn runLighting() void {
+    const wp = chunk.getWorldPositionForWorldLocation(.{ 0, 1, 0, 0 });
+    _ = game.state.jobs.lighting(wp);
 }

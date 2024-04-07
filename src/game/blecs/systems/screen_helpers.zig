@@ -26,6 +26,19 @@ pub fn showTitleScreen() void {
     showSettingsScreen(blecs.components.screen.TitleScreen);
 }
 
+pub fn toggleScreens() void {
+    const world = game.state.world;
+    const screen: *const blecs.components.screen.Screen = blecs.ecs.get(
+        world,
+        game.state.entities.screen,
+        blecs.components.screen.Screen,
+    ) orelse unreachable;
+    if (blecs.ecs.has_id(world, screen.current, blecs.ecs.id(blecs.components.screen.Game))) {
+        return showTitleScreen();
+    }
+    return showGameScreen();
+}
+
 pub fn showSettingsScreen(comptime T: type) void {
     const screen: *blecs.components.screen.Screen = blecs.ecs.get_mut(
         game.state.world,

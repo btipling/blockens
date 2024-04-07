@@ -72,7 +72,7 @@ fn render_multidraw(world: *ecs.world_t, entity: ecs.entity_t, _: @Vector(4, f32
     ecs.add(world, entity, components.block.UseTextureAtlas);
     ecs.add(world, entity, components.shape.NeedsSetup);
     if (!did_debug) {
-        ecs.add(world, entity, components.Debug);
+        // ecs.add(world, entity, components.Debug);
         did_debug = true;
     }
 }

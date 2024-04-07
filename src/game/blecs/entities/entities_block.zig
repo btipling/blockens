@@ -18,7 +18,6 @@ pub fn init() void {
 }
 
 pub fn initBlocks() void {
-    std.debug.print("init block entities\n", .{});
     for (game.state.ui.data.block_options.items) |o| {
         const block_id: u8 = @intCast(o.id);
         initBlock(block_id);
@@ -27,7 +26,6 @@ pub fn initBlocks() void {
 }
 
 pub fn deinitBlocks() void {
-    std.debug.print("deinit block entities\n", .{});
     for (game.state.ui.data.block_options.items) |o| {
         const block_id: u8 = @intCast(o.id);
         deinitBlock(block_id);
