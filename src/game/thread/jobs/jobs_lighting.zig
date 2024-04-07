@@ -93,7 +93,7 @@ pub const LightingJob = struct {
                 };
             }
         }
-
+        transferAmbianceToBelow(&t_block_data, &bt_block_data);
         {
             {
                 t_c.mutex.lock();
@@ -110,6 +110,24 @@ pub const LightingJob = struct {
         }
     }
 };
+
+fn transferAmbianceToBelow(t_data: *[chunk.chunkSize]u32, b_data: *[chunk.chunkSize]u32) void {
+    for (0..chunk.chunkDim) |_x| {
+        const x: f32 = @floatFromInt(_x);
+        for (0..chunk.chunkDim) |_z| {
+            const z: f32 = @floatFromInt(_z);
+            const ti = chunk.getIndexFromPositionV(.{ x, 0, z, 1 });
+            const t_bd: block.BlockData = block.BlockData.fromId(t_data[ti]);
+            if (t_bd.block_id != air) continue;
+            if (t_bd.getFullAmbiance() == .none) continue;
+            const bi = chunk.getIndexFromPositionV(.{ x, 63, z, 1 });
+            var b_bd: block.BlockData = block.BlockData.fromId(b_data[bi]);
+            if (b_bd.block_id == air) continue;
+            b_bd.setAmbient(.top, t_bd.getFullAmbiance());
+            b_data[bi] = b_bd.toId();
+        }
+    }
+}
 
 fn setAirBasedOnSurroundings(c_data: *[chunk.chunkSize]u32, i: usize, level: block.BlockLighingLevel) void {
     var bd: block.BlockData = block.BlockData.fromId(c_data[i]);
