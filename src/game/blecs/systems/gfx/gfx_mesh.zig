@@ -124,6 +124,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
 
             if (config.use_tracy) ztracy.Message("building multidraw shader attribute variables");
             builder = _c.attr_builder orelse std.debug.panic("expected attribuilder from chunk\n", .{});
+            _c.attr_builder = null;
             builder.vbo = vbo;
             builder.usage = gl.STATIC_DRAW;
             _c.attr_builder = null;

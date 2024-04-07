@@ -187,6 +187,7 @@ pub const ChunkMeshJob = struct {
                 // Attach buffer builder and indicies on chunk to pass on to gfx_mesh, which will clean it up.
                 c.mutex.lock();
                 defer c.mutex.unlock();
+                if (c.attr_builder) |b| b.deinit();
                 c.attr_builder = builder;
                 c.indices = indices;
                 c.draws = c_draws;
