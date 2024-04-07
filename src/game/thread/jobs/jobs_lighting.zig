@@ -9,9 +9,8 @@ const config = @import("config");
 const air: u8 = 0;
 
 pub const LightingJob = struct {
-    chunk: *chunk.Chunk,
-    entity: blecs.ecs.entity_t,
-    world: *blecs.ecs.world_t,
+    x: f32,
+    z: f32,
 
     pub fn exec(self: *@This()) void {
         std.debug.print("started lighting job\n", .{});
@@ -24,144 +23,197 @@ pub const LightingJob = struct {
         } else {
             self.lightingJob();
         }
-        _ = game.state.jobs.meshChunk(self.world, self.entity, self.chunk);
         std.debug.print("ended lighting job\n", .{});
     }
 
     pub fn lightingJob(self: *@This()) void {
-        const c: *chunk.Chunk = self.chunk;
-        var block_data: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
+        std.debug.print("going ham brah000000000000\n", .{});
+        const top_wp: chunk.worldPosition = chunk.worldPosition.initFromPositionV(.{ self.x, 1, self.z, 1 });
+        const t_c: *chunk.Chunk = game.state.blocks.game_chunks.get(top_wp) orelse return;
+        const bot_wp: chunk.worldPosition = chunk.worldPosition.initFromPositionV(.{ self.x, 0, self.z, 1 });
+        const b_c: *chunk.Chunk = game.state.blocks.game_chunks.get(bot_wp) orelse return;
+        std.debug.print("going ham brah000000000001\n", .{});
+        std.debug.print("going ham brah000000000002\n", .{});
+        var t_block_data: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
+        std.debug.print("going ham brah000000000002a\n", .{});
+        var bt_block_data: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
+        std.debug.print("going ham brah000000000002b\n", .{});
         {
-            c.mutex.lock();
-            defer c.mutex.unlock();
-            @memcpy(&block_data, c.data);
+            {
+                t_c.mutex.lock();
+                defer t_c.mutex.unlock();
+                @memcpy(&t_block_data, t_c.data);
+            }
+            {
+                b_c.mutex.lock();
+                defer b_c.mutex.unlock();
+                @memcpy(&bt_block_data, b_c.data);
+            }
+            std.debug.print("going ham brah000000000004\n", .{});
         }
-        // var mapped: [chunk.chunkSize]bool = std.mem.zeroes([chunk.chunkSize]false);
+        std.debug.print("going ham brah000000000006\n", .{});
+        // Clear out all the ambient.
+        for (0..chunk.chunkSize) |i| {
+            var bd: block.BlockData = block.BlockData.fromId(t_block_data[i]);
+            bd.clearAmbient();
+            t_block_data[i] = bd.toId();
+            bd = block.BlockData.fromId(bt_block_data[i]);
+            bd.clearAmbient();
+            bt_block_data[i] = bd.toId();
+        }
         var z: isize = 0;
         while (z < 64) : (z += 1) {
             var x: isize = 0;
             while (x < 64) : (x += 1) {
-                var y: isize = 63;
+                var y: isize = 127;
                 while (true) : (y -= 1) {
                     // flow in 5 directions and mark any block for that surface as lit
-                    const distance: isize = 1;
-                    checkPosition(&block_data, x, y, z, distance);
-                    {
-                        const chunk_index: usize = @intCast(x + y * 64 + z * 64 * 64);
-                        // check below, if hit, stop checking for this y.
-                        var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
-                        if (bd.block_id != air) {
-                            bd.setAmbient(.top, .full);
-                            block_data[chunk_index] = bd.toId();
+                    if (y >= 64) {
+                        const _y = @mod(y, 64);
+                        if (!runY(&t_block_data, x, _y, z)) break;
+                    } else {
+                        if (!runY(&bt_block_data, x, y, z)) break;
+                        if (y == 0) {
                             break;
                         }
-                    }
-                    if (y == 0) {
-                        break;
                     }
                 }
             }
         }
         {
-            c.mutex.lock();
-            defer c.mutex.unlock();
-            @memcpy(c.data, &block_data);
+            {
+                t_c.mutex.lock();
+                defer t_c.mutex.unlock();
+                @memcpy(t_c.data, &t_block_data);
+                renderChunk(t_c);
+            }
+            {
+                b_c.mutex.lock();
+                defer b_c.mutex.unlock();
+                @memcpy(b_c.data, &bt_block_data);
+                renderChunk(b_c);
+            }
         }
     }
 };
 
-fn checkPosition(
-    block_data: *[chunk.chunkSize]u32,
-    x: isize,
-    y: isize,
-    z: isize,
-    distance: isize,
-) void {
-    if (x < 0 or x >= chunk.chunkDim) return;
-    if (y < 0 or y >= chunk.chunkDim) return;
-    if (z < 0 or z >= chunk.chunkDim) return;
-    if (distance >= 10) return;
-    {
-        // front: z+
-        const _z = z + distance;
-        const chunk_index: usize = @intCast(x + y * 64 + _z * 64 * 64);
-        if (_z < chunk.chunkDim and chunk_index < chunk.chunkSize) {
-            var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
-            if (bd.block_id != air) {
-                switch (distance) {
-                    1 => bd.setAmbient(.front, .full),
-                    2 => bd.setAmbient(.front, .bright),
-                    else => bd.setAmbient(.front, .dark),
-                }
-                block_data[chunk_index] = bd.toId();
-            }
-        }
+fn runY(cdata: *[chunk.chunkSize]u32, x: isize, y: isize, z: isize) bool {
+    const chunk_index: usize = @intCast(x + y * 64 + z * 64 * 64);
+    // check below, if hit, stop checking for this y.
+    var bd: block.BlockData = block.BlockData.fromId(cdata[chunk_index]);
+    if (bd.block_id == air) {
+        bd.setFullAmbiance(.full);
+    } else {
+        bd.setAmbient(.top, .full);
+        cdata[chunk_index] = bd.toId();
+        return false;
     }
-    {
-        // back: z- only for distance 1:
-        const _z = z - distance;
-        const ci: isize = x + y * 64 + _z * 64 * 64;
-        if (_z >= 0 and ci >= 0) {
-            const chunk_index: usize = @intCast(ci);
-            var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
-            if (bd.block_id != air) {
-                switch (distance) {
-                    1 => bd.setAmbient(.back, .full),
-                    2 => bd.setAmbient(.back, .bright),
-                    else => bd.setAmbient(.back, .dark),
-                }
-                block_data[chunk_index] = bd.toId();
-            }
-        }
-    }
-    {
-        // left: x+
-        const _x = x + distance;
-        const chunk_index: usize = @intCast(_x + y * 64 + z * 64 * 64);
-        if (_x < chunk.chunkDim and chunk_index < chunk.chunkSize) {
-            var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
-            if (bd.block_id != air) {
-                switch (distance) {
-                    1 => bd.setAmbient(.left, .full),
-                    2 => bd.setAmbient(.left, .bright),
-                    else => bd.setAmbient(.left, .dark),
-                }
-                block_data[chunk_index] = bd.toId();
-            }
-        }
-    }
-    {
-        // right: x-
-        const _x = x - distance;
-        const ci: isize = _x + y * 64 + z * 64 * 64;
-        if (_x >= 0 and ci >= 0) {
-            const chunk_index: usize = @intCast(ci);
-            var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
-            if (bd.block_id != air) {
-                switch (distance) {
-                    1 => bd.setAmbient(.right, .full),
-                    2 => bd.setAmbient(.right, .bright),
-                    else => bd.setAmbient(.right, .dark),
-                }
-                block_data[chunk_index] = bd.toId();
-            }
-        }
-    }
-    {
-        // below: y-
-        const _y = y - distance;
-        const ci: isize = x + _y * 64 + z * 64 * 64;
-        if (_y >= 0 and ci >= 0) {
-            const chunk_index: usize = @intCast(ci);
-            var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
-            if (bd.block_id != air) {
-                switch (distance) {
-                    1 => bd.setAmbient(.top, .full),
-                    2 => bd.setAmbient(.top, .bright),
-                    else => bd.setAmbient(.top, .dark),
-                }
-                block_data[chunk_index] = bd.toId();
-            }
-        }
-    }
+    return true;
 }
+
+fn renderChunk(c: *chunk.Chunk) void {
+    const world = game.state.world;
+    const render_entity = blecs.ecs.get_target(
+        world,
+        c.entity,
+        blecs.entities.block.HasChunkRenderer,
+        0,
+    );
+    _ = game.state.jobs.meshChunk(world, render_entity, c);
+}
+
+// fn checkPosition(
+//     block_data: *[chunk.chunkSize]u32,
+//     x: isize,
+//     y: isize,
+//     z: isize,
+//     distance: isize,
+// ) void {
+//     if (x < 0 or x >= chunk.chunkDim) return;
+//     if (y < 0 or y >= chunk.chunkDim) return;
+//     if (z < 0 or z >= chunk.chunkDim) return;
+//     if (distance >= 10) return;
+//     {
+//         // front: z+
+//         const _z = z + distance;
+//         const chunk_index: usize = @intCast(x + y * 64 + _z * 64 * 64);
+//         if (_z < chunk.chunkDim and chunk_index < chunk.chunkSize) {
+//             var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
+//             if (bd.block_id != air) {
+//                 switch (distance) {
+//                     1 => bd.setAmbient(.front, .full),
+//                     2 => bd.setAmbient(.front, .bright),
+//                     else => bd.setAmbient(.front, .dark),
+//                 }
+//                 block_data[chunk_index] = bd.toId();
+//             }
+//         }
+//     }
+//     {
+//         // back: z- only for distance 1:
+//         const _z = z - distance;
+//         const ci: isize = x + y * 64 + _z * 64 * 64;
+//         if (_z >= 0 and ci >= 0) {
+//             const chunk_index: usize = @intCast(ci);
+//             var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
+//             if (bd.block_id != air) {
+//                 switch (distance) {
+//                     1 => bd.setAmbient(.back, .full),
+//                     2 => bd.setAmbient(.back, .bright),
+//                     else => bd.setAmbient(.back, .dark),
+//                 }
+//                 block_data[chunk_index] = bd.toId();
+//             }
+//         }
+//     }
+//     {
+//         // left: x+
+//         const _x = x + distance;
+//         const chunk_index: usize = @intCast(_x + y * 64 + z * 64 * 64);
+//         if (_x < chunk.chunkDim and chunk_index < chunk.chunkSize) {
+//             var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
+//             if (bd.block_id != air) {
+//                 switch (distance) {
+//                     1 => bd.setAmbient(.left, .full),
+//                     2 => bd.setAmbient(.left, .bright),
+//                     else => bd.setAmbient(.left, .dark),
+//                 }
+//                 block_data[chunk_index] = bd.toId();
+//             }
+//         }
+//     }
+//     {
+//         // right: x-
+//         const _x = x - distance;
+//         const ci: isize = _x + y * 64 + z * 64 * 64;
+//         if (_x >= 0 and ci >= 0) {
+//             const chunk_index: usize = @intCast(ci);
+//             var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
+//             if (bd.block_id != air) {
+//                 switch (distance) {
+//                     1 => bd.setAmbient(.right, .full),
+//                     2 => bd.setAmbient(.right, .bright),
+//                     else => bd.setAmbient(.right, .dark),
+//                 }
+//                 block_data[chunk_index] = bd.toId();
+//             }
+//         }
+//     }
+//     {
+//         // below: y-
+//         const _y = y - distance;
+//         const ci: isize = x + _y * 64 + z * 64 * 64;
+//         if (_y >= 0 and ci >= 0) {
+//             const chunk_index: usize = @intCast(ci);
+//             var bd: block.BlockData = block.BlockData.fromId(block_data[chunk_index]);
+//             if (bd.block_id != air) {
+//                 switch (distance) {
+//                     1 => bd.setAmbient(.top, .full),
+//                     2 => bd.setAmbient(.top, .bright),
+//                     else => bd.setAmbient(.top, .dark),
+//                 }
+//                 block_data[chunk_index] = bd.toId();
+//             }
+//         }
+//     }
+// }

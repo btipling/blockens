@@ -55,4 +55,14 @@ fn showLightingControls() !void {
     })) {
         game.state.gfx.update_lighting();
     }
+    if (zgui.button("Run lighting", .{
+        .w = 600,
+        .h = 100,
+    })) {
+        runLighting();
+    }
+}
+
+fn runLighting() void {
+    _ = game.state.jobs.lighting(0, 0);
 }

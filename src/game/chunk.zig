@@ -167,7 +167,7 @@ pub const Chunk = struct {
             blecs.entities.block.HasChunkRenderer,
             0,
         );
-        _ = game.state.jobs.lighting(world, render_entity, self);
+        _ = game.state.jobs.meshChunk(world, render_entity, self);
     }
 
     pub fn setDataAt(self: *Chunk, i: usize, v: u32) void {

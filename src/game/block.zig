@@ -37,6 +37,33 @@ pub const BlockData = packed struct {
         const bytes: []align(4) const u8 = std.mem.sliceAsBytes(([_]BlockData{self})[0..]);
         return std.mem.bytesToValue(u32, bytes);
     }
+
+    pub fn clearAmbient(self: *BlockData) void {
+        self.ambient = 0;
+    }
+
+    // Full ambiance is an transparent block thing. Air blocks, and transparent blocks
+    // propagate ambiant light.
+    pub fn setFullAmbiance(self: *BlockData, level: BlockLighingLevel) void {
+        if (self.block_id != 0) return;
+        self.ambient = switch (level) {
+            .full => 0xFFF,
+            .bright => 0x0FF,
+            .dark => 0x00F,
+            .none => 0x000,
+        };
+    }
+
+    pub fn getFullAmbiance(self: *BlockData) BlockLighingLevel {
+        if (self.block_id != 0) return .none;
+        switch (self.ambient) {
+            0xFFF => return .full,
+            0x0FF => return .bright,
+            0x00F => return .dark,
+            else => return .none,
+        }
+    }
+
     pub fn setAmbient(self: *BlockData, surface: BlockSurface, level: BlockLighingLevel) void {
         var current = self.ambient;
         var l: u12 = switch (level) {
