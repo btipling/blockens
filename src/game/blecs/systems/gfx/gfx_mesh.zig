@@ -106,7 +106,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         vs = gfx.gl.Gl.initVertexShader(vertexShader) catch @panic("nope");
         fs = gfx.gl.Gl.initFragmentShader(fragmentShader) catch @panic("nope");
     }
-    const program = gfx.gl.Gl.initProgram(&[_]u32{ vs, fs }) catch @panic("nope");
+    const program = gfx.gl.Gl.initProgram(&[_]u32{ vs, fs }, !er.is_multi_draw) catch @panic("nope");
     gl.useProgram(program);
 
     var builder: *gfx.buffer_data.AttributeBuilder = undefined;

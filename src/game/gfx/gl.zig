@@ -89,7 +89,7 @@ pub const Gl = struct {
         return shader;
     }
 
-    pub fn initProgram(shaders: []const u32) !u32 {
+    pub fn initProgram(shaders: []const u32, delete_shaders: bool) !u32 {
         const shaderProgram: u32 = gl.createProgram();
         for (shaders) |shader| {
             gl.attachShader(shaderProgram, shader);
@@ -107,8 +107,10 @@ pub const Gl = struct {
             return GlErr.RenderError;
         }
 
-        for (shaders) |shader| {
-            gl.deleteShader(shader);
+        if (delete_shaders) {
+            for (shaders) |shader| {
+                gl.deleteShader(shader);
+            }
         }
         return shaderProgram;
     }
