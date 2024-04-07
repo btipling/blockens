@@ -5,10 +5,11 @@ const blecs = @import("../../blecs/blecs.zig");
 const data = @import("../../data/data.zig");
 const config = @import("config");
 
+const default_pos: @Vector(4, f32) = .{ 0, 0, 0, 0 };
 pub const PlayerPosition = struct {
-    loc: @Vector(4, f32),
-    rotation: @Vector(4, f32) = .{ 0, 0, 0, 1 },
-    angle: f32,
+    loc: @Vector(4, f32) = default_pos,
+    rotation: @Vector(4, f32) = .{ 0, 0, 0, 0 },
+    angle: f32 = 0,
 };
 pub const SaveData = struct {
     player_position: PlayerPosition,
@@ -39,6 +40,9 @@ pub const SaveJob = struct {
     fn savePlayerPosition(self: *@This()) !void {
         const loaded_world = game.state.ui.data.world_loaded_id;
         const pp = self.data.player_position;
+        const pl: [4]f32 = pp.loc;
+        const dp: [4]f32 = default_pos;
+        if (std.mem.eql(f32, pl[0..], dp[0..])) return; // don't save unset player position
         try game.state.db.updatePlayerPosition(loaded_world, pp.loc, pp.rotation, pp.angle);
     }
 

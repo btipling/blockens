@@ -5,6 +5,7 @@ const block = @import("../../block.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const data = @import("../../data/data.zig");
 const config = @import("config");
+const save_job = @import("jobs_save.zig");
 
 const air: u8 = 0;
 
@@ -130,6 +131,14 @@ pub const LightingJob = struct {
                     0,
                 );
                 _ = game.state.jobs.meshChunk(world, render_entity, b_c);
+            }
+            {
+                // save updates
+                const save_data = save_job.SaveData{
+                    .player_position = .{},
+                    .chunks_updated = .{ t_c, b_c },
+                };
+                _ = game.state.jobs.save(save_data);
             }
         }
     }
