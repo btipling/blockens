@@ -35,20 +35,19 @@ pub const LightingJob = struct {
                 const air: u8 = 0;
                 while (true) : (y -= 1) {
                     const chunk_index = x + y * 64 + z * 64 * 64;
-                    const block_pos = chunk.getPositionAtIndexV(chunk_index);
-                    const bd: block.BlockData = block.BlockData.fromId(c.data[chunk_index]);
+                    var bd: block.BlockData = block.BlockData.fromId(c.data[chunk_index]);
                     if (bd.block_id != air) {
-                        std.debug.print("block_id: {} chunk_index: {} block_pos: {}\n", .{
-                            bd.block_id,
-                            chunk_index,
-                            block_pos,
-                        });
+                        bd.setAmbient(.top, .full);
+                        bd.setAmbient(.front, .bright);
+                        bd.setAmbient(.back, .bright);
+                        bd.setAmbient(.left, .bright);
+                        bd.setAmbient(.right, .bright);
+                        c.data[chunk_index] = bd.toId();
                         break;
                     }
                     if (y == 0) break;
                 }
             }
-            std.debug.print("done looking at z {}\n", .{x});
         }
         std.debug.print("done looking at blockoboyos\n", .{});
     }

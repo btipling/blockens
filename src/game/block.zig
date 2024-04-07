@@ -9,6 +9,22 @@ pub const Block = struct {
     data: data.block,
 };
 
+pub const BlockLighingLevel = enum {
+    full,
+    bright,
+    dark,
+    none,
+};
+
+pub const BlockSurface = enum {
+    top,
+    bottom,
+    front,
+    back,
+    left,
+    right,
+};
+
 pub const BlockData = packed struct {
     block_id: u8,
     ambient: u12,
@@ -18,8 +34,43 @@ pub const BlockData = packed struct {
         return std.mem.bytesToValue(BlockData, bytes);
     }
     pub fn toId(self: BlockData) u32 {
-        const bytes: []u8 = std.mem.sliceAsBytes(([_]BlockData{self})[0..]);
+        const bytes: []align(4) const u8 = std.mem.sliceAsBytes(([_]BlockData{self})[0..]);
         return std.mem.bytesToValue(u32, bytes);
+    }
+    pub fn setAmbient(self: *BlockData, surface: BlockSurface, level: BlockLighingLevel) void {
+        var current = self.ambient;
+        var l: u12 = switch (level) {
+            .full => 0x03,
+            .bright => 0x02,
+            .dark => 0x01,
+            .none => 0x00,
+        };
+        switch (surface) {
+            .top => {
+                l = l << 10;
+                current ^= 0xC00;
+            },
+            .bottom => {
+                l = l << 8;
+                current ^= 0x300;
+            },
+            .front => {
+                l = l << 6;
+                current ^= 0x0C0;
+            },
+            .back => {
+                l = l << 4;
+                current ^= 0x030;
+            },
+            .left => {
+                l = l << 2;
+                current ^= 0x00C;
+            },
+            .right => {
+                current ^= 0x003;
+            },
+        }
+        self.ambient = current | l;
     }
 };
 

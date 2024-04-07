@@ -4,6 +4,7 @@ const zm = @import("zmath");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
 const chunk = @import("../../../chunk.zig");
+const block = @import("../../../block.zig");
 
 pub fn init() void {
     const s = system();
@@ -62,8 +63,8 @@ fn selectBlock(world: *ecs.world_t) !void {
         const pos: @Vector(4, f32) = camera_pos + ray_direction * distance;
         const res = chunk.getBlockId(pos);
         if (!res.read) return;
-        const block_id: u8 = @intCast(res.data);
-        if (block_id != 0) {
+        const bd: block.BlockData = block.BlockData.fromId(res.data);
+        if (bd.block_id != 0) {
             if (wants_remove) {
                 removeBlock(world, pos);
                 return;
