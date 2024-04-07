@@ -125,7 +125,7 @@ pub const Script = struct {
             std.log.err("evalChunkFunc: chunks is not back to a table\n", .{});
             return ScriptError.ExpectedTable;
         }
-        var c: [chunk.chunkSize]u32 = [_]u32{0} ** chunk.chunkSize;
+        var c: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
         for (1..(ts + 1)) |i| {
             _ = self.luaInstance.rawGetIndex(-1, @intCast(i));
             const blockId = self.luaInstance.toInteger(-1) catch |err| {

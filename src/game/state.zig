@@ -167,10 +167,10 @@ pub const Game = struct {
         try self.initUIData();
         self.gfx = gfx.init(self.allocator);
         self.blocks = block.init(self.allocator);
+        self.jobs = thread.jobs.Jobs.init();
         try self.initScript();
         try self.initDb();
         try self.populateUIOptions();
-        self.jobs = thread.jobs.Jobs.init();
         self.jobs.start();
         try thread.handler.init();
         try thread.buffer.init(self.allocator);
@@ -224,7 +224,13 @@ pub const Game = struct {
         try self.db.saveChunkScript("default", default_chunk_script, .{ 0, 1, 0 });
         const chunk_data = try self.script.evalChunkFunc(default_chunk_script);
         try self.db.saveChunkData(1, 0, 0, 0, 1, chunk_data);
+
+        var c: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
+        const chunk_top_data: []u32 = try self.allocator.alloc(u32, c.len);
+        @memcpy(chunk_top_data, &c);
+        try self.db.saveChunkData(1, 0, 1, 0, 1, chunk_top_data);
         self.allocator.free(chunk_data);
+        self.allocator.free(chunk_top_data);
         self.allocator.free(dirt_texture.?);
         self.allocator.free(grass_texture.?);
     }
