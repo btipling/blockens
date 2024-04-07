@@ -46,7 +46,7 @@ fn handle_chunk_gen(msg: buffer.buffer_message) !void {
     if (game.state.ui.data.world_chunk_table_data.get(wp)) |cd| {
         game.state.allocator.free(cd.chunkData);
     }
-    game.state.ui.data.world_chunk_table_data.put(wp, ch_cfg) catch unreachable;
+    game.state.ui.data.world_chunk_table_data.put(wp, ch_cfg) catch @panic("OOM");
 }
 
 fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
@@ -94,13 +94,13 @@ fn handle_copy_chunk(msg: buffer.buffer_message) void {
             c.deinit();
             game.state.allocator.destroy(c);
         }
-        game.state.blocks.settings_chunks.put(wp, copy_data.chunk) catch unreachable;
+        game.state.blocks.settings_chunks.put(wp, copy_data.chunk) catch @panic("OOM");
     } else {
         if (game.state.blocks.game_chunks.get(wp)) |c| {
             c.deinit();
             game.state.allocator.destroy(c);
         }
-        game.state.blocks.game_chunks.put(wp, copy_data.chunk) catch unreachable;
+        game.state.blocks.game_chunks.put(wp, copy_data.chunk) catch @panic("OOM");
     }
 }
 

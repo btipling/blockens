@@ -64,6 +64,10 @@ pub const BlockData = packed struct {
         }
     }
 
+    pub fn setSettingsAmbient(self: *BlockData) void {
+        self.ambient = 0xFFF;
+    }
+
     pub fn setAmbient(self: *BlockData, surface: BlockSurface, level: BlockLighingLevel) void {
         var l: u12 = switch (level) {
             .full => 0x03,
