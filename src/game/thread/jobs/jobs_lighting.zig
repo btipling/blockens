@@ -1,6 +1,7 @@
 const std = @import("std");
 const game = @import("../../game.zig");
 const chunk = @import("../../chunk.zig");
+const block = @import("../../block.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const data = @import("../../data/data.zig");
 const config = @import("config");
@@ -20,10 +21,35 @@ pub const LightingJob = struct {
     }
 
     pub fn lightingJob(self: *@This()) void {
+        const p = chunk.worldPosition.vecFromWorldPosition(self.wp);
         std.debug.print("doing a lighting {}\n", .{
-            self.wp,
+            p,
         });
         const c: *chunk.Chunk = game.state.blocks.game_chunks.get(self.wp) orelse return;
-        std.debug.print("got a chunk bro {}\n", .{c.entity});
+        std.debug.print("got a chunk {}\n", .{c.entity});
+        var z: usize = 0;
+        while (z < 64) : (z += 1) {
+            var x: usize = 0;
+            while (x < 64) : (x += 1) {
+                var y: usize = 63;
+                const air: u8 = 0;
+                while (true) : (y -= 1) {
+                    const chunk_index = x + y * 64 + z * 64 * 64;
+                    const block_pos = chunk.getPositionAtIndexV(chunk_index);
+                    const bd: block.BlockData = block.BlockData.fromId(c.data[chunk_index]);
+                    if (bd.block_id != air) {
+                        std.debug.print("block_id: {} chunk_index: {} block_pos: {}\n", .{
+                            bd.block_id,
+                            chunk_index,
+                            block_pos,
+                        });
+                        break;
+                    }
+                    if (y == 0) break;
+                }
+            }
+            std.debug.print("done looking at z {}\n", .{x});
+        }
+        std.debug.print("done looking at blockoboyos\n", .{});
     }
 };

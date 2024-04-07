@@ -36,7 +36,10 @@ pub fn toggleScreens() void {
     if (blecs.ecs.has_id(world, screen.current, blecs.ecs.id(blecs.components.screen.Game))) {
         return showTitleScreen();
     }
-    return showGameScreen();
+    if (blecs.ecs.has_id(game.state.world, screen.current, blecs.ecs.id(blecs.components.screen.TitleScreen))) {
+        return showGameScreen();
+    }
+    return showTitleScreen();
 }
 
 pub fn showSettingsScreen(comptime T: type) void {

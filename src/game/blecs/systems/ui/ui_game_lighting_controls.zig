@@ -64,6 +64,6 @@ fn showLightingControls() !void {
 }
 
 fn runLighting() void {
-    const wp = chunk.getWorldPositionForWorldLocation(.{ 0, 1, 0, 0 });
+    const wp = chunk.getWorldPositionForWorldLocation(.{ 0, 64, 0, 0 });
     _ = game.state.jobs.lighting(wp);
 }
