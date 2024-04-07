@@ -27,17 +27,12 @@ pub const LightingJob = struct {
     }
 
     pub fn lightingJob(self: *@This()) void {
-        std.debug.print("going ham brah000000000000\n", .{});
         const top_wp: chunk.worldPosition = chunk.worldPosition.initFromPositionV(.{ self.x, 1, self.z, 1 });
         const t_c: *chunk.Chunk = game.state.blocks.game_chunks.get(top_wp) orelse return;
         const bot_wp: chunk.worldPosition = chunk.worldPosition.initFromPositionV(.{ self.x, 0, self.z, 1 });
         const b_c: *chunk.Chunk = game.state.blocks.game_chunks.get(bot_wp) orelse return;
-        std.debug.print("going ham brah000000000001\n", .{});
-        std.debug.print("going ham brah000000000002\n", .{});
         var t_block_data: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
-        std.debug.print("going ham brah000000000002a\n", .{});
         var bt_block_data: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
-        std.debug.print("going ham brah000000000002b\n", .{});
         {
             {
                 t_c.mutex.lock();
@@ -49,9 +44,7 @@ pub const LightingJob = struct {
                 defer b_c.mutex.unlock();
                 @memcpy(&bt_block_data, b_c.data);
             }
-            std.debug.print("going ham brah000000000004\n", .{});
         }
-        std.debug.print("going ham brah000000000006\n", .{});
         // Clear out all the ambient.
         for (0..chunk.chunkSize) |i| {
             var bd: block.BlockData = block.BlockData.fromId(t_block_data[i]);
@@ -124,11 +117,12 @@ fn setAirBasedOnSurroundings(c_data: *[chunk.chunkSize]u32, i: usize, level: blo
     if (bd.getFullAmbiance() != .none) return;
     const block_index = chunk.getPositionAtIndexV(i);
     var light_up = false;
-    if (isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2], block_index[3] + 1 })) light_up = true;
-    if (isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2], block_index[3] - 1 })) light_up = true;
+    if (isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2] + 1, block_index[3] })) light_up = true;
+    if (isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2] - 1, block_index[3] })) light_up = true;
     if (isAmbientSource(c_data, .{ block_index[0] + 1, block_index[1], block_index[2], block_index[3] })) light_up = true;
     if (isAmbientSource(c_data, .{ block_index[0] - 1, block_index[1], block_index[2], block_index[3] })) light_up = true;
     if (light_up) {
+        std.debug.print("lighting up air with level {}", .{level});
         bd.setFullAmbiance(level);
         c_data[i] = bd.toId();
         setSurroundingAmbience(c_data, i, level);
@@ -140,13 +134,13 @@ fn setSurroundingAmbience(c_data: *[chunk.chunkSize]u32, i: usize, level: block.
     const block_index = chunk.getPositionAtIndexV(i);
     setAmbient(
         c_data,
-        .{ block_index[0], block_index[1], block_index[2], block_index[3] - 1 },
+        .{ block_index[0], block_index[1], block_index[2] + 1, block_index[3] },
         level,
         .front,
     );
     setAmbient(
         c_data,
-        .{ block_index[0], block_index[1], block_index[2], block_index[3] + 1 },
+        .{ block_index[0], block_index[1], block_index[2] - 1, block_index[3] },
         level,
         .back,
     );
