@@ -65,7 +65,6 @@ pub const BlockData = packed struct {
     }
 
     pub fn setAmbient(self: *BlockData, surface: BlockSurface, level: BlockLighingLevel) void {
-        var current = self.ambient;
         var l: u12 = switch (level) {
             .full => 0x03,
             .bright => 0x02,
@@ -75,29 +74,22 @@ pub const BlockData = packed struct {
         switch (surface) {
             .top => {
                 l = l << 10;
-                current ^= 0xC00;
             },
             .bottom => {
                 l = l << 8;
-                current ^= 0x300;
             },
             .front => {
                 l = l << 6;
-                current ^= 0x0C0;
             },
             .back => {
                 l = l << 4;
-                current ^= 0x030;
             },
             .left => {
                 l = l << 2;
-                current ^= 0x00C;
             },
-            .right => {
-                current ^= 0x003;
-            },
+            .right => {},
         }
-        self.ambient = current | l;
+        self.ambient = self.ambient | l;
     }
 };
 

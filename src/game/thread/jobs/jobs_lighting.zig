@@ -76,16 +76,23 @@ pub const LightingJob = struct {
         var y: i8 = 1;
         while (y >= 0) : (y -= 1) {
             var level: block.BlockLighingLevel = .full;
+            var down_level: block.BlockLighingLevel = .bright;
             while (level != .none) {
                 var i: usize = 0;
                 while (i < chunk.chunkSize) : (i += 1) {
                     if (y == 1) {
-                        setAirBasedOnSurroundings(&t_block_data, i, level);
+                        setAirBasedOnSurroundings(&t_block_data, i, down_level);
                     } else {
-                        setAirBasedOnSurroundings(&bt_block_data, i, level);
+                        setAirBasedOnSurroundings(&bt_block_data, i, down_level);
                     }
                 }
                 level = switch (level) {
+                    .full => .bright,
+                    .bright => .dark,
+                    .dark => .none,
+                    .none => .none,
+                };
+                down_level = switch (down_level) {
                     .full => .bright,
                     .bright => .dark,
                     .dark => .none,
