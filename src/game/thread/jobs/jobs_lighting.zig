@@ -23,5 +23,7 @@ pub const LightingJob = struct {
         std.debug.print("doing a lighting {}\n", .{
             self.wp,
         });
+        const c: *chunk.Chunk = game.state.blocks.game_chunks.get(self.wp) orelse return;
+        std.debug.print("got a chunk bro {}\n", .{c.entity});
     }
 };
