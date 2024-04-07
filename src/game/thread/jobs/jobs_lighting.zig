@@ -78,7 +78,7 @@ pub const LightingJob = struct {
             var level: block.BlockLighingLevel = .full;
             while (level != .none) {
                 var i: usize = 0;
-                while (i < chunk.chunkDim) : (i += 1) {
+                while (i < chunk.chunkSize) : (i += 1) {
                     if (y == 1) {
                         setAirBasedOnSurroundings(&t_block_data, i, level);
                     } else {
@@ -116,13 +116,14 @@ fn setAirBasedOnSurroundings(c_data: *[chunk.chunkSize]u32, i: usize, level: blo
     if (bd.block_id != air) return;
     if (bd.getFullAmbiance() != .none) return;
     const block_index = chunk.getPositionAtIndexV(i);
+    const debug = block_index[0] == 4 and block_index[1] == 1 and block_index[2] == 22;
+    if (debug) std.debug.print("seriously wtf??\n", .{});
     var light_up = false;
-    if (isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2] + 1, block_index[3] })) light_up = true;
-    if (isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2] - 1, block_index[3] })) light_up = true;
-    if (isAmbientSource(c_data, .{ block_index[0] + 1, block_index[1], block_index[2], block_index[3] })) light_up = true;
-    if (isAmbientSource(c_data, .{ block_index[0] - 1, block_index[1], block_index[2], block_index[3] })) light_up = true;
+    if (isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2] + 1, block_index[3] }, debug)) light_up = true;
+    if (isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2] - 1, block_index[3] }, debug)) light_up = true;
+    if (isAmbientSource(c_data, .{ block_index[0] + 1, block_index[1], block_index[2], block_index[3] }, debug)) light_up = true;
+    if (isAmbientSource(c_data, .{ block_index[0] - 1, block_index[1], block_index[2], block_index[3] }, debug)) light_up = true;
     if (light_up) {
-        std.debug.print("lighting up air with level {}", .{level});
         bd.setFullAmbiance(level);
         c_data[i] = bd.toId();
         setSurroundingAmbience(c_data, i, level);
@@ -158,12 +159,16 @@ fn setSurroundingAmbience(c_data: *[chunk.chunkSize]u32, i: usize, level: block.
     );
 }
 
-fn isAmbientSource(c_data: *[chunk.chunkSize]u32, pos: @Vector(4, f32)) bool {
+fn isAmbientSource(c_data: *[chunk.chunkSize]u32, pos: @Vector(4, f32), debug: bool) bool {
+    if (debug) std.debug.print("isAmbientSource pos checking? {}\n", .{pos});
     if (pos[0] < 0) return false;
     if (pos[1] < 0) return false;
     if (pos[2] < 0) return false;
+    if (debug) std.debug.print("isAmbientSource pos checking!\n", .{});
     const i = chunk.getIndexFromPositionV(pos);
     const bd = block.BlockData.fromId(c_data[i]);
+    if (debug) std.debug.print("isAmbientSource getFullAmbiance: {}\n", .{bd.getFullAmbiance() != .none});
+    if (debug) std.debug.print("isAmbientSource is air: {}\n", .{bd.block_id == air});
     return bd.block_id == air and bd.getFullAmbiance() != .none;
 }
 
@@ -189,6 +194,7 @@ fn runY(c_data: *[chunk.chunkSize]u32, x: isize, y: isize, z: isize) bool {
     var bd: block.BlockData = block.BlockData.fromId(c_data[chunk_index]);
     if (bd.block_id == air) {
         bd.setFullAmbiance(.full);
+        c_data[chunk_index] = bd.toId();
         setSurroundingAmbience(c_data, chunk_index, .full);
     } else {
         bd.setAmbient(.top, .full);

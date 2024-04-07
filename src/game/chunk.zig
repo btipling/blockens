@@ -310,7 +310,7 @@ pub const Chunker = struct {
                 continue;
             }
             const blockId = self.chunk.data[i];
-            if (blockId == 0) {
+            if (blockId & 0x00_000_00F == 0) {
                 continue :outer;
             }
             if (self.meshed[i]) {
