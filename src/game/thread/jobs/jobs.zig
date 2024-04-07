@@ -104,11 +104,13 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn lighting(self: *Jobs, wp: chunk.worldPosition) zjobs.JobId {
+    pub fn lighting(self: *Jobs, world: *blecs.ecs.world_t, entity: blecs.ecs.entity_t, c: *chunk.Chunk) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
             lighting_job.LightingJob{
-                .wp = wp,
+                .chunk = c,
+                .entity = entity,
+                .world = world,
             },
         ) catch |e| {
             std.debug.print("error scheduling lighting job: {}\n", .{e});
