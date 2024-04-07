@@ -14,7 +14,6 @@ pub const LightingJob = struct {
     z: f32,
 
     pub fn exec(self: *@This()) void {
-        std.debug.print("started lighting job\n", .{});
         if (config.use_tracy) {
             const ztracy = @import("ztracy");
             ztracy.SetThreadName("LightingJob");
@@ -24,7 +23,6 @@ pub const LightingJob = struct {
         } else {
             self.lightingJob();
         }
-        std.debug.print("ended lighting job\n", .{});
     }
 
     pub fn lightingJob(self: *@This()) void {
