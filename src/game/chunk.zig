@@ -35,6 +35,24 @@ pub const worldPosition = struct {
     pub fn equal(self: worldPosition, other: worldPosition) bool {
         return self.x == other.x and self.y == other.y and self.x == other.x;
     }
+
+    // Get adjacent chunk world positions:
+    pub fn getFrontWP(self: worldPosition) worldPosition {
+        const p = self.vecFromWorldPosition();
+        return initFromPositionV(.{ p[0], p[1], p[2] + 1, 0 });
+    }
+    pub fn getBackWP(self: worldPosition) worldPosition {
+        const p = self.vecFromWorldPosition();
+        return initFromPositionV(.{ p[0], p[1], p[2] - 1, 0 });
+    }
+    pub fn getLeftWP(self: worldPosition) worldPosition {
+        const p = self.vecFromWorldPosition();
+        return initFromPositionV(.{ p[0] + 1, p[1], p[2], 0 });
+    }
+    pub fn getRightWP(self: worldPosition) worldPosition {
+        const p = self.vecFromWorldPosition();
+        return initFromPositionV(.{ p[0] - 1, p[1], p[2], 0 });
+    }
 };
 
 pub fn getWorldPositionForWorldLocation(pos: @Vector(4, f32)) worldPosition {
