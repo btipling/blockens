@@ -75,23 +75,16 @@ pub const LightingJob = struct {
         var y: i8 = 1;
         while (y >= 0) : (y -= 1) {
             var level: block.BlockLighingLevel = .full;
-            var down_level: block.BlockLighingLevel = .bright;
             while (level != .none) {
                 var i: usize = 0;
                 while (i < chunk.chunkSize) : (i += 1) {
                     if (y == 1) {
-                        setAirBasedOnSurroundings(&t_block_data, i, down_level);
+                        setAirBasedOnSurroundings(&t_block_data, i);
                     } else {
-                        setAirBasedOnSurroundings(&bt_block_data, i, down_level);
+                        setAirBasedOnSurroundings(&bt_block_data, i);
                     }
                 }
                 level = switch (level) {
-                    .full => .bright,
-                    .bright => .dark,
-                    .dark => .none,
-                    .none => .none,
-                };
-                down_level = switch (down_level) {
                     .full => .bright,
                     .bright => .dark,
                     .dark => .none,
@@ -160,20 +153,33 @@ fn transferAmbianceToBelow(t_data: *[chunk.chunkSize]u32, b_data: *[chunk.chunkS
     }
 }
 
-fn setAirBasedOnSurroundings(c_data: *[chunk.chunkSize]u32, i: usize, level: block.BlockLighingLevel) void {
+fn setAirBasedOnSurroundings(c_data: *[chunk.chunkSize]u32, i: usize) void {
     var bd: block.BlockData = block.BlockData.fromId(c_data[i]);
     if (bd.block_id != air) return;
     if (bd.getFullAmbiance() != .none) return;
     const block_index = chunk.getPositionAtIndexV(i);
-    var light_up = false;
-    if (isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2] + 1, block_index[3] })) light_up = true;
-    if (isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2] - 1, block_index[3] })) light_up = true;
-    if (isAmbientSource(c_data, .{ block_index[0] + 1, block_index[1], block_index[2], block_index[3] })) light_up = true;
-    if (isAmbientSource(c_data, .{ block_index[0] - 1, block_index[1], block_index[2], block_index[3] })) light_up = true;
-    if (light_up) {
-        bd.setFullAmbiance(level);
+    var brightest_l: block.BlockLighingLevel = .none;
+    {
+        const ll = isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2] + 1, block_index[3] });
+        if (ll.isBrighterThan(brightest_l)) brightest_l = ll;
+    }
+    {
+        const ll = isAmbientSource(c_data, .{ block_index[0], block_index[1], block_index[2] - 1, block_index[3] });
+        if (ll.isBrighterThan(brightest_l)) brightest_l = ll;
+    }
+    {
+        const ll = isAmbientSource(c_data, .{ block_index[0] + 1, block_index[1], block_index[2], block_index[3] });
+        if (ll.isBrighterThan(brightest_l)) brightest_l = ll;
+    }
+    {
+        const ll = isAmbientSource(c_data, .{ block_index[0] - 1, block_index[1], block_index[2], block_index[3] });
+        if (ll.isBrighterThan(brightest_l)) brightest_l = ll;
+    }
+    const ll = brightest_l.getNextDarker();
+    if (ll != .none) {
+        bd.setFullAmbiance(ll);
         c_data[i] = bd.toId();
-        setSurroundingAmbience(c_data, i, level);
+        setSurroundingAmbience(c_data, i, ll);
     }
     return;
 }
@@ -218,13 +224,14 @@ fn setSurroundingAmbience(c_data: *[chunk.chunkSize]u32, i: usize, level: block.
     );
 }
 
-fn isAmbientSource(c_data: *[chunk.chunkSize]u32, pos: @Vector(4, f32)) bool {
-    if (pos[0] < 0) return false;
-    if (pos[1] < 0) return false;
-    if (pos[2] < 0) return false;
+fn isAmbientSource(c_data: *[chunk.chunkSize]u32, pos: @Vector(4, f32)) block.BlockLighingLevel {
+    if (pos[0] < 0) return .none;
+    if (pos[1] < 0) return .none;
+    if (pos[2] < 0) return .none;
     const i = chunk.getIndexFromPositionV(pos);
     const bd = block.BlockData.fromId(c_data[i]);
-    return bd.block_id == air and bd.getFullAmbiance() != .none;
+    if (bd.block_id != air) return .none; // TODO: support transparent blocks.
+    return bd.getFullAmbiance();
 }
 
 fn setAmbient(

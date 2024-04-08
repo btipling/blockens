@@ -14,6 +14,16 @@ pub const BlockLighingLevel = enum {
     bright,
     dark,
     none,
+    pub fn isBrighterThan(self: BlockLighingLevel, r: BlockLighingLevel) bool {
+        const sv = @intFromEnum(self);
+        const rv = @intFromEnum(r);
+        return sv < rv;
+    }
+
+    pub fn getNextDarker(self: BlockLighingLevel) BlockLighingLevel {
+        if (self == .none) return self;
+        return @enumFromInt(@intFromEnum(self) + 1);
+    }
 };
 
 pub const BlockSurface = enum {
