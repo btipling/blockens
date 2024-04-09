@@ -105,6 +105,41 @@ pub const BlockData = packed struct {
         }
         self.ambient = self.ambient | l;
     }
+
+    pub fn getSurfaceAmbience(self: *BlockData, surface: BlockSurface) BlockLighingLevel {
+        var val: u12 = 0;
+        switch (surface) {
+            .top => {
+                val = self.ambient ^ (0xFFF - 0xC00);
+                val = val >> 10;
+            },
+            .bottom => {
+                val = self.ambient ^ (0xFFF - 0x300);
+                val = val >> 8;
+            },
+            .front => {
+                val = self.ambient ^ (0xFFF - 0x0C0);
+                val = val >> 6;
+            },
+            .back => {
+                val = self.ambient ^ (0xFFF - 0x030);
+                val = val >> 4;
+            },
+            .left => {
+                val = self.ambient ^ (0xFFF - 0x00C);
+                val = val >> 2;
+            },
+            .right => {
+                val = self.ambient ^ (0xFFF - 0x003);
+            },
+        }
+        switch (val) {
+            0x03 => return .full,
+            0x02 => return .bright,
+            0x01 => return .dark,
+            else => return .none,
+        }
+    }
 };
 
 pub fn init(allocator: std.mem.Allocator) *Blocks {

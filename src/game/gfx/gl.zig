@@ -219,16 +219,23 @@ pub const Gl = struct {
     }
 
     pub fn resizeAnimationShaderStorageBufferObject(ssbo: u32, num_frames: usize) void {
+        var ar = std.ArrayListUnmanaged(animationKeyFrame){};
+        defer ar.deinit(game.state.allocator);
+        var i: usize = 0;
+        while (i < num_frames) : (i += 1) {
+            ar.append(game.state.allocator, .{
+                .data = std.mem.zeroes([4]f32),
+                .scale = std.mem.zeroes([4]f32),
+                .rotation = std.mem.zeroes([4]f32),
+                .translation = std.mem.zeroes([4]f32),
+            }) catch @panic("OOM");
+        }
+        const data_ptr: *const anyopaque = ar.items.ptr;
+
         const struct_size = @sizeOf(animationKeyFrame);
-        const size = @as(isize, @intCast(num_frames * struct_size));
-        const empty_frame: animationKeyFrame = .{
-            .data = std.mem.zeroes([4]f32),
-            .scale = std.mem.zeroes([4]f32),
-            .rotation = std.mem.zeroes([4]f32),
-            .translation = std.mem.zeroes([4]f32),
-        };
+        const size: isize = @intCast(ar.items.len * struct_size);
         gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
-        gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, &empty_frame, gl.DYNAMIC_DRAW);
+        gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, data_ptr, gl.DYNAMIC_DRAW);
     }
 
     pub fn addAnimationShaderStorageBufferData(
@@ -244,7 +251,7 @@ pub const Gl = struct {
                 .scale = d.scale,
                 .rotation = d.rotation,
                 .translation = d.translation,
-            }) catch unreachable;
+            }) catch @panic("OOM");
         }
         gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
 

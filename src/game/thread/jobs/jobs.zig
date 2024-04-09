@@ -116,4 +116,19 @@ pub const Jobs = struct {
             return zjobs.JobId.none;
         };
     }
+
+    pub fn relighting(self: *Jobs, x: f32, z: f32, wp: chunk.worldPosition) zjobs.JobId {
+        std.debug.print("relighting {} {} via {}\n", .{ x, z, wp.vecFromWorldPosition() });
+        return self.jobs.schedule(
+            zjobs.JobId.none,
+            lighting_job.LightingJob{
+                .x = x,
+                .z = z,
+                .triggered_wp = wp,
+            },
+        ) catch |e| {
+            std.debug.print("error scheduling relighting job: {}\n", .{e});
+            return zjobs.JobId.none;
+        };
+    }
 };
