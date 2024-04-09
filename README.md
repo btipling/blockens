@@ -37,6 +37,14 @@ Should do it. Note, lua script evals are much slower in debug builds than they a
 
 ## More images
 
+![blockens 4_8_2024 8_03_19 PM](https://github.com/btipling/blockens/assets/249641/1dd3cfb9-0120-4280-92b3-dba13b013aca)
+
+![blockens 4_8_2024 8_04_38 PM](https://github.com/btipling/blockens/assets/249641/eacefa1a-93d1-4232-b869-b227271332fb)
+
+![blockens 4_8_2024 8_07_14 PM](https://github.com/btipling/blockens/assets/249641/8b358a95-3b8a-4f3c-b919-f4a215a758e7)
+
+![blockens 4_8_2024 8_09_31 PM](https://github.com/btipling/blockens/assets/249641/4bcde1ad-e598-46e6-bd3a-2bafbf839dc5)
+
 ![image](https://github.com/btipling/blockens/assets/249641/dd6cb670-548b-44fc-b7c0-b681e9a8376c)
 
 ![image](https://github.com/btipling/blockens/assets/249641/74770b22-e036-451f-b768-14040bd08976)
@@ -49,6 +57,3 @@ Should do it. Note, lua script evals are much slower in debug builds than they a
 
 ![image](https://github.com/btipling/blockens/assets/249641/868a1585-2315-4e9d-a1a9-74192de6cf50)
 
-## Meshing chunks
-![image](https://github.com/btipling/blockens/assets/249641/d8babff4-7d4e-4749-9306-6913f1db7140)
-![image](https://github.com/btipling/blockens/assets/249641/1e820484-b65e-4a39-802f-04afbf158a97)
