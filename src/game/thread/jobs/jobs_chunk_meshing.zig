@@ -206,7 +206,7 @@ pub const ChunkMeshJob = struct {
             .chunk = c,
             .empty = num_elements < 1,
         }) catch @panic("OOM");
-        buffer.write_message(msg) catch @panic("nope");
+        buffer.write_message(msg) catch @panic("unable to write message");
         if (config.use_tracy) ztracy.Message("done with mesh job");
     }
 };

@@ -4,6 +4,7 @@ const blecs = @import("../blecs/blecs.zig");
 const chunk = @import("../chunk.zig");
 const buffer = @import("./buffer.zig");
 const helpers = @import("../blecs/helpers.zig");
+const ui_helpers = @import("../blecs/systems/ui/ui_helpers.zig");
 
 var handler: *Handler = undefined;
 
@@ -27,6 +28,7 @@ pub fn handle_incoming() !void {
             .chunk_gen => try handle_chunk_gen(msg),
             .chunk_mesh => handle_chunk_mesh(msg),
             .chunk_copy => handle_copy_chunk(msg),
+            .lighting => handle_lighting(msg),
         }
         i += 0;
         if (i >= maxHandlersPerFrame) return;
@@ -102,6 +104,17 @@ fn handle_copy_chunk(msg: buffer.buffer_message) void {
         }
         game.state.blocks.game_chunks.put(wp, copy_data.chunk) catch @panic("OOM");
     }
+}
+
+fn handle_lighting(msg: buffer.buffer_message) void {
+    const pr = buffer.progress_report(msg);
+    const ld = buffer.get_lighting_data(msg) orelse return;
+    std.debug.print("chunk vertical x: {d} z: {d} lit, progress: {d}% done: {}\n", .{ ld.x, ld.z, pr.percent * 100, pr.done });
+    if (!pr.done) return;
+    std.debug.print("loading world\n", .{});
+    ui_helpers.loadChunkDatas() catch @panic("unable to load chunk datas");
+    ui_helpers.loadChunksInWorld();
+    ui_helpers.loadCharacterInWorld();
 }
 
 fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entity_t {

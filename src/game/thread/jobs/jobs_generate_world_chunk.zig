@@ -33,6 +33,6 @@ pub const GenerateWorldChunkJob = struct {
             .chunk_data = chunk_data,
             .wp = self.wp,
         }) catch unreachable;
-        buffer.write_message(msg) catch unreachable;
+        buffer.write_message(msg) catch @panic("unable to write message");
     }
 };

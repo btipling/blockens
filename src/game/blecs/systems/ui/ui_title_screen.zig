@@ -97,16 +97,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     screen_helpers.showGameScreen();
                     const loadedGame = game.state.ui.data.world_chunk_table_data.count() > 0;
                     if (!loadedGame) {
-                        helpers.loadChunkDatas() catch unreachable;
-                        helpers.loadChunksInWorld();
-                        helpers.loadCharacterInWorld();
-                        // for (0..config.worldChunkDims) |i| {
-                        //     const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
-                        //     for (0..config.worldChunkDims) |ii| {
-                        //         const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
-                        //         _ = game.state.jobs.lighting(@floatFromInt(x), @floatFromInt(z));
-                        //     }
-                        // }
+                        _ = game.state.jobs.lighting(game.state.ui.data.world_loaded_id);
                     }
                 }
                 centerNext(ww);

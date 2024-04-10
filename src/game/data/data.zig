@@ -151,7 +151,7 @@ pub const chunkScript = struct {
 
 pub const chunkDataSQL = struct {
     id: i32,
-    worldId: i32,
+    world_id: i32,
     x: i32,
     y: i32,
     z: i32,
@@ -161,7 +161,7 @@ pub const chunkDataSQL = struct {
 
 pub const chunkData = struct {
     id: i32 = 0,
-    worldId: i32 = 0,
+    world_id: i32 = 0,
     x: i32 = 0,
     y: i32 = 0,
     z: i32 = 0,
@@ -804,7 +804,7 @@ pub const Data = struct {
 
     pub fn saveChunkData(
         self: *Data,
-        worldId: i32,
+        world_id: i32,
         x: i32,
         y: i32,
         z: i32,
@@ -828,7 +828,7 @@ pub const Data = struct {
         var t = chunkToBlob(voxels);
         insertStmt.exec(
             .{
-                .world_id = worldId,
+                .world_id = world_id,
                 .x = x,
                 .y = y,
                 .z = z,
@@ -898,7 +898,7 @@ pub const Data = struct {
 
             while (try selectStmt.step()) |r| {
                 data.id = r.id;
-                data.worldId = r.world_id;
+                data.world_id = r.world_id;
                 data.x = r.x;
                 data.y = r.y;
                 data.z = r.z;

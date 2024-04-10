@@ -45,7 +45,7 @@ pub const CopyChunkJob = struct {
         buffer.set_progress(&msg, true, 1);
         buffer.put_chunk_copy_data(msg, .{
             .chunk = c,
-        }) catch unreachable;
-        buffer.write_message(msg) catch unreachable;
+        }) catch @panic("OOM");
+        buffer.write_message(msg) catch @panic("unable to write message");
     }
 };
