@@ -44,8 +44,8 @@ pub const chunk_copy_data = struct {
 };
 
 pub const lightings_data = struct {
-    x: f32,
-    y: f32,
+    x: i32,
+    z: i32,
 };
 
 const Buffer = struct {
@@ -73,6 +73,7 @@ pub fn init(allocator: std.mem.Allocator) !void {
         .chunk_gens = std.AutoHashMap(buffer_message, chunk_gen_data).init(a),
         .chunk_meshes = std.AutoHashMap(buffer_message, chunk_mesh_data).init(a),
         .chunk_copies = std.AutoHashMap(buffer_message, chunk_copy_data).init(a),
+        .lightings = std.AutoHashMap(buffer_message, lightings_data).init(a),
     };
 }
 
@@ -95,6 +96,8 @@ pub fn deinit() void {
         buffer.allocator.destroy(c.*.chunk);
     }
     buffer.chunk_copies.deinit();
+
+    buffer.lightings.deinit();
     buffer.allocator.destroy(buffer);
 }
 
@@ -176,6 +179,23 @@ pub fn get_chunk_copy_data(msg: buffer_message) ?chunk_copy_data {
     return null;
 }
 
+pub fn put_lighting_data(msg: buffer_message, chunk_val: lightings_data) !void {
+    buffer.mutex.lock();
+    defer buffer.mutex.unlock();
+    if (msg.type != .lighting) return BufferErr.Invalid;
+    try buffer.lightings.put(msg, chunk_val);
+}
+
+pub fn get_lighting_data(msg: buffer_message) ?lightings_data {
+    buffer.mutex.lock();
+    defer buffer.mutex.unlock();
+    if (msg.type != .lighting) return null;
+    if (buffer.lightings.fetchRemove(msg)) |kv| {
+        return kv.value;
+    }
+    return null;
+}
+
 pub const ProgressReport = struct {
     done: bool,
     percent: f16,
@@ -184,15 +204,24 @@ pub const ProgressReport = struct {
 pub const ProgressTracker = struct {
     num_started: usize,
     num_completed: usize,
-    pub fn completeOne(self: *ProgressTracker) void {
+    pub fn completeOne(self: *ProgressTracker) struct { bool, usize, usize } {
         buffer.mutex.lock();
         defer buffer.mutex.unlock();
-        if (self.num_completed == self.num_start) @panic("tried to complete too many...");
+        if (self.num_completed == self.num_started) std.debug.print(
+            "tried to complete too many...{}/{}\n",
+            .{
+                self.num_started,
+                self.num_completed + 1,
+            },
+        );
         self.num_completed += 1;
-    }
-    pub fn progress(self: ProgressTracker) .{ bool, usize, usize } {
-        buffer.mutex.lock();
-        defer buffer.mutex.unlock();
+        std.debug.print(
+            "self.num_started: {} self.num_completed: {}\n",
+            .{
+                self.num_started,
+                self.num_completed,
+            },
+        );
         return .{
             self.num_started == self.num_completed,
             self.num_started,
@@ -206,13 +235,13 @@ const demo_chunk_flag = 0x2;
 
 pub fn set_progress(msg: *buffer_message, done: bool, percentage: f16) void {
     if (done) msg.flags = msg.flags | done_flag;
-    msg.data = @intFromFloat(percentage);
+    msg.data = @bitCast(percentage);
 }
 
 pub fn progress_report(msg: buffer_message) ProgressReport {
     return .{
         .done = (msg.flags & done_flag) != 0x0,
-        .percent = @floatFromInt(msg.data),
+        .percent = @bitCast(msg.data),
     };
 }
 

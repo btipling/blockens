@@ -56,20 +56,4 @@ fn showLightingControls() !void {
     })) {
         game.state.gfx.update_lighting();
     }
-    if (zgui.button("Run lighting", .{
-        .w = 600,
-        .h = 100,
-    })) {
-        runLighting();
-    }
-}
-
-fn runLighting() void {
-    for (0..config.worldChunkDims) |i| {
-        const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
-        for (0..config.worldChunkDims) |ii| {
-            const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
-            _ = game.state.jobs.lighting(@floatFromInt(x), @floatFromInt(z));
-        }
-    }
 }

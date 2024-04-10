@@ -11,7 +11,7 @@ const generate_world_chunk = @import("jobs_generate_world_chunk.zig");
 const save_job = @import("jobs_save.zig");
 const lighting_job = @import("jobs_lighting.zig");
 const buffer = @import("../buffer.zig");
-const game_config = @import("../../../config.zig");
+const game_config = @import("../../config.zig");
 
 const AllJobs = zjobs.JobQueue(.{});
 
@@ -103,25 +103,27 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn lighting(self: *Jobs) zjobs.JobId {
-        const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker);
+    pub fn lighting(self: *Jobs, world_id: i32) void {
+        const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
         pt.* = .{
             .num_started = game_config.worldChunkDims * game_config.worldChunkDims,
+            .num_completed = 0,
         };
         for (0..game_config.worldChunkDims) |i| {
             const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
             for (0..game_config.worldChunkDims) |ii| {
                 const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
-                return self.jobs.schedule(
+                _ = self.jobs.schedule(
                     zjobs.JobId.none,
                     lighting_job.LightingJob{
-                        .x = @floatFromInt(x),
-                        .z = @floatFromInt(z),
+                        .world_id = world_id,
+                        .x = x,
+                        .z = z,
                         .pt = pt,
                     },
                 ) catch |e| {
                     std.debug.print("error scheduling lighting job: {}\n", .{e});
-                    return zjobs.JobId.none;
+                    return;
                 };
             }
         }
