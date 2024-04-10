@@ -4,6 +4,7 @@ const chunk = @import("../../chunk.zig");
 const block = @import("../../block.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const data = @import("../../data/data.zig");
+const buffer = @import("../buffer.zig");
 const config = @import("config");
 const save_job = @import("jobs_save.zig");
 
@@ -13,6 +14,7 @@ const max_trigger_depth: u8 = 3;
 pub const LightingJob = struct {
     x: f32,
     z: f32,
+    pt: *buffer.ProgressReport,
     // Lighting jobs can trigger other lighting jobs, and that shouldn't get carries away:
     triggered_wp: ?chunk.worldPosition = null,
 

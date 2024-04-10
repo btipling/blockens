@@ -10,9 +10,8 @@ const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
 const generate_world_chunk = @import("jobs_generate_world_chunk.zig");
 const save_job = @import("jobs_save.zig");
 const lighting_job = @import("jobs_lighting.zig");
-
-// TODO: none of these jobs should be talking to ecs or changing global state
-// need to do a command buffer with locks and progress UI
+const buffer = @import("../buffer.zig");
+const game_config = @import("../../../config.zig");
 
 const AllJobs = zjobs.JobQueue(.{});
 
@@ -104,31 +103,28 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn lighting(self: *Jobs, x: f32, z: f32) zjobs.JobId {
-        return self.jobs.schedule(
-            zjobs.JobId.none,
-            lighting_job.LightingJob{
-                .x = x,
-                .z = z,
-            },
-        ) catch |e| {
-            std.debug.print("error scheduling lighting job: {}\n", .{e});
-            return zjobs.JobId.none;
+    pub fn lighting(self: *Jobs) zjobs.JobId {
+        const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker);
+        pt.* = .{
+            .num_started = game_config.worldChunkDims * game_config.worldChunkDims,
         };
-    }
-
-    pub fn relighting(self: *Jobs, x: f32, z: f32, wp: chunk.worldPosition) zjobs.JobId {
-        std.debug.print("relighting {} {} via {}\n", .{ x, z, wp.vecFromWorldPosition() });
-        return self.jobs.schedule(
-            zjobs.JobId.none,
-            lighting_job.LightingJob{
-                .x = x,
-                .z = z,
-                .triggered_wp = wp,
-            },
-        ) catch |e| {
-            std.debug.print("error scheduling relighting job: {}\n", .{e});
-            return zjobs.JobId.none;
-        };
+        for (0..game_config.worldChunkDims) |i| {
+            const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
+            for (0..game_config.worldChunkDims) |ii| {
+                const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
+                return self.jobs.schedule(
+                    zjobs.JobId.none,
+                    lighting_job.LightingJob{
+                        .x = @floatFromInt(x),
+                        .z = @floatFromInt(z),
+                        .pt = pt,
+                    },
+                ) catch |e| {
+                    std.debug.print("error scheduling lighting job: {}\n", .{e});
+                    return zjobs.JobId.none;
+                };
+            }
+        }
+        std.debug.print("scheduled {} lighting jobs\n", .{pt.num_started});
     }
 };

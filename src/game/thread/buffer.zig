@@ -16,6 +16,7 @@ pub const buffer_message_type = enum {
     chunk_gen,
     chunk_mesh,
     chunk_copy,
+    lighting,
 };
 
 pub const buffer_message = packed struct {
@@ -42,6 +43,11 @@ pub const chunk_copy_data = struct {
     chunk: *chunk.Chunk,
 };
 
+pub const lightings_data = struct {
+    x: f32,
+    y: f32,
+};
+
 const Buffer = struct {
     ta: std.heap.ThreadSafeAllocator,
     allocator: std.mem.Allocator,
@@ -50,6 +56,7 @@ const Buffer = struct {
     chunk_gens: std.AutoHashMap(buffer_message, chunk_gen_data),
     chunk_meshes: std.AutoHashMap(buffer_message, chunk_mesh_data),
     chunk_copies: std.AutoHashMap(buffer_message, chunk_copy_data),
+    lightings: std.AutoHashMap(buffer_message, lightings_data),
 };
 
 pub fn init(allocator: std.mem.Allocator) !void {
@@ -172,6 +179,26 @@ pub fn get_chunk_copy_data(msg: buffer_message) ?chunk_copy_data {
 pub const ProgressReport = struct {
     done: bool,
     percent: f16,
+};
+
+pub const ProgressTracker = struct {
+    num_started: usize,
+    num_completed: usize,
+    pub fn completeOne(self: *ProgressTracker) void {
+        buffer.mutex.lock();
+        defer buffer.mutex.unlock();
+        if (self.num_completed == self.num_start) @panic("tried to complete too many...");
+        self.num_completed += 1;
+    }
+    pub fn progress(self: ProgressTracker) .{ bool, usize, usize } {
+        buffer.mutex.lock();
+        defer buffer.mutex.unlock();
+        return .{
+            self.num_started == self.num_completed,
+            self.num_started,
+            self.num_completed,
+        };
+    }
 };
 
 const done_flag = 0x1;
