@@ -452,5 +452,16 @@ pub const Chunker = struct {
             }
             try self.updateChunk();
         }
+        // check final voxel:
+        i = getIndexFromPositionV(.{ 63, 63, 63, 0 });
+        const blockId = self.chunk.data[i];
+        if (blockId & 0x00_000_00F == 0) {
+            return;
+        }
+        if (self.meshed[i]) {
+            return;
+        }
+        self.meshed[i] = true;
+        self.meshes.put(i, .{ 1, 1, 1, 1 }) catch @panic("OOM");
     }
 };
