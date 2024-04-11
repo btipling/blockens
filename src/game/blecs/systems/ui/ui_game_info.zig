@@ -76,9 +76,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 const s: u32 = @intCast(seconds);
                 zgui.text("Hello blockens! {d:0>2}:{d:0>2}:{d:0>2}", .{ h, m, s });
                 zgui.sameLine(.{});
-                const fps: u32 = @intFromFloat((1 / (it.delta_time)));
-                zgui.text(" fps: {d}", .{fps});
-                zgui.sameLine(.{});
                 zgui.text(" selected block id: {d}", .{game.state.blocks.selected_block});
 
                 zgui.text("F1 for settings and F2 for the menu", .{});
@@ -87,6 +84,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 const y: i32 = @intFromFloat(camera_pos.pos[1]);
                 const z: i32 = @intFromFloat(camera_pos.pos[2]);
                 zgui.text("x: {d}, y: {d}, z: {d}.", .{ x, y, z });
+                zgui.sameLine(.{});
+                const fps: u32 = @intFromFloat((1 / (it.delta_time)));
+                zgui.text(" fps: {d}", .{fps});
 
                 const cfX = camera_front.front[0];
                 const cfY = camera_front.front[1];
