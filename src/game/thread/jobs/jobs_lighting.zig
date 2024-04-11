@@ -97,22 +97,16 @@ pub const LightingJob = struct {
         transferAmbianceToBelow(t_block_data, bt_block_data);
         {
             {
-                game.state.db.saveChunkData(
-                    self.world_id,
-                    t_c.x,
-                    t_c.y,
-                    t_c.z,
+                game.state.db.updateChunkData(
+                    t_c.id,
                     t_c.scriptId,
                     t_block_data,
                 ) catch @panic("failed to save top chunk data after lighting");
                 std.debug.print("saved top light data\n", .{});
             }
             {
-                game.state.db.saveChunkData(
-                    self.world_id,
-                    b_c.x,
-                    b_c.y,
-                    b_c.z,
+                game.state.db.updateChunkData(
+                    b_c.id,
                     b_c.scriptId,
                     bt_block_data,
                 ) catch @panic("failed to save bottom chunk data after lighting");
