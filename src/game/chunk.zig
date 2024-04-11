@@ -303,6 +303,7 @@ pub const Chunker = struct {
         var i: usize = 0;
         var firstLoop = true;
         outer: while (true) {
+            var numDimsTravelled: u8 = 1;
             while (true) {
                 if (firstLoop) {
                     // first loop, skip iterating
@@ -320,10 +321,12 @@ pub const Chunker = struct {
                     break;
                 }
                 if (p[1] + 1 < chunkDim) {
+                    numDimsTravelled = 2;
                     p[1] += 1;
                     break;
                 }
                 if (p[2] + 1 < chunkDim) {
+                    numDimsTravelled = 3;
                     p[2] += 1;
                     break;
                 }
@@ -337,7 +340,6 @@ pub const Chunker = struct {
                 continue :outer;
             }
             self.currentVoxel = i;
-            var numDimsTravelled: u8 = 1;
             var endX: f32 = op[0];
             var endY: f32 = op[1];
             var numXAdded: f32 = 0;
