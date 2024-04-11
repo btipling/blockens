@@ -343,12 +343,13 @@ pub const Chunker = struct {
             var numXAdded: f32 = 0;
             var numYAdded: f32 = 0;
             inner: while (true) {
-                const ii = getIndexFromPositionV(p);
                 if (numDimsTravelled == 1) {
+                    const ii = getIndexFromPositionV(p);
                     if (blockId != self.chunk.data[ii] or self.meshed[ii]) {
                         numDimsTravelled += 1;
-                        p[1] += 1;
                         p[0] = op[0];
+                        p[1] += 1;
+                        p[2] = op[2]; // Happens when near chunkDims
                         continue :inner;
                     }
                     if (numXAdded == 0) {
@@ -367,11 +368,21 @@ pub const Chunker = struct {
                     }
                     numXAdded += 1;
                 } else if (numDimsTravelled == 2) {
+                    if (p[1] >= chunkDim) {
+                        p[1] = op[1];
+                        p[2] += 1;
+                        numDimsTravelled += 1;
+                        continue :inner;
+                    }
+                    const ii = getIndexFromPositionV(p);
                     // doing y here, only add if all x along the y are the same
                     if (blockId != self.chunk.data[ii] or self.meshed[ii]) {
                         p[0] = op[0];
                         p[1] = op[1];
                         p[2] += 1;
+                        if (p[2] >= chunkDim) {
+                            break :inner;
+                        }
                         numDimsTravelled += 1;
                         continue :inner;
                     }
@@ -396,13 +407,8 @@ pub const Chunker = struct {
                     self.currentScale[1] = endY - op[1] + 1;
                     p[1] += 1;
                     p[0] = op[0];
-                    if (p[1] >= chunkDim) {
-                        p[1] = op[1];
-                        p[2] += 1;
-                        numDimsTravelled += 1;
-                        continue :inner;
-                    }
                 } else {
+                    const ii = getIndexFromPositionV(p);
                     if (blockId != self.chunk.data[ii]) {
                         break :inner;
                     }
