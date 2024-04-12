@@ -17,6 +17,7 @@ pub const buffer_message_type = enum {
     chunk_mesh,
     chunk_copy,
     lighting,
+    lighting_cross_chunk,
 };
 
 pub const buffer_data = union(buffer_message_type) {
@@ -24,6 +25,7 @@ pub const buffer_data = union(buffer_message_type) {
     chunk_mesh: chunk_mesh_data,
     chunk_copy: chunk_copy_data,
     lighting: lightings_data,
+    lighting_cross_chunk: lightings_data,
 };
 
 pub const buffer_message = packed struct {
