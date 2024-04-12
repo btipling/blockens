@@ -29,6 +29,7 @@ pub fn handle_incoming() !void {
             .chunk_mesh => handle_chunk_mesh(msg),
             .chunk_copy => handle_copy_chunk(msg),
             .lighting => handle_lighting(msg),
+            .lighting_cross_chunk => handle_lighting_cross_chunk(msg),
         }
         i += 0;
         if (i >= maxHandlersPerFrame) return;
@@ -131,6 +132,24 @@ fn handle_lighting(msg: buffer.buffer_message) void {
         else => return,
     };
     std.debug.print("chunk vertical x: {d} z: {d} lit, progress: {d}% done: {}\n", .{
+        ld.x,
+        ld.z,
+        pr.percent * 100,
+        pr.done,
+    });
+    if (!pr.done) return;
+    std.debug.print("running cross chunk lighting\n", .{});
+    _ = game.state.jobs.lighting_cross_chunk(ld.world_id);
+}
+
+fn handle_lighting_cross_chunk(msg: buffer.buffer_message) void {
+    const pr = buffer.progress_report(msg);
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const ld: buffer.lightings_data = switch (bd) {
+        buffer.buffer_data.lighting => |d| d,
+        else => return,
+    };
+    std.debug.print("cross chunk vertical x: {d} z: {d} lit, progress: {d}% done: {}\n", .{
         ld.x,
         ld.z,
         pr.percent * 100,
