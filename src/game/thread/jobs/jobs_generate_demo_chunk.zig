@@ -34,9 +34,12 @@ pub const GenerateDemoChunkJob = struct {
         var msg: buffer.buffer_message = buffer.new_message(.chunk_gen);
         buffer.set_demo_chunk(&msg);
         buffer.set_progress(&msg, true, 1);
-        buffer.put_chunk_gen_data(msg, .{
-            .chunk_data = chunk_data,
-        }) catch @panic("OOM");
+        const bd: buffer.buffer_data = .{
+            .chunk_gen = .{
+                .chunk_data = chunk_data,
+            },
+        };
+        buffer.put_data(msg, bd) catch @panic("OOM");
         buffer.write_message(msg) catch @panic("unable to write message");
     }
 };

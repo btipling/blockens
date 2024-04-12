@@ -29,10 +29,13 @@ pub const GenerateWorldChunkJob = struct {
         game.state.allocator.free(self.script);
         var msg: buffer.buffer_message = buffer.new_message(.chunk_gen);
         buffer.set_progress(&msg, true, 1);
-        buffer.put_chunk_gen_data(msg, .{
-            .chunk_data = chunk_data,
-            .wp = self.wp,
-        }) catch unreachable;
+        const bd: buffer.buffer_data = .{
+            .chunk_gen = .{
+                .chunk_data = chunk_data,
+                .wp = self.wp,
+            },
+        };
+        buffer.put_data(msg, bd) catch @panic("OOM");
         buffer.write_message(msg) catch @panic("unable to write message");
     }
 };

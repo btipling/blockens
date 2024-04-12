@@ -129,10 +129,14 @@ pub const LightingJob = struct {
             done,
             pr,
         );
-        buffer.put_lighting_data(msg, .{
-            .x = self.x,
-            .z = self.z,
-        }) catch @panic("OOM");
+        const bd: buffer.buffer_data = .{
+            .lighting = .{
+                .world_id = self.world_id,
+                .x = self.x,
+                .z = self.z,
+            },
+        };
+        buffer.put_data(msg, bd) catch @panic("OOM");
         buffer.write_message(msg) catch @panic("unable to write message");
     }
 };

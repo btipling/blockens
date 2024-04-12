@@ -38,9 +38,12 @@ pub fn handle_incoming() !void {
 fn handle_chunk_gen(msg: buffer.buffer_message) !void {
     if (!buffer.progress_report(msg).done) return;
     if (try buffer.is_demo_chunk(msg)) return handle_demo_chunk_gen(msg);
-    const chunk_data = buffer.get_chunk_gen_data(msg).?;
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const chunk_data: buffer.chunk_gen_data = switch (bd) {
+        buffer.buffer_data.chunk_gen => |d| d,
+        else => return,
+    };
     const wp = chunk_data.wp orelse return;
-
     var ch_cfg = game.state.ui.data.world_chunk_table_data.get(wp) orelse {
         std.debug.panic("handled chunk gen for non existent chunk in chunk table\n", .{});
     };
@@ -53,7 +56,13 @@ fn handle_chunk_gen(msg: buffer.buffer_message) !void {
 
 fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
-    const chunk_data = buffer.get_chunk_gen_data(msg).?;
+    const is_demo: bool = buffer.is_demo_chunk(msg) catch return;
+    if (!is_demo) return;
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const chunk_data: buffer.chunk_gen_data = switch (bd) {
+        buffer.buffer_data.chunk_gen => |d| d,
+        else => return,
+    };
     if (game.state.ui.data.chunk_demo_data) |d| game.state.allocator.free(d);
     game.state.ui.data.chunk_demo_data = chunk_data.chunk_data;
     blecs.ecs.add(
@@ -65,7 +74,11 @@ fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
 
 fn handle_chunk_mesh(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
-    const mesh_data = buffer.get_chunk_mesh_data(msg) orelse return;
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const mesh_data: buffer.chunk_mesh_data = switch (bd) {
+        buffer.buffer_data.chunk_mesh => |d| d,
+        else => return,
+    };
     const world = mesh_data.world orelse return;
     const entity = mesh_data.entity orelse return;
     if (mesh_data.empty) {
@@ -85,7 +98,11 @@ fn handle_chunk_mesh(msg: buffer.buffer_message) void {
 fn handle_copy_chunk(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
     const world = game.state.world;
-    const copy_data = buffer.get_chunk_copy_data(msg) orelse return;
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const copy_data: buffer.chunk_copy_data = switch (bd) {
+        buffer.buffer_data.chunk_copy => |d| d,
+        else => return,
+    };
     const chunk_entity = init_chunk_entity(world, copy_data.chunk);
 
     blecs.ecs.add(world, chunk_entity, blecs.components.block.NeedsMeshing);
@@ -108,8 +125,17 @@ fn handle_copy_chunk(msg: buffer.buffer_message) void {
 
 fn handle_lighting(msg: buffer.buffer_message) void {
     const pr = buffer.progress_report(msg);
-    const ld = buffer.get_lighting_data(msg) orelse return;
-    std.debug.print("chunk vertical x: {d} z: {d} lit, progress: {d}% done: {}\n", .{ ld.x, ld.z, pr.percent * 100, pr.done });
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const ld: buffer.lightings_data = switch (bd) {
+        buffer.buffer_data.lighting => |d| d,
+        else => return,
+    };
+    std.debug.print("chunk vertical x: {d} z: {d} lit, progress: {d}% done: {}\n", .{
+        ld.x,
+        ld.z,
+        pr.percent * 100,
+        pr.done,
+    });
     if (!pr.done) return;
     std.debug.print("loading world\n", .{});
     ui_helpers.loadChunkDatas() catch @panic("unable to load chunk datas");

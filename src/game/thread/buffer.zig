@@ -19,6 +19,13 @@ pub const buffer_message_type = enum {
     lighting,
 };
 
+pub const buffer_data = union(buffer_message_type) {
+    chunk_gen: chunk_gen_data,
+    chunk_mesh: chunk_mesh_data,
+    chunk_copy: chunk_copy_data,
+    lighting: lightings_data,
+};
+
 pub const buffer_message = packed struct {
     id: u64 = 0,
     ts: i64 = 0,
@@ -44,6 +51,7 @@ pub const chunk_copy_data = struct {
 };
 
 pub const lightings_data = struct {
+    world_id: i32,
     x: i32,
     z: i32,
 };
@@ -53,10 +61,7 @@ const Buffer = struct {
     allocator: std.mem.Allocator,
     mutex: std.Thread.Mutex,
     messages: std.ArrayList(buffer_message),
-    chunk_gens: std.AutoHashMap(buffer_message, chunk_gen_data),
-    chunk_meshes: std.AutoHashMap(buffer_message, chunk_mesh_data),
-    chunk_copies: std.AutoHashMap(buffer_message, chunk_copy_data),
-    lightings: std.AutoHashMap(buffer_message, lightings_data),
+    data: std.AutoHashMap(buffer_message, buffer_data),
 };
 
 pub fn init(allocator: std.mem.Allocator) !void {
@@ -70,34 +75,23 @@ pub fn init(allocator: std.mem.Allocator) !void {
         .allocator = allocator,
         .mutex = .{},
         .messages = std.ArrayList(buffer_message).init(a),
-        .chunk_gens = std.AutoHashMap(buffer_message, chunk_gen_data).init(a),
-        .chunk_meshes = std.AutoHashMap(buffer_message, chunk_mesh_data).init(a),
-        .chunk_copies = std.AutoHashMap(buffer_message, chunk_copy_data).init(a),
-        .lightings = std.AutoHashMap(buffer_message, lightings_data).init(a),
+        .data = std.AutoHashMap(buffer_message, buffer_data).init(a),
     };
 }
 
 pub fn deinit() void {
     buffer.messages.deinit();
-    var chunk_gen_iter = buffer.chunk_gens.valueIterator();
-    while (chunk_gen_iter.next()) |c_d| {
-        buffer.allocator.free(c_d.*.chunk_data);
+    var iter = buffer.data.iterator();
+    while (iter.next()) |e| {
+        const bd: buffer_data = e.value_ptr.*;
+        switch (bd) {
+            buffer_data.chunk_gen => |d| buffer.allocator.free(d.chunk_data),
+            buffer_data.chunk_mesh => |d| buffer.allocator.destroy(d.chunk),
+            buffer_data.chunk_copy => |d| buffer.allocator.destroy(d.chunk),
+            else => {},
+        }
     }
-    buffer.chunk_gens.deinit();
-
-    var chunk_mesh_iter = buffer.chunk_meshes.valueIterator();
-    while (chunk_mesh_iter.next()) |c| {
-        buffer.allocator.destroy(c.*.chunk);
-    }
-    buffer.chunk_meshes.deinit();
-
-    var chunk_copies_iter = buffer.chunk_copies.valueIterator();
-    while (chunk_copies_iter.next()) |c| {
-        buffer.allocator.destroy(c.*.chunk);
-    }
-    buffer.chunk_copies.deinit();
-
-    buffer.lightings.deinit();
+    buffer.data.deinit();
     buffer.allocator.destroy(buffer);
 }
 
@@ -128,69 +122,16 @@ pub fn next_message() ?buffer_message {
     return buffer.messages.orderedRemove(0);
 }
 
-pub fn put_chunk_gen_data(msg: buffer_message, chunk_data: chunk_gen_data) !void {
+pub fn put_data(msg: buffer_message, bd: buffer_data) !void {
     buffer.mutex.lock();
     defer buffer.mutex.unlock();
-    if (msg.type != .chunk_gen) return BufferErr.Invalid;
-    try buffer.chunk_gens.put(msg, chunk_data);
+    try buffer.data.put(msg, bd);
 }
 
-pub fn get_chunk_gen_data(msg: buffer_message) ?chunk_gen_data {
+pub fn get_data(msg: buffer_message) ?buffer_data {
     buffer.mutex.lock();
     defer buffer.mutex.unlock();
-    if (msg.type != .chunk_gen) return null;
-    if (buffer.chunk_gens.fetchRemove(msg)) |kv| {
-        return kv.value;
-    }
-    return null;
-}
-
-pub fn put_chunk_mesh_data(msg: buffer_message, chunk_val: chunk_mesh_data) !void {
-    buffer.mutex.lock();
-    defer buffer.mutex.unlock();
-    if (msg.type != .chunk_mesh) return BufferErr.Invalid;
-    try buffer.chunk_meshes.put(msg, chunk_val);
-}
-
-pub fn get_chunk_mesh_data(msg: buffer_message) ?chunk_mesh_data {
-    buffer.mutex.lock();
-    defer buffer.mutex.unlock();
-    if (msg.type != .chunk_mesh) return null;
-    if (buffer.chunk_meshes.fetchRemove(msg)) |kv| {
-        return kv.value;
-    }
-    return null;
-}
-
-pub fn put_chunk_copy_data(msg: buffer_message, chunk_val: chunk_copy_data) !void {
-    buffer.mutex.lock();
-    defer buffer.mutex.unlock();
-    if (msg.type != .chunk_copy) return BufferErr.Invalid;
-    try buffer.chunk_copies.put(msg, chunk_val);
-}
-
-pub fn get_chunk_copy_data(msg: buffer_message) ?chunk_copy_data {
-    buffer.mutex.lock();
-    defer buffer.mutex.unlock();
-    if (msg.type != .chunk_copy) return null;
-    if (buffer.chunk_copies.fetchRemove(msg)) |kv| {
-        return kv.value;
-    }
-    return null;
-}
-
-pub fn put_lighting_data(msg: buffer_message, chunk_val: lightings_data) !void {
-    buffer.mutex.lock();
-    defer buffer.mutex.unlock();
-    if (msg.type != .lighting) return BufferErr.Invalid;
-    try buffer.lightings.put(msg, chunk_val);
-}
-
-pub fn get_lighting_data(msg: buffer_message) ?lightings_data {
-    buffer.mutex.lock();
-    defer buffer.mutex.unlock();
-    if (msg.type != .lighting) return null;
-    if (buffer.lightings.fetchRemove(msg)) |kv| {
+    if (buffer.data.fetchRemove(msg)) |kv| {
         return kv.value;
     }
     return null;

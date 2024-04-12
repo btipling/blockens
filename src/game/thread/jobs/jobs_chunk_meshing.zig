@@ -200,12 +200,15 @@ pub const ChunkMeshJob = struct {
         // Signal via buffer message that the job is done.
         var msg: buffer.buffer_message = buffer.new_message(.chunk_mesh);
         buffer.set_progress(&msg, true, 1);
-        buffer.put_chunk_mesh_data(msg, .{
-            .world = self.world,
-            .entity = self.entity,
-            .chunk = c,
-            .empty = num_elements < 1,
-        }) catch @panic("OOM");
+        const bd: buffer.buffer_data = .{
+            .chunk_mesh = .{
+                .world = self.world,
+                .entity = self.entity,
+                .chunk = c,
+                .empty = num_elements < 1,
+            },
+        };
+        buffer.put_data(msg, bd) catch @panic("OOM");
         buffer.write_message(msg) catch @panic("unable to write message");
         if (config.use_tracy) ztracy.Message("done with mesh job");
     }
