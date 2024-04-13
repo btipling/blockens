@@ -135,6 +135,7 @@ pub fn lightCheckDimensionalAir(c_data: []u32, ci: usize, bd: *block.BlockData, 
     const c_bd: block.BlockData = block.BlockData.fromId((c_data[ci]));
     if (c_bd.block_id != air) return;
     var c_ll = c_bd.getFullAmbiance();
+    if (c_ll == .none) return;
     if (!heading_down) c_ll = c_ll.getNextDarker();
     const ll = bd.getFullAmbiance();
     if (c_ll.isBrighterThan(ll)) bd.setFullAmbiance(c_ll);
@@ -151,6 +152,7 @@ pub fn lightCheckDimensional(c_data: []u32, ci: usize, bd: *block.BlockData, s: 
 pub fn lightCheckAdjacent(c_data: []u32, ci: usize, bd: *block.BlockData, s: block.BlockSurface) void {
     var c_bd: block.BlockData = block.BlockData.fromId((c_data[ci]));
     var ll = bd.getFullAmbiance();
+    if (ll == .none) return;
     const c_ll = c_bd.getSurfaceAmbience(s);
     if (c_bd.block_id == air) {
         if (s == .top) {
@@ -161,6 +163,7 @@ pub fn lightCheckAdjacent(c_data: []u32, ci: usize, bd: *block.BlockData, s: blo
         if (ll.isBrighterThan(c_bd.getFullAmbiance())) {
             c_bd.setFullAmbiance(ll);
             c_data[ci] = c_bd.toId();
+            set_adjacent_block_lighting(c_data, &c_bd, ci);
         }
         return;
     }
@@ -212,7 +215,12 @@ pub fn set_removed_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize
         const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
         lightCheckDimensionalAir(c_data, c_ci, bd, false);
     }
-    // Set the surface of the six adjacent surfaces if needed
+    set_adjacent_block_lighting(c_data, bd, ci);
+}
+
+// Set the surface of the six adjacent surfaces if needed
+pub fn set_adjacent_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize) void {
+    const pos = getPositionAtIndexV(ci);
     x_pos: {
         const x = pos[0] + 1;
         if (x >= chunkDim) break :x_pos;
