@@ -23,7 +23,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             const cu: []components.block.ChunkUpdate = ecs.field(it, components.block.ChunkUpdate, 1) orelse continue;
 
-            const wp = chunk.getWorldPositionForWorldLocation(cu[i].pos);
+            const wp = chunk.worldPosition.getWorldPositionForWorldLocation(cu[i].pos);
             if (game.state.blocks.game_chunks.get(wp)) |c| {
                 if (ecs.is_alive(world, c.entity) and ecs.has_id(world, c.entity, ecs.id(components.gfx.HasPreviousRenderer))) continue;
             }
