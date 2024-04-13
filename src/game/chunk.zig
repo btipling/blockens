@@ -171,7 +171,7 @@ pub fn set_removed_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize
                 if (c_bd.block_id != air) {
                     c_bd.setAmbient(.left, .full);
                     c_data[c_ci] = c_bd.toId();
-                }
+                } else set_propagated_lighting(c_data, &c_bd, c_ci);
             }
             x_neg: {
                 const x = pos[0] - 1;
@@ -182,7 +182,7 @@ pub fn set_removed_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize
                 if (c_bd.block_id != air) {
                     c_bd.setAmbient(.right, .full);
                     c_data[c_ci] = c_bd.toId();
-                }
+                } else set_propagated_lighting(c_data, &c_bd, c_ci);
             }
             z_pos: {
                 const z = pos[2] + 1;
@@ -193,7 +193,7 @@ pub fn set_removed_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize
                 if (c_bd.block_id != air) {
                     c_bd.setAmbient(.front, .full);
                     c_data[c_ci] = c_bd.toId();
-                }
+                } else set_propagated_lighting(c_data, &c_bd, c_ci);
             }
             z_neg: {
                 const z = pos[2] - 1;
@@ -204,13 +204,13 @@ pub fn set_removed_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize
                 if (c_bd.block_id != air) {
                     c_bd.setAmbient(.back, .full);
                     c_data[c_ci] = c_bd.toId();
-                }
+                } else set_propagated_lighting(c_data, &c_bd, c_ci);
             }
         }
         std.debug.print("unreachable.\n", .{});
         return;
     }
-    _ = bd;
+    set_propagated_lighting(c_data, bd, ci);
 }
 
 pub fn set_added_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize) void {
@@ -256,122 +256,160 @@ pub fn set_added_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize) 
         const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
         lightCheckDimensional(c_data, c_ci, bd, .front);
     }
+
+    // If the block above was full lighting all light below has to be dimmed and propagated
+    y_pos: {
+        var c_ci: usize = 0;
+        var c_bd: block.BlockData = undefined;
+        var y = pos[1] - 1;
+        if (y < 0) {
+            // TODO: propagate to chunk below
+            break :y_pos;
+        }
+        c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+        const c_ll: block.BlockLighingLevel = get_ambience_from_adjecent(c_data, c_ci);
+        while (y >= 0) : (y -= 1) {
+            // let the darkness fall
+            c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+            c_bd = block.BlockData.fromId(c_data[c_ci]);
+            if (c_bd.block_id != air) {
+                // reached the surface
+                c_bd.setAmbient(.top, c_ll);
+                c_data[c_ci] = c_bd.toId();
+                return;
+            }
+            // set air to darkened light
+            c_bd.setFullAmbiance(c_ll);
+            c_data[c_ci] = c_bd.toId();
+            // Set all the non-vertical adjacent surfaces to c_ll or propagate light a bit
+            x_pos: {
+                const x = pos[0] + 1;
+                if (x >= chunkDim) break :x_pos;
+                c_ci = getIndexFromPositionV(.{ x, y, pos[2], pos[3] });
+                if (c_ci >= chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
+                c_bd = block.BlockData.fromId(c_data[c_ci]);
+                if (c_bd.block_id != air) {
+                    c_bd.setAmbient(.left, c_ll);
+                    c_data[c_ci] = c_bd.toId();
+                } else set_propagated_lighting(c_data, &c_bd, c_ci);
+            }
+            x_neg: {
+                const x = pos[0] - 1;
+                if (x >= chunkDim) break :x_neg;
+                c_ci = getIndexFromPositionV(.{ x, y, pos[2], pos[3] });
+                if (c_ci >= chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
+                c_bd = block.BlockData.fromId(c_data[c_ci]);
+                if (c_bd.block_id != air) {
+                    c_bd.setAmbient(.right, c_ll);
+                    c_data[c_ci] = c_bd.toId();
+                } else set_propagated_lighting(c_data, &c_bd, c_ci);
+            }
+            z_pos: {
+                const z = pos[2] + 1;
+                if (z >= chunkDim) break :z_pos;
+                c_ci = getIndexFromPositionV(.{ pos[0], y, z, pos[3] });
+                if (c_ci >= chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
+                c_bd = block.BlockData.fromId(c_data[c_ci]);
+                if (c_bd.block_id != air) {
+                    c_bd.setAmbient(.front, c_ll);
+                    c_data[c_ci] = c_bd.toId();
+                } else set_propagated_lighting(c_data, &c_bd, c_ci);
+            }
+            z_neg: {
+                const z = pos[2] - 1;
+                if (z >= chunkDim) break :z_neg;
+                c_ci = getIndexFromPositionV(.{ pos[0], y, z, pos[3] });
+                if (c_ci >= chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
+                c_bd = block.BlockData.fromId(c_data[c_ci]);
+                if (c_bd.block_id != air) {
+                    c_bd.setAmbient(.back, c_ll);
+                    c_data[c_ci] = c_bd.toId();
+                } else set_propagated_lighting(c_data, &c_bd, c_ci);
+            }
+        }
+        std.debug.print("unreachable.\n", .{});
+        return;
+    }
 }
 
-pub fn set_edited_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize) void {
-    _ = bd;
+pub fn get_ambience_from_adjecent(c_data: []u32, ci: usize) block.BlockLighingLevel {
     const pos = getPositionAtIndexV(ci);
     // now update adjacent
+    var ll: block.BlockLighingLevel = .none;
     x_pos: {
         const x = pos[0] + 1;
         if (x >= chunkDim) break :x_pos;
         const c_ci = getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
         if (c_ci >= chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-        lightCheckDimensionalBlocked(c_data, c_ci, .left);
+        const c_ll = getAirAmbiance(c_data, c_ci);
+        if (c_ll.isBrighterThan(ll)) ll = c_ll;
     }
     x_neg: {
         const x = pos[0] - 1;
         if (x < 0) break :x_neg;
         const c_ci = getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-        lightCheckDimensionalBlocked(c_data, c_ci, .right);
+        const c_ll = getAirAmbiance(c_data, c_ci);
+        if (c_ll.isBrighterThan(ll)) ll = c_ll;
     }
     y_pos: {
         const y = pos[1] + 1;
         if (y >= chunkDim) break :y_pos;
         const c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
         if (c_ci >= chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
-        lightCheckDimensionalBlocked(c_data, c_ci, .bottom);
-    }
-    y_neg: {
-        const y = pos[1] - 1;
-        if (y < 0) break :y_neg;
-        const c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-        lightCheckDimensionalBlocked(c_data, c_ci, .top);
+        const c_ll = getAirAmbiance(c_data, c_ci);
+        if (c_ll.isBrighterThan(ll)) ll = c_ll;
     }
     z_pos: {
         const z = pos[2] + 1;
         if (z >= chunkDim) break :z_pos;
         const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
         if (c_ci >= chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
-        lightCheckDimensionalBlocked(c_data, c_ci, .front);
+        const c_ll = getAirAmbiance(c_data, c_ci);
+        if (c_ll.isBrighterThan(ll)) ll = c_ll;
     }
     z_neg: {
         const z = pos[2] - 1;
         if (z < 0) break :z_neg;
         const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-        lightCheckDimensionalBlocked(c_data, c_ci, .back);
+        const c_ll = getAirAmbiance(c_data, c_ci);
+        if (c_ll.isBrighterThan(ll)) ll = c_ll;
     }
+    return ll;
 }
 
-pub fn lightCheckDimensionalAir(c_data: []u32, ci: usize, bd: *block.BlockData, heading_down: bool) void {
+pub fn set_propagated_lighting(c_data: []u32, bd: *block.BlockData, ci: usize) void {
+    _ = c_data;
+    _ = bd;
+    _ = ci;
+}
+
+pub fn getAirAmbiance(c_data: []u32, ci: usize) block.BlockLighingLevel {
     const c_bd: block.BlockData = block.BlockData.fromId((c_data[ci]));
-    if (c_bd.block_id != air) return;
-    var c_ll = c_bd.getFullAmbiance();
-    if (c_ll == .none) return;
-    if (!heading_down) c_ll = c_ll.getNextDarker();
-    const ll = bd.getFullAmbiance();
-    if (c_ll.isBrighterThan(ll)) bd.setFullAmbiance(c_ll);
+    if (c_bd.block_id != air) return .none;
+    return c_bd.getFullAmbiance().getNextDarker();
 }
 
+/// BELOW IS CRUFT
+/// REMOVE CRUFT
+/// STOP SCROLLING KTHX
+///
+///
+///
+///
+///
+///
+///
+///
+///
+///
+///
+///
 pub fn lightCheckDimensional(c_data: []u32, ci: usize, bd: *block.BlockData, s: block.BlockSurface) void {
     const c_bd: block.BlockData = block.BlockData.fromId((c_data[ci]));
     if (c_bd.block_id != air) return;
     const c_ll = c_bd.getFullAmbiance();
     const ll = bd.getSurfaceAmbience(s);
     if (c_ll.isBrighterThan(ll)) bd.setAmbient(s, c_ll);
-}
-
-pub fn lightCheckDimensionalBlocked(c_data: []u32, ci: usize, s: block.BlockSurface) void {
-    var bd: block.BlockData = block.BlockData.fromId((c_data[ci]));
-    if (bd.block_id == air) {
-        const pos = getPositionAtIndexV(ci);
-        // Black out the light in air and reset it based on surroundings.
-        bd.setFullAmbiance(.none);
-
-        x_pos: {
-            const x = pos[0] + 1;
-            if (x >= chunkDim) break :x_pos;
-            const c_ci = getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-            if (c_ci >= chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-            lightCheckDimensionalAir(c_data, c_ci, bd, false);
-        }
-        x_neg: {
-            const x = pos[0] - 1;
-            if (x < 0) break :x_neg;
-            const c_ci = getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-            lightCheckDimensionalAir(c_data, c_ci, bd, false);
-        }
-        y_pos: {
-            const y = pos[1] + 1;
-            if (y >= chunkDim) break :y_pos;
-            const c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-            if (c_ci >= chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
-            lightCheckDimensionalAir(c_data, c_ci, bd, true);
-        }
-        y_neg: {
-            const y = pos[1] - 1;
-            if (y < 0) break :y_neg;
-            const c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-            lightCheckDimensionalAir(c_data, c_ci, bd, false);
-        }
-        z_pos: {
-            const z = pos[2] + 1;
-            if (z >= chunkDim) break :z_pos;
-            const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-            if (c_ci >= chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
-            lightCheckDimensionalAir(c_data, c_ci, bd, false);
-        }
-        z_neg: {
-            const z = pos[2] - 1;
-            if (z < 0) break :z_neg;
-            const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-            lightCheckDimensionalAir(c_data, c_ci, bd, false);
-        }
-        c_data[ci] = bd.toId();
-
-        return;
-    }
-    bd.setAmbient(s, .none); // Covered by block
 }
 
 pub fn lightCheckAdjacent(c_data: []u32, ci: usize, bd: *block.BlockData, s: block.BlockSurface) void {

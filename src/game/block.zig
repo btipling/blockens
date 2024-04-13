@@ -85,24 +85,32 @@ pub const BlockData = packed struct {
             .dark => 0x01,
             .none => 0x00,
         };
+        var c: u12 = 0x03; // clear bits
         switch (surface) {
             .top => {
+                c = c << 10;
                 l = l << 10;
             },
             .bottom => {
+                c = c << 8;
                 l = l << 8;
             },
             .front => {
+                c = c << 6;
                 l = l << 6;
             },
             .back => {
+                c = c << 4;
                 l = l << 4;
             },
             .left => {
+                c = c << 2;
                 l = l << 2;
             },
             .right => {},
         }
+        const clear: u12 = 0xFFF ^ c;
+        self.ambient = self.ambient & clear;
         self.ambient = self.ambient | l;
     }
 
