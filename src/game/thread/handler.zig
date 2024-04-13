@@ -131,30 +131,17 @@ fn handle_lighting(msg: buffer.buffer_message) void {
         buffer.buffer_data.lighting => |d| d,
         else => return,
     };
-    std.debug.print("chunk vertical x: {d} z: {d} lit, progress: {d}% done: {}\n", .{
-        ld.x,
-        ld.z,
-        pr.percent * 100,
-        pr.done,
-    });
     if (!pr.done) return;
-    std.debug.print("running cross chunk lighting\n", .{});
     _ = game.state.jobs.lighting_cross_chunk(ld.world_id);
 }
 
 fn handle_lighting_cross_chunk(msg: buffer.buffer_message) void {
     const pr = buffer.progress_report(msg);
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    const ld: buffer.lightings_data = switch (bd) {
+    _ = switch (bd) {
         buffer.buffer_data.lighting => |d| d,
         else => return,
     };
-    std.debug.print("cross chunk vertical x: {d} z: {d} lit, progress: {d}% done: {}\n", .{
-        ld.x,
-        ld.z,
-        pr.percent * 100,
-        pr.done,
-    });
     if (!pr.done) return;
     std.debug.print("loading world\n", .{});
     ui_helpers.loadChunkDatas() catch @panic("unable to load chunk datas");

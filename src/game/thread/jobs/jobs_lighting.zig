@@ -18,7 +18,6 @@ pub const LightingJob = struct {
     pt: *buffer.ProgressTracker,
 
     pub fn exec(self: *@This()) void {
-        std.debug.print("lighting started\n", .{});
         if (config.use_tracy) {
             const ztracy = @import("ztracy");
             ztracy.SetThreadName("LightingJob");
@@ -28,7 +27,6 @@ pub const LightingJob = struct {
         } else {
             self.lightingJob();
         }
-        std.debug.print("lighting done \n", .{});
     }
 
     pub fn lightingJob(self: *@This()) void {
@@ -102,7 +100,6 @@ pub const LightingJob = struct {
                     t_c.scriptId,
                     t_block_data,
                 ) catch @panic("failed to save top chunk data after lighting");
-                std.debug.print("saved top light data\n", .{});
             }
             {
                 game.state.db.updateChunkData(
@@ -110,7 +107,6 @@ pub const LightingJob = struct {
                     b_c.scriptId,
                     bt_block_data,
                 ) catch @panic("failed to save bottom chunk data after lighting");
-                std.debug.print("saved bot light data\n", .{});
             }
         }
         self.finishJob();
@@ -122,7 +118,6 @@ pub const LightingJob = struct {
         if (done) game.state.allocator.destroy(self.pt);
         const ns: f16 = @floatFromInt(num_started);
         const nd: f16 = @floatFromInt(num_done);
-        std.debug.print("writing message done: {}?\n", .{done});
         const pr: f16 = nd / ns;
         buffer.set_progress(
             &msg,

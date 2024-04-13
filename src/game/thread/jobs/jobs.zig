@@ -155,6 +155,5 @@ pub const Jobs = struct {
                 };
             }
         }
-        std.debug.print("scheduled {} cross chunk lighting jobs\n", .{pt.num_started});
     }
 };

@@ -21,7 +21,6 @@ pub const LightingCrossChunkJob = struct {
     pt: *buffer.ProgressTracker,
 
     pub fn exec(self: *@This()) void {
-        std.debug.print("lighting started\n", .{});
         if (config.use_tracy) {
             const ztracy = @import("ztracy");
             ztracy.SetThreadName("LightingCrossChunkJob");
@@ -31,7 +30,6 @@ pub const LightingCrossChunkJob = struct {
         } else {
             self.lightingCrossChunkJob();
         }
-        std.debug.print("lighting done \n", .{});
     }
 
     pub fn lightingCrossChunkJob(self: *@This()) void {
@@ -74,7 +72,6 @@ pub const LightingCrossChunkJob = struct {
                     t_c.scriptId,
                     t_block_data,
                 ) catch @panic("failed to save top chunk data after lighting");
-                std.debug.print("saved top light data\n", .{});
             }
             {
                 game.state.db.updateChunkData(
@@ -82,7 +79,6 @@ pub const LightingCrossChunkJob = struct {
                     b_c.scriptId,
                     bt_block_data,
                 ) catch @panic("failed to save bottom chunk data after lighting");
-                std.debug.print("saved bot light data\n", .{});
             }
         }
         self.finishJob();
@@ -94,7 +90,6 @@ pub const LightingCrossChunkJob = struct {
         if (done) game.state.allocator.destroy(self.pt);
         const ns: f16 = @floatFromInt(num_started);
         const nd: f16 = @floatFromInt(num_done);
-        std.debug.print("writing message done: {}?\n", .{done});
         const pr: f16 = nd / ns;
         buffer.set_progress(
             &msg,
@@ -218,7 +213,6 @@ pub const LightingCrossChunkJob = struct {
 
     fn fixCrossChunkLighting(self: *LightingCrossChunkJob, wp: chunk.worldPosition, c_data: []u32) void {
         {
-            std.debug.print("fixing cross chunk lighting front\n", .{});
             const f_p = wp.getFrontWP().vecFromWorldPosition();
             var f_c: data.chunkData = .{};
             game.state.db.loadChunkData(
@@ -249,7 +243,6 @@ pub const LightingCrossChunkJob = struct {
             }
         }
         {
-            std.debug.print("fixing cross chunk lighting back\n", .{});
             const b_p = wp.getBackWP().vecFromWorldPosition();
             var b_c: data.chunkData = .{};
             game.state.db.loadChunkData(
@@ -280,7 +273,6 @@ pub const LightingCrossChunkJob = struct {
             }
         }
         {
-            std.debug.print("fixing cross chunk lighting left\n", .{});
             const l_p = wp.getLeftWP().vecFromWorldPosition();
             var l_c: data.chunkData = .{};
             game.state.db.loadChunkData(
@@ -311,7 +303,6 @@ pub const LightingCrossChunkJob = struct {
             }
         }
         {
-            std.debug.print("fixing cross chunk lighting right\n", .{});
             const r_p = wp.getRightWP().vecFromWorldPosition();
             var r_c: data.chunkData = .{};
             game.state.db.loadChunkData(

@@ -158,13 +158,6 @@ pub const ProgressTracker = struct {
             },
         );
         self.num_completed += 1;
-        std.debug.print(
-            "self.num_started: {} self.num_completed: {}\n",
-            .{
-                self.num_started,
-                self.num_completed,
-            },
-        );
         return .{
             self.num_started == self.num_completed,
             self.num_started,
