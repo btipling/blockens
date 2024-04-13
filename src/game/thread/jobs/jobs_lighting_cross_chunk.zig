@@ -112,6 +112,30 @@ pub const LightingCrossChunkJob = struct {
         buffer.write_message(msg) catch @panic("unable to write message");
     }
 
+    fn lightFallDimensional(
+        self: *LightingCrossChunkJob,
+        c_data: []u32,
+        ci: usize,
+        ll: block.BlockLighingLevel,
+        s: block.BlockSurface,
+    ) void {
+        var bd: block.BlockData = block.BlockData.fromId(c_data[ci]);
+        if (bd.block_id == air) {
+            const bd_ll = bd.getFullAmbiance();
+            if (ll.isBrighterThan(bd_ll) and ll != bd_ll) {
+                bd.setFullAmbiance(ll.getNextDarker());
+                c_data[ci] = bd.toId();
+                self.lightFall(c_data, ci, bd.getFullAmbiance());
+            }
+            return;
+        }
+        const s_b = bd.getSurfaceAmbience(s);
+        if (ll.isBrighterThan(s_b) and ll != s_b) {
+            bd.setAmbient(s, ll);
+            c_data[ci] = bd.toId();
+        }
+    }
+
     fn lightFall(self: *LightingCrossChunkJob, c_data: []u32, ci: usize, ll: block.BlockLighingLevel) void {
         if (ll == .none) return;
         const pos = chunk.getPositionAtIndexV(ci);
@@ -120,123 +144,39 @@ pub const LightingCrossChunkJob = struct {
             if (x >= chunk.chunkDim) break :x_pos;
             const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
             if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-            var bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
-            if (bd.block_id == air) {
-                const bd_ll = bd.getFullAmbiance();
-                if (ll.isBrighterThan(bd_ll) and ll != bd_ll) {
-                    bd.setFullAmbiance(ll.getNextDarker());
-                    c_data[c_ci] = bd.toId();
-                    self.lightFall(c_data, c_ci, bd.getFullAmbiance());
-                }
-                break :x_pos;
-            }
-            const s_b = bd.getSurfaceAmbience(.left);
-            if (ll.isBrighterThan(s_b) and ll != s_b) {
-                bd.setAmbient(.left, ll);
-                c_data[c_ci] = bd.toId();
-            }
+            self.lightFallDimensional(c_data, c_ci, ll, .left);
         }
         x_neg: {
             const x = pos[0] - 1;
             if (x < 0) break :x_neg;
             const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-            var bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
-            if (bd.block_id == air) {
-                const bd_ll = bd.getFullAmbiance();
-                if (ll.isBrighterThan(bd_ll) and ll != bd_ll) {
-                    bd.setFullAmbiance(ll.getNextDarker());
-                    c_data[c_ci] = bd.toId();
-                    self.lightFall(c_data, c_ci, bd.getFullAmbiance());
-                }
-                break :x_neg;
-            }
-            const s_b = bd.getSurfaceAmbience(.right);
-            if (ll.isBrighterThan(s_b) and ll != s_b) {
-                bd.setAmbient(.right, ll);
-                c_data[c_ci] = bd.toId();
-            }
+            self.lightFallDimensional(c_data, c_ci, ll, .right);
         }
         y_pos: {
             const y = pos[1] + 1;
             if (y >= chunk.chunkDim) break :y_pos;
             const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
             if (c_ci >= chunk.chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
-            var bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
-            if (bd.block_id == air) {
-                const bd_ll = bd.getFullAmbiance();
-                if (ll.isBrighterThan(bd_ll) and ll != bd_ll) {
-                    bd.setFullAmbiance(ll.getNextDarker());
-                    c_data[c_ci] = bd.toId();
-                    self.lightFall(c_data, c_ci, bd.getFullAmbiance());
-                }
-                break :y_pos;
-            }
-            const s_b = bd.getSurfaceAmbience(.bottom);
-            if (ll.isBrighterThan(s_b) and ll != s_b) {
-                bd.setAmbient(.bottom, ll);
-                c_data[c_ci] = bd.toId();
-            }
+            self.lightFallDimensional(c_data, c_ci, ll, .bottom);
         }
         y_neg: {
             const y = pos[1] - 1;
             if (y < 0) break :y_neg;
             const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-            var bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
-            if (bd.block_id == air) {
-                const bd_ll = bd.getFullAmbiance();
-                if (ll.isBrighterThan(bd_ll) and ll != bd_ll) {
-                    bd.setFullAmbiance(ll.getNextDarker());
-                    c_data[c_ci] = bd.toId();
-                    self.lightFall(c_data, c_ci, bd.getFullAmbiance());
-                }
-                break :y_neg;
-            }
-            const s_b = bd.getSurfaceAmbience(.top);
-            if (ll.isBrighterThan(s_b) and ll != s_b) {
-                bd.setAmbient(.top, ll);
-                c_data[c_ci] = bd.toId();
-            }
+            self.lightFallDimensional(c_data, c_ci, ll, .top);
         }
         z_pos: {
             const z = pos[2] + 1;
             if (z >= chunk.chunkDim) break :z_pos;
             const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
             if (c_ci >= chunk.chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
-            var bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
-            if (bd.block_id == air) {
-                const bd_ll = bd.getFullAmbiance();
-                if (ll.isBrighterThan(bd_ll) and ll != bd_ll) {
-                    bd.setFullAmbiance(ll.getNextDarker());
-                    c_data[c_ci] = bd.toId();
-                    self.lightFall(c_data, c_ci, bd.getFullAmbiance());
-                }
-                break :z_pos;
-            }
-            const s_b = bd.getSurfaceAmbience(.front);
-            if (ll.isBrighterThan(s_b) and ll != s_b) {
-                bd.setAmbient(.front, ll);
-                c_data[c_ci] = bd.toId();
-            }
+            self.lightFallDimensional(c_data, c_ci, ll, .front);
         }
         z_neg: {
             const z = pos[2] - 1;
             if (z < 0) break :z_neg;
             const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-            var bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
-            if (bd.block_id == air) {
-                const bd_ll = bd.getFullAmbiance();
-                if (ll.isBrighterThan(bd_ll) and ll != bd_ll) {
-                    bd.setFullAmbiance(ll.getNextDarker());
-                    c_data[c_ci] = bd.toId();
-                    self.lightFall(c_data, c_ci, bd.getFullAmbiance());
-                }
-                break :z_neg;
-            }
-            const s_b = bd.getSurfaceAmbience(.back);
-            if (ll.isBrighterThan(s_b) and ll != s_b) {
-                bd.setAmbient(.back, ll);
-                c_data[c_ci] = bd.toId();
-            }
+            self.lightFallDimensional(c_data, c_ci, ll, .back);
         }
     }
 
