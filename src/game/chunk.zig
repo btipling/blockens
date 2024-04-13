@@ -401,7 +401,7 @@ pub fn set_propagated_lighting(c_data: []u32, ci: usize) void {
             const c_ci = getIndexFromPositionV(.{ pos[0], ty, pos[2], pos[3] });
             if (c_ci >= chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
             const c_bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
-            ll = c_bd.getFullAmbiance();
+            if (c_bd.block_id == air) ll = c_bd.getFullAmbiance();
         } else {
             ll = .full;
         }
