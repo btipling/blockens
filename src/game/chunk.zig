@@ -218,8 +218,12 @@ pub fn set_removed_block_lighting(c_data: []u32, ci: usize) void {
 }
 
 pub fn set_added_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize) void {
-    std.debug.print("adding block\n", .{});
     const pos = getPositionAtIndexV(ci);
+    std.debug.print("adding block {d} {d} {d}\n", .{
+        pos[0],
+        pos[1],
+        pos[2],
+    });
     // set added block surfaces first
     set_surfaces_from_ambient(c_data, bd, ci);
 
@@ -299,6 +303,7 @@ pub fn set_added_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize) 
 }
 
 pub fn set_surfaces_from_ambient(c_data: []u32, bd: *block.BlockData, ci: usize) void {
+    bd.setFullAmbiance(.none);
     const pos = getPositionAtIndexV(ci);
     x_pos: {
         const x = pos[0] + 1;
@@ -317,7 +322,6 @@ pub fn set_surfaces_from_ambient(c_data: []u32, bd: *block.BlockData, ci: usize)
         const y = pos[1] + 1;
         if (y >= chunkDim) break :y_pos;
         const c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-        if (c_ci >= chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
         lightCheckDimensional(c_data, c_ci, bd, .top);
     }
     y_neg: {
@@ -393,7 +397,7 @@ pub fn get_ambience_from_adjecent(c_data: []u32, ci: usize, source_ci: ?usize) b
     return ll;
 }
 
-const max_propagation_distance: u8 = 2;
+const max_propagation_distance: u8 = 3;
 
 // This just fixes the lighting for each block as it should be without any context as
 // to what else has changed. It doesn't rain down light or shadow. If nothing changed
@@ -488,11 +492,6 @@ pub fn set_propagated_lighting_pos(c_data: []u32, ci: usize, distance: u8) void 
             if (x >= chunkDim) break :x_pos;
             const c_ci = getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
             if (c_ci >= chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-            std.debug.print("going positive  x lol {d} {d} {d}\n", .{
-                x,
-                pos[1],
-                pos[2],
-            });
             set_propagated_lighting_pos(c_data, c_ci, distance + 1);
         }
         z_pos: {
@@ -500,11 +499,6 @@ pub fn set_propagated_lighting_pos(c_data: []u32, ci: usize, distance: u8) void 
             if (z >= chunkDim) break :z_pos;
             const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
             if (c_ci >= chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
-            std.debug.print("going positive  z lol {d} {d} {d}\n", .{
-                pos[0],
-                pos[1],
-                z,
-            });
             set_propagated_lighting_pos(c_data, c_ci, distance + 1);
         }
         return;
@@ -523,91 +517,7 @@ pub fn lightCheckDimensional(c_data: []u32, ci: usize, bd: *block.BlockData, s: 
     const c_bd: block.BlockData = block.BlockData.fromId((c_data[ci]));
     if (c_bd.block_id != air) bd.setAmbient(s, .none);
     const c_ll = c_bd.getFullAmbiance();
-    const ll = bd.getSurfaceAmbience(s);
-    if (c_ll.isBrighterThan(ll)) bd.setAmbient(s, c_ll);
-}
-
-/// BELOW IS CRUFT
-/// REMOVE CRUFT
-/// STOP SCROLLING KTHX
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-pub fn lightCheckAdjacent(c_data: []u32, ci: usize, bd: *block.BlockData, s: block.BlockSurface) void {
-    var c_bd: block.BlockData = block.BlockData.fromId((c_data[ci]));
-    var ll = bd.getFullAmbiance();
-    if (ll == .none) return;
-    const c_ll = c_bd.getSurfaceAmbience(s);
-    if (c_bd.block_id == air) {
-        if (s == .top) {
-            // If the light is heading down keep the same light level.
-        } else {
-            ll = ll.getNextDarker();
-        }
-        if (ll.isBrighterThan(c_bd.getFullAmbiance())) {
-            c_bd.setFullAmbiance(ll);
-            c_data[ci] = c_bd.toId();
-            set_adjacent_block_lighting(c_data, &c_bd, ci);
-        }
-        return;
-    }
-    if (ll.isBrighterThan(c_ll)) {
-        c_bd.setAmbient(s, ll);
-        c_data[ci] = c_bd.toId();
-    }
-}
-
-// Set the surface of the six adjacent surfaces if needed
-pub fn set_adjacent_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize) void {
-    const pos = getPositionAtIndexV(ci);
-    x_pos: {
-        const x = pos[0] + 1;
-        if (x >= chunkDim) break :x_pos;
-        const c_ci = getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-        if (c_ci >= chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-        lightCheckAdjacent(c_data, c_ci, bd, .left);
-    }
-    x_neg: {
-        const x = pos[0] - 1;
-        if (x < 0) break :x_neg;
-        const c_ci = getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-        lightCheckAdjacent(c_data, c_ci, bd, .right);
-    }
-    y_pos: {
-        const y = pos[1] + 1;
-        if (y >= chunkDim) break :y_pos;
-        const c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-        if (c_ci >= chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
-        lightCheckAdjacent(c_data, c_ci, bd, .bottom);
-    }
-    y_neg: {
-        const y = pos[1] - 1;
-        if (y < 0) break :y_neg;
-        const c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-        lightCheckAdjacent(c_data, c_ci, bd, .top);
-    }
-    z_pos: {
-        const z = pos[2] + 1;
-        if (z >= chunkDim) break :z_pos;
-        const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-        if (c_ci >= chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
-        lightCheckAdjacent(c_data, c_ci, bd, .front);
-    }
-    z_neg: {
-        const z = pos[2] - 1;
-        if (z < 0) break :z_neg;
-        const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-        lightCheckAdjacent(c_data, c_ci, bd, .back);
-    }
+    bd.setAmbient(s, c_ll);
 }
 
 pub fn positionFromWorldLocation(loc: @Vector(4, f32)) @Vector(4, f32) {
