@@ -180,6 +180,42 @@ pub const LightingCrossChunkJob = struct {
         }
     }
 
+    fn lightCrossing(
+        self: *LightingCrossChunkJob,
+        c_data: []u32,
+        ci: usize,
+        bd: *block.BlockData,
+        c_bd: block.BlockData,
+        s: block.BlockSurface,
+    ) void {
+        // Two blocks facing each other - no light adjustment
+        if (bd.block_id != air and c_bd.block_id != air) return;
+        // Brighten the air between the two if need be
+        if (bd.block_id == air and c_bd.block_id == air) {
+            const am = bd.getFullAmbiance();
+            const c_am = c_bd.getFullAmbiance();
+            if (am == c_am) return; // isBrighterThan returns true when values are equal
+            if (am.isBrighterThan(c_am) and c_am == am.getNextDarker()) return;
+            if (c_am.isBrighterThan(am) and am == c_am.getNextDarker()) return;
+            // Only working on this chunk, other chunk will update from this chunk separately.
+            if (am.isBrighterThan(c_am)) return;
+            bd.setFullAmbiance(c_am.getNextDarker());
+            c_data[ci] = bd.toId();
+            self.lightFall(c_data, ci, bd.getFullAmbiance());
+            return;
+        }
+        if (bd.block_id == air) return; // The other chunk will update itself.
+        if (c_bd.block_id == air) {
+            const c_am = c_bd.getFullAmbiance();
+            const bd_sam = bd.getSurfaceAmbience(s);
+            if (c_am == bd_sam) return;
+            if (!c_am.isBrighterThan(bd_sam)) return;
+            bd.setAmbient(s, c_am);
+            c_data[ci] = bd.toId();
+            return;
+        }
+    }
+
     fn fixCrossChunkLighting(self: *LightingCrossChunkJob, wp: chunk.worldPosition, c_data: []u32) void {
         {
             std.debug.print("fixing cross chunk lighting front\n", .{});
@@ -207,39 +243,8 @@ pub const LightingCrossChunkJob = struct {
                     const c_i = chunk.getIndexFromPositionV(.{ x, y, c_z, 0 });
                     var c_bd: block.BlockData = block.BlockData.fromId(c_data[c_i]);
                     const f_i = chunk.getIndexFromPositionV(.{ x, y, f_z, 0 });
-                    var f_bd: block.BlockData = block.BlockData.fromId(f_data[f_i]);
-                    // Two blocks facing each other - no light adjustment
-                    if (c_bd.block_id != air and f_bd.block_id != air) continue;
-                    // Brighten the air between the two if need be
-                    if (c_bd.block_id == air and f_bd.block_id == air) {
-                        const c_am = c_bd.getFullAmbiance();
-                        const f_am = f_bd.getFullAmbiance();
-                        if (c_am == f_am) continue; // isBrighterThan returns true when values are equal
-                        if (c_am.isBrighterThan(f_am) and f_am == c_am.getNextDarker()) continue;
-                        if (f_am.isBrighterThan(c_am) and c_am == f_am.getNextDarker()) continue;
-                        // Only working on this chunk, other chunk will update from this chunk separately.
-                        if (c_am.isBrighterThan(f_am)) continue;
-                        c_bd.setFullAmbiance(f_am.getNextDarker());
-                        c_data[c_i] = c_bd.toId();
-                        self.lightFall(c_data, c_i, c_bd.getFullAmbiance());
-                        continue;
-                    }
-                    if (c_bd.block_id == air) {
-                        const c_am = c_bd.getFullAmbiance();
-                        const f_sam = f_bd.getSurfaceAmbience(.front);
-                        if (c_am == f_sam) continue;
-                        if (!c_am.isBrighterThan(f_sam)) continue;
-                        continue;
-                    }
-                    if (f_bd.block_id == air) {
-                        const f_am = f_bd.getFullAmbiance();
-                        const c_sam = c_bd.getSurfaceAmbience(.back);
-                        if (f_am == c_sam) continue;
-                        if (!f_am.isBrighterThan(c_sam)) continue;
-                        c_bd.setAmbient(.back, f_am);
-                        c_data[c_i] = c_bd.toId();
-                        continue;
-                    }
+                    const f_bd: block.BlockData = block.BlockData.fromId(f_data[f_i]);
+                    self.lightCrossing(c_data, c_i, &c_bd, f_bd, .back);
                 }
             }
         }
@@ -269,36 +274,8 @@ pub const LightingCrossChunkJob = struct {
                     const c_i = chunk.getIndexFromPositionV(.{ x, y, c_z, 0 });
                     var c_bd: block.BlockData = block.BlockData.fromId(c_data[c_i]);
                     const b_i = chunk.getIndexFromPositionV(.{ x, y, b_z, 0 });
-                    var b_bd: block.BlockData = block.BlockData.fromId(b_data[b_i]);
-                    if (c_bd.block_id != air and b_bd.block_id != air) continue;
-                    if (c_bd.block_id == air and b_bd.block_id == air) {
-                        const c_am = c_bd.getFullAmbiance();
-                        const b_am = b_bd.getFullAmbiance();
-                        if (c_am == b_am) continue; // isBrighterThan returns true when values are equal
-                        if (c_am.isBrighterThan(b_am) and b_am == c_am.getNextDarker()) continue;
-                        if (b_am.isBrighterThan(c_am) and c_am == b_am.getNextDarker()) continue;
-                        if (c_am.isBrighterThan(b_am)) continue; // b_am will have to update itself separateley.
-                        c_bd.setFullAmbiance(b_am.getNextDarker());
-                        c_data[c_i] = c_bd.toId();
-                        self.lightFall(c_data, c_i, c_bd.getFullAmbiance());
-                        continue;
-                    }
-                    if (c_bd.block_id == air) {
-                        const c_am = c_bd.getFullAmbiance();
-                        const b_sam = b_bd.getSurfaceAmbience(.back);
-                        if (c_am == b_sam) continue;
-                        if (!c_am.isBrighterThan(b_sam)) continue;
-                        continue;
-                    }
-                    if (b_bd.block_id == air) {
-                        const b_am = b_bd.getFullAmbiance();
-                        const c_sam = c_bd.getSurfaceAmbience(.front);
-                        if (b_am == c_sam) continue;
-                        if (!b_am.isBrighterThan(c_sam)) continue;
-                        c_bd.setAmbient(.front, b_am);
-                        c_data[c_i] = c_bd.toId();
-                        continue;
-                    }
+                    const b_bd: block.BlockData = block.BlockData.fromId(b_data[b_i]);
+                    self.lightCrossing(c_data, c_i, &c_bd, b_bd, .front);
                 }
             }
         }
@@ -328,36 +305,8 @@ pub const LightingCrossChunkJob = struct {
                     const c_i = chunk.getIndexFromPositionV(.{ c_x, y, z, 0 });
                     var c_bd: block.BlockData = block.BlockData.fromId(c_data[c_i]);
                     const l_i = chunk.getIndexFromPositionV(.{ l_x, y, z, 0 });
-                    var l_bd: block.BlockData = block.BlockData.fromId(l_data[l_i]);
-                    if (c_bd.block_id != air and l_bd.block_id != air) continue;
-                    if (c_bd.block_id == air and l_bd.block_id == air) {
-                        const c_am = c_bd.getFullAmbiance();
-                        const l_am = l_bd.getFullAmbiance();
-                        if (c_am == l_am) continue;
-                        if (c_am.isBrighterThan(l_am) and l_am == c_am.getNextDarker()) continue;
-                        if (l_am.isBrighterThan(c_am) and c_am == l_am.getNextDarker()) continue;
-                        if (c_am.isBrighterThan(l_am)) continue; // other chunk will update itself separately.
-                        c_bd.setFullAmbiance(l_am.getNextDarker());
-                        c_data[c_i] = c_bd.toId();
-                        self.lightFall(c_data, c_i, c_bd.getFullAmbiance());
-                        continue;
-                    }
-                    if (c_bd.block_id == air) {
-                        const c_am = c_bd.getFullAmbiance();
-                        const l_sam = l_bd.getSurfaceAmbience(.left);
-                        if (c_am == l_sam) continue;
-                        if (!c_am.isBrighterThan(l_sam)) continue;
-                        continue;
-                    }
-                    if (l_bd.block_id == air) {
-                        const l_am = l_bd.getFullAmbiance();
-                        const c_sam = c_bd.getSurfaceAmbience(.right);
-                        if (l_am == c_sam) continue;
-                        if (!l_am.isBrighterThan(c_sam)) continue;
-                        c_bd.setAmbient(.right, l_am);
-                        c_data[c_i] = c_bd.toId();
-                        continue;
-                    }
+                    const l_bd: block.BlockData = block.BlockData.fromId(l_data[l_i]);
+                    self.lightCrossing(c_data, c_i, &c_bd, l_bd, .right);
                 }
             }
         }
@@ -387,38 +336,8 @@ pub const LightingCrossChunkJob = struct {
                     const c_i = chunk.getIndexFromPositionV(.{ c_x, y, z, 0 });
                     var c_bd: block.BlockData = block.BlockData.fromId(c_data[c_i]);
                     const r_i = chunk.getIndexFromPositionV(.{ r_x, y, z, 0 });
-                    var r_bd: block.BlockData = block.BlockData.fromId(r_data[r_i]);
-                    // Two blocks facing each other - no light adjustment
-                    if (c_bd.block_id != air and r_bd.block_id != air) continue;
-                    // Brighten the air between the two if need be
-                    if (c_bd.block_id == air and r_bd.block_id == air) {
-                        const c_am = c_bd.getFullAmbiance();
-                        const r_am = r_bd.getFullAmbiance();
-                        if (c_am == r_am) continue; // isBrighterThan returns true when values are equal
-                        if (c_am.isBrighterThan(r_am) and r_am == c_am.getNextDarker()) continue;
-                        if (r_am.isBrighterThan(c_am) and c_am == r_am.getNextDarker()) continue;
-                        if (c_am.isBrighterThan(r_am)) continue; // other chunk will update itself separately.
-                        c_bd.setFullAmbiance(r_am.getNextDarker());
-                        c_data[c_i] = c_bd.toId();
-                        self.lightFall(c_data, c_i, c_bd.getFullAmbiance());
-                        continue;
-                    }
-                    if (c_bd.block_id == air) {
-                        const c_am = c_bd.getFullAmbiance();
-                        const r_sam = r_bd.getSurfaceAmbience(.right);
-                        if (c_am == r_sam) continue;
-                        if (!c_am.isBrighterThan(r_sam)) continue;
-                        continue;
-                    }
-                    if (r_bd.block_id == air) {
-                        const r_am = r_bd.getFullAmbiance();
-                        const c_sam = c_bd.getSurfaceAmbience(.left);
-                        if (r_am == c_sam) continue;
-                        if (!r_am.isBrighterThan(c_sam)) continue;
-                        c_bd.setAmbient(.left, r_am);
-                        c_data[c_i] = c_bd.toId();
-                        continue;
-                    }
+                    const r_bd: block.BlockData = block.BlockData.fromId(r_data[r_i]);
+                    self.lightCrossing(c_data, c_i, &c_bd, r_bd, .left);
                 }
             }
         }
