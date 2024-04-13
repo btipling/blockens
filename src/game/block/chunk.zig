@@ -56,10 +56,11 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
     bd = block.BlockData.fromId(c_data[chunk_index]);
     bd.block_id = block_id;
     c_data[chunk_index] = bd.toId();
+    const l = lighting{};
     if (block_id == air) {
-        lighting.set_removed_block_lighting(c_data, chunk_index);
+        l.set_removed_block_lighting(c_data, chunk_index);
     } else {
-        lighting.set_added_block_lighting(c_data, &bd, chunk_index);
+        l.set_added_block_lighting(c_data, &bd, chunk_index);
     }
     {
         c.mutex.lock();
