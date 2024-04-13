@@ -1,10 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
-const game = @import("../../../game.zig");
-const chunk = @import("../../../chunk.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "BlockMeshingSystem", ecs.PreUpdate, @constCast(&s));
@@ -37,3 +30,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         }
     }
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
+const game = @import("../../../game.zig");
+const chunk = @import("../../../block/block.zig").chunk;

@@ -1,18 +1,3 @@
-const std = @import("std");
-const glfw = @import("zglfw");
-const zm = @import("zmath");
-const zgui = @import("zgui");
-const zmesh = @import("zmesh");
-const blecs = @import("blecs/blecs.zig");
-const data = @import("data/data.zig");
-const gfx = @import("gfx/gfx.zig");
-const block = @import("block.zig");
-const script = @import("script/script.zig");
-const chunk = @import("chunk.zig");
-const mob = @import("mob.zig");
-const thread = @import("thread/thread.zig");
-const gltf = zmesh.io.zcgltf;
-
 pub const max_world_name = 20;
 
 pub const Entities = struct {
@@ -289,3 +274,18 @@ pub const Game = struct {
         self.ui.data.chunk_buf = buf;
     }
 };
+
+const std = @import("std");
+const glfw = @import("zglfw");
+const zm = @import("zmath");
+const zgui = @import("zgui");
+const zmesh = @import("zmesh");
+const blecs = @import("blecs/blecs.zig");
+const data = @import("data/data.zig");
+const gfx = @import("gfx/gfx.zig");
+const script = @import("script/script.zig");
+const mob = @import("mob.zig");
+const thread = @import("thread/thread.zig");
+const gltf = zmesh.io.zcgltf;
+const block = @import("block/block.zig");
+const chunk = block.chunk;

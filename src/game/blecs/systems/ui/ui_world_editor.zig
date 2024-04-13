@@ -1,17 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zgui = @import("zgui");
-const glfw = @import("zglfw");
-const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
-const game = @import("../../../game.zig");
-const config = @import("../../../config.zig");
-const chunk = @import("../../../chunk.zig");
-const data = @import("../../../data/data.zig");
-const game_state = @import("../../../state.zig");
-const helpers = @import("ui_helpers.zig");
-const script = @import("../../../script/script.zig");
-
 const yOptions = enum {
     below,
     above,
@@ -466,3 +452,18 @@ fn saveChunkDatas() !void {
         }
     }
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zgui = @import("zgui");
+const glfw = @import("zglfw");
+const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
+const game = @import("../../../game.zig");
+const config = @import("../../../config.zig");
+const data = @import("../../../data/data.zig");
+const game_state = @import("../../../state.zig");
+const helpers = @import("ui_helpers.zig");
+const script = @import("../../../script/script.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;

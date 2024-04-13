@@ -1,14 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zgui = @import("zgui");
-const glfw = @import("zglfw");
-const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
-const game = @import("../../../game.zig");
-const screen_helpers = @import("../screen_helpers.zig");
-const chunk = @import("../../../chunk.zig");
-const config = @import("../../../config.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "UILightingControlsSystem", ecs.OnStore, @constCast(&s));
@@ -57,3 +46,15 @@ fn showLightingControls() !void {
         game.state.gfx.update_lighting();
     }
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zgui = @import("zgui");
+const glfw = @import("zglfw");
+const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
+const game = @import("../../../game.zig");
+const screen_helpers = @import("../screen_helpers.zig");
+const config = @import("../../../config.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;

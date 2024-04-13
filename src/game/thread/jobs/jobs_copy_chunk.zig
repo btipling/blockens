@@ -1,11 +1,3 @@
-const std = @import("std");
-const game = @import("../../game.zig");
-const chunk = @import("../../chunk.zig");
-const state = @import("../../state.zig");
-const blecs = @import("../../blecs/blecs.zig");
-const buffer = @import("../buffer.zig");
-const config = @import("config");
-
 pub const CopyChunkJob = struct {
     wp: chunk.worldPosition,
     entity: blecs.ecs.entity_t,
@@ -52,3 +44,12 @@ pub const CopyChunkJob = struct {
         buffer.write_message(msg) catch @panic("unable to write message");
     }
 };
+
+const std = @import("std");
+const game = @import("../../game.zig");
+const block = @import("../../block/block.zig");
+const chunk = block.chunk;
+const state = @import("../../state.zig");
+const blecs = @import("../../blecs/blecs.zig");
+const buffer = @import("../buffer.zig");
+const config = @import("config");

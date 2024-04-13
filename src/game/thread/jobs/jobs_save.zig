@@ -1,10 +1,3 @@
-const std = @import("std");
-const game = @import("../../game.zig");
-const chunk = @import("../../chunk.zig");
-const blecs = @import("../../blecs/blecs.zig");
-const data = @import("../../data/data.zig");
-const config = @import("config");
-
 const default_pos: @Vector(4, f32) = .{ 0, 0, 0, 0 };
 pub const PlayerPosition = struct {
     loc: @Vector(4, f32) = default_pos,
@@ -74,3 +67,11 @@ pub const SaveJob = struct {
         }
     }
 };
+
+const std = @import("std");
+const game = @import("../../game.zig");
+const blecs = @import("../../blecs/blecs.zig");
+const data = @import("../../data/data.zig");
+const config = @import("config");
+const block = @import("../../block/block.zig");
+const chunk = block.chunk;

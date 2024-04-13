@@ -1,11 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zm = @import("zmath");
-const components = @import("../../components/components.zig");
-const game = @import("../../../game.zig");
-const chunk = @import("../../../chunk.zig");
-const block = @import("../../../block.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "BlockPickingSystem", ecs.PreUpdate, @constCast(&s));
@@ -109,3 +101,11 @@ fn addBlock(world: *ecs.world_t, pos: @Vector(4, f32), new_block_id: u8) void {
     _ = ecs.set(world, cu_entity, components.block.ChunkUpdate, .{ .pos = pos, .block_id = new_block_id });
     return;
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zm = @import("zmath");
+const components = @import("../../components/components.zig");
+const game = @import("../../../game.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;

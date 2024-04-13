@@ -1,15 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zmesh = @import("zmesh");
-const gl = @import("zopengl").bindings;
-const ztracy = @import("ztracy");
-const config = @import("config");
-const tags = @import("../../tags.zig");
-const components = @import("../../components/components.zig");
-const game = @import("../../../game.zig");
-const chunk = @import("../../../chunk.zig");
-const gfx = @import("../../../gfx/gfx.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "GfxDrawSystem", ecs.OnStore, @constCast(&s));
@@ -135,3 +123,16 @@ fn gfxDraw(
         }
     }
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zmesh = @import("zmesh");
+const gl = @import("zopengl").bindings;
+const ztracy = @import("ztracy");
+const config = @import("config");
+const tags = @import("../../tags.zig");
+const components = @import("../../components/components.zig");
+const game = @import("../../../game.zig");
+const gfx = @import("../../../gfx/gfx.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;

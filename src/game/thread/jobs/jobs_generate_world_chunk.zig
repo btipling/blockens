@@ -1,10 +1,3 @@
-const std = @import("std");
-const game = @import("../../game.zig");
-const chunk = @import("../../chunk.zig");
-const blecs = @import("../../blecs/blecs.zig");
-const buffer = @import("../buffer.zig");
-const config = @import("config");
-
 pub const GenerateWorldChunkJob = struct {
     wp: chunk.worldPosition,
     script: []u8,
@@ -39,3 +32,11 @@ pub const GenerateWorldChunkJob = struct {
         buffer.write_message(msg) catch @panic("unable to write message");
     }
 };
+
+const std = @import("std");
+const game = @import("../../game.zig");
+const blecs = @import("../../blecs/blecs.zig");
+const buffer = @import("../buffer.zig");
+const config = @import("config");
+const block = @import("../../block/block.zig");
+const chunk = block.chunk;

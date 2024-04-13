@@ -1,17 +1,3 @@
-const std = @import("std");
-const zm = @import("zmath");
-const blecs = @import("../blecs/blecs.zig");
-const data = @import("../data/data.zig");
-const mob = @import("../mob.zig");
-const chunk = @import("../chunk.zig");
-
-pub const shadergen = @import("shadergen.zig");
-pub const buffer_data = @import("buffer_data.zig");
-pub const constants = @import("gfx_constants.zig");
-pub const mesh = @import("mesh.zig");
-pub const cltf = @import("cltf_mesh.zig");
-pub const gl = @import("gl.zig");
-
 var gfx: *Gfx = undefined;
 
 pub fn init(allocator: std.mem.Allocator) *Gfx {
@@ -165,3 +151,18 @@ pub const Gfx = struct {
         self.mob_data.deinit();
     }
 };
+
+pub const shadergen = @import("shadergen.zig");
+pub const buffer_data = @import("buffer_data.zig");
+pub const constants = @import("gfx_constants.zig");
+pub const mesh = @import("mesh.zig");
+pub const cltf = @import("cltf_mesh.zig");
+pub const gl = @import("gl.zig");
+
+const std = @import("std");
+const zm = @import("zmath");
+const blecs = @import("../blecs/blecs.zig");
+const data = @import("../data/data.zig");
+const mob = @import("../mob.zig");
+const block = @import("../block/block.zig");
+const chunk = block.chunk;

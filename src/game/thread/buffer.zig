@@ -1,8 +1,3 @@
-const std = @import("std");
-const chunk = @import("../chunk.zig");
-const state = @import("../state.zig");
-const blecs = @import("../blecs/blecs.zig");
-
 var id: u64 = 0;
 
 var ta: std.heap.ThreadSafeAllocator = undefined;
@@ -189,3 +184,9 @@ pub fn is_demo_chunk(msg: buffer_message) !bool {
     if (msg.type != .chunk_gen) return BufferErr.Invalid;
     return (msg.flags & demo_chunk_flag) != 0x0;
 }
+
+const std = @import("std");
+const state = @import("../state.zig");
+const blecs = @import("../blecs/blecs.zig");
+const block = @import("../block/block.zig");
+const chunk = block.chunk;

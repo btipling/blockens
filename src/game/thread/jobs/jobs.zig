@@ -1,19 +1,3 @@
-const std = @import("std");
-const zjobs = @import("zjobs");
-const chunk = @import("../../chunk.zig");
-const game = @import("../../game.zig");
-const state = @import("../../state.zig");
-const blecs = @import("../../blecs/blecs.zig");
-const chunk_meshing = @import("jobs_chunk_meshing.zig");
-const chunk_copy = @import("jobs_copy_chunk.zig");
-const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
-const generate_world_chunk = @import("jobs_generate_world_chunk.zig");
-const save_job = @import("jobs_save.zig");
-const lighting_job = @import("jobs_lighting.zig");
-const lighting_job_cross_chunk = @import("jobs_lighting_cross_chunk.zig");
-const buffer = @import("../buffer.zig");
-const game_config = @import("../../config.zig");
-
 const AllJobs = zjobs.JobQueue(.{});
 
 pub const Jobs = struct {
@@ -157,3 +141,20 @@ pub const Jobs = struct {
         }
     }
 };
+
+const std = @import("std");
+const zjobs = @import("zjobs");
+const game = @import("../../game.zig");
+const state = @import("../../state.zig");
+const blecs = @import("../../blecs/blecs.zig");
+const chunk_meshing = @import("jobs_chunk_meshing.zig");
+const chunk_copy = @import("jobs_copy_chunk.zig");
+const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
+const generate_world_chunk = @import("jobs_generate_world_chunk.zig");
+const save_job = @import("jobs_save.zig");
+const lighting_job = @import("jobs_lighting.zig");
+const lighting_job_cross_chunk = @import("jobs_lighting_cross_chunk.zig");
+const buffer = @import("../buffer.zig");
+const game_config = @import("../../config.zig");
+const block = @import("../../block/block.zig");
+const chunk = block.chunk;

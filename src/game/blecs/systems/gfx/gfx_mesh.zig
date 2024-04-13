@@ -1,17 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zmesh = @import("zmesh");
-const zm = @import("zmath");
-const gl = @import("zopengl").bindings;
-const ztracy = @import("ztracy");
-const config = @import("config");
-const tags = @import("../../tags.zig");
-const components = @import("../../components/components.zig");
-const game = @import("../../../game.zig");
-const mob = @import("../../../mob.zig");
-const chunk = @import("../../../chunk.zig");
-const gfx = @import("../../../gfx/gfx.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "GfxMeshSystem", ecs.PreStore, @constCast(&s));
@@ -256,8 +242,8 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             texture = gfx.gl.Gl.initTextureAtlasFromColors(d);
         }
     } else if (er.block_id != null and game.state.blocks.blocks.contains(er.block_id.?)) {
-        const block = game.state.blocks.blocks.get(er.block_id.?).?;
-        texture = gfx.gl.Gl.initTextureFromColors(block.data.texture);
+        const b = game.state.blocks.blocks.get(er.block_id.?).?;
+        texture = gfx.gl.Gl.initTextureFromColors(b.data.texture);
     }
     if (er.has_mob_texture) {
         const mesh_c: *const components.mob.Mesh = ecs.get(world, entity, components.mob.Mesh).?;
@@ -290,3 +276,18 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     builder.deinit();
     if (config.use_tracy) ztracy.Message("gfx mesh system is done");
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zmesh = @import("zmesh");
+const zm = @import("zmath");
+const gl = @import("zopengl").bindings;
+const ztracy = @import("ztracy");
+const config = @import("config");
+const tags = @import("../../tags.zig");
+const components = @import("../../components/components.zig");
+const game = @import("../../../game.zig");
+const mob = @import("../../../mob.zig");
+const gfx = @import("../../../gfx/gfx.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;

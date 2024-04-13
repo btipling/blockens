@@ -1,7 +1,3 @@
-const std = @import("std");
-const chunk = @import("chunk.zig");
-const data = @import("data/data.zig");
-
 var blocks: *Blocks = undefined;
 
 pub const Block = struct {
@@ -188,3 +184,8 @@ pub const Blocks = struct {
     settings_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
     selected_block: u8 = 4,
 };
+
+pub const chunk = @import("chunk.zig");
+
+const std = @import("std");
+const data = @import("../data/data.zig");

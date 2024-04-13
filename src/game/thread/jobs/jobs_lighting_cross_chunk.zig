@@ -1,13 +1,3 @@
-const std = @import("std");
-const game = @import("../../game.zig");
-const chunk = @import("../../chunk.zig");
-const block = @import("../../block.zig");
-const blecs = @import("../../blecs/blecs.zig");
-const data = @import("../../data/data.zig");
-const buffer = @import("../buffer.zig");
-const config = @import("config");
-const save_job = @import("jobs_save.zig");
-
 const air: u8 = 0;
 const max_trigger_depth: u8 = 3;
 
@@ -334,3 +324,13 @@ pub const LightingCrossChunkJob = struct {
         }
     }
 };
+
+const std = @import("std");
+const game = @import("../../game.zig");
+const blecs = @import("../../blecs/blecs.zig");
+const data = @import("../../data/data.zig");
+const buffer = @import("../buffer.zig");
+const config = @import("config");
+const save_job = @import("jobs_save.zig");
+const block = @import("../../block/block.zig");
+const chunk = block.chunk;

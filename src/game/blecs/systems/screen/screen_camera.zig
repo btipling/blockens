@@ -1,15 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zm = @import("zmath");
-const ztracy = @import("ztracy");
-const config = @import("config");
-const math = @import("../../../math/math.zig");
-const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
-const game = @import("../../../game.zig");
-const chunk = @import("../../../chunk.zig");
-const gfx = @import("../../../gfx/gfx.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "ScreenCameraSystem", ecs.OnStore, @constCast(&s));
@@ -274,3 +262,16 @@ fn cullChunks(camera_position: @Vector(4, f32), view: zm.Mat, perspective: zm.Ma
         }
     }
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zm = @import("zmath");
+const ztracy = @import("ztracy");
+const config = @import("config");
+const math = @import("../../../math/math.zig");
+const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
+const game = @import("../../../game.zig");
+const gfx = @import("../../../gfx/gfx.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;

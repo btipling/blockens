@@ -1,14 +1,3 @@
-const std = @import("std");
-const zm = @import("zmath");
-const ztracy = @import("ztracy");
-const config = @import("config");
-const chunk = @import("../../chunk.zig");
-const block = @import("../../block.zig");
-const game = @import("../../game.zig");
-const blecs = @import("../../blecs/blecs.zig");
-const buffer = @import("../buffer.zig");
-const gfx = @import("../../gfx/gfx.zig");
-
 pub const ChunkMeshJob = struct {
     chunk: *chunk.Chunk,
     entity: blecs.ecs.entity_t,
@@ -213,3 +202,14 @@ pub const ChunkMeshJob = struct {
         if (config.use_tracy) ztracy.Message("done with mesh job");
     }
 };
+
+const std = @import("std");
+const zm = @import("zmath");
+const ztracy = @import("ztracy");
+const config = @import("config");
+const game = @import("../../game.zig");
+const blecs = @import("../../blecs/blecs.zig");
+const buffer = @import("../buffer.zig");
+const gfx = @import("../../gfx/gfx.zig");
+const block = @import("../../block/block.zig");
+const chunk = block.chunk;

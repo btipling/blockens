@@ -1,13 +1,3 @@
-const std = @import("std");
-const zm = @import("zmath");
-const ztracy = @import("ztracy");
-const config = @import("config");
-const blecs = @import("blecs/blecs.zig");
-const gfx = @import("gfx/gfx.zig");
-const game = @import("game.zig");
-const block = @import("block.zig");
-const game_state = @import("state.zig");
-
 pub const chunkDim = 64;
 pub const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
 const drawSize = chunkDim * chunkDim;
@@ -858,3 +848,13 @@ pub const Chunker = struct {
         self.meshes.put(i, .{ 1, 1, 1, 1 }) catch @panic("OOM");
     }
 };
+
+const std = @import("std");
+const zm = @import("zmath");
+const ztracy = @import("ztracy");
+const config = @import("config");
+const blecs = @import("../blecs/blecs.zig");
+const gfx = @import("../gfx/gfx.zig");
+const game = @import("../game.zig");
+const block = @import("block.zig");
+const game_state = @import("../state.zig");

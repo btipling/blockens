@@ -1,16 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zm = @import("zmath");
-const math = @import("../../math/math.zig");
-const game = @import("../../game.zig");
-const config = @import("../../config.zig");
-const components = @import("../components/components.zig");
-const mob_entities = @import("entities_mob.zig");
-const helpers = @import("../helpers.zig");
-const chunk = @import("../../chunk.zig");
-const gfx = @import("../../gfx/gfx.zig");
-const data = @import("../../data/data.zig");
-
 pub var game_data: ecs.entity_t = undefined;
 pub var settings_data: ecs.entity_t = undefined;
 
@@ -623,3 +610,17 @@ pub fn initBlockHighlight() void {
     ecs.add(world, bhl_e, components.shape.NeedsSetup);
     game.state.entities.block_highlight = bhl_e;
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zm = @import("zmath");
+const math = @import("../../math/math.zig");
+const game = @import("../../game.zig");
+const config = @import("../../config.zig");
+const components = @import("../components/components.zig");
+const mob_entities = @import("entities_mob.zig");
+const helpers = @import("../helpers.zig");
+const gfx = @import("../../gfx/gfx.zig");
+const data = @import("../../data/data.zig");
+const block = @import("../../block/block.zig");
+const chunk = block.chunk;

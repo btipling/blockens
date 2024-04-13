@@ -1,11 +1,3 @@
-const std = @import("std");
-const game = @import("../game.zig");
-const blecs = @import("../blecs/blecs.zig");
-const chunk = @import("../chunk.zig");
-const buffer = @import("./buffer.zig");
-const helpers = @import("../blecs/helpers.zig");
-const ui_helpers = @import("../blecs/systems/ui/ui_helpers.zig");
-
 var handler: *Handler = undefined;
 
 const Handler = struct {};
@@ -183,3 +175,12 @@ fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entit
     blecs.ecs.add(world, chunk_entity, blecs.components.block.UseMultiDraw);
     return chunk_entity;
 }
+
+const std = @import("std");
+const game = @import("../game.zig");
+const blecs = @import("../blecs/blecs.zig");
+const block = @import("../block/block.zig");
+const chunk = block.chunk;
+const buffer = @import("./buffer.zig");
+const helpers = @import("../blecs/helpers.zig");
+const ui_helpers = @import("../blecs/systems/ui/ui_helpers.zig");

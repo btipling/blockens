@@ -1,12 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zm = @import("zmath");
-const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
-const game = @import("../../../game.zig");
-const chunk = @import("../../../chunk.zig");
-const game_mob = @import("../../../mob.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "MobFallingSystem", ecs.OnUpdate, @constCast(&s));
@@ -133,3 +124,13 @@ fn onGround(bbc: [3]f32, mob_loc: @Vector(4, f32)) bool {
     if (!res.read) return true;
     return res.data & 0x0F != 0;
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zm = @import("zmath");
+const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
+const game = @import("../../../game.zig");
+const game_mob = @import("../../../mob.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;

@@ -1,12 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zm = @import("zmath");
-const ztracy = @import("ztracy");
-const config = @import("config");
-const components = @import("../../components/components.zig");
-const game = @import("../../../game.zig");
-const chunk = @import("../../../chunk.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "BlockChunkUpdateSystem", ecs.PreUpdate, @constCast(&s));
@@ -100,3 +91,13 @@ fn updateChunk(
     ecs.delete(world, entity);
     return update_at;
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zm = @import("zmath");
+const ztracy = @import("ztracy");
+const config = @import("config");
+const components = @import("../../components/components.zig");
+const game = @import("../../../game.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;

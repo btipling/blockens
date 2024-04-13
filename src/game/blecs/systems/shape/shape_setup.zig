@@ -1,17 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zmesh = @import("zmesh");
-const zm = @import("zmath");
-const ztracy = @import("ztracy");
-const config = @import("config");
-const tags = @import("../../tags.zig");
-const game = @import("../../../game.zig");
-const chunk = @import("../../../chunk.zig");
-const game_mob = @import("../../../mob.zig");
-const math = @import("../../../math/math.zig");
-const gfx = @import("../../../gfx/gfx.zig");
-const components = @import("../../components/components.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "ShapeSetupSystem", ecs.PreStore, @constCast(&s));
@@ -411,3 +397,18 @@ const extractions = struct {
         return e;
     }
 };
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zmesh = @import("zmesh");
+const zm = @import("zmath");
+const ztracy = @import("ztracy");
+const config = @import("config");
+const tags = @import("../../tags.zig");
+const game = @import("../../../game.zig");
+const game_mob = @import("../../../mob.zig");
+const math = @import("../../../math/math.zig");
+const gfx = @import("../../../gfx/gfx.zig");
+const components = @import("../../components/components.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;

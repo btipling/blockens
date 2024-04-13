@@ -1,14 +1,3 @@
-const std = @import("std");
-const zgui = @import("zgui");
-const ecs = @import("zflecs");
-const config = @import("../../../config.zig");
-const data = @import("../../../data/data.zig");
-const game = @import("../../../game.zig");
-const entities = @import("../../entities/entities.zig");
-const game_state = @import("../../../state.zig");
-const chunk = @import("../../../chunk.zig");
-const script = @import("../../../script/script.zig");
-
 const ScriptOptionsParams = struct {
     w: f32 = 500.0,
     h: f32 = 900.0,
@@ -105,3 +94,15 @@ pub fn loadChunkDatas() !void {
         }
     }
 }
+
+const std = @import("std");
+const zgui = @import("zgui");
+const ecs = @import("zflecs");
+const config = @import("../../../config.zig");
+const data = @import("../../../data/data.zig");
+const game = @import("../../../game.zig");
+const entities = @import("../../entities/entities.zig");
+const game_state = @import("../../../state.zig");
+const script = @import("../../../script/script.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;

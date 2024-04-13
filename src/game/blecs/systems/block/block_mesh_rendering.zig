@@ -1,15 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zm = @import("zmath");
-const components = @import("../../components/components.zig");
-const helpers = @import("../../helpers.zig");
-const game = @import("../../../game.zig");
-const math = @import("../../../math/math.zig");
-const entities = @import("../../entities/entities.zig");
-const gfx = @import("../../../gfx/gfx.zig");
-const game_state = @import("../../../state.zig");
-const chunk = @import("../../../chunk.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "BlockMeshRenderingSystem", ecs.PreUpdate, @constCast(&s));
@@ -76,3 +64,16 @@ fn render_multidraw(world: *ecs.world_t, entity: ecs.entity_t, _: @Vector(4, f32
         did_debug = true;
     }
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zm = @import("zmath");
+const components = @import("../../components/components.zig");
+const helpers = @import("../../helpers.zig");
+const game = @import("../../../game.zig");
+const math = @import("../../../math/math.zig");
+const entities = @import("../../entities/entities.zig");
+const gfx = @import("../../../gfx/gfx.zig");
+const game_state = @import("../../../state.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;

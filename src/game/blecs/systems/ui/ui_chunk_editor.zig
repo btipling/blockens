@@ -1,17 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zgui = @import("zgui");
-const glfw = @import("zglfw");
-const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
-const game = @import("../../../game.zig");
-const data = @import("../../../data/data.zig");
-const state = @import("../../../state.zig");
-const chunk = @import("../../../chunk.zig");
-const script = @import("../../../script/script.zig");
-const helpers = @import("ui_helpers.zig");
-const screen_helpers = @import("../screen_helpers.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "UIChunkEditorSystem", ecs.OnStore, @constCast(&s));
@@ -250,3 +236,18 @@ fn deleteChunkScriptFunc() !void {
     try listChunkScripts();
     game.state.ui.data.chunk_loaded_script_id = 0;
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zgui = @import("zgui");
+const glfw = @import("zglfw");
+const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
+const game = @import("../../../game.zig");
+const data = @import("../../../data/data.zig");
+const state = @import("../../../state.zig");
+const script = @import("../../../script/script.zig");
+const helpers = @import("ui_helpers.zig");
+const screen_helpers = @import("../screen_helpers.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;

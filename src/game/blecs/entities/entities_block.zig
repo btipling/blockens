@@ -1,13 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const game = @import("../../game.zig");
-const gfx = @import("../../gfx/gfx.zig");
-const data = @import("../../data/data.zig");
-const block = @import("../../block.zig");
-const components = @import("../components/components.zig");
-const helpers = @import("../helpers.zig");
-const entities_screen = @import("entities_screen.zig");
-
 pub var HasChunkRenderer: ecs.entity_t = 0;
 
 pub const MaxBlocks = 256;
@@ -76,3 +66,13 @@ pub fn loadTextureAtlas() void {
     if (game.state.ui.data.texture_atlas_rgba_data) |d| game.state.allocator.free(d);
     game.state.ui.data.texture_atlas_rgba_data = ta.toOwnedSlice() catch unreachable;
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const game = @import("../../game.zig");
+const gfx = @import("../../gfx/gfx.zig");
+const data = @import("../../data/data.zig");
+const block = @import("../../block/block.zig");
+const components = @import("../components/components.zig");
+const helpers = @import("../helpers.zig");
+const entities_screen = @import("entities_screen.zig");

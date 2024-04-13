@@ -1,9 +1,3 @@
-const std = @import("std");
-const ziglua = @import("ziglua");
-const data = @import("../data/data.zig");
-const state = @import("../state.zig");
-const chunk = @import("../chunk.zig");
-
 const Lua = ziglua.Lua;
 
 const ScriptError = error{
@@ -151,3 +145,10 @@ pub const Script = struct {
         return buf;
     }
 };
+
+const std = @import("std");
+const ziglua = @import("ziglua");
+const data = @import("../data/data.zig");
+const state = @import("../state.zig");
+const block = @import("../block/block.zig");
+const chunk = block.chunk;

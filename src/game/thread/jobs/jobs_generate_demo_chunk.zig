@@ -1,11 +1,3 @@
-const std = @import("std");
-const game = @import("../../game.zig");
-const script = @import("../../script/script.zig");
-const buffer = @import("../buffer.zig");
-const chunk = @import("../../chunk.zig");
-const block = @import("../../block.zig");
-const config = @import("config");
-
 pub const GenerateDemoChunkJob = struct {
     pub fn exec(self: *@This()) void {
         if (config.use_tracy) {
@@ -43,3 +35,11 @@ pub const GenerateDemoChunkJob = struct {
         buffer.write_message(msg) catch @panic("unable to write message");
     }
 };
+
+const std = @import("std");
+const game = @import("../../game.zig");
+const script = @import("../../script/script.zig");
+const buffer = @import("../buffer.zig");
+const config = @import("config");
+const block = @import("../../block/block.zig");
+const chunk = block.chunk;
