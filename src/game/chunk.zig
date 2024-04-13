@@ -5,12 +5,15 @@ const config = @import("config");
 const blecs = @import("blecs/blecs.zig");
 const gfx = @import("gfx/gfx.zig");
 const game = @import("game.zig");
+const block = @import("block.zig");
 const game_state = @import("state.zig");
 
 pub const chunkDim = 64;
 pub const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
 const drawSize = chunkDim * chunkDim;
 const minVoxelsInMesh = 1;
+
+const air: u8 = 0;
 
 pub const worldPosition = struct {
     x: u32,
@@ -77,6 +80,7 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
     const chunk_local_pos = chunkPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
     // Get chunk from chunk state map:
+    var bd: block.BlockData = undefined;
     var c = game.state.blocks.game_chunks.get(wp) orelse {
         // Chunk not previously generated, but maybe we already updated it before generating:
         var ch_cfg: game_state.chunkConfig = game.state.ui.data.world_chunk_table_data.get(wp) orelse {
@@ -92,12 +96,71 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
             game.state.ui.data.world_chunk_table_data.put(wp, new_ch_cfg) catch @panic("OOM");
             return wp;
         };
+        bd = block.BlockData.fromId(block_id);
+        // no chunk, assume fully lit chunk.
+        bd.setFullAmbiance(block.BlockLighingLevel.full);
+        // TODO: need to check surrounding lighting
         // Was previously updated, but not generated, just update the table.
-        ch_cfg.chunkData[chunk_index] = block_id;
+        ch_cfg.chunkData[chunk_index] = bd.toId();
         return wp;
     };
-    c.setDataAt(chunk_index, block_id);
+
+    bd = block.BlockData.fromId(c.data[chunk_index]);
+    bd.block_id = block_id;
+    set_edited_block_lighting(c.data, &bd, chunk_index);
+    c.setDataAt(chunk_index, bd.toId());
     return wp;
+}
+
+pub fn lightCheckDimensional(c_data: []u32, ci: usize, bd: *block.BlockData, s: block.BlockSurface) void {
+    const c_bd: block.BlockData = block.BlockData.fromId((c_data[ci]));
+    if (c_bd.block_id != air) return;
+    const c_ll = c_bd.getFullAmbiance();
+    const ll = bd.getSurfaceAmbience(s);
+    if (c_ll.isBrighterThan(ll)) bd.setAmbient(s, c_ll);
+}
+
+pub fn set_edited_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize) void {
+    const pos = getPositionAtIndexV(ci);
+    x_pos: {
+        const x = pos[0] + 1;
+        if (x >= chunkDim) break :x_pos;
+        const c_ci = getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
+        if (c_ci >= chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
+        lightCheckDimensional(c_data, c_ci, bd, .right);
+    }
+    x_neg: {
+        const x = pos[0] - 1;
+        if (x < 0) break :x_neg;
+        const c_ci = getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
+        lightCheckDimensional(c_data, c_ci, bd, .left);
+    }
+    y_pos: {
+        const y = pos[1] + 1;
+        if (y >= chunkDim) break :y_pos;
+        const c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+        if (c_ci >= chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
+        lightCheckDimensional(c_data, c_ci, bd, .top);
+    }
+    y_neg: {
+        const y = pos[1] - 1;
+        if (y < 0) break :y_neg;
+        const c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+        lightCheckDimensional(c_data, c_ci, bd, .bottom);
+    }
+    z_pos: {
+        const z = pos[2] + 1;
+        if (z >= chunkDim) break :z_pos;
+        const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
+        if (c_ci >= chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
+        lightCheckDimensional(c_data, c_ci, bd, .back);
+    }
+    z_neg: {
+        const z = pos[2] - 1;
+        if (z < 0) break :z_neg;
+        const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
+        lightCheckDimensional(c_data, c_ci, bd, .front);
+    }
 }
 
 pub fn positionFromWorldLocation(loc: @Vector(4, f32)) @Vector(4, f32) {
