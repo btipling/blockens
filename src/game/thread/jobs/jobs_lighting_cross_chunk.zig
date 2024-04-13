@@ -112,6 +112,134 @@ pub const LightingCrossChunkJob = struct {
         buffer.write_message(msg) catch @panic("unable to write message");
     }
 
+    fn lightFall(self: *LightingCrossChunkJob, c_data: []u32, ci: usize, ll: block.BlockLighingLevel) void {
+        if (ll == .none) return;
+        const pos = chunk.getPositionAtIndexV(ci);
+        x_pos: {
+            const x = pos[0] + 1;
+            if (x >= chunk.chunkDim) break :x_pos;
+            const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
+            if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
+            var bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
+            if (bd.block_id == air) {
+                const bd_ll = bd.getFullAmbiance();
+                if (ll.isBrighterThan(bd_ll) and ll != bd_ll) {
+                    bd.setFullAmbiance(ll.getNextDarker());
+                    c_data[c_ci] = bd.toId();
+                    self.lightFall(c_data, c_ci, bd.getFullAmbiance());
+                }
+                break :x_pos;
+            }
+            const s_b = bd.getSurfaceAmbience(.left);
+            if (ll.isBrighterThan(s_b) and ll != s_b) {
+                bd.setAmbient(.left, ll);
+                c_data[c_ci] = bd.toId();
+            }
+        }
+        x_neg: {
+            const x = pos[0] - 1;
+            if (x < 0) break :x_neg;
+            const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
+            var bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
+            if (bd.block_id == air) {
+                const bd_ll = bd.getFullAmbiance();
+                if (ll.isBrighterThan(bd_ll) and ll != bd_ll) {
+                    bd.setFullAmbiance(ll.getNextDarker());
+                    c_data[c_ci] = bd.toId();
+                    self.lightFall(c_data, c_ci, bd.getFullAmbiance());
+                }
+                break :x_neg;
+            }
+            const s_b = bd.getSurfaceAmbience(.right);
+            if (ll.isBrighterThan(s_b) and ll != s_b) {
+                bd.setAmbient(.right, ll);
+                c_data[c_ci] = bd.toId();
+            }
+        }
+        y_pos: {
+            const y = pos[1] + 1;
+            if (y >= chunk.chunkDim) break :y_pos;
+            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+            if (c_ci >= chunk.chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
+            var bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
+            if (bd.block_id == air) {
+                const bd_ll = bd.getFullAmbiance();
+                if (ll.isBrighterThan(bd_ll) and ll != bd_ll) {
+                    bd.setFullAmbiance(ll.getNextDarker());
+                    c_data[c_ci] = bd.toId();
+                    self.lightFall(c_data, c_ci, bd.getFullAmbiance());
+                }
+                break :y_pos;
+            }
+            const s_b = bd.getSurfaceAmbience(.bottom);
+            if (ll.isBrighterThan(s_b) and ll != s_b) {
+                bd.setAmbient(.bottom, ll);
+                c_data[c_ci] = bd.toId();
+            }
+        }
+        y_neg: {
+            const y = pos[1] - 1;
+            if (y < 0) break :y_neg;
+            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+            var bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
+            if (bd.block_id == air) {
+                const bd_ll = bd.getFullAmbiance();
+                if (ll.isBrighterThan(bd_ll) and ll != bd_ll) {
+                    bd.setFullAmbiance(ll.getNextDarker());
+                    c_data[c_ci] = bd.toId();
+                    self.lightFall(c_data, c_ci, bd.getFullAmbiance());
+                }
+                break :y_neg;
+            }
+            const s_b = bd.getSurfaceAmbience(.top);
+            if (ll.isBrighterThan(s_b) and ll != s_b) {
+                bd.setAmbient(.top, ll);
+                c_data[c_ci] = bd.toId();
+            }
+        }
+        z_pos: {
+            const z = pos[2] + 1;
+            if (z >= chunk.chunkDim) break :z_pos;
+            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
+            if (c_ci >= chunk.chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
+            var bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
+            if (bd.block_id == air) {
+                const bd_ll = bd.getFullAmbiance();
+                if (ll.isBrighterThan(bd_ll) and ll != bd_ll) {
+                    bd.setFullAmbiance(ll.getNextDarker());
+                    c_data[c_ci] = bd.toId();
+                    self.lightFall(c_data, c_ci, bd.getFullAmbiance());
+                }
+                break :z_pos;
+            }
+            const s_b = bd.getSurfaceAmbience(.front);
+            if (ll.isBrighterThan(s_b) and ll != s_b) {
+                bd.setAmbient(.front, ll);
+                c_data[c_ci] = bd.toId();
+            }
+        }
+        z_neg: {
+            const z = pos[2] - 1;
+            if (z < 0) break :z_neg;
+            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
+            var bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
+            if (bd.block_id == air) {
+                const bd_ll = bd.getFullAmbiance();
+                if (ll.isBrighterThan(bd_ll) and ll != bd_ll) {
+                    bd.setFullAmbiance(ll.getNextDarker());
+                    c_data[c_ci] = bd.toId();
+                    self.lightFall(c_data, c_ci, bd.getFullAmbiance());
+                }
+                break :z_neg;
+            }
+            const s_b = bd.getSurfaceAmbience(.back);
+            if (ll.isBrighterThan(s_b) and ll != s_b) {
+                bd.setAmbient(.back, ll);
+                c_data[c_ci] = bd.toId();
+            }
+        }
+    }
+
     fn fixCrossChunkLighting(self: *LightingCrossChunkJob, wp: chunk.worldPosition, c_data: []u32) void {
         {
             std.debug.print("fixing cross chunk lighting front\n", .{});
@@ -149,12 +277,11 @@ pub const LightingCrossChunkJob = struct {
                         if (c_am == f_am) continue; // isBrighterThan returns true when values are equal
                         if (c_am.isBrighterThan(f_am) and f_am == c_am.getNextDarker()) continue;
                         if (f_am.isBrighterThan(c_am) and c_am == f_am.getNextDarker()) continue;
-                        if (c_am.isBrighterThan(f_am)) {
-                            f_bd.setFullAmbiance(c_am.getNextDarker());
-                            continue;
-                        }
+                        // Only working on this chunk, other chunk will update from this chunk separately.
+                        if (c_am.isBrighterThan(f_am)) continue;
                         c_bd.setFullAmbiance(f_am.getNextDarker());
                         c_data[c_i] = c_bd.toId();
+                        self.lightFall(c_data, c_i, c_bd.getFullAmbiance());
                         continue;
                     }
                     if (c_bd.block_id == air) {
@@ -210,12 +337,10 @@ pub const LightingCrossChunkJob = struct {
                         if (c_am == b_am) continue; // isBrighterThan returns true when values are equal
                         if (c_am.isBrighterThan(b_am) and b_am == c_am.getNextDarker()) continue;
                         if (b_am.isBrighterThan(c_am) and c_am == b_am.getNextDarker()) continue;
-                        if (c_am.isBrighterThan(b_am)) {
-                            b_bd.setFullAmbiance(c_am.getNextDarker());
-                            continue;
-                        }
+                        if (c_am.isBrighterThan(b_am)) continue; // b_am will have to update itself separateley.
                         c_bd.setFullAmbiance(b_am.getNextDarker());
                         c_data[c_i] = c_bd.toId();
+                        self.lightFall(c_data, c_i, c_bd.getFullAmbiance());
                         continue;
                     }
                     if (c_bd.block_id == air) {
@@ -271,12 +396,10 @@ pub const LightingCrossChunkJob = struct {
                         if (c_am == l_am) continue;
                         if (c_am.isBrighterThan(l_am) and l_am == c_am.getNextDarker()) continue;
                         if (l_am.isBrighterThan(c_am) and c_am == l_am.getNextDarker()) continue;
-                        if (c_am.isBrighterThan(l_am)) {
-                            l_bd.setFullAmbiance(c_am.getNextDarker());
-                            continue;
-                        }
+                        if (c_am.isBrighterThan(l_am)) continue; // other chunk will update itself separately.
                         c_bd.setFullAmbiance(l_am.getNextDarker());
                         c_data[c_i] = c_bd.toId();
+                        self.lightFall(c_data, c_i, c_bd.getFullAmbiance());
                         continue;
                     }
                     if (c_bd.block_id == air) {
@@ -334,12 +457,10 @@ pub const LightingCrossChunkJob = struct {
                         if (c_am == r_am) continue; // isBrighterThan returns true when values are equal
                         if (c_am.isBrighterThan(r_am) and r_am == c_am.getNextDarker()) continue;
                         if (r_am.isBrighterThan(c_am) and c_am == r_am.getNextDarker()) continue;
-                        if (c_am.isBrighterThan(r_am)) {
-                            r_bd.setFullAmbiance(c_am.getNextDarker());
-                            continue;
-                        }
+                        if (c_am.isBrighterThan(r_am)) continue; // other chunk will update itself separately.
                         c_bd.setFullAmbiance(r_am.getNextDarker());
                         c_data[c_i] = c_bd.toId();
+                        self.lightFall(c_data, c_i, c_bd.getFullAmbiance());
                         continue;
                     }
                     if (c_bd.block_id == air) {
