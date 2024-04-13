@@ -104,12 +104,40 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
         ch_cfg.chunkData[chunk_index] = bd.toId();
         return wp;
     };
+    const c_data = game.state.allocator.alloc(u32, chunkSize) catch @panic("OOM");
+    defer game.state.allocator.free(c_data);
+    {
+        c.mutex.lock();
+        defer c.mutex.unlock();
+        c.data[chunk_index] = bd.toId();
+        c.updated = true;
+        @memcpy(c_data, c.data);
+    }
 
-    bd = block.BlockData.fromId(c.data[chunk_index]);
+    bd = block.BlockData.fromId(c_data[chunk_index]);
     bd.block_id = block_id;
-    set_edited_block_lighting(c.data, &bd, chunk_index);
-    c.setDataAt(chunk_index, bd.toId());
+    if (block_id == air) {
+        set_removed_block_lighting(c_data, &bd, chunk_index);
+    } else {
+        set_edited_block_lighting(c_data, &bd, chunk_index);
+    }
+    {
+        c.mutex.lock();
+        defer c.mutex.unlock();
+        c_data[chunk_index] = bd.toId();
+        @memcpy(c.data, c_data);
+        c.updated = true;
+    }
     return wp;
+}
+
+pub fn lightCheckDimensionalAir(c_data: []u32, ci: usize, bd: *block.BlockData, heading_down: bool) void {
+    const c_bd: block.BlockData = block.BlockData.fromId((c_data[ci]));
+    if (c_bd.block_id != air) return;
+    var c_ll = c_bd.getFullAmbiance();
+    if (!heading_down) c_ll = c_ll.getNextDarker();
+    const ll = bd.getFullAmbiance();
+    if (c_ll.isBrighterThan(ll)) bd.setFullAmbiance(c_ll);
 }
 
 pub fn lightCheckDimensional(c_data: []u32, ci: usize, bd: *block.BlockData, s: block.BlockSurface) void {
@@ -118,6 +146,112 @@ pub fn lightCheckDimensional(c_data: []u32, ci: usize, bd: *block.BlockData, s: 
     const c_ll = c_bd.getFullAmbiance();
     const ll = bd.getSurfaceAmbience(s);
     if (c_ll.isBrighterThan(ll)) bd.setAmbient(s, c_ll);
+}
+
+pub fn lightCheckAdjacent(c_data: []u32, ci: usize, bd: *block.BlockData, s: block.BlockSurface) void {
+    var c_bd: block.BlockData = block.BlockData.fromId((c_data[ci]));
+    var ll = bd.getFullAmbiance();
+    const c_ll = c_bd.getSurfaceAmbience(s);
+    if (c_bd.block_id == air) {
+        if (s == .top) {
+            // If the light is heading down keep the same light level.
+        } else {
+            ll = ll.getNextDarker();
+        }
+        if (ll.isBrighterThan(c_bd.getFullAmbiance())) {
+            c_bd.setFullAmbiance(ll);
+            c_data[ci] = c_bd.toId();
+        }
+        return;
+    }
+    if (ll.isBrighterThan(c_ll)) {
+        c_bd.setAmbient(s, ll);
+        c_data[ci] = c_bd.toId();
+    }
+}
+
+pub fn set_removed_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize) void {
+    const pos = getPositionAtIndexV(ci);
+    // Get brightest light from all 6 directions.
+    x_pos: {
+        const x = pos[0] + 1;
+        if (x >= chunkDim) break :x_pos;
+        const c_ci = getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
+        if (c_ci >= chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
+        lightCheckDimensionalAir(c_data, c_ci, bd, false);
+    }
+    x_neg: {
+        const x = pos[0] - 1;
+        if (x < 0) break :x_neg;
+        const c_ci = getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
+        lightCheckDimensionalAir(c_data, c_ci, bd, false);
+    }
+    y_pos: {
+        const y = pos[1] + 1;
+        if (y >= chunkDim) break :y_pos;
+        const c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+        if (c_ci >= chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
+        lightCheckDimensionalAir(c_data, c_ci, bd, true);
+    }
+    y_neg: {
+        const y = pos[1] - 1;
+        if (y < 0) break :y_neg;
+        const c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+        lightCheckDimensionalAir(c_data, c_ci, bd, false);
+    }
+    z_pos: {
+        const z = pos[2] + 1;
+        if (z >= chunkDim) break :z_pos;
+        const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
+        if (c_ci >= chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
+        lightCheckDimensionalAir(c_data, c_ci, bd, false);
+    }
+    z_neg: {
+        const z = pos[2] - 1;
+        if (z < 0) break :z_neg;
+        const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
+        lightCheckDimensionalAir(c_data, c_ci, bd, false);
+    }
+    // Set the surface of the six adjacent surfaces if needed
+    x_pos: {
+        const x = pos[0] + 1;
+        if (x >= chunkDim) break :x_pos;
+        const c_ci = getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
+        if (c_ci >= chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
+        lightCheckAdjacent(c_data, c_ci, bd, .left);
+    }
+    x_neg: {
+        const x = pos[0] - 1;
+        if (x < 0) break :x_neg;
+        const c_ci = getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
+        lightCheckAdjacent(c_data, c_ci, bd, .right);
+    }
+    y_pos: {
+        const y = pos[1] + 1;
+        if (y >= chunkDim) break :y_pos;
+        const c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+        if (c_ci >= chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
+        lightCheckAdjacent(c_data, c_ci, bd, .bottom);
+    }
+    y_neg: {
+        const y = pos[1] - 1;
+        if (y < 0) break :y_neg;
+        const c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+        lightCheckAdjacent(c_data, c_ci, bd, .top);
+    }
+    z_pos: {
+        const z = pos[2] + 1;
+        if (z >= chunkDim) break :z_pos;
+        const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
+        if (c_ci >= chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
+        lightCheckAdjacent(c_data, c_ci, bd, .front);
+    }
+    z_neg: {
+        const z = pos[2] - 1;
+        if (z < 0) break :z_neg;
+        const c_ci = getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
+        lightCheckAdjacent(c_data, c_ci, bd, .back);
+    }
 }
 
 pub fn set_edited_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize) void {
@@ -249,13 +383,6 @@ pub const Chunk = struct {
             0,
         );
         _ = game.state.jobs.meshChunk(world, render_entity, self);
-    }
-
-    pub fn setDataAt(self: *Chunk, i: usize, v: u32) void {
-        self.mutex.lock();
-        defer self.mutex.unlock();
-        self.data[i] = v;
-        self.updated = true;
     }
 
     pub fn deinit(self: *Chunk) void {
