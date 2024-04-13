@@ -147,7 +147,6 @@ pub fn set_removed_block_lighting(c_data: []u32, ci: usize) void {
             if (c_bd.block_id != air) break :y_pos;
             const c_ll = c_bd.getFullAmbiance();
             if (c_ll != .full) {
-                std.debug.print("removed block light above wasn't full light {d}\n", .{y});
                 break :y_pos;
             }
         }
@@ -213,17 +212,11 @@ pub fn set_removed_block_lighting(c_data: []u32, ci: usize) void {
         std.debug.print("unreachable.\n", .{});
         return;
     }
-    std.debug.print("removed block is propagating \n", .{});
     set_propagated_lighting(c_data, ci);
 }
 
 pub fn set_added_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize) void {
     const pos = getPositionAtIndexV(ci);
-    std.debug.print("adding block {d} {d} {d}\n", .{
-        pos[0],
-        pos[1],
-        pos[2],
-    });
     // set added block surfaces first
     set_surfaces_from_ambient(c_data, bd, ci);
 
@@ -238,7 +231,6 @@ pub fn set_added_block_lighting(c_data: []u32, bd: *block.BlockData, ci: usize) 
         }
         c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
         const c_ll: block.BlockLighingLevel = get_ambience_from_adjecent(c_data, c_ci, ci);
-        std.debug.print("setting the darkness to {}\n", .{c_ll});
         while (y >= 0) : (y -= 1) {
             // let the darkness fall
             c_ci = getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
@@ -434,12 +426,6 @@ pub fn set_propagated_lighting_neg(c_data: []u32, ci: usize, distance: u8) void 
         } else {
             ll = .full;
         }
-        std.debug.print("propagating the light neg {} {d} {d} {d}\n", .{
-            ll,
-            pos[0],
-            pos[1],
-            pos[2],
-        });
         // if air set full ambience and if changed propagate changes to adjacent and down
         bd.setFullAmbiance(ll);
         c_data[ci] = bd.toId();
@@ -478,12 +464,6 @@ pub fn set_propagated_lighting_pos(c_data: []u32, ci: usize, distance: u8) void 
         } else {
             ll = .full;
         }
-        std.debug.print("propagating the light pos {} {d} {d} {d}\n", .{
-            ll,
-            pos[0],
-            pos[1],
-            pos[2],
-        });
         // if air set full ambience and if changed propagate changes to adjacent and down
         bd.setFullAmbiance(ll);
         c_data[ci] = bd.toId();
