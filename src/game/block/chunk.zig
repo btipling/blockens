@@ -61,6 +61,7 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
         .pos = c.wp.vecFromWorldPosition(),
         .fetcher = .{},
     };
+    defer l.deinit();
     l.datas[0] = .{
         .wp = c.wp,
         .data = c_data,

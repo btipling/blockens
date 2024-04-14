@@ -8,7 +8,6 @@ pub const data_fetcher = struct {
         const c: *chunk.Chunk = game.state.blocks.game_chunks.get(wp) orelse return null;
 
         const c_data = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-        defer game.state.allocator.free(c_data);
         {
             c.mutex.lock();
             defer c.mutex.unlock();
@@ -34,8 +33,18 @@ fetcher: data_fetcher,
 datas: [7]datas = undefined,
 num_extra_datas: u8 = 0,
 
+pub fn deinit(self: Lighting) void {
+    var i: usize = 1;
+    while (i < self.num_extra_datas + 1) : (i += 1) {
+        const d = self.datas[i];
+        if (d.data) |cd| game.state.allocator.free(cd);
+    }
+}
+
 pub fn get_datas(self: *Lighting, wp: chunk.worldPosition) ?[]u32 {
-    for (self.datas) |d| {
+    var i: usize = 0;
+    while (i < self.num_extra_datas + 1) : (i += 1) {
+        const d = self.datas[i];
         if (d.wp.equal(wp)) {
             if (d.fetchable) return d.data;
             return null;
@@ -51,7 +60,7 @@ pub fn get_datas(self: *Lighting, wp: chunk.worldPosition) ?[]u32 {
         return null;
     };
 
-    self.datas[self.num_extra_datas] = d;
+    self.datas[self.num_extra_datas + 1] = d;
     self.num_extra_datas += 1;
     return d.data;
 }
@@ -78,14 +87,16 @@ pub fn set_removed_block_lighting(self: *Lighting, ci: usize) void {
                 break :y_pos;
             }
         }
-        // if (self.pos[1] == 1) {
-        //     _y += chunk.chunkDim;
-        // }
+        if (self.pos[1] == 1) {
+            _y += chunk.chunkDim;
+        }
         while (_y >= 0) : (_y -= 1) {
             const y = @mod(_y, chunk.chunkDim);
+            var wp = self.wp;
+            if (y != _y) wp = wp.getBelowWP();
             // let the light fall
             c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-            var data = self.get_datas(self.wp) orelse return;
+            var data = self.get_datas(wp) orelse return;
             c_bd = block.BlockData.fromId(data[c_ci]);
             if (c_bd.block_id != air) {
                 // reached the surface
