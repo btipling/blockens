@@ -1,8 +1,3 @@
-const ecs = @import("zflecs");
-const zm = @import("zmath");
-const math = @import("../../math/math.zig");
-const game = @import("../../game.zig");
-
 pub const Shape = struct {
     shape_type: ShapeType = .plane,
     pub const ShapeType = enum {
@@ -87,3 +82,8 @@ pub fn init() void {
 
     ecs.COMPONENT(world, Position);
 }
+
+const ecs = @import("zflecs");
+const zm = @import("zmath");
+const math = @import("../../math/math.zig");
+const game = @import("../../game.zig");

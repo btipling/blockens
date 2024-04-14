@@ -1,10 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const gl = @import("zopengl").bindings;
-const zm = @import("zmath");
-const math = @import("../../math/math.zig");
-const game = @import("../../game.zig");
-
 pub const BaseRenderer = struct {
     clear: gl.Bitfield = 0,
     bgColor: math.vecs.Vflx4 = undefined,
@@ -62,3 +55,10 @@ pub fn init() void {
     ecs.TAG(world, Wireframe);
     ecs.TAG(world, IsPreviousRenderer);
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const gl = @import("zopengl").bindings;
+const zm = @import("zmath");
+const math = @import("../../math/math.zig");
+const game = @import("../../game.zig");

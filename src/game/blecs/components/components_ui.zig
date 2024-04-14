@@ -26,5 +26,5 @@ pub fn init() void {
     ecs.TAG(world, DemoCharacter);
     ecs.TAG(world, GameChunksInfo);
     ecs.TAG(world, GameMobInfo);
-    ecs.TAG(game.state.world, LightingControls);
+    ecs.TAG(world, LightingControls);
 }

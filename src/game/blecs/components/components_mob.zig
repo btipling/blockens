@@ -1,7 +1,3 @@
-const ecs = @import("zflecs");
-const game = @import("../../game.zig");
-const math = @import("../../math/math.zig");
-
 pub const Mob = struct {
     mob_id: i32 = 0,
     data_entity: ecs.entity_t,
@@ -72,3 +68,7 @@ pub fn init() void {
     ecs.COMPONENT(world, AddAction);
     ecs.TAG(world, RemoveAction);
 }
+
+const ecs = @import("zflecs");
+const game = @import("../../game.zig");
+const math = @import("../../math/math.zig");

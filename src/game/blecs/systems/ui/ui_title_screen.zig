@@ -1,13 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zgui = @import("zgui");
-const components = @import("../../components/components.zig");
-const game = @import("../../../game.zig");
-const game_state = @import("../../../state.zig");
-const screen_helpers = @import("../screen_helpers.zig");
-const helpers = @import("ui_helpers.zig");
-const config = @import("../../../config.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "UITitleScreenSystem", ecs.OnStore, @constCast(&s));
@@ -94,10 +84,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     .h = 100,
                 })) {
                     if (game.state.ui.data.world_loaded_id == 0) game.state.ui.data.world_loaded_id = default_world;
-                    screen_helpers.showGameScreen();
                     const loadedGame = game.state.ui.data.world_chunk_table_data.count() > 0;
                     if (!loadedGame) {
+                        screen_helpers.showLoadingScreen();
                         _ = game.state.jobs.lighting(game.state.ui.data.world_loaded_id);
+                    } else {
+                        screen_helpers.showGameScreen();
                     }
                 }
                 centerNext(ww);
@@ -126,3 +118,13 @@ fn centerNext(ww: f32) void {
         .spacing = 20,
     });
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zgui = @import("zgui");
+const components = @import("../../components/components.zig");
+const game = @import("../../../game.zig");
+const game_state = @import("../../../state.zig");
+const screen_helpers = @import("../screen_helpers.zig");
+const helpers = @import("ui_helpers.zig");
+const config = @import("../../../config.zig");

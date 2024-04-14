@@ -1,7 +1,3 @@
-const std = @import("std");
-const blecs = @import("../blecs.zig");
-const game = @import("../../game.zig");
-
 pub fn showBlockTextureGen() void {
     showSettingsScreen(blecs.components.screen.TextureGen);
 }
@@ -24,6 +20,10 @@ pub fn showWorldEditor() void {
 
 pub fn showTitleScreen() void {
     showSettingsScreen(blecs.components.screen.TitleScreen);
+}
+
+pub fn showLoadingScreen() void {
+    showSettingsScreen(blecs.components.screen.LoadingScreen);
 }
 
 pub fn toggleScreens() void {
@@ -128,3 +128,7 @@ pub fn toggleWireframe(entity: blecs.ecs.entity_t) void {
     }
     blecs.ecs.add(game.state.world, entity, blecs.components.gfx.Wireframe);
 }
+
+const std = @import("std");
+const blecs = @import("../blecs.zig");
+const game = @import("../../game.zig");

@@ -139,6 +139,7 @@ fn handle_lighting_cross_chunk(msg: buffer.buffer_message) void {
     ui_helpers.loadChunkDatas() catch @panic("unable to load chunk datas");
     ui_helpers.loadChunksInWorld();
     ui_helpers.loadCharacterInWorld();
+    screen_helpers.showGameScreen();
 }
 
 fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entity_t {
@@ -184,3 +185,4 @@ const chunk = block.chunk;
 const buffer = @import("./buffer.zig");
 const helpers = @import("../blecs/helpers.zig");
 const ui_helpers = @import("../blecs/systems/ui/ui_helpers.zig");
+const screen_helpers = @import("../blecs/systems/screen_helpers.zig");

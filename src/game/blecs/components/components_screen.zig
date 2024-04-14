@@ -1,7 +1,3 @@
-const ecs = @import("zflecs");
-const game = @import("../../game.zig");
-const math = @import("../../math/math.zig");
-
 pub const Mob = struct {
     mob_id: i32 = 0,
 };
@@ -77,41 +73,48 @@ pub const CharacterEditor = struct {};
 pub const WorldEditor = struct {};
 pub const TitleScreen = struct {};
 pub const LightingEditor = struct {};
+pub const LoadingScreen = struct {};
 
 pub fn init() void {
-    ecs.COMPONENT(game.state.world, Mob);
-    ecs.COMPONENT(game.state.world, Screen);
+    const world = game.state.world;
+    ecs.COMPONENT(world, Mob);
+    ecs.COMPONENT(world, Screen);
 
-    ecs.COMPONENT(game.state.world, Camera);
-    ecs.TAG(game.state.world, CurrentCamera);
-    ecs.COMPONENT(game.state.world, CameraPosition);
-    ecs.COMPONENT(game.state.world, CameraFront);
-    ecs.COMPONENT(game.state.world, CameraRotation);
-    ecs.COMPONENT(game.state.world, UpDirection);
+    ecs.COMPONENT(world, Camera);
+    ecs.TAG(world, CurrentCamera);
+    ecs.COMPONENT(world, CameraPosition);
+    ecs.COMPONENT(world, CameraFront);
+    ecs.COMPONENT(world, CameraRotation);
+    ecs.COMPONENT(world, UpDirection);
 
-    ecs.COMPONENT(game.state.world, Perspective);
+    ecs.COMPONENT(world, Perspective);
     // After perspective is applied translation:
-    ecs.COMPONENT(game.state.world, PostPerspective);
+    ecs.COMPONENT(world, PostPerspective);
     // Complete world changes:
-    ecs.COMPONENT(game.state.world, WorldTranslation);
-    ecs.COMPONENT(game.state.world, WorldRotation);
-    ecs.COMPONENT(game.state.world, WorldScale);
+    ecs.COMPONENT(world, WorldTranslation);
+    ecs.COMPONENT(world, WorldRotation);
+    ecs.COMPONENT(world, WorldScale);
     // Where a specific entity is in the world:
-    ecs.COMPONENT(game.state.world, WorldLocation);
+    ecs.COMPONENT(world, WorldLocation);
 
-    ecs.TAG(game.state.world, Data);
-    ecs.TAG(game.state.world, Game);
-    ecs.TAG(game.state.world, Data);
-    ecs.TAG(game.state.world, Cursor);
-    ecs.TAG(game.state.world, Settings);
-    ecs.TAG(game.state.world, Updated);
-    ecs.TAG(game.state.world, NeedsAnimation);
-    ecs.TAG(game.state.world, NeedsDemoChunk);
+    ecs.TAG(world, Data);
+    ecs.TAG(world, Game);
+    ecs.TAG(world, Data);
+    ecs.TAG(world, Cursor);
+    ecs.TAG(world, Settings);
+    ecs.TAG(world, Updated);
+    ecs.TAG(world, NeedsAnimation);
+    ecs.TAG(world, NeedsDemoChunk);
 
-    ecs.TAG(game.state.world, TextureGen);
-    ecs.TAG(game.state.world, BlockEditor);
-    ecs.TAG(game.state.world, ChunkEditor);
-    ecs.TAG(game.state.world, CharacterEditor);
-    ecs.TAG(game.state.world, WorldEditor);
-    ecs.TAG(game.state.world, TitleScreen);
+    ecs.TAG(world, TextureGen);
+    ecs.TAG(world, BlockEditor);
+    ecs.TAG(world, ChunkEditor);
+    ecs.TAG(world, CharacterEditor);
+    ecs.TAG(world, WorldEditor);
+    ecs.TAG(world, TitleScreen);
+    ecs.TAG(world, LoadingScreen);
 }
+
+const ecs = @import("zflecs");
+const game = @import("../../game.zig");
+const math = @import("../../math/math.zig");
