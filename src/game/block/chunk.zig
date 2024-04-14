@@ -57,8 +57,14 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
     bd.block_id = block_id;
     c_data[chunk_index] = bd.toId();
     var l = lighting{
-        .data = c_data,
         .wp = c.wp,
+        .pos = c.wp.vecFromWorldPosition(),
+        .fetcher = .{},
+    };
+    defer l.deinit();
+    l.datas[0] = .{
+        .wp = c.wp,
+        .data = c_data,
     };
     if (block_id == air) {
         l.set_removed_block_lighting(chunk_index);
@@ -70,6 +76,21 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
         defer c.mutex.unlock();
         @memcpy(c.data, c_data);
         c.updated = true;
+    }
+    var i: usize = 1;
+    while (i < l.num_extra_datas + 1) : (i += 1) {
+        const d = l.datas[i];
+        if (!d.fetchable) continue;
+        const c_c_data = d.data orelse continue;
+        const c_wp = d.wp;
+        var c_c: *Chunk = game.state.blocks.game_chunks.get(c_wp) orelse continue;
+        {
+            c_c.mutex.lock();
+            defer c_c.mutex.unlock();
+            @memcpy(c_c.data, c_c_data);
+            c_c.updated = true;
+        }
+        c_c.refreshRender(game.state.world);
     }
     return wp;
 }
