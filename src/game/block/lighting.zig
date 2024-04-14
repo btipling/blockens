@@ -4,7 +4,7 @@ const max_propagation_distance: u8 = 3;
 const Lighting = @This();
 
 pub const data_fetcher = struct {
-    pub fn fetch(wp: chunk.worldPosition) ?datas {
+    pub fn fetch(_: data_fetcher, wp: chunk.worldPosition) ?datas {
         const c: *chunk.Chunk = game.state.blocks.game_chunks.get(wp) orelse return null;
 
         const c_data = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
@@ -23,7 +23,7 @@ pub const data_fetcher = struct {
 
 pub const datas = struct {
     wp: chunk.worldPosition,
-    data: ?[]u32,
+    data: ?[]u32 = null,
     fetchable: bool = true,
 };
 
@@ -32,13 +32,28 @@ pos: @Vector(4, f32),
 propagated: [chunk.chunkSize]u1 = std.mem.zeroes([chunk.chunkSize]u1),
 fetcher: data_fetcher,
 datas: [7]datas = undefined,
-num_lightings: u8 = 0,
+num_extra_datas: u8 = 0,
 
-pub fn get_datas(self: Lighting, wp: chunk.worldPosition) ?[]u32 {
+pub fn get_datas(self: *Lighting, wp: chunk.worldPosition) ?[]u32 {
     for (self.datas) |d| {
-        if (d.wp.equal(wp)) return d.data;
+        if (d.wp.equal(wp)) {
+            if (d.fetchable) return d.data;
+            return null;
+        }
     }
-    return null;
+    const d = self.fetcher.fetch(wp) orelse {
+        const ed: datas = .{
+            .wp = wp,
+            .fetchable = false,
+        };
+        self.datas[self.num_extra_datas] = ed;
+        self.num_extra_datas += 1;
+        return null;
+    };
+
+    self.datas[self.num_extra_datas] = d;
+    self.num_extra_datas += 1;
+    return d.data;
 }
 
 pub fn set_removed_block_lighting(self: *Lighting, ci: usize) void {
@@ -63,7 +78,9 @@ pub fn set_removed_block_lighting(self: *Lighting, ci: usize) void {
                 break :y_pos;
             }
         }
-        // if (self.pos[1] == 1) _y += chunk.chunkDim;
+        // if (self.pos[1] == 1) {
+        //     _y += chunk.chunkDim;
+        // }
         while (_y >= 0) : (_y -= 1) {
             const y = @mod(_y, chunk.chunkDim);
             // let the light fall
@@ -209,7 +226,7 @@ pub fn set_added_block_lighting(self: *Lighting, bd: *block.BlockData, ci: usize
     }
 }
 
-pub fn set_surfaces_from_ambient(self: Lighting, bd: *block.BlockData, ci: usize) void {
+pub fn set_surfaces_from_ambient(self: *Lighting, bd: *block.BlockData, ci: usize) void {
     bd.setFullAmbiance(.none);
     const pos = chunk.getPositionAtIndexV(ci);
     x_pos: {
@@ -323,14 +340,14 @@ pub fn set_propagated_lighting_with_distance(self: *Lighting, ci: usize, distanc
     self.set_surfaces_from_ambient(&bd, ci);
 }
 
-pub fn getAirAmbiance(self: Lighting, ci: usize) block.BlockLighingLevel {
+pub fn getAirAmbiance(self: *Lighting, ci: usize) block.BlockLighingLevel {
     const data = self.get_datas(self.wp) orelse return .full;
     const c_bd: block.BlockData = block.BlockData.fromId((data[ci]));
     if (c_bd.block_id != air) return .none;
     return c_bd.getFullAmbiance().getNextDarker();
 }
 
-pub fn lightCheckDimensional(self: Lighting, ci: usize, bd: *block.BlockData, s: block.BlockSurface) void {
+pub fn lightCheckDimensional(self: *Lighting, ci: usize, bd: *block.BlockData, s: block.BlockSurface) void {
     const data = self.get_datas(self.wp) orelse return;
     const c_bd: block.BlockData = block.BlockData.fromId((data[ci]));
     if (c_bd.block_id != air) bd.setAmbient(s, .none);
@@ -339,7 +356,7 @@ pub fn lightCheckDimensional(self: Lighting, ci: usize, bd: *block.BlockData, s:
 }
 
 // source_ci - when we want brightness from any block other than the one queried from
-pub fn get_ambience_from_adjecent(self: Lighting, ci: usize, source_ci: ?usize) block.BlockLighingLevel {
+pub fn get_ambience_from_adjecent(self: *Lighting, ci: usize, source_ci: ?usize) block.BlockLighingLevel {
     const pos = chunk.getPositionAtIndexV(ci);
     // now update adjacent
     var ll: block.BlockLighingLevel = .none;
