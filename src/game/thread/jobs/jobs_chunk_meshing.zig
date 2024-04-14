@@ -4,7 +4,6 @@ pub const ChunkMeshJob = struct {
     world: *blecs.ecs.world_t,
 
     pub fn exec(self: *@This()) void {
-        std.debug.print("yeah we meshin'\n", .{});
         self.chunk.mesh_mutex.lock();
         defer self.chunk.mesh_mutex.unlock();
         if (config.use_tracy) {

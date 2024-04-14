@@ -87,19 +87,30 @@ pub fn set_removed_block_lighting(self: *Lighting, ci: usize) void {
                 break :y_pos;
             }
         }
+        var multi_chunk = false;
         if (self.pos[1] == 1) {
+            multi_chunk = true;
             _y += chunk.chunkDim;
         }
         while (_y >= 0) : (_y -= 1) {
-            const y = @mod(_y, chunk.chunkDim);
             var wp = self.wp;
-            if (y != _y) wp = wp.getBelowWP();
+            const y = blk: {
+                if (multi_chunk) {
+                    if (_y < chunk.chunkDim) {
+                        wp = wp.getBelowWP();
+                        break :blk _y;
+                    }
+                    break :blk _y - chunk.chunkDim;
+                }
+                break :blk _y;
+            };
             // let the light fall
             c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
             var data = self.get_datas(wp) orelse return;
             c_bd = block.BlockData.fromId(data[c_ci]);
             if (c_bd.block_id != air) {
                 // reached the surface
+                c_bd.setFullAmbiance(.full);
                 c_bd.setAmbient(.top, .full);
                 data[c_ci] = c_bd.toId();
                 return;

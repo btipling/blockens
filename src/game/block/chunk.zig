@@ -81,10 +81,15 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
     while (i < l.num_extra_datas + 1) : (i += 1) {
         const d = l.datas[i];
         if (!d.fetchable) continue;
+        const c_c_data = d.data orelse continue;
         const c_wp = d.wp;
         var c_c: *Chunk = game.state.blocks.game_chunks.get(c_wp) orelse continue;
-        c_c.updated = true;
-        std.debug.print("we scheduling meshin'\n", .{});
+        {
+            c_c.mutex.lock();
+            defer c_c.mutex.unlock();
+            @memcpy(c_c.data, c_c_data);
+            c_c.updated = true;
+        }
         c_c.refreshRender(game.state.world);
     }
     return wp;
