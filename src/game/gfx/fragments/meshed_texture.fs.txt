@@ -15,16 +15,10 @@
     // bl_amb_frag
     // bl_block_ambient
 
-    highp float surface_h = bl_surface_height;
-    highp float surface_t = bl_surface_height * 2;
-    highp float texture_start = surface_h * 3 * bl_block_index;
-    float top_offset = 0.0009;
-    if (bl_block_index == 0) {
-        top_offset = 0;
-    }
-    float bot_offset = 0.00001;
-    float threshold = 0.001;
-    float bl_frag_x = fragPos.x + 0.5;
+    float surface_h = bl_surface_height;
+    float surface_t = bl_surface_height * 2;
+    float texture_start = surface_h * 3 * bl_block_index;
+    float bl_frag_x = fragPos.x;
     float bl_frag_y = fragPos.y;
     float bl_frag_z = fragPos.z;
     // bl_block_ambient has 12 bits of data. 2 bits are extracted per surface
@@ -32,18 +26,13 @@
     if (abs(fragNormal.y) > 0.5) {
         // top or bottom of voxel
         if (fragNormal.y > 0) {
-            textColor = texture(texture1, vec2(fract(bl_frag_x), (fract(bl_frag_z * -1.0) * surface_h) + texture_start + top_offset));
+            // top
+            textColor = texture(texture1, vec2(fract(bl_frag_x), (fract(bl_frag_z * -1.0) * surface_h) + texture_start));
             // xx00 0000 0000
             bl_as = float((bl_block_ambient & 0xC00u) >> 10)/3;
         } else {
-            float tc_pre = fract(bl_frag_x) * surface_h;
-            if (tc_pre < threshold) {
-                tc_pre = threshold;
-            }
-            if (surface_h - tc_pre < threshold) {
-                tc_pre = surface_h;
-            }
-            textColor = texture(texture1, vec2(fract((bl_frag_z + 0.5) * -1.0), tc_pre + surface_t + texture_start));
+            // bottom
+            textColor = texture(texture1, vec2(fract(bl_frag_x), (fract(bl_frag_z * -1.0) * surface_h) + surface_t + texture_start));
              // 00xx 0000 0000
             bl_as = float((bl_block_ambient & 0x300u) >> 8)/3;
         }

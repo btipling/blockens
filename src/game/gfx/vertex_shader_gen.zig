@@ -125,7 +125,7 @@ pub const VertexShaderGen = struct {
             }
             if (r.cfg.is_meshed) {
                 r.a("out vec3 fragPos;\n");
-                r.a("flat out highp float bl_surface_height;\n");
+                r.a("flat out float bl_surface_height;\n");
             }
             if (r.cfg.has_normals) {
                 r.a("flat out vec3 fragNormal;\n");

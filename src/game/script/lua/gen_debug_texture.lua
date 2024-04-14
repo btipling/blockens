@@ -18,7 +18,7 @@ function generate_textures()
             if (i % 8 == 0 or (i - 1) % 8 == 0) and i % 16 ~= 0 and (i - 1) % 16 ~= 0 then
                 pixelcolor = rgba_to_int(10, 10, 255, 255)
             elseif i > 112 and i < 145 then
-                pixelcolor = rgba_to_int(10, 10, 255, 255)
+                pixelcolor = rgba_to_int(10, 155, 10, 255)
             else
                 pixelcolor = rgba_to_int(200, 200, 255, 255)
             end
@@ -35,7 +35,7 @@ function generate_textures()
             if (i % 8 == 0 or (i - 1) % 8 == 0) and i % 16 ~= 0 and (i - 1) % 16 ~= 0 then
                 pixelcolor = rgba_to_int(200, 200, 255, 255)
             elseif i > 624 and i < 657 then
-                pixelcolor = rgba_to_int(200, 200, 255, 255)
+                pixelcolor = rgba_to_int(100, 255, 100, 255)
             else
                 pixelcolor = darken(pixelcolor, 150)
             end
