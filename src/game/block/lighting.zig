@@ -5,7 +5,7 @@ const Lighting = @This();
 
 propagated: [chunk.chunkSize]u1 = std.mem.zeroes([chunk.chunkSize]u1),
 
-pub fn set_removed_block_lighting(self: Lighting, c_data: []u32, ci: usize) void {
+pub fn set_removed_block_lighting(self: *Lighting, c_data: []u32, ci: usize) void {
     const pos = chunk.getPositionAtIndexV(ci);
     // Get light from above and see if it's full, have to propagate full all the way down
     y_pos: {
@@ -85,13 +85,12 @@ pub fn set_removed_block_lighting(self: Lighting, c_data: []u32, ci: usize) void
                 } else self.set_propagated_lighting(c_data, c_ci);
             }
         }
-        std.debug.print("unreachable.\n", .{});
         return;
     }
     self.set_propagated_lighting(c_data, ci);
 }
 
-pub fn set_added_block_lighting(self: Lighting, c_data: []u32, bd: *block.BlockData, ci: usize) void {
+pub fn set_added_block_lighting(self: *Lighting, c_data: []u32, bd: *block.BlockData, ci: usize) void {
     const pos = chunk.getPositionAtIndexV(ci);
     // set added block surfaces first
     self.set_surfaces_from_ambient(c_data, bd, ci);
@@ -166,7 +165,6 @@ pub fn set_added_block_lighting(self: Lighting, c_data: []u32, bd: *block.BlockD
                 } else self.set_propagated_lighting(c_data, c_ci);
             }
         }
-        std.debug.panic("not reachable", .{});
     }
 }
 
@@ -217,23 +215,14 @@ pub fn set_surfaces_from_ambient(_: Lighting, c_data: []u32, bd: *block.BlockDat
 // This just fixes the lighting for each block as it should be without any context as
 // to what else has changed. It doesn't rain down light or shadow. If nothing changed
 // it stops. If something changed and its air it propagates more until things stop changing.
-pub fn set_propagated_lighting(self: Lighting, c_data: []u32, ci: usize) void {
-    self.set_propagated_lighting_neg(c_data, ci, 0);
-    self.set_propagated_lighting_pos(c_data, ci, 0);
-
-    const pos = chunk.getPositionAtIndexV(ci);
-    const bd: block.BlockData = block.BlockData.fromId(c_data[ci]);
-    if (bd.block_id != air) return;
-    y_neg: {
-        const y = pos[1] - 1;
-        if (y < 0) break :y_neg;
-        const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-        self.set_propagated_lighting(c_data, c_ci);
-    }
+pub fn set_propagated_lighting(self: *Lighting, c_data: []u32, ci: usize) void {
+    self.set_propagated_lighting_with_distance(c_data, ci, 0);
 }
 
-pub fn set_propagated_lighting_neg(self: Lighting, c_data: []u32, ci: usize, distance: u8) void {
+pub fn set_propagated_lighting_with_distance(self: *Lighting, c_data: []u32, ci: usize, distance: u8) void {
     if (distance >= max_propagation_distance) return;
+    if (self.propagated[ci] == 1) return;
+    self.propagated[ci] = 1;
     const pos = chunk.getPositionAtIndexV(ci);
     var bd: block.BlockData = block.BlockData.fromId(c_data[ci]);
 
@@ -256,53 +245,33 @@ pub fn set_propagated_lighting_neg(self: Lighting, c_data: []u32, ci: usize, dis
             const x = pos[0] - 1;
             if (x < 0) break :x_neg;
             const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-            self.set_propagated_lighting_neg(c_data, c_ci, distance + 1);
+            self.set_propagated_lighting_with_distance(c_data, c_ci, distance + 1);
         }
-        z_neg: {
-            const z = pos[2] - 1;
-            if (z < 0) break :z_neg;
-            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-            self.set_propagated_lighting_neg(c_data, c_ci, distance + 1);
-        }
-        return;
-    }
-    // non-air just set surfaces of this block
-    self.set_surfaces_from_ambient(c_data, &bd, ci);
-}
-
-pub fn set_propagated_lighting_pos(self: Lighting, c_data: []u32, ci: usize, distance: u8) void {
-    if (distance >= max_propagation_distance) return;
-    const pos = chunk.getPositionAtIndexV(ci);
-    var bd: block.BlockData = block.BlockData.fromId(c_data[ci]);
-
-    if (bd.block_id == air) {
-        var ll = get_ambience_from_adjecent(c_data, ci, null);
-        const ty = pos[1] + 1;
-        if (ty < chunk.chunkDim) {
-            // if block above is air just set this block to that
-            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], ty, pos[2], pos[3] });
-            if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-            const c_bd: block.BlockData = block.BlockData.fromId(c_data[c_ci]);
-            if (c_bd.block_id == air) ll = c_bd.getFullAmbiance();
-        } else {
-            ll = .full;
-        }
-        // if air set full ambience and if changed propagate changes to adjacent and down
-        bd.setFullAmbiance(ll);
-        c_data[ci] = bd.toId();
         x_pos: {
             const x = pos[0] + 1;
             if (x >= chunk.chunkDim) break :x_pos;
             const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
             if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-            self.set_propagated_lighting_pos(c_data, c_ci, distance + 1);
+            self.set_propagated_lighting_with_distance(c_data, c_ci, distance + 1);
+        }
+        y_neg: {
+            const y = pos[1] - 1;
+            if (y < 0) break :y_neg;
+            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+            self.set_propagated_lighting_with_distance(c_data, c_ci, distance);
+        }
+        z_neg: {
+            const z = pos[2] - 1;
+            if (z < 0) break :z_neg;
+            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
+            self.set_propagated_lighting_with_distance(c_data, c_ci, distance + 1);
         }
         z_pos: {
             const z = pos[2] + 1;
             if (z >= chunk.chunkDim) break :z_pos;
             const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
             if (c_ci >= chunk.chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
-            self.set_propagated_lighting_pos(c_data, c_ci, distance + 1);
+            self.set_propagated_lighting_with_distance(c_data, c_ci, distance + 1);
         }
         return;
     }

@@ -56,7 +56,7 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
     bd = block.BlockData.fromId(c_data[chunk_index]);
     bd.block_id = block_id;
     c_data[chunk_index] = bd.toId();
-    const l = lighting{};
+    var l = lighting{};
     if (block_id == air) {
         l.set_removed_block_lighting(c_data, chunk_index);
     } else {
