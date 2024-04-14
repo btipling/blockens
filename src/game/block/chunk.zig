@@ -77,6 +77,16 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
         @memcpy(c.data, c_data);
         c.updated = true;
     }
+    var i: usize = 1;
+    while (i < l.num_extra_datas + 1) : (i += 1) {
+        const d = l.datas[i];
+        if (!d.fetchable) continue;
+        const c_wp = d.wp;
+        var c_c: *Chunk = game.state.blocks.game_chunks.get(c_wp) orelse continue;
+        c_c.updated = true;
+        std.debug.print("we scheduling meshin'\n", .{});
+        c_c.refreshRender(game.state.world);
+    }
     return wp;
 }
 
