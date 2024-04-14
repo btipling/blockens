@@ -17,15 +17,13 @@ function generate_textures()
         x = ii % 16
         y = math.floor(ii / 16) % 16
         s = math.floor(ii / (16 * 16))
-        -- You can customize each texture here as needed
-        pixelcolor = rgba_to_int(255, 0, 0, 255) -- Red color
+        pixelcolor = rgba_to_int(255, 0, 0, 255)
         if s == 0 then
             pixelcolor = rgba_to_int(255, 200, 200, 255)
         end
         if s == 1 and y <= 1 then
             pixelcolor = rgba_to_int(255, 200, 200, 255)
         end
-        -- if on the third surface, darken
         if s == 2 then
             pixelcolor = darken(pixelcolor, 150)
         end
@@ -34,6 +32,4 @@ function generate_textures()
     return textures
 end
 
--- Calling the function to generate the textures
 textures = generate_textures()
--- textures now contains three 16x16 textures

@@ -40,6 +40,4 @@ function generate_textures()
     return textures
 end
 
--- Calling the function to generate the textures
 textures = generate_textures()
--- textures now contains three 16x16 textures
