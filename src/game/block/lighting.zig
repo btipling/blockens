@@ -500,7 +500,7 @@ test "lighting basic remove block lighting fall" {
     }
 }
 
-test "lighting remove block across chunks lighting fall" {
+test "lighting adding block across chunks darkness fall" {
     const t_wp = chunk.worldPosition.initFromPositionV(.{ 0, 1, 0, 0 });
     var l: Lighting = .{
         .wp = t_wp,
@@ -591,7 +591,7 @@ test "lighting remove block across chunks lighting fall" {
     }
 }
 
-test "lighting adding block across chunks darkness fall" {
+test "lighting removing block across chunks lighting falls" {
     const t_wp = chunk.worldPosition.initFromPositionV(.{ 0, 1, 0, 0 });
     var l: Lighting = .{
         .wp = t_wp,
