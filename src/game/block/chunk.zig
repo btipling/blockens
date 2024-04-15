@@ -60,6 +60,7 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
         .wp = c.wp,
         .pos = c.wp.vecFromWorldPosition(),
         .fetcher = .{},
+        .allocator = game.state.allocator,
     };
     defer l.deinit();
     l.datas[0] = .{

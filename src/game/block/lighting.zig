@@ -3,23 +3,6 @@ const max_propagation_distance: u8 = 3;
 
 const Lighting = @This();
 
-pub const data_fetcher = struct {
-    pub fn fetch(_: data_fetcher, wp: chunk.worldPosition) ?datas {
-        const c: *chunk.Chunk = game.state.blocks.game_chunks.get(wp) orelse return null;
-
-        const c_data = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-        {
-            c.mutex.lock();
-            defer c.mutex.unlock();
-            @memcpy(c_data, c.data);
-        }
-        return .{
-            .wp = wp,
-            .data = c_data,
-        };
-    }
-};
-
 pub const datas = struct {
     wp: chunk.worldPosition,
     data: ?[]u32 = null,
@@ -29,6 +12,7 @@ pub const datas = struct {
 wp: chunk.worldPosition,
 pos: @Vector(4, f32),
 propagated: [chunk.chunkSize]u1 = std.mem.zeroes([chunk.chunkSize]u1),
+allocator: std.mem.Allocator,
 fetcher: data_fetcher,
 datas: [7]datas = undefined,
 num_extra_datas: u8 = 0,
@@ -37,7 +21,7 @@ pub fn deinit(self: Lighting) void {
     var i: usize = 1;
     while (i < self.num_extra_datas + 1) : (i += 1) {
         const d = self.datas[i];
-        if (d.data) |cd| game.state.allocator.free(cd);
+        if (d.data) |cd| self.allocator.free(cd);
     }
 }
 
@@ -428,7 +412,40 @@ pub fn get_ambience_from_adjecent(self: *Lighting, ci: usize, source_ci: ?usize)
     return ll;
 }
 
+test "lighting init test" {
+    const wp = chunk.worldPosition.initFromPositionV(.{ 0, 1, 0, 0 });
+    var l: Lighting = .{
+        .wp = wp,
+        .pos = wp.vecFromWorldPosition(),
+        .fetcher = .{},
+        .allocator = std.testing.allocator_instance.allocator(),
+    };
+    defer l.deinit();
+    const chunk_index: usize = 0;
+    const block_id: u8 = 1;
+    const data = l.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+    defer l.allocator.free(data);
+    {
+        var d: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
+        d[chunk_index] = block_id;
+        @memcpy(data, d[0..]);
+    }
+    l.datas[0] = .{
+        .wp = wp,
+        .data = data,
+    };
+    var bd: block.BlockData = block.BlockData.fromId(data[chunk_index]);
+    l.set_added_block_lighting(&bd, chunk_index);
+    try std.testing.expectEqual(bd.block_id, block_id);
+}
+
 const std = @import("std");
-const game = @import("../game.zig");
 const block = @import("block.zig");
 const chunk = block.chunk;
+const data_fetcher = blk: {
+    const builtin = @import("builtin");
+    if (builtin.is_test) {
+        break :blk @import("test_data_fetcher.zig");
+    }
+    break :blk @import("data_fetcher.zig");
+};
