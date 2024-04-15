@@ -132,7 +132,7 @@ pub fn set_removed_block_lighting(self: *Lighting, ci: usize) void {
             }
             x_neg: {
                 const x = pos[0] - 1;
-                if (x >= chunk.chunkDim) break :x_neg;
+                if (x < 0) break :x_neg;
                 c_ci = chunk.getIndexFromPositionV(.{ x, y, pos[2], pos[3] });
                 if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
                 c_bd = block.BlockData.fromId(data[c_ci]);
@@ -154,7 +154,7 @@ pub fn set_removed_block_lighting(self: *Lighting, ci: usize) void {
             }
             z_neg: {
                 const z = pos[2] - 1;
-                if (z >= chunk.chunkDim) break :z_neg;
+                if (z < 0) break :z_neg;
                 c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, z, pos[3] });
                 if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
                 c_bd = block.BlockData.fromId(data[c_ci]);
@@ -213,7 +213,7 @@ pub fn set_added_block_lighting(self: *Lighting, bd: *block.BlockData, ci: usize
             }
             x_neg: {
                 const x = pos[0] - 1;
-                if (x >= chunk.chunkDim) break :x_neg;
+                if (x < 0) break :x_neg;
                 c_ci = chunk.getIndexFromPositionV(.{ x, y, pos[2], pos[3] });
                 if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
                 c_bd = block.BlockData.fromId(data[c_ci]);
@@ -235,7 +235,7 @@ pub fn set_added_block_lighting(self: *Lighting, bd: *block.BlockData, ci: usize
             }
             z_neg: {
                 const z = pos[2] - 1;
-                if (z >= chunk.chunkDim) break :z_neg;
+                if (z < 0) break :z_neg;
                 c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, z, pos[3] });
                 if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
                 c_bd = block.BlockData.fromId(data[c_ci]);
