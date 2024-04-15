@@ -216,9 +216,13 @@ fn setSurroundingAmbience(c_data: []u32, i: usize, level: block.BlockLighingLeve
 }
 
 fn isAmbientSource(c_data: []u32, pos: @Vector(4, f32)) block.BlockLighingLevel {
+    const f_dim: f32 = @floatFromInt(chunk.chunkDim);
     if (pos[0] < 0) return .none;
     if (pos[1] < 0) return .none;
     if (pos[2] < 0) return .none;
+    if (pos[0] >= f_dim) return .none;
+    if (pos[1] >= f_dim) return .none;
+    if (pos[2] >= f_dim) return .none;
     const i = chunk.getIndexFromPositionV(pos);
     const bd = block.BlockData.fromId(c_data[i]);
     if (bd.block_id != air) return .none; // TODO: support transparent blocks.

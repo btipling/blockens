@@ -43,6 +43,7 @@ fn handleSharedKeys() ?glfw.Key {
         ecs.add(game.state.world, game.state.entities.ui, components.ui.Menu);
         return .F2;
     }
+
     return null;
 }
 
@@ -51,7 +52,21 @@ fn unsetKeyState() ?glfw.Key {
         ecs.remove(game.state.world, game.state.entities.ui, components.ui.Menu);
         pressedKeyState = null;
     }
+
+    if (input.keys.holdKey(.left_control) and input.keys.holdKey(.s)) {
+        return saveNow();
+    }
     return pressedKeyState;
+}
+
+fn saveNow() ?glfw.Key {
+    const m: *components.mob.Mob = ecs.get_mut(
+        game.state.world,
+        game.state.entities.player,
+        components.mob.Mob,
+    ) orelse return null;
+    m.last_saved = 0;
+    return null;
 }
 
 fn toggleCamera() void {
