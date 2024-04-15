@@ -162,17 +162,33 @@ pub fn set_added_block_lighting(self: *Lighting, bd: *block.BlockData, ci: usize
     y_pos: {
         var c_ci: usize = 0;
         var c_bd: block.BlockData = undefined;
-        var y = pos[1] - 1;
-        if (y < 0) {
+        var _y = pos[1] - 1;
+        if (_y < 0) {
             // TODO: propagate to chunk below
             break :y_pos;
         }
-        c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+        c_ci = chunk.getIndexFromPositionV(.{ pos[0], _y, pos[2], pos[3] });
         const c_ll: block.BlockLighingLevel = self.get_ambience_from_adjecent(c_ci, ci);
-        while (y >= 0) : (y -= 1) {
+        var multi_chunk = false;
+        if (self.pos[1] == 1) {
+            multi_chunk = true;
+            _y += chunk.chunkDim;
+        }
+        while (_y >= 0) : (_y -= 1) {
             // let the darkness fall
+            var wp = self.wp;
+            const y = blk: {
+                if (multi_chunk) {
+                    if (_y < chunk.chunkDim) {
+                        wp = wp.getBelowWP();
+                        break :blk _y;
+                    }
+                    break :blk _y - chunk.chunkDim;
+                }
+                break :blk _y;
+            };
             c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-            const data = self.get_datas(self.wp) orelse return;
+            const data = self.get_datas(wp) orelse return;
             c_bd = block.BlockData.fromId(data[c_ci]);
             if (c_bd.block_id != air) {
                 // reached the surface
@@ -517,9 +533,100 @@ test "lighting remove block across chunks lighting fall" {
         var d: [chunk.chunkSize]u32 = undefined;
         @memset(&d, init_data);
         @memcpy(b_data, d[0..]);
+
+        {
+            // set a lit ground floor across y = 63 on bottom chunk
+            var ground_bd: block.BlockData = block.BlockData.fromId(1);
+            ground_bd.setFullAmbiance(.none);
+            ground_bd.setAmbient(.top, .full);
+            const gd: u32 = ground_bd.toId();
+            const y: f32 = 63;
+            var x: f32 = 0;
+            while (x < chunk.chunkDim) : (x += 1) {
+                var z: f32 = 0;
+                while (z < chunk.chunkDim) : (z += 1) {
+                    const ci = chunk.getIndexFromPositionV(.{ x, y, z, 0 });
+                    b_data[ci] = gd;
+                }
+            }
+        }
         l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
     }
-    // Set a block on y, just above bottom chunk.
+    const placement_x: f32 = 16;
+    const placement_z: f32 = 16;
+    const ci = chunk.getIndexFromPositionV(.{ placement_x, 5, placement_z, 0 });
+    // validate the block on the chunk below where placement will occur is fully list on the surface
+    {
+        const b_data = l.fetcher.test_chunk_data.get(b_wp) orelse @panic("expected bottom wp");
+        const b_ci = chunk.getIndexFromPositionV(.{ placement_x, 63, placement_z, 0 });
+        var below_bd: block.BlockData = block.BlockData.fromId(b_data[b_ci]);
+        try std.testing.expectEqual(below_bd.getSurfaceAmbience(.top), .full);
+    }
+    // Set a block on y, a bit above bottom chunk.
+    {
+        // Set a block above of the dark ground in y 1:
+        var bd: block.BlockData = block.BlockData.fromId(1);
+        t_data[ci] = bd.toId();
+    }
+    var bd: block.BlockData = block.BlockData.fromId(t_data[ci]);
+    bd.block_id = 0;
+    t_data[ci] = bd.toId();
+    // init l
+    l.datas[0] = .{
+        .wp = t_wp,
+        .data = t_data,
+    };
+    l.set_added_block_lighting(&bd, ci);
+    // validate that the block on chunk below's surface is now fully lit
+    {
+        // expected lighting to have fetched extra data for bottom chunk
+        try std.testing.expectEqual(l.num_extra_datas, 1);
+        // expected extra data to have been fetchable
+        try std.testing.expect(l.datas[1].fetchable);
+        const b_data = l.datas[1].data orelse @panic("expected data to be there");
+        const b_ci = chunk.getIndexFromPositionV(.{ placement_x, 63, placement_z, 0 });
+        var below_bd: block.BlockData = block.BlockData.fromId(b_data[b_ci]);
+        // bright is one level darker than full.
+        try std.testing.expectEqual(below_bd.getSurfaceAmbience(.top), .bright);
+    }
+}
+
+test "lighting adding block across chunks darkness fall" {
+    const t_wp = chunk.worldPosition.initFromPositionV(.{ 0, 1, 0, 0 });
+    var l: Lighting = .{
+        .wp = t_wp,
+        .pos = t_wp.vecFromWorldPosition(),
+        .fetcher = .{},
+        .allocator = std.testing.allocator_instance.allocator(),
+    };
+    defer l.deinit();
+    l.fetcher.init();
+    defer l.fetcher.deinit();
+    const t_data = l.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+    defer l.allocator.free(t_data);
+
+    {
+        // init data to full ambient lit air for top chunk
+        var init_bd: block.BlockData = block.BlockData.fromId(0);
+        init_bd.setFullAmbiance(.full);
+        const init_data: u32 = init_bd.toId();
+        var d: [chunk.chunkSize]u32 = undefined;
+        @memset(&d, init_data);
+        @memcpy(t_data, d[0..]);
+    }
+    const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
+    {
+        // Set a dark and full non air block bottom chunk for fetcher
+        const b_data = l.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+        var init_bd: block.BlockData = block.BlockData.fromId(1);
+        init_bd.setFullAmbiance(.none);
+        const init_data: u32 = init_bd.toId();
+        var d: [chunk.chunkSize]u32 = undefined;
+        @memset(&d, init_data);
+        @memcpy(b_data, d[0..]);
+        l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
+    }
+    // Set a block on y, just a slight ways above bottom chunk.
     const placement_x: f32 = 16;
     const placement_z: f32 = 16;
     const ci = chunk.getIndexFromPositionV(.{ placement_x, 0, placement_z, 0 });
