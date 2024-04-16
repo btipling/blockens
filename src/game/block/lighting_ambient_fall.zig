@@ -292,8 +292,6 @@ test "floating plane lighting test" {
             }
         }
     }
-
-    try std.testing.expect(true);
 }
 
 const std = @import("std");
