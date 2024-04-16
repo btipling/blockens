@@ -234,6 +234,6 @@ const game = @import("../game.zig");
 const block = @import("block.zig");
 const Chunker = @import("chunker.zig");
 const game_state = @import("../state.zig");
-const lighting = @import("lighting.zig");
+const lighting = @import("lighting/ambient_edit.zig");
 
 pub const worldPosition = @import("world_position.zig");

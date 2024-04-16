@@ -15,7 +15,7 @@ pub fn fetch(_: data_fetcher, wp: chunk.worldPosition) ?lighting.datas {
     };
 }
 
-const game = @import("../game.zig");
-const block = @import("block.zig");
-const lighting = @import("lighting.zig");
+const game = @import("../../game.zig");
+const block = @import("../block.zig");
+const lighting = @import("ambient_edit.zig");
 const chunk = block.chunk;
