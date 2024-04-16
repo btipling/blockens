@@ -29,6 +29,43 @@ pub fn utest_allocate_test_chunk(id: u32, ambiance: block.BlockLighingLevel) []u
     return data;
 }
 
+pub fn utest_expect_surface_light_at_v(
+    data: []u32,
+    pos: @Vector(4, f32),
+    surface: block.BlockSurface,
+    expected_ll: block.BlockLighingLevel,
+) !void {
+    const b_ci = chunk.getIndexFromPositionV(pos);
+    var below_bd: block.BlockData = block.BlockData.fromId(data[b_ci]);
+    try std.testing.expectEqual(expected_ll, below_bd.getSurfaceAmbience(surface));
+}
+
+pub fn utest_chunk_ae_lighting(y: f32) ambient_edit.Lighting {
+    const t_wp = chunk.worldPosition.initFromPositionV(.{ 0, y, 0, 0 });
+    var l: ambient_edit.Lighting = .{
+        .wp = t_wp,
+        .pos = t_wp.vecFromWorldPosition(),
+        .fetcher = .{},
+        .allocator = std.testing.allocator_instance.allocator(),
+    };
+    l.fetcher.init();
+    return l;
+}
+
+pub fn utest_set_block_surface_light(
+    data: []u32,
+    ci: usize,
+    clear_ll: block.BlockLighingLevel,
+    surface: block.BlockSurface,
+    ll: block.BlockLighingLevel,
+) void {
+    var bd: block.BlockData = block.BlockData.fromId(1);
+    bd.setFullAmbiance(clear_ll);
+    bd.setAmbient(surface, ll);
+    data[ci] = bd.toId();
+}
+
 const std = @import("std");
+const ambient_edit = @import("lighting_ambient_edit.zig");
 const block = @import("block.zig");
 const chunk = block.chunk;

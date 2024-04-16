@@ -1,7 +1,7 @@
 const air: u8 = 0;
 const max_propagation_distance: u8 = 3;
 
-const Lighting = @This();
+pub const Lighting = @This();
 
 pub const datas = struct {
     wp: chunk.worldPosition,
@@ -429,123 +429,59 @@ pub fn get_ambience_from_adjecent(self: *Lighting, ci: usize, source_ci: ?usize)
 }
 
 test "lighting basic remove block lighting fall" {
-    const wp = chunk.worldPosition.initFromPositionV(.{ 0, 1, 0, 0 });
-    var l: Lighting = .{
-        .wp = wp,
-        .pos = wp.vecFromWorldPosition(),
-        .fetcher = .{},
-        .allocator = std.testing.allocator_instance.allocator(),
-    };
+    var l: Lighting = testing_utils.utest_chunk_ae_lighting(1);
     defer l.deinit();
-    l.fetcher.init();
     defer l.fetcher.deinit();
-    const data = l.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+    const data = testing_utils.utest_allocate_test_chunk(0, .full);
     defer l.allocator.free(data);
 
-    {
-        // init data to full ambient lit air
-        var init_bd: block.BlockData = block.BlockData.fromId(0);
-        init_bd.setFullAmbiance(.full);
-        const init_data: u32 = init_bd.toId();
-        var d: [chunk.chunkSize]u32 = undefined;
-        @memset(&d, init_data);
-        @memcpy(data, d[0..]);
-    }
+    // set a dark ground floor across y = 0
+    testing_utils.utest_add_floor_at_y(data, 0, .none);
+    const _x: f32 = 16;
+    const _z: f32 = 16;
+    const ci = chunk.getIndexFromPositionV(.{ _x, 1, _z, 0 });
 
-    {
-        // set a dark ground floor across y = 0
-        var ground_bd: block.BlockData = block.BlockData.fromId(1);
-        ground_bd.setFullAmbiance(.none);
-        const gd: u32 = ground_bd.toId();
-        const y: f32 = 0;
-        var x: f32 = 0;
-        while (x < chunk.chunkDim) : (x += 1) {
-            var z: f32 = 0;
-            while (z < chunk.chunkDim) : (z += 1) {
-                const ci = chunk.getIndexFromPositionV(.{ x, y, z, 0 });
-                data[ci] = gd;
-            }
-        }
-    }
-    const placement_x: f32 = 16;
-    const placement_z: f32 = 16;
-    const ci = chunk.getIndexFromPositionV(.{ placement_x, 1, placement_z, 0 });
-    {
-        // Set a block on top of the dark ground in y 1:
-        var bd: block.BlockData = block.BlockData.fromId(1);
-        bd.setFullAmbiance(.full);
-        bd.setAmbient(.bottom, .none);
-        data[ci] = bd.toId();
-    }
+    testing_utils.utest_set_block_surface_light(data, ci, .full, .bottom, .none);
+
     // init l
     l.datas[0] = .{
-        .wp = wp,
+        .wp = l.wp,
         .data = data,
     };
     // validate the block below placement is dark on the surface
-    {
-        const b_ci = chunk.getIndexFromPositionV(.{ placement_x, 0, placement_z, 0 });
-        var below_bd: block.BlockData = block.BlockData.fromId(data[b_ci]);
-        try std.testing.expectEqual(below_bd.getSurfaceAmbience(.top), .none);
-    }
+    try testing_utils.utest_expect_surface_light_at_v(data, .{ _x, 0, _z, 0 }, .top, .none);
+
     var bd: block.BlockData = block.BlockData.fromId(data[ci]);
     bd.block_id = 0;
     data[ci] = bd.toId();
     l.set_removed_block_lighting(ci);
+
     // validate that the block below's surface is now fully lit
-    {
-        const b_ci = chunk.getIndexFromPositionV(.{ placement_x, 0, placement_z, 0 });
-        var below_bd: block.BlockData = block.BlockData.fromId(data[b_ci]);
-        try std.testing.expectEqual(below_bd.getSurfaceAmbience(.top), .full);
-    }
+    try testing_utils.utest_expect_surface_light_at_v(data, .{ _x, 0, _z, 0 }, .top, .full);
 }
 
 test "lighting adding block across chunks darkness fall" {
-    const t_wp = chunk.worldPosition.initFromPositionV(.{ 0, 1, 0, 0 });
-    var l: Lighting = .{
-        .wp = t_wp,
-        .pos = t_wp.vecFromWorldPosition(),
-        .fetcher = .{},
-        .allocator = std.testing.allocator_instance.allocator(),
-    };
+    var l: Lighting = testing_utils.utest_chunk_ae_lighting(1);
     defer l.deinit();
-    l.fetcher.init();
     defer l.fetcher.deinit();
-    const t_data = l.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+    const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
     defer l.allocator.free(t_data);
 
-    {
-        // init data to full ambient lit air for top chunk
-        var init_bd: block.BlockData = block.BlockData.fromId(0);
-        init_bd.setFullAmbiance(.full);
-        const init_data: u32 = init_bd.toId();
-        var d: [chunk.chunkSize]u32 = undefined;
-        @memset(&d, init_data);
-        @memcpy(t_data, d[0..]);
-    }
     const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
     {
         // Set a dark and full non air block bottom chunk for fetcher
-        const b_data = l.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-        var init_bd: block.BlockData = block.BlockData.fromId(1);
-        init_bd.setFullAmbiance(.none);
-        const init_data: u32 = init_bd.toId();
-        var d: [chunk.chunkSize]u32 = undefined;
-        @memset(&d, init_data);
-        @memcpy(b_data, d[0..]);
+        const b_data = testing_utils.utest_allocate_test_chunk(1, .none);
         // set a lit ground floor across y = 63 on bottom chunk
         testing_utils.utest_add_floor_at_y(b_data, 63, .full);
         l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
     }
-    const placement_x: f32 = 16;
-    const placement_z: f32 = 16;
-    const ci = chunk.getIndexFromPositionV(.{ placement_x, 5, placement_z, 0 });
+    const _x: f32 = 16;
+    const _z: f32 = 16;
+    const ci = chunk.getIndexFromPositionV(.{ _x, 5, _z, 0 });
     // validate the block on the chunk below where placement will occur is fully list on the surface
     {
         const b_data = l.fetcher.test_chunk_data.get(b_wp) orelse @panic("expected bottom wp");
-        const b_ci = chunk.getIndexFromPositionV(.{ placement_x, 63, placement_z, 0 });
-        var below_bd: block.BlockData = block.BlockData.fromId(b_data[b_ci]);
-        try std.testing.expectEqual(below_bd.getSurfaceAmbience(.top), .full);
+        try testing_utils.utest_expect_surface_light_at_v(b_data, .{ _x, 63, _z, 0 }, .top, .full);
     }
     // Set a block on y, a bit above bottom chunk.
     {
@@ -558,7 +494,7 @@ test "lighting adding block across chunks darkness fall" {
     t_data[ci] = bd.toId();
     // init l
     l.datas[0] = .{
-        .wp = t_wp,
+        .wp = l.wp,
         .data = t_data,
     };
     l.set_added_block_lighting(&bd, ci);
@@ -569,23 +505,14 @@ test "lighting adding block across chunks darkness fall" {
         // expected extra data to have been fetchable
         try std.testing.expect(l.datas[1].fetchable);
         const b_data = l.datas[1].data orelse @panic("expected data to be there");
-        const b_ci = chunk.getIndexFromPositionV(.{ placement_x, 63, placement_z, 0 });
-        var below_bd: block.BlockData = block.BlockData.fromId(b_data[b_ci]);
         // bright is one level darker than full.
-        try std.testing.expectEqual(below_bd.getSurfaceAmbience(.top), .bright);
+        try testing_utils.utest_expect_surface_light_at_v(b_data, .{ _x, 63, _z, 0 }, .top, .bright);
     }
 }
 
 test "lighting removing block across chunks lighting falls" {
-    const t_wp = chunk.worldPosition.initFromPositionV(.{ 0, 1, 0, 0 });
-    var l: Lighting = .{
-        .wp = t_wp,
-        .pos = t_wp.vecFromWorldPosition(),
-        .fetcher = .{},
-        .allocator = std.testing.allocator_instance.allocator(),
-    };
+    var l: Lighting = testing_utils.utest_chunk_ae_lighting(1);
     defer l.deinit();
-    l.fetcher.init();
     defer l.fetcher.deinit();
     // set a lit ground floor across y = 63 on bottom chunk
     const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
@@ -598,27 +525,20 @@ test "lighting removing block across chunks lighting falls" {
         l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
     }
     // Set a block on y, just a slight ways above bottom chunk.
-    const placement_x: f32 = 16;
-    const placement_z: f32 = 16;
-    const ci = chunk.getIndexFromPositionV(.{ placement_x, 0, placement_z, 0 });
-    {
-        // Set a block on top of the dark ground in y 1:
-        var bd: block.BlockData = block.BlockData.fromId(1);
-        bd.setFullAmbiance(.full);
-        bd.setAmbient(.bottom, .none);
-        t_data[ci] = bd.toId();
-    }
+    const _x: f32 = 16;
+    const _z: f32 = 16;
+    const ci = chunk.getIndexFromPositionV(.{ _x, 0, _z, 0 });
+    // Set a block on top of the dark ground in y 1:
+    testing_utils.utest_set_block_surface_light(t_data, ci, .full, .bottom, .none);
     // init l
     l.datas[0] = .{
-        .wp = t_wp,
+        .wp = l.wp,
         .data = t_data,
     };
     // validate the block on the chunk below placement is dark on the surface
     {
         const b_data = l.fetcher.test_chunk_data.get(b_wp) orelse @panic("expected bottom wp");
-        const b_ci = chunk.getIndexFromPositionV(.{ placement_x, 63, placement_z, 0 });
-        var below_bd: block.BlockData = block.BlockData.fromId(b_data[b_ci]);
-        try std.testing.expectEqual(below_bd.getSurfaceAmbience(.top), .none);
+        try testing_utils.utest_expect_surface_light_at_v(b_data, .{ _x, 63, _z, 0 }, .top, .none);
     }
     var bd: block.BlockData = block.BlockData.fromId(t_data[ci]);
     bd.block_id = 0;
@@ -631,9 +551,7 @@ test "lighting removing block across chunks lighting falls" {
         // expected extra data to have been fetchable
         try std.testing.expect(l.datas[1].fetchable);
         const b_data = l.datas[1].data orelse @panic("expected data to be there");
-        const b_ci = chunk.getIndexFromPositionV(.{ placement_x, 63, placement_z, 0 });
-        var below_bd: block.BlockData = block.BlockData.fromId(b_data[b_ci]);
-        try std.testing.expectEqual(below_bd.getSurfaceAmbience(.top), .full);
+        try testing_utils.utest_expect_surface_light_at_v(b_data, .{ _x, 63, _z, 0 }, .top, .full);
     }
 }
 
