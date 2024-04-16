@@ -189,7 +189,6 @@ fn runY(c_data: []u32, x: isize, y: isize, z: isize) bool {
 }
 
 test "floating plane lighting test" {
-    // The bottom surface of a floating plane should have shade increasing in darkness closer to its center.
     const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
     defer std.testing.allocator.free(t_data);
 
@@ -222,6 +221,73 @@ test "floating plane lighting test" {
                     },
                     .top,
                     .full,
+                );
+            }
+        }
+    }
+
+    {
+        // The bottom surface of a floating plane should have shade increasing in darkness closer to its center.
+        // block.BlockLighingLevel is [x][z]
+        const expected_lighting: [5][5]block.BlockLighingLevel = .{
+            // zig fmt: off
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .dark,   .none,   .dark,   .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .bright, .bright, .bright, .bright },
+            // zig fmt: on
+        };
+        var _x: usize = 0;
+        while (_x < plane_dim) : (_x += 1) {
+            var _z: usize = 0;
+            while (_z < plane_dim) : (_z += 1) {
+                const x: f32 = @floatFromInt(_x);
+                const z: f32 = @floatFromInt(_z);
+                try testing_utils.utest_expect_surface_light_at_v(
+                    b_data,
+                    .{
+                        plane_pos[0] + x,
+                        plane_pos[1],
+                        plane_pos[2] + z,
+                        plane_pos[3],
+                    },
+                    .bottom,
+                    expected_lighting[_x][_z],
+                );
+            }
+        }
+    }
+
+    {
+        // The top surface of the floor beneath floating plane should also have 
+        // shade increasing in darkness closer to its center.
+        // block.BlockLighingLevel is [x][z]
+        const expected_lighting: [5][5]block.BlockLighingLevel = .{
+            // zig fmt: off
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .dark,   .none,   .dark,   .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .bright, .bright, .bright, .bright },
+            // zig fmt: on
+        };
+        var _x: usize = 0;
+        while (_x < plane_dim) : (_x += 1) {
+            var _z: usize = 0;
+            while (_z < plane_dim) : (_z += 1) {
+                const x: f32 = @floatFromInt(_x);
+                const z: f32 = @floatFromInt(_z);
+                try testing_utils.utest_expect_surface_light_at_v(
+                    b_data,
+                    .{
+                        plane_pos[0] + x,
+                        0, // floor y
+                        plane_pos[2] + z,
+                        plane_pos[3],
+                    },
+                    .bottom,
+                    expected_lighting[_x][_z],
                 );
             }
         }
