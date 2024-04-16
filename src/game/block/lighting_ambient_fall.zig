@@ -195,11 +195,13 @@ test "floating plane lighting test" {
     const b_data = testing_utils.utest_allocate_test_chunk(0, .full);
     defer std.testing.allocator.free(b_data);
 
-    const plane_pos: @Vector(4, f32) = .{ 10, 5, 10, 0 };
+    const plane_pos: @Vector(4, f32) = .{ 10, 4, 10, 0 };
     const plane_dim: usize = 5;
-    testing_utils.utest_add_plane_at_y(b_data, plane_pos, plane_dim, .bottom, .full);
 
-    testing_utils.utest_add_floor_at_y(b_data, 0, .full);
+    // plane goes at top y, 5 blocks above floor on bot
+    testing_utils.utest_add_plane_at_y(t_data, plane_pos, plane_dim, .bottom, .full);
+
+    testing_utils.utest_add_floor_at_y(b_data, 63, .full);
 
     light_fall(t_data, b_data);
 
@@ -212,7 +214,7 @@ test "floating plane lighting test" {
                 const x: f32 = @floatFromInt(_x);
                 const z: f32 = @floatFromInt(_z);
                 try testing_utils.utest_expect_surface_light_at_v(
-                    b_data,
+                    t_data,
                     .{
                         plane_pos[0] + x,
                         plane_pos[1],
@@ -245,7 +247,7 @@ test "floating plane lighting test" {
                 const x: f32 = @floatFromInt(_x);
                 const z: f32 = @floatFromInt(_z);
                 try testing_utils.utest_expect_surface_light_at_v(
-                    b_data,
+                    t_data,
                     .{
                         plane_pos[0] + x,
                         plane_pos[1],
@@ -282,7 +284,7 @@ test "floating plane lighting test" {
                     b_data,
                     .{
                         plane_pos[0] + x,
-                        0, // floor y
+                        63, // floor y
                         plane_pos[2] + z,
                         plane_pos[3],
                     },
