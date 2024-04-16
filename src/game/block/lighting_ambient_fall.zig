@@ -188,5 +188,5 @@ fn runY(c_data: []u32, x: isize, y: isize, z: isize) bool {
     return true;
 }
 
-const block = @import("../block.zig");
+const block = @import("block.zig");
 const chunk = block.chunk;

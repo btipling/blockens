@@ -1,3 +1,3 @@
 #!/usr/bin/env pwsh
 
-zig test .\src\game\block\lighting\ambient_edit.zig
+zig test .\src\game\block\lighting_ambient_edit.zig

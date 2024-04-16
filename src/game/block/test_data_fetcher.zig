@@ -26,6 +26,6 @@ pub fn deinit(self: *data_fetcher) void {
 }
 
 const std = @import("std");
-const block = @import("../block.zig");
-const lighting = @import("ambient_edit.zig");
+const block = @import("block.zig");
+const lighting = @import("lighting_ambient_edit.zig");
 const chunk = block.chunk;

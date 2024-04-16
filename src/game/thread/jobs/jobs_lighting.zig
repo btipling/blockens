@@ -81,4 +81,4 @@ const data = @import("../../data/data.zig");
 const buffer = @import("../buffer.zig");
 const config = @import("config");
 const save_job = @import("jobs_save.zig");
-const lighting = @import("../../block/lighting/ambient_fall.zig");
+const lighting = @import("../../block/lighting_ambient_fall.zig");

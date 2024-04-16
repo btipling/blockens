@@ -667,7 +667,7 @@ test "lighting removing block across chunks lighting falls" {
 }
 
 const std = @import("std");
-const block = @import("../block.zig");
+const block = @import("block.zig");
 const chunk = block.chunk;
 const data_fetcher = if (@import("builtin").is_test)
     (@import("test_data_fetcher.zig"))
