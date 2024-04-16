@@ -555,6 +555,269 @@ test "lighting removing block across chunks lighting falls" {
     }
 }
 
+test "lighting plane building surface test" {
+    // iteratively build a plane and ensure it behaves correctly
+    const plane_pos: @Vector(4, f32) = .{ 10, 4, 10, 0 };
+    const plane_dim: usize = 5;
+    const floor_y: f32 = 63; // on bottom chunk
+    _ = plane_pos;
+    _ = floor_y;
+
+    // All the expected lightings per iteration
+
+    // both bottom of top plane and top of below surface should be like this.
+    // zig fmt: off
+    const expected_lighting: [25][5][5]?block.BlockLighingLevel = .{
+        .{
+            .{ .bright, null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .bright, null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .bright, .bright, null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .bright, .bright, .bright, null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .bright, .bright, .bright },
+            .{ .bright, .bright, null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .bright, .bright },
+            .{ .bright, .bright, .bright, null,    null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .bright, .bright, .bright, null    },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ null,    null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, null,    null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .dark,   .bright, .bright, .bright },
+            .{ .bright, .bright, null,    null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .dark,   .dark,   .bright, .bright },
+            .{ .bright, .bright, .bright, null,    null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .bright, .bright, .bright, null    },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ null,    null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, null,    null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .dark,   .bright, .bright, .bright },
+            .{ .bright, .bright, null,    null,    null    },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .dark,   .none,   .dark,   .bright },
+            .{ .bright, .dark,   .bright, .bright, .bright },
+            .{ .bright, .bright, .bright,  null,    null   },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .dark,   .none,   .dark,   .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .bright, .bright, .bright, null },
+        },
+        .{
+            .{ .bright, .bright, .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .dark,   .none,   .dark,   .bright },
+            .{ .bright, .dark,   .dark,   .dark,   .bright },
+            .{ .bright, .bright, .bright, .bright, .bright },
+        },
+    };
+    // zig fmt: on
+
+    var test_case: usize = 0;
+    const num_test_cases: usize = expected_lighting.len;
+    while (test_case < num_test_cases) : (test_case += 1) {
+        errdefer std.debug.print("failed test case: {d}\n", .{test_case});
+        var _x: usize = 0;
+        while (_x < plane_dim) : (_x += 1) {
+            var _z: usize = 0;
+            while (_z < plane_dim) : (_z += 1) {
+                var l: Lighting = testing_utils.utest_chunk_ae_lighting(1);
+                defer l.deinit();
+                defer l.fetcher.deinit();
+                // set a lit ground floor across y = 63 on bottom chunk
+                const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
+                defer l.allocator.free(t_data);
+
+                const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
+                {
+                    // Set a dark and full non air block bottom chunk for fetcher
+                    const b_data = testing_utils.utest_allocate_test_chunk(1, .none);
+                    l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
+                }
+
+                const tc: [5][5]?block.BlockLighingLevel = expected_lighting[test_case];
+                // current_setup is a value from 0 to 24;
+                const current_setup: usize = num_test_cases - (num_test_cases - test_case);
+                var cs_i: usize = 0;
+                var cs_x: usize = 0;
+                var cs_z: usize = 0;
+                while (cs_i < current_setup) : (cs_i += 1) {
+                    if (cs_x < 4) cs_x += 1 else {
+                        cs_x = 0;
+                        cs_z += 1;
+                    }
+                }
+                _ = tc;
+                if (test_case == 5) {
+                    try std.testing.expect(false);
+                } else try std.testing.expect(true);
+                // Set a block on y, just a slight ways above bottom chunk.
+                // const _x: f32 = 16;
+                // const _z: f32 = 16;
+                // const ci = chunk.getIndexFromPositionV(.{ _x, 0, _z, 0 });
+                // Set a block on top of the dark ground in y 1:
+                // testing_utils.utest_set_block_surface_light(t_data, ci, .full, .bottom, .none);
+                // // init l
+                // l.datas[0] = .{
+                //     .wp = l.wp,
+                //     .data = t_data,
+                // };
+                // // validate the block on the chunk below placement is dark on the surface
+                // {
+                //     const b_data = l.fetcher.test_chunk_data.get(b_wp) orelse @panic("expected bottom wp");
+                //     try testing_utils.utest_expect_surface_light_at_v(b_data, .{ _x, 63, _z, 0 }, .top, .none);
+                // }
+                // var bd: block.BlockData = block.BlockData.fromId(t_data[ci]);
+                // bd.block_id = 0;
+                // t_data[ci] = bd.toId();
+                // l.set_removed_block_lighting(ci);
+                // // validate that the block on chunk below's surface is now fully lit
+                // {
+                //     // expected lighting to have fetched extra data for bottom chunk
+                //     try std.testing.expectEqual(l.num_extra_datas, 1);
+                //     // expected extra data to have been fetchable
+                //     try std.testing.expect(l.datas[1].fetchable);
+                //     const b_data = l.datas[1].data orelse @panic("expected data to be there");
+                //     try testing_utils.utest_expect_surface_light_at_v(b_data, .{ _x, 63, _z, 0 }, .top, .full);
+                // }
+            }
+        }
+    }
+}
+
 const std = @import("std");
 const block = @import("block.zig");
 const chunk = block.chunk;
