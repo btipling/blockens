@@ -188,5 +188,10 @@ fn runY(c_data: []u32, x: isize, y: isize, z: isize) bool {
     return true;
 }
 
+test "test bottom surface" {
+    try std.testing.expect(true);
+}
+
+const std = @import("std");
 const block = @import("block.zig");
 const chunk = block.chunk;
