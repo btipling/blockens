@@ -533,23 +533,8 @@ test "lighting adding block across chunks darkness fall" {
         var d: [chunk.chunkSize]u32 = undefined;
         @memset(&d, init_data);
         @memcpy(b_data, d[0..]);
-
-        {
-            // set a lit ground floor across y = 63 on bottom chunk
-            var ground_bd: block.BlockData = block.BlockData.fromId(1);
-            ground_bd.setFullAmbiance(.none);
-            ground_bd.setAmbient(.top, .full);
-            const gd: u32 = ground_bd.toId();
-            const y: f32 = 63;
-            var x: f32 = 0;
-            while (x < chunk.chunkDim) : (x += 1) {
-                var z: f32 = 0;
-                while (z < chunk.chunkDim) : (z += 1) {
-                    const ci = chunk.getIndexFromPositionV(.{ x, y, z, 0 });
-                    b_data[ci] = gd;
-                }
-            }
-        }
+        // set a lit ground floor across y = 63 on bottom chunk
+        testing_utils.utest_add_floor_at_y(b_data, 63, .full);
         l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
     }
     const placement_x: f32 = 16;
@@ -602,28 +587,14 @@ test "lighting removing block across chunks lighting falls" {
     defer l.deinit();
     l.fetcher.init();
     defer l.fetcher.deinit();
-    const t_data = l.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+    // set a lit ground floor across y = 63 on bottom chunk
+    const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
     defer l.allocator.free(t_data);
 
-    {
-        // init data to full ambient lit air for top chunk
-        var init_bd: block.BlockData = block.BlockData.fromId(0);
-        init_bd.setFullAmbiance(.full);
-        const init_data: u32 = init_bd.toId();
-        var d: [chunk.chunkSize]u32 = undefined;
-        @memset(&d, init_data);
-        @memcpy(t_data, d[0..]);
-    }
     const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
     {
         // Set a dark and full non air block bottom chunk for fetcher
-        const b_data = l.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-        var init_bd: block.BlockData = block.BlockData.fromId(1);
-        init_bd.setFullAmbiance(.none);
-        const init_data: u32 = init_bd.toId();
-        var d: [chunk.chunkSize]u32 = undefined;
-        @memset(&d, init_data);
-        @memcpy(b_data, d[0..]);
+        const b_data = testing_utils.utest_allocate_test_chunk(1, .none);
         l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
     }
     // Set a block on y, just a slight ways above bottom chunk.
@@ -673,3 +644,4 @@ const data_fetcher = if (@import("builtin").is_test)
     (@import("test_data_fetcher.zig"))
 else
     @import("data_fetcher.zig");
+const testing_utils = @import("testing_utils.zig");

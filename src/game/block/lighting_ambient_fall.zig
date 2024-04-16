@@ -189,6 +189,30 @@ fn runY(c_data: []u32, x: isize, y: isize, z: isize) bool {
 }
 
 test "test bottom surface" {
+    const t_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+    defer std.testing.allocator.free(t_data);
+
+    {
+        // init data to full ambient lit air for top chunk
+        var init_bd: block.BlockData = block.BlockData.fromId(0);
+        init_bd.setFullAmbiance(.full);
+        const init_data: u32 = init_bd.toId();
+        var d: [chunk.chunkSize]u32 = undefined;
+        @memset(&d, init_data);
+        @memcpy(t_data, d[0..]);
+    }
+
+    const b_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+    defer std.testing.allocator.free(b_data);
+    {
+        // init data to full ambient lit air for top chunk
+        var init_bd: block.BlockData = block.BlockData.fromId(0);
+        init_bd.setFullAmbiance(.full);
+        const init_data: u32 = init_bd.toId();
+        var d: [chunk.chunkSize]u32 = undefined;
+        @memset(&d, init_data);
+        @memcpy(b_data, d[0..]);
+    }
     try std.testing.expect(true);
 }
 
