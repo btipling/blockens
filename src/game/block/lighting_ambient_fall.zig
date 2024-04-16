@@ -188,34 +188,49 @@ fn runY(c_data: []u32, x: isize, y: isize, z: isize) bool {
     return true;
 }
 
-test "test bottom surface" {
-    const t_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+test "floating plane lighting test" {
+    // The bottom surface of a floating plane should have shade increasing in darkness closer to its center.
+    const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
     defer std.testing.allocator.free(t_data);
 
+    const b_data = testing_utils.utest_allocate_test_chunk(0, .full);
+    defer std.testing.allocator.free(b_data);
+
+    const plane_pos: @Vector(4, f32) = .{ 10, 5, 10, 0 };
+    const plane_dim: usize = 5;
+    testing_utils.utest_add_plane_at_y(b_data, plane_pos, plane_dim, .bottom, .full);
+
+    testing_utils.utest_add_floor_at_y(b_data, 0, .full);
+
+    light_fall(t_data, b_data);
+
     {
-        // init data to full ambient lit air for top chunk
-        var init_bd: block.BlockData = block.BlockData.fromId(0);
-        init_bd.setFullAmbiance(.full);
-        const init_data: u32 = init_bd.toId();
-        var d: [chunk.chunkSize]u32 = undefined;
-        @memset(&d, init_data);
-        @memcpy(t_data, d[0..]);
+        // test top surface of plane is fully lit:
+        var _x: usize = 0;
+        while (_x < plane_dim) : (_x += 1) {
+            var _z: usize = 0;
+            while (_z < plane_dim) : (_z += 1) {
+                const x: f32 = @floatFromInt(_x);
+                const z: f32 = @floatFromInt(_z);
+                try testing_utils.utest_expect_surface_light_at_v(
+                    b_data,
+                    .{
+                        plane_pos[0] + x,
+                        plane_pos[1],
+                        plane_pos[2] + z,
+                        plane_pos[3],
+                    },
+                    .top,
+                    .full,
+                );
+            }
+        }
     }
 
-    const b_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-    defer std.testing.allocator.free(b_data);
-    {
-        // init data to full ambient lit air for top chunk
-        var init_bd: block.BlockData = block.BlockData.fromId(0);
-        init_bd.setFullAmbiance(.full);
-        const init_data: u32 = init_bd.toId();
-        var d: [chunk.chunkSize]u32 = undefined;
-        @memset(&d, init_data);
-        @memcpy(b_data, d[0..]);
-    }
     try std.testing.expect(true);
 }
 
 const std = @import("std");
 const block = @import("block.zig");
 const chunk = block.chunk;
+const testing_utils = @import("testing_utils.zig");
