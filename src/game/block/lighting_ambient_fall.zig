@@ -286,7 +286,7 @@ test "floating plane lighting test" {
                         plane_pos[2] + z,
                         plane_pos[3],
                     },
-                    .bottom,
+                    .top,
                     expected_lighting[_x][_z],
                 );
             }
