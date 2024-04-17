@@ -576,6 +576,7 @@ test "lighting plane building surface test" {
     // both bottom of top plane and top of below surface should be like this.
     // zig fmt: off
     const expected_lighting: [25][5][5]?block.BlockLighingLevel = .{
+        // 0
         .{
             .{ .bright, null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
@@ -583,6 +584,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 1
         .{
             .{ .bright, .bright, null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
@@ -590,6 +592,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 2
         .{
             .{ .bright, .bright, .bright, null,    null    },
             .{ null,    null,    null,    null,    null    },
@@ -597,6 +600,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 3
         .{
             .{ .bright, .bright, .bright, .bright, null    },
             .{ null,    null,    null,    null,    null    },
@@ -604,6 +608,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 4
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ null,    null,    null,    null,    null    },
@@ -611,6 +616,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 5
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, null,    null,    null,    null    },
@@ -618,6 +624,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 6
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .bright, null,    null,    null    },
@@ -625,6 +632,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 7
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .bright, .bright, null,    null    },
@@ -632,6 +640,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 8
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .bright, .bright, .bright, null    },
@@ -639,6 +648,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 9
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .bright, .bright, .bright, .bright },
@@ -646,6 +656,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 10
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .bright, .bright, .bright, .bright },
@@ -653,6 +664,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 11
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .bright, .bright, .bright },
@@ -660,6 +672,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 12
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .bright, .bright },
@@ -667,6 +680,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 13
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .dark,   .bright },
@@ -674,6 +688,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 14
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .dark,   .bright },
@@ -681,6 +696,7 @@ test "lighting plane building surface test" {
             .{ null,    null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 15
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .dark,   .bright },
@@ -688,6 +704,7 @@ test "lighting plane building surface test" {
             .{ .bright, null,    null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 16
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .dark,   .bright },
@@ -695,6 +712,7 @@ test "lighting plane building surface test" {
             .{ .bright, .bright, null,    null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 17
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .dark,   .bright },
@@ -702,6 +720,7 @@ test "lighting plane building surface test" {
             .{ .bright, .bright, .bright, null,    null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 18
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .dark,   .bright },
@@ -709,6 +728,7 @@ test "lighting plane building surface test" {
             .{ .bright, .bright, .bright, .bright, null    },
             .{ null,    null,    null,    null,    null    },
         },
+        // 19
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .dark,   .bright },
@@ -716,6 +736,7 @@ test "lighting plane building surface test" {
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ null,    null,    null,    null,    null    },
         },
+        // 20
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .dark,   .bright },
@@ -723,6 +744,7 @@ test "lighting plane building surface test" {
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, null,    null,    null,    null    },
         },
+        // 21
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .dark,   .bright },
@@ -730,6 +752,7 @@ test "lighting plane building surface test" {
             .{ .bright, .dark,   .bright, .bright, .bright },
             .{ .bright, .bright, null,    null,    null    },
         },
+        // 22
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .dark,   .bright },
@@ -737,6 +760,7 @@ test "lighting plane building surface test" {
             .{ .bright, .dark,   .bright, .bright, .bright },
             .{ .bright, .bright, .bright,  null,    null   },
         },
+        // 23
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .dark,   .bright },
@@ -744,6 +768,7 @@ test "lighting plane building surface test" {
             .{ .bright, .dark,   .dark,   .dark,   .bright },
             .{ .bright, .bright, .bright, .bright, null },
         },
+        // 24
         .{
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .dark,   .bright },
