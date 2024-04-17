@@ -171,6 +171,9 @@ pub fn set_added_block_lighting(self: *Lighting, bd: *block.BlockData, ci: usize
         const c_ll: block.BlockLighingLevel = self.get_ambience_from_adjecent(c_ci, ci);
         {
             // The bottom of the added block should be the same as the ambience below.
+            if (c_ll == .dark) {
+                std.debug.print("GOT A DARK LL?\n", .{});
+            }
             bd.setAmbient(.bottom, c_ll);
             var data = self.get_datas(self.wp) orelse return;
             data[ci] = bd.toId();
@@ -758,56 +761,55 @@ test "lighting plane building surface test" {
     defer std.testing.allocator.free(b_base_data);
 
     var test_case: usize = 0;
-    const num_test_cases: usize = expected_lighting.len;
     const block_id = 1;
-    while (test_case < num_test_cases) : (test_case += 1) {
-        errdefer std.debug.print("failed test case: {d}\n", .{test_case});
-        var _x: usize = 0;
-        while (_x < plane_dim) : (_x += 1) {
-            var _z: usize = 0;
-            while (_z < plane_dim) : (_z += 1) {
-                var l: Lighting = testing_utils.utest_chunk_ae_lighting(1);
-                defer l.deinit();
-                defer l.fetcher.deinit();
-                // set a lit ground floor across y = 63 on bottom chunk
+    var _x: usize = 0;
+    while (_x < plane_dim) : (_x += 1) {
+        var _z: usize = 0;
+        while (_z < plane_dim) : (_z += 1) {
+            errdefer std.debug.print("failed test case: {d}\n", .{test_case});
+            var l: Lighting = testing_utils.utest_chunk_ae_lighting(1);
+            defer l.deinit();
+            defer l.fetcher.deinit();
+            // set a lit ground floor across y = 63 on bottom chunk
 
-                const t_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-                defer std.testing.allocator.free(t_data);
-                @memcpy(t_data, t_base_data);
+            const t_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+            defer std.testing.allocator.free(t_data);
+            @memcpy(t_data, t_base_data);
 
-                {
-                    const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
-                    // Set a dark and full non air block bottom chunk for fetcher
-                    const b_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-                    @memcpy(b_data, b_base_data);
-                    l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
-                }
+            {
+                const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
+                // Set a dark and full non air block bottom chunk for fetcher
+                const b_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+                @memcpy(b_data, b_base_data);
+                l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
+            }
 
-                const pos: @Vector(4, f32) = .{
-                    plane_pos[0] + @as(f32, @floatFromInt(_x)),
-                    plane_pos[1],
-                    plane_pos[2] + @as(f32, @floatFromInt(_z)),
-                    plane_pos[3],
-                };
-                const b_ci = chunk.getIndexFromPositionV(pos);
+            const pos: @Vector(4, f32) = .{
+                plane_pos[0] + @as(f32, @floatFromInt(_x)),
+                plane_pos[1],
+                plane_pos[2] + @as(f32, @floatFromInt(_z)),
+                plane_pos[3],
+            };
+            const b_ci = chunk.getIndexFromPositionV(pos);
 
-                var bd: block.BlockData = block.BlockData.fromId(t_data[b_ci]);
-                bd.block_id = block_id;
-                t_data[b_ci] = bd.toId();
+            var bd: block.BlockData = block.BlockData.fromId(t_data[b_ci]);
+            bd.block_id = block_id;
+            t_data[b_ci] = bd.toId();
 
-                l.datas[0] = .{
-                    .wp = l.wp,
-                    .data = t_data,
-                };
+            l.datas[0] = .{
+                .wp = l.wp,
+                .data = t_data,
+            };
 
-                // Do the thing.
-                l.set_added_block_lighting(&bd, b_ci);
+            // Do the thing.
+            l.set_added_block_lighting(&bd, b_ci);
 
-                // Check the thing got done.
-                const bl_data = l.datas[1].data orelse @panic("expected data to be there");
-                const tc: [5][5]?block.BlockLighingLevel = expected_lighting[test_case];
-                var __x: usize = 0;
-                while (__x < plane_dim) : (__x += 1) outer: {
+            // Check the thing got done.
+            const bl_data = l.datas[1].data orelse @panic("expected data to be there");
+            const tc: [5][5]?block.BlockLighingLevel = expected_lighting[test_case];
+            var __x: usize = 0;
+            outer: {
+                while (__x < plane_dim) : (__x += 1) {
                     var __z: usize = 0;
                     while (__z < plane_dim) : (__z += 1) {
                         var failed_top = true;
@@ -832,7 +834,7 @@ test "lighting plane building surface test" {
                                 plane_pos[3],
                             },
                             .bottom,
-                            .bright,
+                            ll,
                         );
                         failed_top = false;
                         failed_top_surface = true;
@@ -863,10 +865,11 @@ test "lighting plane building surface test" {
                         );
                     }
                 }
-
-                @memcpy(t_base_data, t_data);
-                @memcpy(b_base_data, bl_data);
             }
+
+            @memcpy(t_base_data, t_data);
+            @memcpy(b_base_data, bl_data);
+            test_case += 1;
         }
     }
 }
