@@ -208,7 +208,7 @@ pub fn set_added_block_lighting(self: *Lighting, bd: *block.BlockData, ci: usize
             // set air to darkened light
             c_bd.setFullAmbiance(c_ll);
             data[c_ci] = c_bd.toId();
-            // Set all the non-vertical adjacent surfaces to c_ll or propagate light a bit
+            // Set all the non-vertical adjacent surfaces to c_ll or propagate darkness a bit
             x_pos: {
                 const x = pos[0] + 1;
                 if (x >= chunk.chunkDim) break :x_pos;
@@ -333,6 +333,19 @@ pub fn set_propagated_lighting_with_distance(self: *Lighting, ci: usize, distanc
         // if air set full ambience and if changed propagate changes to adjacent and down
         bd.setFullAmbiance(ll);
         data[ci] = bd.toId();
+        y_pos: {
+            // in case of block above bd, set bot surface to new ll
+            const y = pos[1] + 1;
+            if (y >= chunk.chunkDim) break :y_pos;
+            const t_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+            var t_bd: block.BlockData = block.BlockData.fromId(data[t_ci]);
+            if (t_bd.block_id == air) break :y_pos;
+            if (t_bd.getSurfaceAmbience(.bottom) != ll) {
+                self.propagated[t_ci] = 1;
+                t_bd.setAmbient(.bottom, ll);
+                data[t_ci] = t_bd.toId();
+            }
+        }
         x_neg: {
             const x = pos[0] - 1;
             if (x < 0) break :x_neg;
@@ -347,6 +360,7 @@ pub fn set_propagated_lighting_with_distance(self: *Lighting, ci: usize, distanc
             self.set_propagated_lighting_with_distance(c_ci, distance + 1);
         }
         y_neg: {
+            // TODO: this needs to fall
             const y = pos[1] - 1;
             if (y < 0) break :y_neg;
             const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
@@ -839,16 +853,27 @@ test "lighting plane building surface test" {
                     while (__z < plane_dim) : (__z += 1) {
                         var failed_top = true;
                         var failed_top_surface = false;
-                        errdefer std.debug.print("test_case: {d} - failed at {d} {d} - failed top: {} - failed top surface: {}\n", .{
-                            test_case,
-                            __x,
-                            __z,
-                            failed_top,
-                            failed_top_surface,
-                        });
                         const ll: block.BlockLighingLevel = tc[__x][__z] orelse break :outer;
                         const x: f32 = @floatFromInt(__x);
                         const z: f32 = @floatFromInt(__z);
+                        const poss: @Vector(4, f32) = .{
+                            plane_pos[0] + x,
+                            plane_pos[1],
+                            plane_pos[2] + z,
+                            0,
+                        };
+                        const b_ciss = chunk.getIndexFromPositionV(poss);
+                        errdefer std.debug.print("test_case: {d} - ci: {d} - failed at {d} {d} - ({d}, {d}, {d}) - failed top: {} - failed top surface: {}\n", .{
+                            test_case,
+                            __x,
+                            __z,
+                            b_ciss,
+                            plane_pos[0] + x,
+                            plane_pos[1],
+                            plane_pos[2] + z,
+                            failed_top,
+                            failed_top_surface,
+                        });
                         // Test top
                         try testing_utils.utest_expect_surface_light_at_v(
                             t_data,
