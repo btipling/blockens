@@ -159,16 +159,22 @@ pub fn set_added_block_lighting(self: *Lighting, bd: *block.BlockData, ci: usize
     self.set_surfaces_from_ambient(bd, ci);
 
     // If the block above was full lighting all light below has to be dimmed and propagated
-    y_pos: {
+    y_fall: {
         var c_ci: usize = 0;
         var c_bd: block.BlockData = undefined;
         var _y = pos[1] - 1;
         if (_y < 0) {
             // TODO: propagate to chunk below
-            break :y_pos;
+            break :y_fall;
         }
         c_ci = chunk.getIndexFromPositionV(.{ pos[0], _y, pos[2], pos[3] });
         const c_ll: block.BlockLighingLevel = self.get_ambience_from_adjecent(c_ci, ci);
+        {
+            // The bottom of the added block should be the same as the ambience below.
+            bd.setAmbient(.bottom, c_ll);
+            var data = self.get_datas(self.wp) orelse return;
+            data[ci] = bd.toId();
+        }
         var multi_chunk = false;
         if (self.pos[1] == 1) {
             multi_chunk = true;
@@ -769,11 +775,13 @@ test "lighting plane building surface test" {
                 defer std.testing.allocator.free(t_data);
                 @memcpy(t_data, t_base_data);
 
-                const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
-                // Set a dark and full non air block bottom chunk for fetcher
-                const b_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-                @memcpy(b_data, b_base_data);
-                l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
+                {
+                    const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
+                    // Set a dark and full non air block bottom chunk for fetcher
+                    const b_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+                    @memcpy(b_data, b_base_data);
+                    l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
+                }
 
                 const pos: @Vector(4, f32) = .{
                     plane_pos[0] + @as(f32, @floatFromInt(_x)),
@@ -796,6 +804,7 @@ test "lighting plane building surface test" {
                 l.set_added_block_lighting(&bd, b_ci);
 
                 // Check the thing got done.
+                const bl_data = l.datas[1].data orelse @panic("expected data to be there");
                 const tc: [5][5]?block.BlockLighingLevel = expected_lighting[test_case];
                 var __x: usize = 0;
                 while (__x < plane_dim) : (__x += 1) outer: {
@@ -803,13 +812,14 @@ test "lighting plane building surface test" {
                     while (__z < plane_dim) : (__z += 1) {
                         var failed_top = true;
                         var failed_top_surface = false;
-                        errdefer std.debug.print("failed at {d} {d} - failed top: {} - failed top surface: {}\n", .{
+                        errdefer std.debug.print("test_case: {d} - failed at {d} {d} - failed top: {} - failed top surface: {}\n", .{
+                            test_case,
                             __x,
                             __z,
                             failed_top,
                             failed_top_surface,
                         });
-                        const ll: block.BlockLighingLevel = tc[_x][_z] orelse break :outer;
+                        const ll: block.BlockLighingLevel = tc[__x][__z] orelse break :outer;
                         const x: f32 = @floatFromInt(__x);
                         const z: f32 = @floatFromInt(__z);
                         // Test top
@@ -841,7 +851,7 @@ test "lighting plane building surface test" {
                         failed_top_surface = false;
                         // Test bottom
                         try testing_utils.utest_expect_surface_light_at_v(
-                            b_data,
+                            bl_data,
                             .{
                                 plane_pos[0] + x,
                                 63,
@@ -855,7 +865,7 @@ test "lighting plane building surface test" {
                 }
 
                 @memcpy(t_base_data, t_data);
-                @memcpy(b_base_data, b_data);
+                @memcpy(b_base_data, bl_data);
             }
         }
     }
