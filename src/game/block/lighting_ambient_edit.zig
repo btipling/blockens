@@ -560,7 +560,6 @@ test "lighting plane building surface test" {
     const plane_pos: @Vector(4, f32) = .{ 10, 4, 10, 0 };
     const plane_dim: usize = 5;
     const floor_y: f32 = 63; // on bottom chunk
-    _ = plane_pos;
     _ = floor_y;
 
     // All the expected lightings per iteration
@@ -745,9 +744,16 @@ test "lighting plane building surface test" {
         },
     };
     // zig fmt: on
+    const t_base_data = testing_utils.utest_allocate_test_chunk(0, .full);
+    defer std.testing.allocator.free(t_base_data);
+    const b_base_data = testing_utils.utest_allocate_test_chunk(1, .none);
+    // set a lit ground floor across y = 63 on bottom chunk
+    testing_utils.utest_add_floor_at_y(b_base_data, 63, .full);
+    defer std.testing.allocator.free(b_base_data);
 
     var test_case: usize = 0;
     const num_test_cases: usize = expected_lighting.len;
+    const block_id = 1;
     while (test_case < num_test_cases) : (test_case += 1) {
         errdefer std.debug.print("failed test case: {d}\n", .{test_case});
         var _x: usize = 0;
@@ -758,61 +764,98 @@ test "lighting plane building surface test" {
                 defer l.deinit();
                 defer l.fetcher.deinit();
                 // set a lit ground floor across y = 63 on bottom chunk
-                const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
-                defer l.allocator.free(t_data);
+
+                const t_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+                defer std.testing.allocator.free(t_data);
+                @memcpy(t_data, t_base_data);
 
                 const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
-                {
-                    // Set a dark and full non air block bottom chunk for fetcher
-                    const b_data = testing_utils.utest_allocate_test_chunk(1, .none);
-                    l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
-                }
+                // Set a dark and full non air block bottom chunk for fetcher
+                const b_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+                @memcpy(b_data, b_base_data);
+                l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
 
+                const pos: @Vector(4, f32) = .{
+                    plane_pos[0] + @as(f32, @floatFromInt(_x)),
+                    plane_pos[1],
+                    plane_pos[2] + @as(f32, @floatFromInt(_z)),
+                    plane_pos[3],
+                };
+                const b_ci = chunk.getIndexFromPositionV(pos);
+
+                var bd: block.BlockData = block.BlockData.fromId(t_data[b_ci]);
+                bd.block_id = block_id;
+                t_data[b_ci] = bd.toId();
+
+                l.datas[0] = .{
+                    .wp = l.wp,
+                    .data = t_data,
+                };
+
+                // Do the thing.
+                l.set_added_block_lighting(&bd, b_ci);
+
+                // Check the thing got done.
                 const tc: [5][5]?block.BlockLighingLevel = expected_lighting[test_case];
-                // current_setup is a value from 0 to 24;
-                const current_setup: usize = num_test_cases - (num_test_cases - test_case);
-                var cs_i: usize = 0;
-                var cs_x: usize = 0;
-                var cs_z: usize = 0;
-                while (cs_i < current_setup) : (cs_i += 1) {
-                    if (cs_x < 4) cs_x += 1 else {
-                        cs_x = 0;
-                        cs_z += 1;
+                var __x: usize = 0;
+                while (__x < plane_dim) : (__x += 1) outer: {
+                    var __z: usize = 0;
+                    while (__z < plane_dim) : (__z += 1) {
+                        var failed_top = true;
+                        var failed_top_surface = false;
+                        errdefer std.debug.print("failed at {d} {d} - failed top: {} - failed top surface: {}\n", .{
+                            __x,
+                            __z,
+                            failed_top,
+                            failed_top_surface,
+                        });
+                        const ll: block.BlockLighingLevel = tc[_x][_z] orelse break :outer;
+                        const x: f32 = @floatFromInt(__x);
+                        const z: f32 = @floatFromInt(__z);
+                        // Test top
+                        try testing_utils.utest_expect_surface_light_at_v(
+                            t_data,
+                            .{
+                                plane_pos[0] + x,
+                                plane_pos[1],
+                                plane_pos[2] + z,
+                                plane_pos[3],
+                            },
+                            .bottom,
+                            .bright,
+                        );
+                        failed_top = false;
+                        failed_top_surface = true;
+                        // top's top surface should always be full
+                        try testing_utils.utest_expect_surface_light_at_v(
+                            t_data,
+                            .{
+                                plane_pos[0] + x,
+                                plane_pos[1],
+                                plane_pos[2] + z,
+                                plane_pos[3],
+                            },
+                            .top,
+                            .full,
+                        );
+                        failed_top_surface = false;
+                        // Test bottom
+                        try testing_utils.utest_expect_surface_light_at_v(
+                            b_data,
+                            .{
+                                plane_pos[0] + x,
+                                63,
+                                plane_pos[2] + z,
+                                plane_pos[3],
+                            },
+                            .top,
+                            ll,
+                        );
                     }
                 }
-                _ = tc;
-                if (test_case == 5) {
-                    try std.testing.expect(false);
-                } else try std.testing.expect(true);
-                // Set a block on y, just a slight ways above bottom chunk.
-                // const _x: f32 = 16;
-                // const _z: f32 = 16;
-                // const ci = chunk.getIndexFromPositionV(.{ _x, 0, _z, 0 });
-                // Set a block on top of the dark ground in y 1:
-                // testing_utils.utest_set_block_surface_light(t_data, ci, .full, .bottom, .none);
-                // // init l
-                // l.datas[0] = .{
-                //     .wp = l.wp,
-                //     .data = t_data,
-                // };
-                // // validate the block on the chunk below placement is dark on the surface
-                // {
-                //     const b_data = l.fetcher.test_chunk_data.get(b_wp) orelse @panic("expected bottom wp");
-                //     try testing_utils.utest_expect_surface_light_at_v(b_data, .{ _x, 63, _z, 0 }, .top, .none);
-                // }
-                // var bd: block.BlockData = block.BlockData.fromId(t_data[ci]);
-                // bd.block_id = 0;
-                // t_data[ci] = bd.toId();
-                // l.set_removed_block_lighting(ci);
-                // // validate that the block on chunk below's surface is now fully lit
-                // {
-                //     // expected lighting to have fetched extra data for bottom chunk
-                //     try std.testing.expectEqual(l.num_extra_datas, 1);
-                //     // expected extra data to have been fetchable
-                //     try std.testing.expect(l.datas[1].fetchable);
-                //     const b_data = l.datas[1].data orelse @panic("expected data to be there");
-                //     try testing_utils.utest_expect_surface_light_at_v(b_data, .{ _x, 63, _z, 0 }, .top, .full);
-                // }
+
+                @memcpy(t_base_data, t_data);
+                @memcpy(b_base_data, b_data);
             }
         }
     }

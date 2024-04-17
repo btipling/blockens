@@ -64,8 +64,8 @@ pub fn utest_expect_surface_light_at_v(
     expected_ll: block.BlockLighingLevel,
 ) !void {
     const b_ci = chunk.getIndexFromPositionV(pos);
-    var below_bd: block.BlockData = block.BlockData.fromId(data[b_ci]);
-    try std.testing.expectEqual(expected_ll, below_bd.getSurfaceAmbience(surface));
+    var bd: block.BlockData = block.BlockData.fromId(data[b_ci]);
+    try std.testing.expectEqual(expected_ll, bd.getSurfaceAmbience(surface));
 }
 
 pub fn utest_chunk_ae_lighting(y: f32) ambient_edit.Lighting {
