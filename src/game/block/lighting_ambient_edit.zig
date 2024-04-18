@@ -805,7 +805,6 @@ test "lighting plane building surface test" {
     while (_x < plane_dim) : (_x += 1) {
         var _z: usize = 0;
         while (_z < plane_dim) : (_z += 1) {
-            errdefer std.debug.print("failed test case: {d}\n", .{test_case});
             var l: Lighting = testing_utils.utest_chunk_ae_lighting(1);
             defer l.deinit();
             defer l.fetcher.deinit();
@@ -863,17 +862,20 @@ test "lighting plane building surface test" {
                             0,
                         };
                         const b_ciss = chunk.getIndexFromPositionV(poss);
-                        errdefer std.debug.print("test_case: {d} - ci: {d} - failed at {d} {d} - ({d}, {d}, {d}) - failed top: {} - failed top surface: {}\n", .{
-                            test_case,
-                            __x,
-                            __z,
-                            b_ciss,
-                            plane_pos[0] + x,
-                            plane_pos[1],
-                            plane_pos[2] + z,
-                            failed_top,
-                            failed_top_surface,
-                        });
+                        errdefer std.debug.print(
+                            "\n\nFAILED test_case: {d} \n- ci: {d} \n- failed at {d} {d} \n- ({d}, {d}, {d}) \n- failed top: {} \n- failed top surface: {}\n\n",
+                            .{
+                                test_case,
+                                b_ciss,
+                                __x,
+                                __z,
+                                plane_pos[0] + x,
+                                plane_pos[1],
+                                plane_pos[2] + z,
+                                failed_top,
+                                failed_top_surface,
+                            },
+                        );
                         // Test top
                         try testing_utils.utest_expect_surface_light_at_v(
                             t_data,
