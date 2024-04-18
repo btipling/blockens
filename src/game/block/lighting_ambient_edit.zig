@@ -50,210 +50,280 @@ pub fn get_datas(self: *Lighting, wp: chunk.worldPosition) ?[]u32 {
 }
 
 pub fn set_removed_block_lighting(self: *Lighting, ci: usize) void {
-    const pos = chunk.getPositionAtIndexV(ci);
-    // Get light from above and see if it's full, have to propagate full all the way down
-    y_pos: {
-        var c_ci: usize = 0;
-        var c_bd: block.BlockData = undefined;
-        var _y: f32 = pos[1] + 1;
-        if (_y >= chunk.chunkDim) {
-            _y = chunk.chunkDim - 1;
-            // Assume full light for now for missing chunk.
-        } else {
-            c_ci = chunk.getIndexFromPositionV(.{ pos[0], _y, pos[2], pos[3] });
-            if (c_ci >= chunk.chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
-            const data = self.get_datas(self.wp) orelse return;
-            c_bd = block.BlockData.fromId((data[c_ci]));
-            // Only if the block above is air and full
-            if (c_bd.block_id != air) break :y_pos;
-            const c_ll = c_bd.getFullAmbiance();
-            if (c_ll != .full) {
-                break :y_pos;
-            }
-        }
-        var multi_chunk = false;
-        if (self.pos[1] == 1) {
-            multi_chunk = true;
-            _y += chunk.chunkDim;
-        }
-        while (_y >= 0) : (_y -= 1) {
-            var wp = self.wp;
-            const y = blk: {
-                if (multi_chunk) {
-                    if (_y < chunk.chunkDim) {
-                        wp = wp.getBelowWP();
-                        break :blk _y;
-                    }
-                    break :blk _y - chunk.chunkDim;
-                }
-                break :blk _y;
-            };
-            // let the light fall
-            c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-            var data = self.get_datas(wp) orelse return;
-            c_bd = block.BlockData.fromId(data[c_ci]);
-            if (c_bd.block_id != air) {
-                // reached the surface
-                c_bd.setFullAmbiance(.full);
-                c_bd.setAmbient(.top, .full);
-                data[c_ci] = c_bd.toId();
-                return;
-            }
-            // set air to full
-            c_bd.setFullAmbiance(.full);
-            data[c_ci] = c_bd.toId();
-            // Set all the non-vertical adjacent surfaces to full or propagate light a bit
-            x_pos: {
-                const x = pos[0] + 1;
-                if (x >= chunk.chunkDim) break :x_pos;
-                c_ci = chunk.getIndexFromPositionV(.{ x, y, pos[2], pos[3] });
-                if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-                c_bd = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) {
-                    c_bd.setAmbient(.left, .full);
-                    data[c_ci] = c_bd.toId();
-                } else self.set_propagated_lighting(c_ci);
-            }
-            x_neg: {
-                const x = pos[0] - 1;
-                if (x < 0) break :x_neg;
-                c_ci = chunk.getIndexFromPositionV(.{ x, y, pos[2], pos[3] });
-                if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-                c_bd = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) {
-                    c_bd.setAmbient(.right, .full);
-                    data[c_ci] = c_bd.toId();
-                } else self.set_propagated_lighting(c_ci);
-            }
-            z_pos: {
-                const z = pos[2] + 1;
-                if (z >= chunk.chunkDim) break :z_pos;
-                c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, z, pos[3] });
-                if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-                c_bd = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) {
-                    c_bd.setAmbient(.front, .full);
-                    data[c_ci] = c_bd.toId();
-                } else self.set_propagated_lighting(c_ci);
-            }
-            z_neg: {
-                const z = pos[2] - 1;
-                if (z < 0) break :z_neg;
-                c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, z, pos[3] });
-                if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-                c_bd = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) {
-                    c_bd.setAmbient(.back, .full);
-                    data[c_ci] = c_bd.toId();
-                } else self.set_propagated_lighting(c_ci);
-            }
-        }
-        return;
-    }
-    self.set_propagated_lighting(ci);
+    self.darken_area_around_block(ci);
+    self.determine_air_ambience_around_block(ci);
+    self.determine_block_ambience_around_block(ci);
 }
 
-pub fn set_added_block_lighting(self: *Lighting, bd: *block.BlockData, ci: usize) void {
-    const pos = chunk.getPositionAtIndexV(ci);
-    // set added block surfaces first
-    self.set_surfaces_from_ambient(bd, ci);
+pub fn set_added_block_lighting(self: *Lighting, _: *block.BlockData, ci: usize) void {
+    self.darken_area_around_block(ci);
+    self.determine_air_ambience_around_block(ci);
+    self.determine_block_ambience_around_block(ci);
+}
 
-    // If the block above was full lighting all light below has to be dimmed and propagated
-    y_fall: {
-        var c_ci: usize = 0;
-        var c_bd: block.BlockData = undefined;
-        var _y = pos[1] - 1;
-        if (_y < 0) {
-            // TODO: propagate to chunk below
-            break :y_fall;
-        }
-        c_ci = chunk.getIndexFromPositionV(.{ pos[0], _y, pos[2], pos[3] });
-        const c_ll: block.BlockLighingLevel = self.get_ambience_from_adjecent(c_ci, ci);
-        {
-            // The bottom of the added block should be the same as the ambience below.
-            if (c_ll == .dark) {
-                std.debug.print("GOT A DARK LL?\n", .{});
-            }
-            bd.setAmbient(.bottom, c_ll);
-            var data = self.get_datas(self.wp) orelse return;
-            data[ci] = bd.toId();
-        }
-        var multi_chunk = false;
-        if (self.pos[1] == 1) {
-            multi_chunk = true;
-            _y += chunk.chunkDim;
-        }
-        while (_y >= 0) : (_y -= 1) {
-            // let the darkness fall
-            var wp = self.wp;
-            const y = blk: {
-                if (multi_chunk) {
-                    if (_y < chunk.chunkDim) {
-                        wp = wp.getBelowWP();
-                        break :blk _y;
-                    }
-                    break :blk _y - chunk.chunkDim;
-                }
-                break :blk _y;
-            };
-            c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-            const data = self.get_datas(wp) orelse return;
-            c_bd = block.BlockData.fromId(data[c_ci]);
-            if (c_bd.block_id != air) {
-                // reached the surface
-                c_bd.setAmbient(.top, c_ll);
+pub fn darken_area_around_block(self: *Lighting, ci: usize) void {
+    const pos = chunk.getPositionAtIndexV(ci);
+    var is_multi_chunk = self.pos[1] == 1;
+    // go 2 positions up and 2 positions out in every direction and nuke the light
+    // in a 5x5x5 cube starting at the top going down and everything beneath the cube until
+    // a surface is hit
+    // then starting at the top, figure out what the ambient lighting should be for each
+    // going down
+
+    // go up 2 or as far as we can
+    var y = pos[1];
+    while (y < chunk.chunkDim and y < pos[1] + 2) : (y += 1) {}
+    // go out x znd z by 2 or as far as we can
+    var x = pos[0];
+    while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
+    var z = pos[0];
+    while (z > 0 and z > pos[2] - 2) : (z -= 2) {}
+    // set ends in the x and z direction
+    var y_end = y;
+    while (y_end > 0 and y_end > y - 5) : (y_end -= 1) {} // y goes down
+    var x_end = x;
+    while (x_end < chunk.chunkDim and x_end < x + 5) : (x_end += 1) {}
+    var z_end = z;
+    while (z_end < chunk.chunkDim and z_end < z + 5) : (z_end += 1) {}
+    // shut out the lights
+    var y_d = y;
+    var x_d = x;
+    var z_d = z;
+    std.debug.print("y: {d}, x: {d}, z: {d} - end_y: {d}, end_x: {d}, end_z: {d}\n", .{
+        y_d,
+        x_d,
+        z_d,
+        y_end,
+        x_end,
+        z_end,
+    });
+    while (y_d >= y_end) : (y_d -= 1) {
+        while (x_d < x_end) : (x_d += 1) {
+            while (z_d < z_end) : (z_d += 1) {
+                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
+                var data = self.get_datas(self.wp) orelse continue;
+                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
+                c_bd.ambient = 0;
                 data[c_ci] = c_bd.toId();
-                return;
             }
-            // set air to darkened light
-            c_bd.setFullAmbiance(c_ll);
-            data[c_ci] = c_bd.toId();
-            // Set all the non-vertical adjacent surfaces to c_ll or propagate darkness a bit
-            x_pos: {
-                const x = pos[0] + 1;
-                if (x >= chunk.chunkDim) break :x_pos;
-                c_ci = chunk.getIndexFromPositionV(.{ x, y, pos[2], pos[3] });
-                if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-                c_bd = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) {
-                    c_bd.setAmbient(.left, c_ll);
-                    data[c_ci] = c_bd.toId();
-                } else self.set_propagated_lighting(c_ci);
-            }
-            x_neg: {
-                const x = pos[0] - 1;
-                if (x < 0) break :x_neg;
-                c_ci = chunk.getIndexFromPositionV(.{ x, y, pos[2], pos[3] });
-                if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-                c_bd = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) {
-                    c_bd.setAmbient(.right, c_ll);
-                    data[c_ci] = c_bd.toId();
-                } else self.set_propagated_lighting(c_ci);
-            }
-            z_pos: {
-                const z = pos[2] + 1;
-                if (z >= chunk.chunkDim) break :z_pos;
-                c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, z, pos[3] });
-                if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-                c_bd = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) {
-                    c_bd.setAmbient(.front, c_ll);
-                    data[c_ci] = c_bd.toId();
-                } else self.set_propagated_lighting(c_ci);
-            }
-            z_neg: {
-                const z = pos[2] - 1;
-                if (z < 0) break :z_neg;
-                c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, z, pos[3] });
-                if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-                c_bd = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) {
-                    c_bd.setAmbient(.back, c_ll);
-                    data[c_ci] = c_bd.toId();
-                } else self.set_propagated_lighting(c_ci);
-            }
+            z_d = z;
         }
+        x_d = x;
+    }
+    // now darken each x, z from y_end until a surface is hit:
+    y_d = y_end;
+    x_d = x;
+    z_d = z;
+
+    var wp = self.wp;
+    while (x_d < x_end) : (x_d += 1) {
+        while (z_d < z_end) : (z_d += 1) {
+            while (true) {
+                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
+                var data = self.get_datas(wp) orelse continue;
+                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
+                if (c_bd.block_id != air) {
+                    c_bd.setAmbient(.top, .none);
+                    data[c_ci] = c_bd.toId();
+                    break;
+                }
+                c_bd.ambient = 0;
+                data[c_ci] = c_bd.toId();
+                if (y_d == 0) {
+                    if (is_multi_chunk) {
+                        wp = wp.getBelowWP();
+                        y_d = 63;
+                        is_multi_chunk = false;
+                    } else break;
+                } else y_d -= 1;
+            }
+            wp = self.wp;
+            y_d = y_end;
+        }
+        z_d = z;
+    }
+}
+
+pub fn determine_air_ambience_around_block(self: *Lighting, ci: usize) void {
+    const pos = chunk.getPositionAtIndexV(ci);
+    var is_multi_chunk = self.pos[1] == 1;
+    // go 2 positions up and 2 positions out in every direction and nuke the light
+    // in a 5x5x5 cube starting at the top going down and everything beneath the cube until
+    // a surface is hit
+    // then starting at the top, figure out what the ambient lighting should be for each
+    // going down
+
+    // go up 2 or as far as we can
+    var y = pos[1];
+    while (y < chunk.chunkDim and y < pos[1] + 2) : (y += 1) {}
+    // go out x znd z by 2 or as far as we can
+    var x = pos[0];
+    while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
+    var z = pos[0];
+    while (z > 0 and z > pos[2] - 2) : (z -= 2) {}
+    // set ends in the x and z direction
+    var y_end = y;
+    while (y_end > 0 and y_end > y - 5) : (y_end -= 1) {} // y goes down
+    var x_end = x;
+    while (x_end < chunk.chunkDim and x_end < x + 5) : (x_end += 1) {}
+    var z_end = z;
+    while (z_end < chunk.chunkDim and z_end < z + 5) : (z_end += 1) {}
+    // shut out the lights
+    var y_d = y;
+    var x_d = x;
+    var z_d = z;
+    std.debug.print("y: {d}, x: {d}, z: {d} - end_y: {d}, end_x: {d}, end_z: {d}\n", .{
+        y_d,
+        x_d,
+        z_d,
+        y_end,
+        x_end,
+        z_end,
+    });
+    while (y_d >= y_end) : (y_d -= 1) {
+        while (x_d < x_end) : (x_d += 1) {
+            while (z_d < z_end) : (z_d += 1) {
+                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
+                var data = self.get_datas(self.wp) orelse continue;
+                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
+                if (c_bd.block_id == air) {
+                    const ll = self.get_ambience_from_adjecent(c_ci, null);
+                    if (ll == .dark) {
+                        std.debug.print("\n\t\t\tgot dark at y: {d}, x: {d}, z: {d}\n", .{
+                            y_d,
+                            x_d,
+                            z_d,
+                        });
+                    }
+                    std.debug.print("setting {d}, {d}, {d} air to {} \n", .{
+                        y_d,
+                        x_d,
+                        z_d,
+                        ll,
+                    });
+                    c_bd.setFullAmbiance(ll);
+                    data[c_ci] = c_bd.toId();
+                }
+            }
+            z_d = z;
+        }
+        x_d = x;
+    }
+    // now darken each x, z from y_end until a surface is hit:
+    y_d = y_end;
+    x_d = x;
+    z_d = z;
+
+    var wp = self.wp;
+    while (x_d < x_end) : (x_d += 1) {
+        while (z_d < z_end) : (z_d += 1) {
+            while (true) {
+                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
+                var data = self.get_datas(wp) orelse continue;
+                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
+                if (c_bd.block_id != air) {
+                    break;
+                }
+                if (c_bd.block_id == air) {
+                    const ll = self.get_ambience_from_adjecent(c_ci, null);
+                    c_bd.setFullAmbiance(ll);
+                    data[c_ci] = c_bd.toId();
+                }
+                if (y_d == 0) {
+                    if (is_multi_chunk) {
+                        wp = wp.getBelowWP();
+                        y_d = 63;
+                        is_multi_chunk = false;
+                    } else break;
+                } else y_d -= 1;
+            }
+            wp = self.wp;
+            y_d = y_end;
+        }
+        z_d = z;
+    }
+}
+
+pub fn determine_block_ambience_around_block(self: *Lighting, ci: usize) void {
+    const pos = chunk.getPositionAtIndexV(ci);
+    var is_multi_chunk = self.pos[1] == 1;
+    // go 2 positions up and 2 positions out in every direction and nuke the light
+    // in a 5x5x5 cube starting at the top going down and everything beneath the cube until
+    // a surface is hit
+    // then starting at the top, figure out what the ambient lighting should be for each
+    // going down
+
+    // go up 2 or as far as we can
+    var y = pos[1];
+    while (y < chunk.chunkDim and y < pos[1] + 2) : (y += 1) {}
+    // go out x znd z by 2 or as far as we can
+    var x = pos[0];
+    while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
+    var z = pos[0];
+    while (z > 0 and z > pos[2] - 2) : (z -= 2) {}
+    // set ends in the x and z direction
+    var y_end = y;
+    while (y_end > 0 and y_end > y - 5) : (y_end -= 1) {} // y goes down
+    var x_end = x;
+    while (x_end < chunk.chunkDim and x_end < x + 5) : (x_end += 1) {}
+    var z_end = z;
+    while (z_end < chunk.chunkDim and z_end < z + 5) : (z_end += 1) {}
+    // shut out the lights
+    var y_d = y;
+    var x_d = x;
+    var z_d = z;
+    std.debug.print("y: {d}, x: {d}, z: {d} - end_y: {d}, end_x: {d}, end_z: {d}\n", .{
+        y_d,
+        x_d,
+        z_d,
+        y_end,
+        x_end,
+        z_end,
+    });
+    while (y_d >= y_end) : (y_d -= 1) {
+        while (x_d < x_end) : (x_d += 1) {
+            while (z_d < z_end) : (z_d += 1) {
+                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
+                var data = self.get_datas(self.wp) orelse continue;
+                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
+                if (c_bd.block_id != air) {
+                    self.set_surfaces_from_ambient(&c_bd, c_ci);
+                    data[c_ci] = c_bd.toId();
+                }
+            }
+            z_d = z;
+        }
+        x_d = x;
+    }
+    // now darken each x, z from y_end until a surface is hit:
+    y_d = y_end;
+    x_d = x;
+    z_d = z;
+
+    var wp = self.wp;
+    while (x_d < x_end) : (x_d += 1) {
+        while (z_d < z_end) : (z_d += 1) {
+            while (true) {
+                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
+                var data = self.get_datas(wp) orelse continue;
+                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
+                if (c_bd.block_id != air) {
+                    self.set_surfaces_from_ambient(&c_bd, c_ci);
+                    data[c_ci] = c_bd.toId();
+                    break;
+                }
+                if (y_d == 0) {
+                    if (is_multi_chunk) {
+                        wp = wp.getBelowWP();
+                        y_d = 63;
+                        is_multi_chunk = false;
+                    } else break;
+                } else y_d -= 1;
+            }
+            wp = self.wp;
+            y_d = y_end;
+        }
+        z_d = z;
     }
 }
 
@@ -298,9 +368,6 @@ pub fn set_surfaces_from_ambient(self: *Lighting, bd: *block.BlockData, ci: usiz
         const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
         self.lightCheckDimensional(c_ci, bd, .front);
     }
-
-    var data = self.get_datas(self.wp) orelse return;
-    data[ci] = bd.toId();
 }
 
 // This just fixes the lighting for each block as it should be without any context as
@@ -359,13 +426,6 @@ pub fn set_propagated_lighting_with_distance(self: *Lighting, ci: usize, distanc
             if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
             self.set_propagated_lighting_with_distance(c_ci, distance + 1);
         }
-        y_neg: {
-            // TODO: this needs to fall
-            const y = pos[1] - 1;
-            if (y < 0) break :y_neg;
-            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-            self.set_propagated_lighting_with_distance(c_ci, distance);
-        }
         z_neg: {
             const z = pos[2] - 1;
             if (z < 0) break :z_neg;
@@ -378,6 +438,13 @@ pub fn set_propagated_lighting_with_distance(self: *Lighting, ci: usize, distanc
             const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
             if (c_ci >= chunk.chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
             self.set_propagated_lighting_with_distance(c_ci, distance + 1);
+        }
+        y_neg: {
+            // TODO: this needs to fall
+            const y = pos[1] - 1;
+            if (y < 0) break :y_neg;
+            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+            self.set_propagated_lighting_with_distance(c_ci, distance);
         }
         return;
     }
@@ -405,6 +472,25 @@ pub fn get_ambience_from_adjecent(self: *Lighting, ci: usize, source_ci: ?usize)
     const pos = chunk.getPositionAtIndexV(ci);
     // now update adjacent
     var ll: block.BlockLighingLevel = .none;
+    var y_p_ll = ll;
+    var x_p_ll = ll;
+    var x_n_ll = ll;
+    var z_p_ll = ll;
+    var z_n_ll = ll;
+    y_pos: {
+        // If above is air we don't darken that brightness.
+        const y = pos[1] + 1;
+        if (y >= chunk.chunkDim) break :y_pos;
+        const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
+        if (c_ci >= chunk.chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
+        if (source_ci) |s_ci| if (c_ci == s_ci) break :y_pos;
+        const data = self.get_datas(self.wp) orelse break :y_pos;
+        const c_bd: block.BlockData = block.BlockData.fromId((data[c_ci]));
+        if (c_bd.block_id != air) break :y_pos;
+        const c_ll = c_bd.getFullAmbiance();
+        if (c_ll.isBrighterThan(ll)) ll = c_ll;
+        y_p_ll = c_ll;
+    }
     x_pos: {
         const x = pos[0] + 1;
         if (x >= chunk.chunkDim) break :x_pos;
@@ -413,6 +499,7 @@ pub fn get_ambience_from_adjecent(self: *Lighting, ci: usize, source_ci: ?usize)
         if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
         const c_ll = self.getAirAmbiance(c_ci);
         if (c_ll.isBrighterThan(ll)) ll = c_ll;
+        x_p_ll = c_ll;
     }
     x_neg: {
         const x = pos[0] - 1;
@@ -421,15 +508,7 @@ pub fn get_ambience_from_adjecent(self: *Lighting, ci: usize, source_ci: ?usize)
         if (source_ci) |s_ci| if (c_ci == s_ci) break :x_neg;
         const c_ll = self.getAirAmbiance(c_ci);
         if (c_ll.isBrighterThan(ll)) ll = c_ll;
-    }
-    y_pos: {
-        const y = pos[1] + 1;
-        if (y >= chunk.chunkDim) break :y_pos;
-        const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-        if (c_ci >= chunk.chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
-        if (source_ci) |s_ci| if (c_ci == s_ci) break :y_pos;
-        const c_ll = self.getAirAmbiance(c_ci);
-        if (c_ll.isBrighterThan(ll)) ll = c_ll;
+        x_n_ll = c_ll;
     }
     z_pos: {
         const z = pos[2] + 1;
@@ -439,6 +518,7 @@ pub fn get_ambience_from_adjecent(self: *Lighting, ci: usize, source_ci: ?usize)
         if (source_ci) |s_ci| if (c_ci == s_ci) break :z_pos;
         const c_ll = self.getAirAmbiance(c_ci);
         if (c_ll.isBrighterThan(ll)) ll = c_ll;
+        z_p_ll = c_ll;
     }
     z_neg: {
         const z = pos[2] - 1;
@@ -447,6 +527,17 @@ pub fn get_ambience_from_adjecent(self: *Lighting, ci: usize, source_ci: ?usize)
         if (source_ci) |s_ci| if (c_ci == s_ci) break :z_neg;
         const c_ll = self.getAirAmbiance(c_ci);
         if (c_ll.isBrighterThan(ll)) ll = c_ll;
+        z_n_ll = c_ll;
+    }
+    if (ll == .dark) {
+        std.debug.print("\ndark air @ {d} {d} {d} \n", .{ pos[0], pos[1], pos[2] });
+        std.debug.print("y_pos {} \nx_pos {} \nx_neg {} \nz_pos {} \nz_neg {} \n\n", .{
+            y_p_ll,
+            x_p_ll,
+            x_n_ll,
+            z_p_ll,
+            z_n_ll,
+        });
     }
     return ll;
 }
