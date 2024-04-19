@@ -44,6 +44,10 @@ pub fn getBelowWP(self: worldPosition) worldPosition {
     const p = self.vecFromWorldPosition();
     return initFromPositionV(.{ p[0], p[1] - 1, p[2], 0 });
 }
+pub fn getAboveWP(self: worldPosition) worldPosition {
+    const p = self.vecFromWorldPosition();
+    return initFromPositionV(.{ p[0], p[1] + 1, p[2], 0 });
+}
 
 pub fn getWorldPositionForWorldLocation(pos: @Vector(4, f32)) worldPosition {
     const chunk_pos = positionFromWorldLocation(pos);

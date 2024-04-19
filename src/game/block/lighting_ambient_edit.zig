@@ -1,5 +1,6 @@
 const air: u8 = 0;
 const max_propagation_distance: u8 = 3;
+const fl_chunk_dim: f32 = @as(f32, @floatFromInt(chunk.chunkDim));
 
 pub const Lighting = @This();
 
@@ -223,7 +224,7 @@ pub fn determine_air_ambience_around_block(self: *Lighting, ci: usize) void {
     // go up 2 or as far as we can
     var y = pos[1];
     // go down an extra 1 to fix top surfaces
-    while (y < chunk.chunkDim and y < pos[1] + 3) : (y += 1) {}
+    while (y < chunk.chunkDim and y < pos[1] + 2) : (y += 1) {}
     // go out x znd z by 2 or as far as we can
     var x = pos[0];
     while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
@@ -298,7 +299,7 @@ pub fn determine_air_ambience_around_block(self: *Lighting, ci: usize) void {
 
 pub fn determine_block_ambience_around_block(self: *Lighting, ci: usize) void {
     const pos = chunk.getPositionAtIndexV(ci);
-    var is_multi_chunk = self.pos[1] == 1;
+    const is_multi_chunk = self.pos[1] == 1;
     // go 2 positions up and 2 positions out in every direction and nuke the light
     // in a 5x5x5 cube starting at the top going down and everything beneath the cube until
     // a surface is hit
@@ -306,8 +307,16 @@ pub fn determine_block_ambience_around_block(self: *Lighting, ci: usize) void {
     // going down
 
     // go up 2 or as far as we can
+    var default_wp = self.wp;
+    var below_wp = self.wp.getBelowWP();
+
     var y = pos[1];
+    if (is_multi_chunk) y += chunk.chunkDim;
     while (y < chunk.chunkDim and y < pos[1] + 2) : (y += 1) {}
+    if (y >= fl_chunk_dim) {
+        default_wp = self.wp.getAboveWP();
+        below_wp = self.wp;
+    }
     // go out x znd z by 2 or as far as we can
     var x = pos[0];
     while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
@@ -321,22 +330,20 @@ pub fn determine_block_ambience_around_block(self: *Lighting, ci: usize) void {
     var z_end = z;
     while (z_end < chunk.chunkDim and z_end < z + 5) : (z_end += 1) {}
     // shut out the lights
-    var y_d = y;
+    var _y_d = y;
     var x_d = x;
     var z_d = z;
-    std.debug.print("y: {d}, x: {d}, z: {d} - end_y: {d}, end_x: {d}, end_z: {d}\n", .{
-        y_d,
-        x_d,
-        z_d,
-        y_end,
-        x_end,
-        z_end,
-    });
-    while (y_d >= y_end) : (y_d -= 1) {
+    var wp = default_wp;
+    while (_y_d >= y_end) : (_y_d -= 1) {
+        var y_d = _y_d;
+        if (y_d >= fl_chunk_dim) {
+            y_d -= fl_chunk_dim;
+            wp = below_wp;
+        }
         while (x_d < x_end) : (x_d += 1) {
             while (z_d < z_end) : (z_d += 1) {
                 const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
-                var data = self.get_datas(self.wp) orelse continue;
+                var data = self.get_datas(wp) orelse continue;
                 var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
                 if (c_bd.block_id == air) continue;
                 self.set_surfaces_from_ambient(&c_bd, c_ci);
@@ -347,14 +354,16 @@ pub fn determine_block_ambience_around_block(self: *Lighting, ci: usize) void {
         x_d = x;
     }
     // now darken each x, z from y_end until a surface is hit:
-    y_d = y_end;
+    _y_d = y_end - 1;
     x_d = x;
     z_d = z;
 
-    var wp = self.wp;
+    wp = default_wp;
     while (x_d < x_end) : (x_d += 1) {
         while (z_d < z_end) : (z_d += 1) {
             while (true) {
+                const y_d = @mod(_y_d, chunk.chunkDim);
+                if (y_d != _y_d) wp = below_wp;
                 const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
                 var data = self.get_datas(wp) orelse continue;
                 var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
@@ -364,15 +373,11 @@ pub fn determine_block_ambience_around_block(self: *Lighting, ci: usize) void {
                     break;
                 }
                 if (y_d == 0) {
-                    if (is_multi_chunk) {
-                        wp = wp.getBelowWP();
-                        y_d = 63;
-                        is_multi_chunk = false;
-                    } else break;
-                } else y_d -= 1;
+                    break;
+                } else _y_d -= 1;
             }
-            wp = self.wp;
-            y_d = y_end;
+            wp = default_wp;
+            _y_d = y_end;
         }
         z_d = z;
     }
