@@ -1,11 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zgui = @import("zgui");
-const glfw = @import("zglfw");
-const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
-const game = @import("../../../game.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "UIGameInfoSystem", ecs.OnStore, @constCast(&s));
@@ -19,35 +11,37 @@ fn system() ecs.system_desc_t {
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
+    const world = game.state.world;
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
+            if (ecs.has_id(world, game.state.entities.ui, ecs.id(components.ui.Menu))) continue;
             const current_camera = entities.screen.getCurrentCamera();
             const camera_front: *const components.screen.CameraFront = ecs.get(
-                game.state.world,
+                world,
                 current_camera,
                 components.screen.CameraFront,
             ) orelse continue;
             const camera_pos: *const components.screen.CameraPosition = ecs.get(
-                game.state.world,
+                world,
                 current_camera,
                 components.screen.CameraPosition,
             ) orelse continue;
             const camera_rot: *const components.screen.CameraRotation = ecs.get(
-                game.state.world,
+                world,
                 current_camera,
                 components.screen.CameraRotation,
             ) orelse continue;
             const time: *const components.Time = ecs.get(
-                game.state.world,
+                world,
                 game.state.entities.clock,
                 components.Time,
             ) orelse continue;
-            const xPos: f32 = 50.0;
-            const yPos: f32 = 50.0;
+            const xPos: f32 = 0;
+            const yPos: f32 = 0;
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
-                .w = 1500,
-                .h = 200,
+                .w = @floatFromInt(game.state.window_width),
+                .h = 75,
             });
             zgui.setNextItemWidth(-1);
             zgui.pushStyleColor4f(.{ .idx = .window_bg, .c = [_]f32{ 1.00, 1.00, 1.00, 0.25 } });
@@ -74,31 +68,62 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 const h: u32 = @intCast(hours);
                 const m: u32 = @intCast(minutes);
                 const s: u32 = @intCast(seconds);
-                zgui.text("Hello blockens! {d:0>2}:{d:0>2}:{d:0>2}", .{ h, m, s });
+                zgui.text("::BLOCKENS::[{d:0>2}:{d:0>2}:{d:0>2}] ", .{ h, m, s });
                 zgui.sameLine(.{});
-                zgui.text(" selected block id: {d}", .{game.state.blocks.selected_block});
-
-                zgui.text("F1 for settings and F2 for the menu", .{});
-
+                zgui.text("[F1 settings] [F2 menu] ", .{});
+                zgui.sameLine(.{});
                 const x: i32 = @intFromFloat(camera_pos.pos[0]);
                 const y: i32 = @intFromFloat(camera_pos.pos[1]);
                 const z: i32 = @intFromFloat(camera_pos.pos[2]);
-                zgui.text("x: {d}, y: {d}, z: {d}.", .{ x, y, z });
+                zgui.text("[camera:{d},{d},{d}] ", .{ x, y, z });
                 zgui.sameLine(.{});
-                const fps: u32 = @intFromFloat((1 / (it.delta_time)));
-                zgui.text(" fps: {d}", .{fps});
+                const yaw = camera_rot.yaw;
+                const pitch = camera_rot.pitch;
+                zgui.text("[yaw: {e:.2}] [pitch: {e:.2}] ", .{ yaw, pitch });
 
+                zgui.sameLine(.{});
                 const cfX = camera_front.front[0];
                 const cfY = camera_front.front[1];
                 const cfZ = camera_front.front[2];
-                zgui.text("cfX: {e:.2}, cfY: {e:.2}, cfZ: {e:.2}.", .{ cfX, cfY, cfZ });
+                zgui.text("[front:{e:.2},{e:.2},{e:.2}] ", .{ cfX, cfY, cfZ });
+                zgui.sameLine(.{});
+                const fps: u32 = @intFromFloat((1 / (it.delta_time)));
+                zgui.text("[fps:{d}]", .{fps});
 
-                const yaw = camera_rot.yaw;
-                const pitch = camera_rot.pitch;
-                zgui.text("yaw: {e:.2}, pitch: {e:.2}.", .{ yaw, pitch });
+                const mp: *const components.mob.Position = ecs.get(
+                    game.state.world,
+                    game.state.entities.player,
+                    components.mob.Position,
+                ) orelse return;
+                const m_p = @floor(mp.position);
+                zgui.text("[player:{d},{d},{d}] ", .{ m_p[0], m_p[1], m_p[2] });
+                zgui.sameLine(.{});
+                zgui.text("[block id:{d}] ", .{game.state.blocks.selected_block});
+                const blh_e = game.state.entities.block_highlight;
+                const wl: *const components.screen.WorldLocation = ecs.get(
+                    world,
+                    blh_e,
+                    components.screen.WorldLocation,
+                ) orelse return;
+                zgui.sameLine(.{});
+                const p = wl.loc;
+                zgui.text("[block:{d},{d},{d}] ", .{ p[0], p[1], p[2] });
+                zgui.sameLine(.{});
+                const c_p = chunk.chunkPosFromWorldLocation(p);
+                zgui.text("[chunk block:{d},{d},{d}]", .{ c_p[0], c_p[1], c_p[2] });
             }
             zgui.end();
             zgui.popStyleColor(.{ .count = 2 });
         }
     }
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zgui = @import("zgui");
+const glfw = @import("zglfw");
+const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
+const game = @import("../../../game.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;
