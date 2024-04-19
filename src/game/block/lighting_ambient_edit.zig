@@ -78,7 +78,7 @@ pub fn darken_area_around_block(self: *Lighting, ci: usize) void {
     // go out x znd z by 2 or as far as we can
     var x = pos[0];
     while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
-    var z = pos[0];
+    var z = pos[2];
     while (z > 0 and z > pos[2] - 2) : (z -= 2) {}
     // set ends in the x and z direction
     var y_end = y;
@@ -157,7 +157,7 @@ pub fn light_fall_around_block(self: *Lighting, ci: usize) void {
     // go out x znd z by 2 or as far as we can
     var x = pos[0];
     while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
-    var z = pos[0];
+    var z = pos[2];
     while (z > 0 and z > pos[2] - 2) : (z -= 2) {}
     // set ends in the x and z direction
     var y_end = y;
@@ -192,7 +192,11 @@ pub fn light_fall_around_block(self: *Lighting, ci: usize) void {
                 }
                 const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
                 var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) break; // All done dropping light.
+                if (c_bd.block_id != air) {
+                    // All done dropping light.
+                    c_bd.setAmbient(.top, ll);
+                    break;
+                }
                 c_bd.setFullAmbiance(ll);
                 data[c_ci] = c_bd.toId();
                 if (y_d == 0) {
@@ -217,11 +221,12 @@ pub fn determine_air_ambience_around_block(self: *Lighting, ci: usize) void {
 
     // go up 2 or as far as we can
     var y = pos[1];
-    while (y < chunk.chunkDim and y < pos[1] + 2) : (y += 1) {}
+    // go down an extra 1 to fix top surfaces
+    while (y < chunk.chunkDim and y < pos[1] + 3) : (y += 1) {}
     // go out x znd z by 2 or as far as we can
     var x = pos[0];
     while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
-    var z = pos[0];
+    var z = pos[2];
     while (z > 0 and z > pos[2] - 2) : (z -= 2) {}
     // set ends in the x and z direction
     var y_end = y;
@@ -305,7 +310,7 @@ pub fn determine_block_ambience_around_block(self: *Lighting, ci: usize) void {
     // go out x znd z by 2 or as far as we can
     var x = pos[0];
     while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
-    var z = pos[0];
+    var z = pos[2];
     while (z > 0 and z > pos[2] - 2) : (z -= 2) {}
     // set ends in the x and z direction
     var y_end = y;
