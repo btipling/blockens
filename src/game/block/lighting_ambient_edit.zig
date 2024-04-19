@@ -51,12 +51,14 @@ pub fn get_datas(self: *Lighting, wp: chunk.worldPosition) ?[]u32 {
 
 pub fn set_removed_block_lighting(self: *Lighting, ci: usize) void {
     self.darken_area_around_block(ci);
+    self.light_fall_around_block(ci);
     self.determine_air_ambience_around_block(ci);
     self.determine_block_ambience_around_block(ci);
 }
 
 pub fn set_added_block_lighting(self: *Lighting, _: *block.BlockData, ci: usize) void {
     self.darken_area_around_block(ci);
+    self.light_fall_around_block(ci);
     self.determine_air_ambience_around_block(ci);
     self.determine_block_ambience_around_block(ci);
 }
@@ -144,14 +146,10 @@ pub fn darken_area_around_block(self: *Lighting, ci: usize) void {
     }
 }
 
-pub fn determine_air_ambience_around_block(self: *Lighting, ci: usize) void {
+pub fn light_fall_around_block(self: *Lighting, ci: usize) void {
     const pos = chunk.getPositionAtIndexV(ci);
     var is_multi_chunk = self.pos[1] == 1;
-    // go 2 positions up and 2 positions out in every direction and nuke the light
-    // in a 5x5x5 cube starting at the top going down and everything beneath the cube until
-    // a surface is hit
-    // then starting at the top, figure out what the ambient lighting should be for each
-    // going down
+    // drop light from top
 
     // go up 2 or as far as we can
     var y = pos[1];
@@ -168,7 +166,71 @@ pub fn determine_air_ambience_around_block(self: *Lighting, ci: usize) void {
     while (x_end < chunk.chunkDim and x_end < x + 5) : (x_end += 1) {}
     var z_end = z;
     while (z_end < chunk.chunkDim and z_end < z + 5) : (z_end += 1) {}
-    // shut out the lights
+    var y_d = y;
+    var x_d = x;
+    var z_d = z;
+    std.debug.print("y: {d}, x: {d}, z: {d} - end_y: {d}, end_x: {d}, end_z: {d}\n", .{
+        y_d,
+        x_d,
+        z_d,
+        y_end,
+        x_end,
+        z_end,
+    });
+    var wp = self.wp;
+    while (x_d < x_end) : (x_d += 1) {
+        while (z_d < z_end) : (z_d += 1) {
+            while (true) {
+                var data = self.get_datas(wp) orelse break;
+                var ll: block.BlockLighingLevel = .full;
+                // Look one up to get light to drop.
+                if (y_d + 1 < chunk.chunkDim) {
+                    const u_ci = chunk.getIndexFromPositionV(.{ x_d, y_d + 1, z_d, 0 });
+                    const u_bd: block.BlockData = block.BlockData.fromId(data[u_ci]);
+                    if (u_bd.block_id != air) break; // No light falling here.
+                    ll = u_bd.getFullAmbiance();
+                }
+                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
+                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
+                if (c_bd.block_id != air) break; // All done dropping light.
+                c_bd.setFullAmbiance(ll);
+                data[c_ci] = c_bd.toId();
+                if (y_d == 0) {
+                    if (is_multi_chunk) {
+                        wp = wp.getBelowWP();
+                        y_d = 63;
+                        is_multi_chunk = false;
+                    } else break;
+                } else y_d -= 1;
+            }
+            wp = self.wp;
+            y_d = y;
+        }
+        z_d = z;
+    }
+}
+
+pub fn determine_air_ambience_around_block(self: *Lighting, ci: usize) void {
+    const pos = chunk.getPositionAtIndexV(ci);
+    var is_multi_chunk = self.pos[1] == 1;
+    // find the adjacent air ambiance for non fully ambiant are and propagate it
+
+    // go up 2 or as far as we can
+    var y = pos[1];
+    while (y < chunk.chunkDim and y < pos[1] + 2) : (y += 1) {}
+    // go out x znd z by 2 or as far as we can
+    var x = pos[0];
+    while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
+    var z = pos[0];
+    while (z > 0 and z > pos[2] - 2) : (z -= 2) {}
+    // set ends in the x and z direction
+    var y_end = y;
+    while (y_end > 0 and y_end > y - 5) : (y_end -= 1) {} // y goes down
+    var x_end = x;
+    while (x_end < chunk.chunkDim and x_end < x + 5) : (x_end += 1) {}
+    var z_end = z;
+    while (z_end < chunk.chunkDim and z_end < z + 5) : (z_end += 1) {}
+    // get air ambiance
     var y_d = y;
     var x_d = x;
     var z_d = z;
@@ -186,24 +248,11 @@ pub fn determine_air_ambience_around_block(self: *Lighting, ci: usize) void {
                 const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
                 var data = self.get_datas(self.wp) orelse continue;
                 var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id == air) {
-                    const ll = self.get_ambience_from_adjecent(c_ci, null);
-                    if (ll == .dark) {
-                        std.debug.print("\n\t\t\tgot dark at y: {d}, x: {d}, z: {d}\n", .{
-                            y_d,
-                            x_d,
-                            z_d,
-                        });
-                    }
-                    std.debug.print("setting {d}, {d}, {d} air to {} \n", .{
-                        y_d,
-                        x_d,
-                        z_d,
-                        ll,
-                    });
-                    c_bd.setFullAmbiance(ll);
-                    data[c_ci] = c_bd.toId();
-                }
+                if (c_bd.block_id != air) continue;
+                if (c_bd.getFullAmbiance() != .none) continue; // already has ambiance
+                const ll = self.get_ambience_from_adjecent(c_ci, null);
+                c_bd.setFullAmbiance(ll);
+                data[c_ci] = c_bd.toId();
             }
             z_d = z;
         }
@@ -221,14 +270,11 @@ pub fn determine_air_ambience_around_block(self: *Lighting, ci: usize) void {
                 const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
                 var data = self.get_datas(wp) orelse continue;
                 var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) {
-                    break;
-                }
-                if (c_bd.block_id == air) {
-                    const ll = self.get_ambience_from_adjecent(c_ci, null);
-                    c_bd.setFullAmbiance(ll);
-                    data[c_ci] = c_bd.toId();
-                }
+                if (c_bd.block_id != air) break;
+                if (c_bd.getFullAmbiance() != .none) break; // already dropped light in this y.
+                const ll = self.get_ambience_from_adjecent(c_ci, null);
+                c_bd.setFullAmbiance(ll);
+                data[c_ci] = c_bd.toId();
                 if (y_d == 0) {
                     if (is_multi_chunk) {
                         wp = wp.getBelowWP();
@@ -286,10 +332,9 @@ pub fn determine_block_ambience_around_block(self: *Lighting, ci: usize) void {
                 const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
                 var data = self.get_datas(self.wp) orelse continue;
                 var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) {
-                    self.set_surfaces_from_ambient(&c_bd, c_ci);
-                    data[c_ci] = c_bd.toId();
-                }
+                if (c_bd.block_id == air) continue;
+                self.set_surfaces_from_ambient(&c_bd, c_ci);
+                data[c_ci] = c_bd.toId();
             }
             z_d = z;
         }
