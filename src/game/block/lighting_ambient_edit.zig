@@ -195,6 +195,7 @@ pub fn light_fall_around_block(self: *Lighting, ci: usize) void {
                 if (c_bd.block_id != air) {
                     // All done dropping light.
                     c_bd.setAmbient(.top, ll);
+                    data[c_ci] = c_bd.toId();
                     break;
                 }
                 c_bd.setFullAmbiance(ll);
