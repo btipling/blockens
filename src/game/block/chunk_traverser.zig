@@ -237,6 +237,7 @@ pub fn get_datas(self: *traverser, wp: chunk.worldPosition) ?[]u32 {
         };
         self.datas[self.num_extra_datas] = ed;
         self.num_extra_datas += 1;
+        std.debug.print("adding an extra, {d} {}\n", .{ self.num_extra_datas, wp });
         return null;
     };
 

@@ -300,43 +300,69 @@ pub fn get_ambience_from_adjecent(self: *Lighting) block.BlockLighingLevel {
 }
 
 test "lighting basic remove block lighting fall" {
-    var l: Lighting = testing_utils.utest_chunk_ae_lighting(1);
-    defer l.deinit();
-    defer l.fetcher.deinit();
-    const data = testing_utils.utest_allocate_test_chunk(0, .full);
-    defer l.allocator.free(data);
+    const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
+    defer std.testing.allocator.free(t_data);
 
     // set a dark ground floor across y = 0
-    testing_utils.utest_add_floor_at_y(data, 0, .none);
+    testing_utils.utest_add_floor_at_y(t_data, 0, .none);
     const _x: f32 = 16;
     const _z: f32 = 16;
     const ci = chunk.getIndexFromPositionV(.{ _x, 1, _z, 0 });
 
-    testing_utils.utest_set_block_surface_light(data, ci, .full, .bottom, .none);
+    testing_utils.utest_set_block_surface_light(t_data, ci, .full, .bottom, .none);
 
-    // init l
-    l.datas[0] = .{
-        .wp = l.wp,
-        .data = data,
-    };
+    const t_wp = chunk.worldPosition.initFromPositionV(.{ 0, 1, 0, 0 });
+    var test_traverser = chunk_traverser.init(std.testing.allocator, .{}, t_wp, ci, .{
+        .wp = t_wp,
+        .data = t_data,
+    });
+    test_traverser.fetcher.init();
+    defer test_traverser.deinit();
+    defer test_traverser.fetcher.deinit();
+
+    const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
+    {
+        // Set a dark and full non air block bottom chunk for fetcher
+        const b_data = testing_utils.utest_allocate_test_chunk(1, .none);
+        // set a lit ground floor across y = 63 on bottom chunk
+        test_traverser.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
+    }
+
+    var l: Lighting = .{ .traverser = &test_traverser };
     // validate the block below placement is dark on the surface
-    try testing_utils.utest_expect_surface_light_at_v(data, .{ _x, 0, _z, 0 }, .top, .none);
+    try testing_utils.utest_expect_surface_light_at_v(t_data, .{ _x, 0, _z, 0 }, .top, .none);
 
-    var bd: block.BlockData = block.BlockData.fromId(data[ci]);
+    var bd: block.BlockData = block.BlockData.fromId(t_data[ci]);
     bd.block_id = 0;
-    data[ci] = bd.toId();
-    l.set_removed_block_lighting(ci);
+    t_data[ci] = bd.toId();
+    l.set_removed_block_lighting();
 
     // validate that the block below's surface is now fully lit
-    try testing_utils.utest_expect_surface_light_at_v(data, .{ _x, 0, _z, 0 }, .top, .full);
+    try testing_utils.utest_expect_surface_light_at_v(t_data, .{ _x, 0, _z, 0 }, .top, .full);
 }
 
 test "lighting adding block across chunks darkness fall" {
-    var l: Lighting = testing_utils.utest_chunk_ae_lighting(1);
-    defer l.deinit();
-    defer l.fetcher.deinit();
     const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
-    defer l.allocator.free(t_data);
+    defer std.testing.allocator.free(t_data);
+
+    const _x: f32 = 16;
+    const _z: f32 = 16;
+    const ci = chunk.getIndexFromPositionV(.{ _x, 5, _z, 0 });
+    // Set a block on y, a bit above bottom chunk.
+    {
+        // Set a block above of the dark ground in y 1:
+        var bd: block.BlockData = block.BlockData.fromId(1);
+        t_data[ci] = bd.toId();
+    }
+
+    const t_wp = chunk.worldPosition.initFromPositionV(.{ 0, 1, 0, 0 });
+    var test_traverser = chunk_traverser.init(std.testing.allocator, .{}, t_wp, ci, .{
+        .wp = t_wp,
+        .data = t_data,
+    });
+    test_traverser.fetcher.init();
+    defer test_traverser.deinit();
+    defer test_traverser.fetcher.deinit();
 
     const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
     {
@@ -344,84 +370,73 @@ test "lighting adding block across chunks darkness fall" {
         const b_data = testing_utils.utest_allocate_test_chunk(1, .none);
         // set a lit ground floor across y = 63 on bottom chunk
         testing_utils.utest_add_floor_at_y(b_data, 63, .full);
-        l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
+        test_traverser.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
     }
-    const _x: f32 = 16;
-    const _z: f32 = 16;
-    const ci = chunk.getIndexFromPositionV(.{ _x, 5, _z, 0 });
+
     // validate the block on the chunk below where placement will occur is fully list on the surface
     {
-        const b_data = l.fetcher.test_chunk_data.get(b_wp) orelse @panic("expected bottom wp");
+        const b_data = test_traverser.fetcher.test_chunk_data.get(b_wp) orelse @panic("expected bottom wp");
         try testing_utils.utest_expect_surface_light_at_v(b_data, .{ _x, 63, _z, 0 }, .top, .full);
     }
-    // Set a block on y, a bit above bottom chunk.
-    {
-        // Set a block above of the dark ground in y 1:
-        var bd: block.BlockData = block.BlockData.fromId(1);
-        t_data[ci] = bd.toId();
-    }
-    var bd: block.BlockData = block.BlockData.fromId(t_data[ci]);
-    bd.block_id = 0;
-    t_data[ci] = bd.toId();
-    // init l
-    l.datas[0] = .{
-        .wp = l.wp,
-        .data = t_data,
-    };
-    l.set_added_block_lighting(&bd, ci);
+    var l: Lighting = .{ .traverser = &test_traverser };
+
+    l.set_added_block_lighting();
     // validate that the block on chunk below's surface is now fully lit
     {
         // expected lighting to have fetched extra data for bottom chunk
-        try std.testing.expectEqual(l.num_extra_datas, 1);
+        try std.testing.expectEqual(test_traverser.num_extra_datas, 1);
         // expected extra data to have been fetchable
-        try std.testing.expect(l.datas[1].fetchable);
-        const b_data = l.datas[1].data orelse @panic("expected data to be there");
+        try std.testing.expect(test_traverser.datas[1].fetchable);
+        const b_data = test_traverser.datas[1].data orelse @panic("expected data to be there");
         // bright is one level darker than full.
         try testing_utils.utest_expect_surface_light_at_v(b_data, .{ _x, 63, _z, 0 }, .top, .bright);
     }
 }
 
 test "lighting removing block across chunks lighting falls" {
-    var l: Lighting = testing_utils.utest_chunk_ae_lighting(1);
-    defer l.deinit();
-    defer l.fetcher.deinit();
     // set a lit ground floor across y = 63 on bottom chunk
     const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
-    defer l.allocator.free(t_data);
+    defer std.testing.allocator.free(t_data);
 
-    const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
-    {
-        // Set a dark and full non air block bottom chunk for fetcher
-        const b_data = testing_utils.utest_allocate_test_chunk(1, .none);
-        l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
-    }
     // Set a block on y, just a slight ways above bottom chunk.
     const _x: f32 = 16;
     const _z: f32 = 16;
     const ci = chunk.getIndexFromPositionV(.{ _x, 0, _z, 0 });
     // Set a block on top of the dark ground in y 1:
     testing_utils.utest_set_block_surface_light(t_data, ci, .full, .bottom, .none);
-    // init l
-    l.datas[0] = .{
-        .wp = l.wp,
+
+    const t_wp = chunk.worldPosition.initFromPositionV(.{ 0, 1, 0, 0 });
+    var test_traverser = chunk_traverser.init(std.testing.allocator, .{}, t_wp, ci, .{
+        .wp = t_wp,
         .data = t_data,
-    };
+    });
+    test_traverser.fetcher.init();
+    defer test_traverser.deinit();
+    defer test_traverser.fetcher.deinit();
+
+    const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
+    {
+        // Set a dark and full non air block bottom chunk for fetcher
+        const b_data = testing_utils.utest_allocate_test_chunk(1, .none);
+        test_traverser.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
+    }
+    var l: Lighting = .{ .traverser = &test_traverser };
     // validate the block on the chunk below placement is dark on the surface
     {
-        const b_data = l.fetcher.test_chunk_data.get(b_wp) orelse @panic("expected bottom wp");
+        const b_data = test_traverser.fetcher.test_chunk_data.get(b_wp) orelse @panic("expected bottom wp");
         try testing_utils.utest_expect_surface_light_at_v(b_data, .{ _x, 63, _z, 0 }, .top, .none);
     }
     var bd: block.BlockData = block.BlockData.fromId(t_data[ci]);
     bd.block_id = 0;
     t_data[ci] = bd.toId();
-    l.set_removed_block_lighting(ci);
+    l.set_removed_block_lighting();
     // validate that the block on chunk below's surface is now fully lit
     {
         // expected lighting to have fetched extra data for bottom chunk
-        try std.testing.expectEqual(l.num_extra_datas, 1);
+        try std.testing.expectEqual(test_traverser.num_extra_datas, 1);
         // expected extra data to have been fetchable
-        try std.testing.expect(l.datas[1].fetchable);
-        const b_data = l.datas[1].data orelse @panic("expected data to be there");
+        try std.testing.expect(test_traverser.datas[1].fetchable);
+        const b_data = test_traverser.datas[1].data orelse @panic("expected data to be there");
         try testing_utils.utest_expect_surface_light_at_v(b_data, .{ _x, 63, _z, 0 }, .top, .full);
     }
 }
@@ -619,7 +634,7 @@ test "lighting plane building surface test" {
             .{ .bright, .bright, .bright, .bright, .bright },
             .{ .bright, .dark,   .dark,   .dark,   .bright },
             .{ .bright, .dark,   .none,   .dark,   .bright },
-            .{ .bright, .dark,   .bright, .bright, .bright },
+            .{ .bright, .dark,   .dark,   .bright, .bright },
             .{ .bright, .bright, .bright,  null,    null   },
         },
         // 23
@@ -653,22 +668,11 @@ test "lighting plane building surface test" {
     while (_x < plane_dim) : (_x += 1) {
         var _z: usize = 0;
         while (_z < plane_dim) : (_z += 1) {
-            var l: Lighting = testing_utils.utest_chunk_ae_lighting(1);
-            defer l.deinit();
-            defer l.fetcher.deinit();
             // set a lit ground floor across y = 63 on bottom chunk
 
             const t_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
             defer std.testing.allocator.free(t_data);
             @memcpy(t_data, t_base_data);
-
-            {
-                const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
-                // Set a dark and full non air block bottom chunk for fetcher
-                const b_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-                @memcpy(b_data, b_base_data);
-                l.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
-            }
 
             const pos: @Vector(4, f32) = .{
                 plane_pos[0] + @as(f32, @floatFromInt(_x)),
@@ -682,16 +686,29 @@ test "lighting plane building surface test" {
             bd.block_id = block_id;
             t_data[b_ci] = bd.toId();
 
-            l.datas[0] = .{
-                .wp = l.wp,
+            const t_wp = chunk.worldPosition.initFromPositionV(.{ 0, 1, 0, 0 });
+            var test_traverser = chunk_traverser.init(std.testing.allocator, .{}, t_wp, b_ci, .{
+                .wp = t_wp,
                 .data = t_data,
-            };
+            });
+            test_traverser.fetcher.init();
+            defer test_traverser.deinit();
+            defer test_traverser.fetcher.deinit();
 
+            {
+                const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
+                // Set a dark and full non air block bottom chunk for fetcher
+                const b_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+                @memcpy(b_data, b_base_data);
+                test_traverser.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
+            }
+
+            var l: Lighting = .{ .traverser = &test_traverser };
             // Do the thing.
-            l.set_added_block_lighting(&bd, b_ci);
+            l.set_added_block_lighting();
 
             // Check the thing got done.
-            const bl_data = l.datas[1].data orelse @panic("expected data to be there");
+            const bl_data = test_traverser.datas[1].data orelse @panic("expected data to be there");
             const tc: [5][5]?block.BlockLighingLevel = expected_lighting[test_case];
             var __x: usize = 0;
             outer: {

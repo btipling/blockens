@@ -68,18 +68,6 @@ pub fn utest_expect_surface_light_at_v(
     try std.testing.expectEqual(expected_ll, bd.getSurfaceAmbience(surface));
 }
 
-pub fn utest_chunk_ae_lighting(y: f32) ambient_edit.Lighting {
-    const t_wp = chunk.worldPosition.initFromPositionV(.{ 0, y, 0, 0 });
-    var l: ambient_edit.Lighting = .{
-        .wp = t_wp,
-        .pos = t_wp.vecFromWorldPosition(),
-        .fetcher = .{},
-        .allocator = std.testing.allocator_instance.allocator(),
-    };
-    l.fetcher.init();
-    return l;
-}
-
 pub fn utest_set_block_surface_light(
     data: []u32,
     ci: usize,
@@ -94,6 +82,6 @@ pub fn utest_set_block_surface_light(
 }
 
 const std = @import("std");
-const ambient_edit = @import("lighting_ambient_edit.zig");
+const chunk_traverser = @import("chunk_traverser.zig");
 const block = @import("block.zig");
 const chunk = block.chunk;
