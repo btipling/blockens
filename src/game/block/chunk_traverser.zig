@@ -222,14 +222,18 @@ pub fn saveBD(self: *traverser) void {
 }
 
 pub fn get_datas(self: *traverser, wp: chunk.worldPosition) ?[]u32 {
+    // std.debug.print("{} fetching datas\n", .{wp});
     var i: usize = 0;
     while (i < self.num_extra_datas + 1) : (i += 1) {
         const d = self.datas[i];
         if (d.wp.equal(wp)) {
-            if (d.fetchable) return d.data;
+            if (d.fetchable) {
+                return d.data;
+            }
             return null;
         }
     }
+
     const d = self.fetcher.fetch(wp) orelse {
         const ed: datas = .{
             .wp = wp,
@@ -237,7 +241,6 @@ pub fn get_datas(self: *traverser, wp: chunk.worldPosition) ?[]u32 {
         };
         self.datas[self.num_extra_datas] = ed;
         self.num_extra_datas += 1;
-        std.debug.print("adding an extra, {d} {}\n", .{ self.num_extra_datas, wp });
         return null;
     };
 

@@ -110,7 +110,7 @@ pub const BlockData = packed struct {
         self.ambient = self.ambient | l;
     }
 
-    pub fn getSurfaceAmbience(self: *BlockData, surface: BlockSurface) BlockLighingLevel {
+    pub fn getSurfaceAmbience(self: *const BlockData, surface: BlockSurface) BlockLighingLevel {
         var val: u12 = 0;
         switch (surface) {
             .top => {
@@ -118,7 +118,7 @@ pub const BlockData = packed struct {
                 val = val >> 10;
             },
             .bottom => {
-                val = self.ambient ^ (0xFFF - 0x300);
+                val = (self.ambient | 0xC00) ^ (0xFFF - 0x300);
                 val = val >> 8;
             },
             .front => {
@@ -126,7 +126,7 @@ pub const BlockData = packed struct {
                 val = val >> 6;
             },
             .back => {
-                val = self.ambient ^ (0xFFF - 0x030);
+                val = ((self.ambient | 0x0C0) & 0x0F0) ^ (0x0F0 - 0x030);
                 val = val >> 4;
             },
             .left => {
@@ -134,7 +134,7 @@ pub const BlockData = packed struct {
                 val = val >> 2;
             },
             .right => {
-                val = self.ambient ^ (0xFFF - 0x003);
+                val = (self.ambient | 0x00C) ^ (0xFFF - 0x003);
             },
         }
         switch (val) {

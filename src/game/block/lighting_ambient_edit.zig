@@ -394,7 +394,6 @@ pub fn get_ambience_from_adjecent(self: *Lighting) block.BlockLighingLevel {
 }
 
 test "lighting basic remove block lighting fall" {
-    if (true) return error.SkipZigTest;
     const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
     defer std.testing.allocator.free(t_data);
 
@@ -437,7 +436,6 @@ test "lighting basic remove block lighting fall" {
 }
 
 test "lighting adding block across chunks darkness fall" {
-    if (true) return error.SkipZigTest;
     const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
     defer std.testing.allocator.free(t_data);
 
@@ -490,7 +488,6 @@ test "lighting adding block across chunks darkness fall" {
 }
 
 test "lighting removing block across chunks lighting falls" {
-    if (true) return error.SkipZigTest;
     // set a lit ground floor across y = 63 on bottom chunk
     const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
     defer std.testing.allocator.free(t_data);
@@ -539,7 +536,6 @@ test "lighting removing block across chunks lighting falls" {
 }
 
 test "lighting plane building surface test" {
-    if (true) return error.SkipZigTest;
     // iteratively build a plane and ensure it behaves correctly
     const plane_pos: @Vector(4, f32) = .{ 10, 4, 10, 0 };
     const plane_dim: usize = 5;
@@ -893,9 +889,10 @@ test "test block on chunk edge casts shadow on other chunks surfaces and chunk b
     const t_data = testing_utils.utest_allocate_test_chunk(0, .full);
     defer std.testing.allocator.free(t_data);
 
-    const _x: f32 = 16;
+    const _x: f32 = 5;
+    const _y: f32 = 16;
     const _z: f32 = 63; // putting a block right along the z edge
-    const ci = chunk.getIndexFromPositionV(.{ _x, 0, _z, 0 });
+    const ci = chunk.getIndexFromPositionV(.{ _x, _y, _z, 0 });
     testing_utils.utest_set_block_surface_light(t_data, ci, .full, .bottom, .none);
 
     const t_wp = chunk.worldPosition.initFromPositionV(.{ 0, 1, 0, 0 });
@@ -910,37 +907,65 @@ test "test block on chunk edge casts shadow on other chunks surfaces and chunk b
     const b_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 });
     {
         const b_data = testing_utils.utest_allocate_test_chunk(1, .full);
+        testing_utils.utest_add_floor_at_y(b_data, 63, .full);
         test_traverser.fetcher.test_chunk_data.put(b_wp, b_data) catch @panic("OOM");
     }
 
     const zp_wp = chunk.worldPosition.initFromPositionV(.{ 0, 1, 1, 0 });
     {
         const zp_data = testing_utils.utest_allocate_test_chunk(0, .full);
-        testing_utils.utest_add_plane_at_x(zp_data, .{ 0, 0, 0, 0 }, 20, .back, .full);
+        var surfaces: [6]?block.BlockSurface = undefined;
+        surfaces[0] = .back;
+        surfaces[1] = .front;
+        testing_utils.utest_add_plane_at_x(
+            zp_data,
+            .{ 0, 0, 0, 0 },
+            20,
+            surfaces,
+            2,
+            .full,
+        );
         test_traverser.fetcher.test_chunk_data.put(zp_wp, zp_data) catch @panic("OOM");
+    }
+    {
+        // z+ bottom chunk is needed by the algorithm:
+        const zpb_wp = chunk.worldPosition.initFromPositionV(.{ 0, 0, 1, 0 });
+        const zpb_data = testing_utils.utest_allocate_test_chunk(1, .full);
+        test_traverser.fetcher.test_chunk_data.put(zpb_wp, zpb_data) catch @panic("OOM");
     }
     var l: Lighting = .{ .traverser = &test_traverser };
 
     var bd: block.BlockData = block.BlockData.fromId(t_data[ci]);
-    bd.block_id = 0;
+    bd.block_id = 2;
     t_data[ci] = bd.toId();
-    l.set_removed_block_lighting();
+    l.set_added_block_lighting();
     {
-        // expected lighting to have fetched extra data for two chunks
-        try std.testing.expectEqual(2, test_traverser.num_extra_datas);
+        // expected lighting to have fetched extra data for three chunks
+        try std.testing.expectEqual(3, test_traverser.num_extra_datas);
         // expected extra data to have been fetchable
         try std.testing.expect(test_traverser.datas[1].fetchable);
         try std.testing.expect(test_traverser.datas[2].fetchable);
     }
     {
         // validate that the block casted a shadow on the chunk below
-        const b_data = test_traverser.datas[1].data orelse @panic("expected data to be there");
+        var test_data: ?[]u32 = null;
+        for (test_traverser.datas) |d| {
+            if (d.wp.equal(b_wp)) test_data = d.data;
+        }
+        std.debug.assert(test_data != null);
+        const b_data = test_data.?;
         try testing_utils.utest_expect_surface_light_at_v(b_data, .{ _x, 63, _z, 0 }, .top, .bright);
     }
     {
         // expect a shadow across the back surface of the z plus chunk
-        const zp_data = test_traverser.datas[2].data orelse @panic("expected data to be there");
-        try testing_utils.utest_expect_surface_light_at_v(zp_data, .{ _x, _x - 1, 0, 0 }, .back, .bright);
+        var test_data: ?[]u32 = null;
+        for (test_traverser.datas) |d| {
+            if (d.wp.equal(zp_wp)) test_data = d.data;
+        }
+        std.debug.assert(test_data != null);
+        const zp_data = test_data.?;
+        const pos: @Vector(4, f32) = .{ _x, _y - 2, 0, 0 };
+        try testing_utils.utest_expect_surface_light_at_v(zp_data, pos, .back, .bright);
     }
 }
 

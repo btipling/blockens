@@ -48,7 +48,8 @@ pub fn utest_add_plane_at_x(
     data: []u32,
     pos: @Vector(4, f32),
     dimension: usize,
-    surface: block.BlockSurface,
+    surfaces: [6]?block.BlockSurface,
+    num_surfaces: usize,
     ll: block.BlockLighingLevel,
 ) void {
     {
@@ -56,7 +57,10 @@ pub fn utest_add_plane_at_x(
         std.debug.assert(@as(usize, @intFromFloat(pos[1])) + dimension < chunk.chunkDim);
         var ground_bd: block.BlockData = block.BlockData.fromId(1);
         ground_bd.setFullAmbiance(.none);
-        ground_bd.setAmbient(surface, ll);
+        var i: usize = 0;
+        while (i < num_surfaces) : (i += 1) {
+            ground_bd.setAmbient(surfaces[i].?, ll);
+        }
         const gd: u32 = ground_bd.toId();
         var _x: usize = 0;
         while (_x < dimension) : (_x += 1) {
@@ -91,7 +95,7 @@ pub fn utest_expect_surface_light_at_v(
     expected_ll: block.BlockLighingLevel,
 ) !void {
     const b_ci = chunk.getIndexFromPositionV(pos);
-    var bd: block.BlockData = block.BlockData.fromId(data[b_ci]);
+    const bd: block.BlockData = block.BlockData.fromId(data[b_ci]);
     try std.testing.expectEqual(expected_ll, bd.getSurfaceAmbience(surface));
 }
 

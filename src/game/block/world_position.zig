@@ -20,7 +20,8 @@ pub fn vecFromWorldPosition(self: worldPosition) @Vector(4, f32) {
     return .{ x, y, z, 0 };
 }
 pub fn equal(self: worldPosition, other: worldPosition) bool {
-    return self.x == other.x and self.y == other.y and self.x == other.x;
+    const rv = self.x == other.x and self.y == other.y and self.z == other.z;
+    return rv;
 }
 
 pub fn getWorldLocation(self: worldPosition) @Vector(4, f32) {
