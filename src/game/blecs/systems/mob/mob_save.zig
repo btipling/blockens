@@ -25,7 +25,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     const world = it.world;
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
-            if (true) continue;
             const entity = it.entities()[i];
             const m: *components.mob.Mob = ecs.get_mut(world, entity, components.mob.Mob) orelse continue;
             ecs.remove(world, entity, components.mob.DidUpdate);
