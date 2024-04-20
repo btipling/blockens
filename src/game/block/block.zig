@@ -114,15 +114,14 @@ pub const BlockData = packed struct {
         var val: u12 = 0;
         switch (surface) {
             .top => {
-                val = self.ambient ^ (0xFFF - 0xC00);
-                val = val >> 10;
+                val = self.ambient >> 10;
             },
             .bottom => {
                 val = (self.ambient | 0xC00) ^ (0xFFF - 0x300);
                 val = val >> 8;
             },
             .front => {
-                val = self.ambient ^ (0xFFF - 0x0C0);
+                val = self.ambient & 0x0F0;
                 val = val >> 6;
             },
             .back => {
@@ -130,7 +129,7 @@ pub const BlockData = packed struct {
                 val = val >> 4;
             },
             .left => {
-                val = self.ambient ^ (0xFFF - 0x00C);
+                val = self.ambient & 0x00F;
                 val = val >> 2;
             },
             .right => {
