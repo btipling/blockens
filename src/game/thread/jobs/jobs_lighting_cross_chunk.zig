@@ -203,7 +203,7 @@ pub const LightingCrossChunkJob = struct {
 
     fn fixCrossChunkLighting(self: *LightingCrossChunkJob, wp: chunk.worldPosition, c_data: []u32) void {
         {
-            const f_p = wp.getFrontWP().vecFromWorldPosition();
+            const f_p = wp.getZPlusWP().vecFromWorldPosition();
             var f_c: data.chunkData = .{};
             game.state.db.loadChunkData(
                 self.world_id,
@@ -233,7 +233,7 @@ pub const LightingCrossChunkJob = struct {
             }
         }
         {
-            const b_p = wp.getBackWP().vecFromWorldPosition();
+            const b_p = wp.getZNegWP().vecFromWorldPosition();
             var b_c: data.chunkData = .{};
             game.state.db.loadChunkData(
                 self.world_id,
@@ -263,7 +263,7 @@ pub const LightingCrossChunkJob = struct {
             }
         }
         {
-            const l_p = wp.getLeftWP().vecFromWorldPosition();
+            const l_p = wp.getXPlusWP().vecFromWorldPosition();
             var l_c: data.chunkData = .{};
             game.state.db.loadChunkData(
                 self.world_id,
@@ -293,7 +293,7 @@ pub const LightingCrossChunkJob = struct {
             }
         }
         {
-            const r_p = wp.getRightWP().vecFromWorldPosition();
+            const r_p = wp.getXNegWP().vecFromWorldPosition();
             var r_c: data.chunkData = .{};
             game.state.db.loadChunkData(
                 self.world_id,

@@ -134,7 +134,7 @@ pub fn darken_area_around_block(self: *Lighting, ci: usize) void {
                 data[c_ci] = c_bd.toId();
                 if (y_d == 0) {
                     if (is_multi_chunk) {
-                        wp = wp.getBelowWP();
+                        wp = wp.getYNegWP();
                         y_d = 63;
                         is_multi_chunk = false;
                     } else break;
@@ -150,11 +150,18 @@ pub fn darken_area_around_block(self: *Lighting, ci: usize) void {
 pub fn light_fall_around_block(self: *Lighting, ci: usize) void {
     const pos = chunk.getPositionAtIndexV(ci);
     var is_multi_chunk = self.pos[1] == 1;
+
+    var default_wp = self.wp;
+    var below_wp = self.wp.getYNegWP();
     // drop light from top
 
     // go up 2 or as far as we can
     var y = pos[1];
     while (y < chunk.chunkDim and y < pos[1] + 2) : (y += 1) {}
+    if (y >= fl_chunk_dim) {
+        default_wp = self.wp.getYPosWP();
+        below_wp = self.wp;
+    }
     // go out x znd z by 2 or as far as we can
     var x = pos[0];
     while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
@@ -178,19 +185,24 @@ pub fn light_fall_around_block(self: *Lighting, ci: usize) void {
         x_end,
         z_end,
     });
-    var wp = self.wp;
+    var wp = default_wp;
     while (x_d < x_end) : (x_d += 1) {
         while (z_d < z_end) : (z_d += 1) {
             while (true) {
-                var data = self.get_datas(wp) orelse break;
                 var ll: block.BlockLighingLevel = .full;
-                // Look one up to get light to drop.
-                if (y_d + 1 < chunk.chunkDim) {
+                {
+                    var lookup_wp = wp;
+                    // Look one up to get light to drop.
+                    if (y_d + 1 >= chunk.chunkDim) {
+                        lookup_wp = wp.getYPosWP();
+                    }
+                    const up_data = self.get_datas(lookup_wp) orelse break;
                     const u_ci = chunk.getIndexFromPositionV(.{ x_d, y_d + 1, z_d, 0 });
-                    const u_bd: block.BlockData = block.BlockData.fromId(data[u_ci]);
+                    const u_bd: block.BlockData = block.BlockData.fromId(up_data[u_ci]);
                     if (u_bd.block_id != air) break; // No light falling here.
                     ll = u_bd.getFullAmbiance();
                 }
+                var data = self.get_datas(wp) orelse break;
                 const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
                 var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
                 if (c_bd.block_id != air) {
@@ -203,13 +215,13 @@ pub fn light_fall_around_block(self: *Lighting, ci: usize) void {
                 data[c_ci] = c_bd.toId();
                 if (y_d == 0) {
                     if (is_multi_chunk) {
-                        wp = wp.getBelowWP();
+                        wp = below_wp;
                         y_d = 63;
                         is_multi_chunk = false;
                     } else break;
                 } else y_d -= 1;
             }
-            wp = self.wp;
+            wp = default_wp;
             y_d = y;
         }
         z_d = z;
@@ -265,7 +277,7 @@ pub fn determine_air_ambience_around_block(self: *Lighting, ci: usize) void {
         }
         x_d = x;
     }
-    // now darken each x, z from y_end until a surface is hit:
+
     y_d = y_end;
     x_d = x;
     z_d = z;
@@ -284,7 +296,7 @@ pub fn determine_air_ambience_around_block(self: *Lighting, ci: usize) void {
                 data[c_ci] = c_bd.toId();
                 if (y_d == 0) {
                     if (is_multi_chunk) {
-                        wp = wp.getBelowWP();
+                        wp = wp.getYNegWP();
                         y_d = 63;
                         is_multi_chunk = false;
                     } else break;
@@ -300,21 +312,15 @@ pub fn determine_air_ambience_around_block(self: *Lighting, ci: usize) void {
 pub fn determine_block_ambience_around_block(self: *Lighting, ci: usize) void {
     const pos = chunk.getPositionAtIndexV(ci);
     const is_multi_chunk = self.pos[1] == 1;
-    // go 2 positions up and 2 positions out in every direction and nuke the light
-    // in a 5x5x5 cube starting at the top going down and everything beneath the cube until
-    // a surface is hit
-    // then starting at the top, figure out what the ambient lighting should be for each
-    // going down
 
-    // go up 2 or as far as we can
     var default_wp = self.wp;
-    var below_wp = self.wp.getBelowWP();
+    var below_wp = self.wp.getYNegWP();
 
     var y = pos[1];
     if (is_multi_chunk) y += chunk.chunkDim;
     while (y < chunk.chunkDim and y < pos[1] + 2) : (y += 1) {}
     if (y >= fl_chunk_dim) {
-        default_wp = self.wp.getAboveWP();
+        default_wp = self.wp.getYPosWP();
         below_wp = self.wp;
     }
     // go out x znd z by 2 or as far as we can
@@ -329,7 +335,7 @@ pub fn determine_block_ambience_around_block(self: *Lighting, ci: usize) void {
     while (x_end < chunk.chunkDim and x_end < x + 5) : (x_end += 1) {}
     var z_end = z;
     while (z_end < chunk.chunkDim and z_end < z + 5) : (z_end += 1) {}
-    // shut out the lights
+
     var _y_d = y;
     var x_d = x;
     var z_d = z;
@@ -353,7 +359,7 @@ pub fn determine_block_ambience_around_block(self: *Lighting, ci: usize) void {
         }
         x_d = x;
     }
-    // now darken each x, z from y_end until a surface is hit:
+
     _y_d = y_end - 1;
     x_d = x;
     z_d = z;
