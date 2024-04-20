@@ -10,6 +10,7 @@ pub fn set_removed_block_lighting(self: *Lighting) void {
     self.determine_air_ambience_around_block();
     self.determine_air_ambience_around_block();
     self.determine_block_ambience_around_block();
+    self.determine_block_surface_from_air();
 }
 
 pub fn set_added_block_lighting(self: *Lighting) void {
@@ -18,6 +19,7 @@ pub fn set_added_block_lighting(self: *Lighting) void {
     self.determine_air_ambience_around_block();
     self.determine_air_ambience_around_block();
     self.determine_block_ambience_around_block();
+    self.determine_block_surface_from_air();
 }
 
 pub fn darken_area_around_block(self: *Lighting) void {
@@ -179,7 +181,7 @@ pub fn determine_block_ambience_around_block(self: *Lighting) void {
         while (self.traverser.position[0] < x_end) : (self.traverser.xPos()) {
             while (self.traverser.position[2] < z_end) : (self.traverser.zPos()) {
                 if (self.traverser.current_bd.block_id == air) continue;
-                self.set_surfaces_from_ambient();
+                self.set_surfaces_directly_from_ambient();
             }
             self.traverser.zMoveTo(z);
         }
@@ -194,7 +196,7 @@ pub fn determine_block_ambience_around_block(self: *Lighting) void {
         while (self.traverser.position[2] < z_end) : (self.traverser.zPos()) {
             while (true) {
                 if (self.traverser.current_bd.block_id != air) {
-                    self.set_surfaces_from_ambient();
+                    self.set_surfaces_directly_from_ambient();
                     break;
                 }
                 if (self.traverser.world_location[1] == 0) break;
@@ -206,7 +208,99 @@ pub fn determine_block_ambience_around_block(self: *Lighting) void {
     }
 }
 
-pub fn set_surfaces_from_ambient(self: *Lighting) void {
+pub fn determine_block_surface_from_air(self: *Lighting) void {
+    self.traverser.reset();
+
+    const y: f32 = self.traverser.position[1] + 2;
+    self.traverser.yMoveTo(y);
+    const x = self.traverser.position[0] - 2;
+    self.traverser.xMoveTo(x);
+    const z = self.traverser.position[2] - 2;
+    self.traverser.zMoveTo(z);
+    const y_end = y - 5;
+    const x_end = x + 5;
+    const z_end = z + 5;
+
+    while (self.traverser.position[1] >= y_end) : (self.traverser.yNeg()) {
+        while (self.traverser.position[0] < x_end) : (self.traverser.xPos()) {
+            while (self.traverser.position[2] < z_end) : (self.traverser.zPos()) {
+                if (self.traverser.current_bd.block_id != air) continue;
+                self.set_surfaces_from_ambient_air();
+            }
+            self.traverser.zMoveTo(z);
+        }
+        self.traverser.xMoveTo(x);
+    }
+
+    self.traverser.yMoveTo(y_end);
+    self.traverser.xMoveTo(x);
+    self.traverser.zMoveTo(z);
+
+    while (self.traverser.position[0] < x_end) : (self.traverser.xPos()) {
+        while (self.traverser.position[2] < z_end) : (self.traverser.zPos()) {
+            while (true) {
+                if (self.traverser.current_bd.block_id != air) {
+                    break;
+                }
+                self.set_surfaces_from_ambient_air();
+                if (self.traverser.world_location[1] == 0) break;
+                self.traverser.yNeg();
+            }
+            self.traverser.yMoveTo(y_end);
+        }
+        self.traverser.zMoveTo(z);
+    }
+}
+
+pub fn set_surfaces_from_ambient_air(self: *Lighting) void {
+    const cached_pos = self.traverser.position;
+    if (self.traverser.current_bd.block_id != air) return;
+    const ll = self.traverser.current_bd.getFullAmbiance();
+    xPos: {
+        self.traverser.xPos();
+        if (self.traverser.current_bd.block_id == air) break :xPos;
+        self.traverser.current_bd.setAmbient(.left, ll);
+        self.traverser.saveBD();
+    }
+    self.traverser.xMoveTo(cached_pos[0]);
+    xNeg: {
+        self.traverser.xNeg();
+        if (self.traverser.current_bd.block_id == air) break :xNeg;
+        self.traverser.current_bd.setAmbient(.right, ll);
+        self.traverser.saveBD();
+    }
+    self.traverser.xMoveTo(cached_pos[0]);
+    yPos: {
+        self.traverser.yPos();
+        if (self.traverser.current_bd.block_id == air) break :yPos;
+        self.traverser.current_bd.setAmbient(.bottom, ll);
+        self.traverser.saveBD();
+    }
+    self.traverser.yMoveTo(cached_pos[1]);
+    yNeg: {
+        self.traverser.yNeg();
+        if (self.traverser.current_bd.block_id == air) break :yNeg;
+        self.traverser.current_bd.setAmbient(.top, ll);
+        self.traverser.saveBD();
+    }
+    self.traverser.yMoveTo(cached_pos[1]);
+    zPos: {
+        self.traverser.zPos();
+        if (self.traverser.current_bd.block_id == air) break :zPos;
+        self.traverser.current_bd.setAmbient(.front, ll);
+        self.traverser.saveBD();
+    }
+    self.traverser.zMoveTo(cached_pos[2]);
+    zNeg: {
+        self.traverser.zNeg();
+        if (self.traverser.current_bd.block_id == air) break :zNeg;
+        self.traverser.current_bd.setAmbient(.back, ll);
+        self.traverser.saveBD();
+    }
+    self.traverser.zMoveTo(cached_pos[2]);
+}
+
+pub fn set_surfaces_directly_from_ambient(self: *Lighting) void {
     const cached_pos = self.traverser.position;
     var bd = self.traverser.current_bd;
     bd.setFullAmbiance(.none);
