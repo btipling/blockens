@@ -149,7 +149,6 @@ pub fn determine_air_ambience_around_block(self: *Lighting) void {
         while (self.traverser.position[2] < z_end) : (self.traverser.zPos()) {
             while (true) {
                 if (self.traverser.current_bd.block_id != air) break;
-                if (self.traverser.current_bd.getFullAmbiance() != .none) break; // already dropped light in this y.
                 const ll = self.get_ambience_from_adjecent();
                 self.traverser.current_bd.setFullAmbiance(ll);
                 self.traverser.saveBD();
@@ -208,6 +207,7 @@ pub fn determine_block_ambience_around_block(self: *Lighting) void {
 pub fn set_surfaces_from_ambient(self: *Lighting) void {
     const cached_pos = self.traverser.position;
     var bd = self.traverser.current_bd;
+    var didthing = false;
     bd.setFullAmbiance(.none);
     {
         self.traverser.xPos();
@@ -227,6 +227,16 @@ pub fn set_surfaces_from_ambient(self: *Lighting) void {
         self.traverser.yPos();
         if (self.traverser.current_bd.block_id != air) bd.setAmbient(.top, .none);
         const c_ll = self.traverser.current_bd.getFullAmbiance();
+        if (c_ll == .none) {
+            std.debug.print("set_surfaces_from_ambient got a none air?\n", .{});
+            self.traverser.debugPrint();
+
+            self.traverser.yPos();
+            self.traverser.debugPrint();
+            self.traverser.yPos();
+            self.traverser.debugPrint();
+            didthing = true;
+        }
         bd.setAmbient(.top, c_ll);
     }
     self.traverser.yMoveTo(cached_pos[1]);
@@ -253,6 +263,10 @@ pub fn set_surfaces_from_ambient(self: *Lighting) void {
     self.traverser.zMoveTo(cached_pos[2]);
     self.traverser.current_bd = bd;
     self.traverser.saveBD();
+    if (didthing) {
+        std.debug.print("original pos\n", .{});
+        self.traverser.debugPrint();
+    }
 }
 
 pub fn get_ambience_from_adjecent(self: *Lighting) block.BlockLighingLevel {
@@ -295,6 +309,10 @@ pub fn get_ambience_from_adjecent(self: *Lighting) block.BlockLighingLevel {
         if (c_ll.isBrighterThan(ll)) ll = c_ll;
     }
     self.traverser.zMoveTo(cached_pos[2]);
+    if (ll == .none) {
+        std.debug.print("get_ambience_from_adjecent got a none air?\n", .{});
+        self.traverser.debugPrint();
+    }
     return ll;
 }
 
