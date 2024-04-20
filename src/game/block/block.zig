@@ -134,7 +134,7 @@ pub const BlockData = packed struct {
                 val = val >> 2;
             },
             .right => {
-                val = (self.ambient | 0x00C) ^ (0xFFF - 0x003);
+                val = ((self.ambient | 0x00C) & 0x00F) ^ (0xFFF - 0x003);
             },
         }
         switch (val) {
