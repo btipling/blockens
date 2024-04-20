@@ -95,7 +95,7 @@ pub fn xPos(self: *traverser) void {
     self.world_location[0] += 1;
     self.chunk_position[0] += 1;
     if (self.chunk_position[0] >= fl_chunk_dim) {
-        self.chunk_position[0] = 0;
+        self.chunk_position[0] = self.chunk_position[0] - fl_chunk_dim;
         self.current_wp = self.current_wp.getXPosWP();
         self.current_data = self.get_datas(self.current_wp) orelse fully_lit_chunk[0..];
     }
@@ -109,7 +109,7 @@ pub fn xNeg(self: *traverser) void {
     self.world_location[0] -= 1;
     self.chunk_position[0] -= 1;
     if (self.chunk_position[0] < 0) {
-        self.chunk_position[0] = 63;
+        self.chunk_position[0] = fl_chunk_dim + self.chunk_position[0];
         self.current_wp = self.current_wp.getXNegWP();
         self.current_data = self.get_datas(self.current_wp) orelse fully_lit_chunk[0..];
     }
@@ -137,7 +137,7 @@ pub fn yPos(self: *traverser) void {
     self.world_location[1] += 1;
     self.chunk_position[1] += 1;
     if (self.chunk_position[1] >= fl_chunk_dim) {
-        self.chunk_position[1] = 0;
+        self.chunk_position[1] = self.chunk_position[1] - fl_chunk_dim;
         self.current_wp = self.current_wp.getYPosWP();
         self.current_data = self.get_datas(self.current_wp) orelse fully_lit_chunk[0..];
     }
@@ -152,7 +152,7 @@ pub fn yNeg(self: *traverser) void {
     self.world_location[1] -= 1;
     self.chunk_position[1] -= 1;
     if (self.chunk_position[1] < 0) {
-        self.chunk_position[1] = 63;
+        self.chunk_position[1] = fl_chunk_dim + self.chunk_position[1];
         self.current_wp = self.current_wp.getYNegWP();
         self.current_data = self.get_datas(self.current_wp) orelse fully_lit_chunk[0..];
     }
@@ -181,7 +181,7 @@ pub fn zPos(self: *traverser) void {
     self.world_location[2] += 1;
     self.chunk_position[2] += 1;
     if (self.chunk_position[2] >= fl_chunk_dim) {
-        self.chunk_position[2] = 0;
+        self.chunk_position[2] = self.chunk_position[2] - fl_chunk_dim;
         self.current_wp = self.current_wp.getZPosWP();
         self.current_data = self.get_datas(self.current_wp) orelse fully_lit_chunk[0..];
     }
@@ -195,7 +195,7 @@ pub fn zNeg(self: *traverser) void {
     self.world_location[2] -= 1;
     self.chunk_position[2] -= 1;
     if (self.chunk_position[2] < 0) {
-        self.chunk_position[2] = 63;
+        self.chunk_position[2] = fl_chunk_dim + self.chunk_position[2];
         self.current_wp = self.current_wp.getZNegWP();
         self.current_data = self.get_datas(self.current_wp) orelse fully_lit_chunk[0..];
     }

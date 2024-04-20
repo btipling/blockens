@@ -44,6 +44,33 @@ pub fn utest_add_plane_at_y(
     }
 }
 
+pub fn utest_add_plane_at_x(
+    data: []u32,
+    pos: @Vector(4, f32),
+    dimension: usize,
+    surface: block.BlockSurface,
+    ll: block.BlockLighingLevel,
+) void {
+    {
+        std.debug.assert(@as(usize, @intFromFloat(pos[0])) + dimension < chunk.chunkDim);
+        std.debug.assert(@as(usize, @intFromFloat(pos[1])) + dimension < chunk.chunkDim);
+        var ground_bd: block.BlockData = block.BlockData.fromId(1);
+        ground_bd.setFullAmbiance(.none);
+        ground_bd.setAmbient(surface, ll);
+        const gd: u32 = ground_bd.toId();
+        var _x: usize = 0;
+        while (_x < dimension) : (_x += 1) {
+            const x: f32 = @floatFromInt(_x);
+            var _y: usize = 0;
+            while (_y < dimension) : (_y += 1) {
+                const y: f32 = @floatFromInt(_y);
+                const ci = chunk.getIndexFromPositionV(.{ pos[0] + x, pos[1] + y, pos[2], pos[3] });
+                data[ci] = gd;
+            }
+        }
+    }
+}
+
 pub fn utest_allocate_test_chunk(id: u32, ambiance: block.BlockLighingLevel) []u32 {
     const data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
     {
