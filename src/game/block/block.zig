@@ -184,6 +184,24 @@ pub const Blocks = struct {
     selected_block: u8 = 4,
 };
 
+test "test fromId" {
+    const block_id: u32 = 1;
+    const bd: BlockData = BlockData.fromId(block_id);
+    try std.testing.expectEqual(block_id, bd.block_id);
+}
+
+test "test lighting surfaces works" {
+    // TODO: test all of these
+    const block_id: u32 = 1;
+    var ll: BlockLighingLevel = .full;
+    var bd: BlockData = BlockData.fromId(block_id);
+    bd.setAmbient(.front, ll);
+    try std.testing.expectEqual(ll, bd.getSurfaceAmbience(.front));
+    ll = .bright;
+    bd.setAmbient(.front, ll);
+    try std.testing.expectEqual(ll, bd.getSurfaceAmbience(.front));
+}
+
 pub const chunk = @import("chunk.zig");
 
 const std = @import("std");
