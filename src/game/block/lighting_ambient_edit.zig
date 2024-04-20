@@ -1,606 +1,298 @@
 const air: u8 = 0;
-const max_propagation_distance: u8 = 3;
-const fl_chunk_dim: f32 = @as(f32, @floatFromInt(chunk.chunkDim));
+
+traverser: *chunk_traverser,
 
 pub const Lighting = @This();
 
-pub const datas = struct {
-    wp: chunk.worldPosition,
-    data: ?[]u32 = null,
-    fetchable: bool = true,
-};
-
-wp: chunk.worldPosition,
-pos: @Vector(4, f32),
-propagated: [chunk.chunkSize]u1 = std.mem.zeroes([chunk.chunkSize]u1),
-allocator: std.mem.Allocator,
-fetcher: data_fetcher,
-datas: [7]datas = undefined,
-num_extra_datas: u8 = 0,
-
-pub fn deinit(self: Lighting) void {
-    var i: usize = 1;
-    while (i < self.num_extra_datas + 1) : (i += 1) {
-        const d = self.datas[i];
-        if (d.data) |cd| self.allocator.free(cd);
-    }
+pub fn set_removed_block_lighting(self: *Lighting) void {
+    self.darken_area_around_block();
+    self.light_fall_around_block();
+    self.determine_air_ambience_around_block();
+    self.determine_block_ambience_around_block();
 }
 
-pub fn get_datas(self: *Lighting, wp: chunk.worldPosition) ?[]u32 {
-    var i: usize = 0;
-    while (i < self.num_extra_datas + 1) : (i += 1) {
-        const d = self.datas[i];
-        if (d.wp.equal(wp)) {
-            if (d.fetchable) return d.data;
-            return null;
-        }
-    }
-    const d = self.fetcher.fetch(wp) orelse {
-        const ed: datas = .{
-            .wp = wp,
-            .fetchable = false,
-        };
-        self.datas[self.num_extra_datas] = ed;
-        self.num_extra_datas += 1;
-        return null;
-    };
-
-    self.datas[self.num_extra_datas + 1] = d;
-    self.num_extra_datas += 1;
-    return d.data;
+pub fn set_added_block_lighting(self: *Lighting) void {
+    self.darken_area_around_block();
+    self.light_fall_around_block();
+    self.determine_air_ambience_around_block();
+    self.determine_block_ambience_around_block();
 }
 
-pub fn set_removed_block_lighting(self: *Lighting, ci: usize) void {
-    self.darken_area_around_block(ci);
-    self.light_fall_around_block(ci);
-    self.determine_air_ambience_around_block(ci);
-    self.determine_block_ambience_around_block(ci);
-}
-
-pub fn set_added_block_lighting(self: *Lighting, _: *block.BlockData, ci: usize) void {
-    self.darken_area_around_block(ci);
-    self.light_fall_around_block(ci);
-    self.determine_air_ambience_around_block(ci);
-    self.determine_block_ambience_around_block(ci);
-}
-
-pub fn darken_area_around_block(self: *Lighting, ci: usize) void {
-    const pos = chunk.getPositionAtIndexV(ci);
-    var is_multi_chunk = self.pos[1] == 1;
+pub fn darken_area_around_block(self: *Lighting) void {
+    self.traverser.reset();
     // go 2 positions up and 2 positions out in every direction and nuke the light
     // in a 5x5x5 cube starting at the top going down and everything beneath the cube until
     // a surface is hit
     // then starting at the top, figure out what the ambient lighting should be for each
     // going down
 
-    // go up 2 or as far as we can
-    var y = pos[1];
-    while (y < chunk.chunkDim and y < pos[1] + 2) : (y += 1) {}
+    // go up 2
+    const y: f32 = self.traverser.position[1] + 2;
+    self.traverser.yMoveTo(y);
     // go out x znd z by 2 or as far as we can
-    var x = pos[0];
-    while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
-    var z = pos[2];
-    while (z > 0 and z > pos[2] - 2) : (z -= 2) {}
+    const x = self.traverser.position[0] - 2;
+    self.traverser.xMoveTo(x);
+    const z = self.traverser.position[2] - 2;
+    self.traverser.zMoveTo(z);
     // set ends in the x and z direction
-    var y_end = y;
-    while (y_end > 0 and y_end > y - 5) : (y_end -= 1) {} // y goes down
-    var x_end = x;
-    while (x_end < chunk.chunkDim and x_end < x + 5) : (x_end += 1) {}
-    var z_end = z;
-    while (z_end < chunk.chunkDim and z_end < z + 5) : (z_end += 1) {}
+    const y_end = y - 5;
+    const x_end = x + 5;
+    const z_end = z + 5;
     // shut out the lights
-    var y_d = y;
-    var x_d = x;
-    var z_d = z;
-    std.debug.print("y: {d}, x: {d}, z: {d} - end_y: {d}, end_x: {d}, end_z: {d}\n", .{
-        y_d,
-        x_d,
-        z_d,
-        y_end,
-        x_end,
-        z_end,
-    });
-    while (y_d >= y_end) : (y_d -= 1) {
-        while (x_d < x_end) : (x_d += 1) {
-            while (z_d < z_end) : (z_d += 1) {
-                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
-                var data = self.get_datas(self.wp) orelse continue;
-                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
-                c_bd.ambient = 0;
-                data[c_ci] = c_bd.toId();
+    while (self.traverser.position[1] >= y_end) : (self.traverser.yNeg()) {
+        while (self.traverser.position[0] < x_end) : (self.traverser.xPos()) {
+            while (self.traverser.position[2] < z_end) : (self.traverser.zPos()) {
+                self.traverser.current_bd.ambient = 0;
+                self.traverser.saveBD();
             }
-            z_d = z;
+            self.traverser.zMoveTo(z);
         }
-        x_d = x;
+        self.traverser.xMoveTo(x);
     }
     // now darken each x, z from y_end until a surface is hit:
-    y_d = y_end;
-    x_d = x;
-    z_d = z;
+    self.traverser.yMoveTo(y_end);
+    self.traverser.xMoveTo(x);
+    self.traverser.zMoveTo(z);
 
-    var wp = self.wp;
-    while (x_d < x_end) : (x_d += 1) {
-        while (z_d < z_end) : (z_d += 1) {
+    while (self.traverser.position[0] < x_end) : (self.traverser.xPos()) {
+        while (self.traverser.position[2] < z_end) : (self.traverser.zPos()) {
             while (true) {
-                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
-                var data = self.get_datas(wp) orelse continue;
-                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) {
-                    c_bd.setAmbient(.top, .none);
-                    data[c_ci] = c_bd.toId();
+                if (self.traverser.current_bd.block_id != air) {
+                    self.traverser.current_bd.setAmbient(.top, .none);
+                    self.traverser.saveBD();
                     break;
                 }
-                c_bd.ambient = 0;
-                data[c_ci] = c_bd.toId();
-                if (y_d == 0) {
-                    if (is_multi_chunk) {
-                        wp = wp.getYNegWP();
-                        y_d = 63;
-                        is_multi_chunk = false;
-                    } else break;
-                } else y_d -= 1;
+                self.traverser.current_bd.ambient = 0;
+                self.traverser.saveBD();
+                self.traverser.yNeg();
             }
-            wp = self.wp;
-            y_d = y_end;
+            self.traverser.yMoveTo(y_end);
         }
-        z_d = z;
+        self.traverser.zMoveTo(z);
     }
 }
 
-pub fn light_fall_around_block(self: *Lighting, ci: usize) void {
-    const pos = chunk.getPositionAtIndexV(ci);
-    var is_multi_chunk = self.pos[1] == 1;
+pub fn light_fall_around_block(self: *Lighting) void {
+    self.traverser.reset();
 
-    var default_wp = self.wp;
-    var below_wp = self.wp.getYNegWP();
-    // drop light from top
+    const y: f32 = self.traverser.position[1] + 2;
+    self.traverser.yMoveTo(y);
+    const x = self.traverser.position[0] - 2;
+    self.traverser.xMoveTo(x);
+    const z = self.traverser.position[2] - 2;
+    self.traverser.zMoveTo(z);
+    const x_end = x + 5;
+    const z_end = z + 5;
 
-    // go up 2 or as far as we can
-    var y = pos[1];
-    while (y < chunk.chunkDim and y < pos[1] + 2) : (y += 1) {}
-    if (y >= fl_chunk_dim) {
-        default_wp = self.wp.getYPosWP();
-        below_wp = self.wp;
-    }
-    // go out x znd z by 2 or as far as we can
-    var x = pos[0];
-    while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
-    var z = pos[2];
-    while (z > 0 and z > pos[2] - 2) : (z -= 2) {}
-    // set ends in the x and z direction
-    var y_end = y;
-    while (y_end > 0 and y_end > y - 5) : (y_end -= 1) {} // y goes down
-    var x_end = x;
-    while (x_end < chunk.chunkDim and x_end < x + 5) : (x_end += 1) {}
-    var z_end = z;
-    while (z_end < chunk.chunkDim and z_end < z + 5) : (z_end += 1) {}
-    var y_d = y;
-    var x_d = x;
-    var z_d = z;
-    std.debug.print("y: {d}, x: {d}, z: {d} - end_y: {d}, end_x: {d}, end_z: {d}\n", .{
-        y_d,
-        x_d,
-        z_d,
-        y_end,
-        x_end,
-        z_end,
-    });
-    var wp = default_wp;
-    while (x_d < x_end) : (x_d += 1) {
-        while (z_d < z_end) : (z_d += 1) {
+    while (self.traverser.position[0] < x_end) : (self.traverser.xPos()) {
+        while (self.traverser.position[2] < z_end) : (self.traverser.zPos()) {
             while (true) {
                 var ll: block.BlockLighingLevel = .full;
                 {
-                    var lookup_wp = wp;
-                    // Look one up to get light to drop.
-                    if (y_d + 1 >= chunk.chunkDim) {
-                        lookup_wp = wp.getYPosWP();
-                    }
-                    const up_data = self.get_datas(lookup_wp) orelse break;
-                    const u_ci = chunk.getIndexFromPositionV(.{ x_d, y_d + 1, z_d, 0 });
-                    const u_bd: block.BlockData = block.BlockData.fromId(up_data[u_ci]);
-                    if (u_bd.block_id != air) break; // No light falling here.
-                    ll = u_bd.getFullAmbiance();
+                    // FIXME: this can't be right.
+                    if (self.traverser.current_bd.block_id != air) break; // No light falling here.
+                    ll = self.traverser.current_bd.getFullAmbiance();
                 }
-                var data = self.get_datas(wp) orelse break;
-                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
-                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) {
+                // FIXME: This check is weird, we just checked above, I think this is a bug:
+                // and explains some things :facepalm:
+                if (self.traverser.current_bd.block_id != air) {
                     // All done dropping light.
-                    c_bd.setAmbient(.top, ll);
-                    data[c_ci] = c_bd.toId();
+                    self.traverser.current_bd.setAmbient(.top, ll);
+                    self.traverser.saveBD();
                     break;
                 }
-                c_bd.setFullAmbiance(ll);
-                data[c_ci] = c_bd.toId();
-                if (y_d == 0) {
-                    if (is_multi_chunk) {
-                        wp = below_wp;
-                        y_d = 63;
-                        is_multi_chunk = false;
-                    } else break;
-                } else y_d -= 1;
+                self.traverser.current_bd.setFullAmbiance(ll);
+                self.traverser.saveBD();
+                self.traverser.yNeg();
             }
-            wp = default_wp;
-            y_d = y;
+            self.traverser.yMoveTo(y);
         }
-        z_d = z;
+        self.traverser.zMoveTo(z);
     }
 }
 
-pub fn determine_air_ambience_around_block(self: *Lighting, ci: usize) void {
-    const pos = chunk.getPositionAtIndexV(ci);
-    var is_multi_chunk = self.pos[1] == 1;
+pub fn determine_air_ambience_around_block(self: *Lighting) void {
+    self.traverser.reset();
+
     // find the adjacent air ambiance for non fully ambiant are and propagate it
+    const y: f32 = self.traverser.position[1] + 2;
+    self.traverser.yMoveTo(y);
+    const x = self.traverser.position[0] - 2;
+    self.traverser.xMoveTo(x);
+    const z = self.traverser.position[2] - 2;
+    self.traverser.zMoveTo(z);
+    const y_end = y - 5;
+    const x_end = x + 5;
+    const z_end = z + 5;
 
-    // go up 2 or as far as we can
-    var y = pos[1];
-    // go down an extra 1 to fix top surfaces
-    while (y < chunk.chunkDim and y < pos[1] + 2) : (y += 1) {}
-    // go out x znd z by 2 or as far as we can
-    var x = pos[0];
-    while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
-    var z = pos[2];
-    while (z > 0 and z > pos[2] - 2) : (z -= 2) {}
-    // set ends in the x and z direction
-    var y_end = y;
-    while (y_end > 0 and y_end > y - 5) : (y_end -= 1) {} // y goes down
-    var x_end = x;
-    while (x_end < chunk.chunkDim and x_end < x + 5) : (x_end += 1) {}
-    var z_end = z;
-    while (z_end < chunk.chunkDim and z_end < z + 5) : (z_end += 1) {}
-    // get air ambiance
-    var y_d = y;
-    var x_d = x;
-    var z_d = z;
-    std.debug.print("y: {d}, x: {d}, z: {d} - end_y: {d}, end_x: {d}, end_z: {d}\n", .{
-        y_d,
-        x_d,
-        z_d,
-        y_end,
-        x_end,
-        z_end,
-    });
-    while (y_d >= y_end) : (y_d -= 1) {
-        while (x_d < x_end) : (x_d += 1) {
-            while (z_d < z_end) : (z_d += 1) {
-                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
-                var data = self.get_datas(self.wp) orelse continue;
-                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) continue;
-                if (c_bd.getFullAmbiance() != .none) continue; // already has ambiance
-                const ll = self.get_ambience_from_adjecent(c_ci, null);
-                c_bd.setFullAmbiance(ll);
-                data[c_ci] = c_bd.toId();
+    while (self.traverser.position[1] >= y_end) : (self.traverser.yNeg()) {
+        while (self.traverser.position[0] < x_end) : (self.traverser.xPos()) {
+            while (self.traverser.position[2] < z_end) : (self.traverser.zPos()) {
+                if (self.traverser.current_bd.block_id != air) continue;
+                if (self.traverser.current_bd.getFullAmbiance() != .none) continue; // already has ambiance
+                const ll = self.get_ambience_from_adjecent();
+                self.traverser.current_bd.setFullAmbiance(ll);
+                self.traverser.saveBD();
             }
-            z_d = z;
+            self.traverser.zMoveTo(z);
         }
-        x_d = x;
+        self.traverser.xMoveTo(x);
     }
 
-    y_d = y_end;
-    x_d = x;
-    z_d = z;
+    self.traverser.yMoveTo(y_end);
+    self.traverser.xMoveTo(x);
+    self.traverser.zMoveTo(z);
 
-    var wp = self.wp;
-    while (x_d < x_end) : (x_d += 1) {
-        while (z_d < z_end) : (z_d += 1) {
+    while (self.traverser.position[0] < x_end) : (self.traverser.xPos()) {
+        while (self.traverser.position[2] < z_end) : (self.traverser.zPos()) {
             while (true) {
-                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
-                var data = self.get_datas(wp) orelse continue;
-                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) break;
-                if (c_bd.getFullAmbiance() != .none) break; // already dropped light in this y.
-                const ll = self.get_ambience_from_adjecent(c_ci, null);
-                c_bd.setFullAmbiance(ll);
-                data[c_ci] = c_bd.toId();
-                if (y_d == 0) {
-                    if (is_multi_chunk) {
-                        wp = wp.getYNegWP();
-                        y_d = 63;
-                        is_multi_chunk = false;
-                    } else break;
-                } else y_d -= 1;
+                if (self.traverser.current_bd.block_id != air) break;
+                if (self.traverser.current_bd.getFullAmbiance() != .none) break; // already dropped light in this y.
+                const ll = self.get_ambience_from_adjecent();
+                self.traverser.current_bd.setFullAmbiance(ll);
+                self.traverser.saveBD();
+                self.traverser.yNeg();
             }
-            wp = self.wp;
-            y_d = y_end;
+            self.traverser.yMoveTo(y_end);
         }
-        z_d = z;
+        self.traverser.zMoveTo(z);
     }
 }
 
-pub fn determine_block_ambience_around_block(self: *Lighting, ci: usize) void {
-    const pos = chunk.getPositionAtIndexV(ci);
-    const is_multi_chunk = self.pos[1] == 1;
+pub fn determine_block_ambience_around_block(self: *Lighting) void {
+    self.traverser.reset();
 
-    var default_wp = self.wp;
-    var below_wp = self.wp.getYNegWP();
+    const y: f32 = self.traverser.position[1] + 2;
+    self.traverser.yMoveTo(y);
+    const x = self.traverser.position[0] - 2;
+    self.traverser.xMoveTo(x);
+    const z = self.traverser.position[2] - 2;
+    self.traverser.zMoveTo(z);
+    const y_end = y - 5;
+    const x_end = x + 5;
+    const z_end = z + 5;
 
-    var y = pos[1];
-    if (is_multi_chunk) y += chunk.chunkDim;
-    while (y < chunk.chunkDim and y < pos[1] + 2) : (y += 1) {}
-    if (y >= fl_chunk_dim) {
-        default_wp = self.wp.getYPosWP();
-        below_wp = self.wp;
-    }
-    // go out x znd z by 2 or as far as we can
-    var x = pos[0];
-    while (x > 0 and x > pos[0] - 2) : (x -= 2) {}
-    var z = pos[2];
-    while (z > 0 and z > pos[2] - 2) : (z -= 2) {}
-    // set ends in the x and z direction
-    var y_end = y;
-    while (y_end > 0 and y_end > y - 5) : (y_end -= 1) {} // y goes down
-    var x_end = x;
-    while (x_end < chunk.chunkDim and x_end < x + 5) : (x_end += 1) {}
-    var z_end = z;
-    while (z_end < chunk.chunkDim and z_end < z + 5) : (z_end += 1) {}
-
-    var _y_d = y;
-    var x_d = x;
-    var z_d = z;
-    var wp = default_wp;
-    while (_y_d >= y_end) : (_y_d -= 1) {
-        var y_d = _y_d;
-        if (y_d >= fl_chunk_dim) {
-            y_d -= fl_chunk_dim;
-            wp = below_wp;
-        }
-        while (x_d < x_end) : (x_d += 1) {
-            while (z_d < z_end) : (z_d += 1) {
-                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
-                var data = self.get_datas(wp) orelse continue;
-                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id == air) continue;
-                self.set_surfaces_from_ambient(&c_bd, c_ci);
-                data[c_ci] = c_bd.toId();
+    while (self.traverser.position[1] >= y_end) : (self.traverser.yNeg()) {
+        while (self.traverser.position[0] < x_end) : (self.traverser.xPos()) {
+            while (self.traverser.position[2] < z_end) : (self.traverser.zPos()) {
+                if (self.traverser.current_bd.block_id == air) continue;
+                self.set_surfaces_from_ambient();
             }
-            z_d = z;
+            self.traverser.zMoveTo(z);
         }
-        x_d = x;
+        self.traverser.xMoveTo(x);
     }
 
-    _y_d = y_end - 1;
-    x_d = x;
-    z_d = z;
+    self.traverser.yMoveTo(y_end - 1);
+    self.traverser.xMoveTo(x);
+    self.traverser.zMoveTo(z);
 
-    wp = default_wp;
-    while (x_d < x_end) : (x_d += 1) {
-        while (z_d < z_end) : (z_d += 1) {
+    while (self.traverser.position[0] < x_end) : (self.traverser.xPos()) {
+        while (self.traverser.position[2] < z_end) : (self.traverser.zPos()) {
             while (true) {
-                const y_d = @mod(_y_d, chunk.chunkDim);
-                if (y_d != _y_d) wp = below_wp;
-                const c_ci = chunk.getIndexFromPositionV(.{ x_d, y_d, z_d, 0 });
-                var data = self.get_datas(wp) orelse continue;
-                var c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
-                if (c_bd.block_id != air) {
-                    self.set_surfaces_from_ambient(&c_bd, c_ci);
-                    data[c_ci] = c_bd.toId();
+                if (self.traverser.current_bd.block_id != air) {
+                    self.set_surfaces_from_ambient();
                     break;
                 }
-                if (y_d == 0) {
-                    break;
-                } else _y_d -= 1;
+                if (self.traverser.world_location[1] == 0) break;
+                self.traverser.yNeg();
             }
-            wp = default_wp;
-            _y_d = y_end;
+            self.traverser.yMoveTo(y_end - 1);
         }
-        z_d = z;
+        self.traverser.zMoveTo(z);
     }
 }
 
-pub fn set_surfaces_from_ambient(self: *Lighting, bd: *block.BlockData, ci: usize) void {
+pub fn set_surfaces_from_ambient(self: *Lighting) void {
+    const cached_pos = self.traverser.position;
+    var bd = self.traverser.current_bd;
     bd.setFullAmbiance(.none);
-    const pos = chunk.getPositionAtIndexV(ci);
-    x_pos: {
-        const x = pos[0] + 1;
-        if (x >= chunk.chunkDim) break :x_pos;
-        const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-        if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-        self.lightCheckDimensional(c_ci, bd, .right);
+    {
+        self.traverser.xPos();
+        if (self.traverser.current_bd.block_id != air) bd.setAmbient(.right, .none);
+        const c_ll = self.traverser.current_bd.getFullAmbiance();
+        bd.setAmbient(.right, c_ll);
     }
-    x_neg: {
-        const x = pos[0] - 1;
-        if (x < 0) break :x_neg;
-        const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-        self.lightCheckDimensional(c_ci, bd, .left);
+    self.traverser.xMoveTo(cached_pos[0]);
+    {
+        self.traverser.yNeg();
+        if (self.traverser.current_bd.block_id != air) bd.setAmbient(.left, .none);
+        const c_ll = self.traverser.current_bd.getFullAmbiance();
+        bd.setAmbient(.left, c_ll);
     }
-    y_pos: {
-        const y = pos[1] + 1;
-        if (y >= chunk.chunkDim) break :y_pos;
-        const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-        self.lightCheckDimensional(c_ci, bd, .top);
+    self.traverser.xMoveTo(cached_pos[0]);
+    {
+        self.traverser.yPos();
+        if (self.traverser.current_bd.block_id != air) bd.setAmbient(.top, .none);
+        const c_ll = self.traverser.current_bd.getFullAmbiance();
+        bd.setAmbient(.top, c_ll);
     }
-    y_neg: {
-        const y = pos[1] - 1;
-        if (y < 0) break :y_neg;
-        const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-        self.lightCheckDimensional(c_ci, bd, .bottom);
+    self.traverser.yMoveTo(cached_pos[1]);
+    {
+        self.traverser.yNeg();
+        if (self.traverser.current_bd.block_id != air) bd.setAmbient(.bottom, .none);
+        const c_ll = self.traverser.current_bd.getFullAmbiance();
+        bd.setAmbient(.bottom, c_ll);
     }
-    z_pos: {
-        const z = pos[2] + 1;
-        if (z >= chunk.chunkDim) break :z_pos;
-        const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-        if (c_ci >= chunk.chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
-        self.lightCheckDimensional(c_ci, bd, .back);
+    self.traverser.yMoveTo(cached_pos[1]);
+    {
+        self.traverser.zPos();
+        if (self.traverser.current_bd.block_id != air) bd.setAmbient(.back, .none);
+        const c_ll = self.traverser.current_bd.getFullAmbiance();
+        bd.setAmbient(.back, c_ll);
     }
-    z_neg: {
-        const z = pos[2] - 1;
-        if (z < 0) break :z_neg;
-        const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-        self.lightCheckDimensional(c_ci, bd, .front);
+    self.traverser.zMoveTo(cached_pos[2]);
+    {
+        self.traverser.zNeg();
+        if (self.traverser.current_bd.block_id != air) bd.setAmbient(.front, .none);
+        const c_ll = self.traverser.current_bd.getFullAmbiance();
+        bd.setAmbient(.front, c_ll);
     }
+    self.traverser.zMoveTo(cached_pos[2]);
+    self.traverser.current_bd = bd;
+    self.traverser.saveBD();
 }
 
-// This just fixes the lighting for each block as it should be without any context as
-// to what else has changed. It doesn't rain down light or shadow. If nothing changed
-// it stops. If something changed and its air it propagates more until things stop changing.
-pub fn set_propagated_lighting(self: *Lighting, ci: usize) void {
-    self.set_propagated_lighting_with_distance(ci, 0);
-}
-
-pub fn set_propagated_lighting_with_distance(self: *Lighting, ci: usize, distance: u8) void {
-    if (distance >= max_propagation_distance) return;
-    if (self.propagated[ci] == 1) return;
-    self.propagated[ci] = 1;
-    const pos = chunk.getPositionAtIndexV(ci);
-    var data = self.get_datas(self.wp) orelse return;
-    var bd: block.BlockData = block.BlockData.fromId(data[ci]);
-
-    if (bd.block_id == air) {
-        var ll = self.get_ambience_from_adjecent(ci, null);
-        const ty = pos[1] + 1;
-        if (ty < chunk.chunkDim) {
-            // if block above is air just set this block to that
-            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], ty, pos[2], pos[3] });
-            if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-            const c_bd: block.BlockData = block.BlockData.fromId(data[c_ci]);
-            if (c_bd.block_id == air) ll = c_bd.getFullAmbiance();
-        } else {
-            ll = .full;
-        }
-        // if air set full ambience and if changed propagate changes to adjacent and down
-        bd.setFullAmbiance(ll);
-        data[ci] = bd.toId();
-        y_pos: {
-            // in case of block above bd, set bot surface to new ll
-            const y = pos[1] + 1;
-            if (y >= chunk.chunkDim) break :y_pos;
-            const t_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-            var t_bd: block.BlockData = block.BlockData.fromId(data[t_ci]);
-            if (t_bd.block_id == air) break :y_pos;
-            if (t_bd.getSurfaceAmbience(.bottom) != ll) {
-                self.propagated[t_ci] = 1;
-                t_bd.setAmbient(.bottom, ll);
-                data[t_ci] = t_bd.toId();
-            }
-        }
-        x_neg: {
-            const x = pos[0] - 1;
-            if (x < 0) break :x_neg;
-            const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-            self.set_propagated_lighting_with_distance(c_ci, distance + 1);
-        }
-        x_pos: {
-            const x = pos[0] + 1;
-            if (x >= chunk.chunkDim) break :x_pos;
-            const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-            if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-            self.set_propagated_lighting_with_distance(c_ci, distance + 1);
-        }
-        z_neg: {
-            const z = pos[2] - 1;
-            if (z < 0) break :z_neg;
-            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-            self.set_propagated_lighting_with_distance(c_ci, distance + 1);
-        }
-        z_pos: {
-            const z = pos[2] + 1;
-            if (z >= chunk.chunkDim) break :z_pos;
-            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-            if (c_ci >= chunk.chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
-            self.set_propagated_lighting_with_distance(c_ci, distance + 1);
-        }
-        y_neg: {
-            // TODO: this needs to fall
-            const y = pos[1] - 1;
-            if (y < 0) break :y_neg;
-            const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-            self.set_propagated_lighting_with_distance(c_ci, distance);
-        }
-        return;
-    }
-    // non-air just set surfaces of this block
-    self.set_surfaces_from_ambient(&bd, ci);
-}
-
-pub fn getAirAmbiance(self: *Lighting, ci: usize) block.BlockLighingLevel {
-    const data = self.get_datas(self.wp) orelse return .full;
-    const c_bd: block.BlockData = block.BlockData.fromId((data[ci]));
-    if (c_bd.block_id != air) return .none;
-    return c_bd.getFullAmbiance().getNextDarker();
-}
-
-pub fn lightCheckDimensional(self: *Lighting, ci: usize, bd: *block.BlockData, s: block.BlockSurface) void {
-    const data = self.get_datas(self.wp) orelse return;
-    const c_bd: block.BlockData = block.BlockData.fromId((data[ci]));
-    if (c_bd.block_id != air) bd.setAmbient(s, .none);
-    const c_ll = c_bd.getFullAmbiance();
-    bd.setAmbient(s, c_ll);
-}
-
-// source_ci - when we want brightness from any block other than the one queried from
-pub fn get_ambience_from_adjecent(self: *Lighting, ci: usize, source_ci: ?usize) block.BlockLighingLevel {
-    const pos = chunk.getPositionAtIndexV(ci);
+pub fn get_ambience_from_adjecent(self: *Lighting) block.BlockLighingLevel {
+    const cached_pos = self.traverser.position;
     // now update adjacent
     var ll: block.BlockLighingLevel = .none;
-    var y_p_ll = ll;
-    var x_p_ll = ll;
-    var x_n_ll = ll;
-    var z_p_ll = ll;
-    var z_n_ll = ll;
     y_pos: {
         // If above is air we don't darken that brightness.
-        const y = pos[1] + 1;
-        if (y >= chunk.chunkDim) break :y_pos;
-        const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-        if (c_ci >= chunk.chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
-        if (source_ci) |s_ci| if (c_ci == s_ci) break :y_pos;
-        const data = self.get_datas(self.wp) orelse break :y_pos;
-        const c_bd: block.BlockData = block.BlockData.fromId((data[c_ci]));
-        if (c_bd.block_id != air) break :y_pos;
-        const c_ll = c_bd.getFullAmbiance();
+        self.traverser.yPos();
+        if (self.traverser.current_bd.block_id != air) break :y_pos;
+        const c_ll = self.traverser.current_bd.getFullAmbiance();
         if (c_ll.isBrighterThan(ll)) ll = c_ll;
-        y_p_ll = c_ll;
     }
+    self.traverser.yMoveTo(cached_pos[1]);
     x_pos: {
-        const x = pos[0] + 1;
-        if (x >= chunk.chunkDim) break :x_pos;
-        const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-        if (source_ci) |s_ci| if (c_ci == s_ci) break :x_pos;
-        if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-        const c_ll = self.getAirAmbiance(c_ci);
+        self.traverser.xPos();
+        if (self.traverser.current_bd.block_id != air) break :x_pos;
+        const c_ll = self.traverser.current_bd.getFullAmbiance().getNextDarker();
         if (c_ll.isBrighterThan(ll)) ll = c_ll;
-        x_p_ll = c_ll;
     }
+    self.traverser.xMoveTo(cached_pos[0]);
     x_neg: {
-        const x = pos[0] - 1;
-        if (x < 0) break :x_neg;
-        const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-        if (source_ci) |s_ci| if (c_ci == s_ci) break :x_neg;
-        const c_ll = self.getAirAmbiance(c_ci);
+        self.traverser.xNeg();
+        if (self.traverser.current_bd.block_id != air) break :x_neg;
+        const c_ll = self.traverser.current_bd.getFullAmbiance().getNextDarker();
         if (c_ll.isBrighterThan(ll)) ll = c_ll;
-        x_n_ll = c_ll;
     }
+    self.traverser.xMoveTo(cached_pos[0]);
     z_pos: {
-        const z = pos[2] + 1;
-        if (z >= chunk.chunkDim) break :z_pos;
-        const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-        if (c_ci >= chunk.chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
-        if (source_ci) |s_ci| if (c_ci == s_ci) break :z_pos;
-        const c_ll = self.getAirAmbiance(c_ci);
+        self.traverser.zPos();
+        if (self.traverser.current_bd.block_id != air) break :z_pos;
+        const c_ll = self.traverser.current_bd.getFullAmbiance().getNextDarker();
         if (c_ll.isBrighterThan(ll)) ll = c_ll;
-        z_p_ll = c_ll;
     }
+    self.traverser.zMoveTo(cached_pos[2]);
     z_neg: {
-        const z = pos[2] - 1;
-        if (z < 0) break :z_neg;
-        const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-        if (source_ci) |s_ci| if (c_ci == s_ci) break :z_neg;
-        const c_ll = self.getAirAmbiance(c_ci);
+        self.traverser.zNeg();
+        if (self.traverser.current_bd.block_id != air) break :z_neg;
+        const c_ll = self.traverser.current_bd.getFullAmbiance().getNextDarker();
         if (c_ll.isBrighterThan(ll)) ll = c_ll;
-        z_n_ll = c_ll;
     }
-    if (ll == .dark) {
-        std.debug.print("\ndark air @ {d} {d} {d} \n", .{ pos[0], pos[1], pos[2] });
-        std.debug.print("y_pos {} \nx_pos {} \nx_neg {} \nz_pos {} \nz_neg {} \n\n", .{
-            y_p_ll,
-            x_p_ll,
-            x_n_ll,
-            z_p_ll,
-            z_n_ll,
-        });
-    }
+    self.traverser.zMoveTo(cached_pos[2]);
     return ll;
 }
 
@@ -1082,6 +774,7 @@ test "lighting plane building surface test" {
 const std = @import("std");
 const block = @import("block.zig");
 const chunk = block.chunk;
+const chunk_traverser = @import("chunk_traverser.zig");
 const data_fetcher = if (@import("builtin").is_test)
     (@import("test_data_fetcher.zig"))
 else

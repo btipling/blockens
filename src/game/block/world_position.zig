@@ -23,16 +23,19 @@ pub fn equal(self: worldPosition, other: worldPosition) bool {
     return self.x == other.x and self.y == other.y and self.x == other.x;
 }
 
+pub fn getWorldLocation(self: worldPosition) @Vector(4, f32) {
+    const pos = self.vecFromWorldPosition();
+    const changer: @Vector(4, f32) = @splat(@floatFromInt(chunk.chunkDim));
+    return pos * changer;
+}
+
+pub fn getWorldLocationForPosition(self: worldPosition, pos: @Vector(4, f32)) @Vector(4, f32) {
+    const chunk_loc = self.getWorldLocation();
+    return chunk_loc + pos;
+}
+
 // Get adjacent chunk world positions:
-pub fn getZPlusWP(self: worldPosition) worldPosition {
-    const p = self.vecFromWorldPosition();
-    return initFromPositionV(.{ p[0], p[1], p[2] + 1, 0 });
-}
-pub fn getZNegWP(self: worldPosition) worldPosition {
-    const p = self.vecFromWorldPosition();
-    return initFromPositionV(.{ p[0], p[1], p[2] - 1, 0 });
-}
-pub fn getXPlusWP(self: worldPosition) worldPosition {
+pub fn getXPosWP(self: worldPosition) worldPosition {
     const p = self.vecFromWorldPosition();
     return initFromPositionV(.{ p[0] + 1, p[1], p[2], 0 });
 }
@@ -40,13 +43,21 @@ pub fn getXNegWP(self: worldPosition) worldPosition {
     const p = self.vecFromWorldPosition();
     return initFromPositionV(.{ p[0] - 1, p[1], p[2], 0 });
 }
+pub fn getYPosWP(self: worldPosition) worldPosition {
+    const p = self.vecFromWorldPosition();
+    return initFromPositionV(.{ p[0], p[1] + 1, p[2], 0 });
+}
 pub fn getYNegWP(self: worldPosition) worldPosition {
     const p = self.vecFromWorldPosition();
     return initFromPositionV(.{ p[0], p[1] - 1, p[2], 0 });
 }
-pub fn getYPosWP(self: worldPosition) worldPosition {
+pub fn getZPosWP(self: worldPosition) worldPosition {
     const p = self.vecFromWorldPosition();
-    return initFromPositionV(.{ p[0], p[1] + 1, p[2], 0 });
+    return initFromPositionV(.{ p[0], p[1], p[2] + 1, 0 });
+}
+pub fn getZNegWP(self: worldPosition) worldPosition {
+    const p = self.vecFromWorldPosition();
+    return initFromPositionV(.{ p[0], p[1], p[2] - 1, 0 });
 }
 
 pub fn getWorldPositionForWorldLocation(pos: @Vector(4, f32)) worldPosition {

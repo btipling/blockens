@@ -1,9 +1,6 @@
 const air: u8 = 0;
 const max_trigger_depth: u8 = 3;
 
-// To use when there is no chunk, just assume fully lit.
-var fully_lit_chunk: [chunk.chunkSize]u32 = [_]u32{0xFF_FFF_00} ** chunk.chunkSize;
-
 pub const LightingCrossChunkJob = struct {
     world_id: i32,
     x: i32,
@@ -203,7 +200,7 @@ pub const LightingCrossChunkJob = struct {
 
     fn fixCrossChunkLighting(self: *LightingCrossChunkJob, wp: chunk.worldPosition, c_data: []u32) void {
         {
-            const f_p = wp.getZPlusWP().vecFromWorldPosition();
+            const f_p = wp.getZPosWP().vecFromWorldPosition();
             var f_c: data.chunkData = .{};
             game.state.db.loadChunkData(
                 self.world_id,
@@ -263,7 +260,7 @@ pub const LightingCrossChunkJob = struct {
             }
         }
         {
-            const l_p = wp.getXPlusWP().vecFromWorldPosition();
+            const l_p = wp.getXPosWP().vecFromWorldPosition();
             var l_c: data.chunkData = .{};
             game.state.db.loadChunkData(
                 self.world_id,
@@ -334,3 +331,4 @@ const config = @import("config");
 const save_job = @import("jobs_save.zig");
 const block = @import("../../block/block.zig");
 const chunk = block.chunk;
+const fully_lit_chunk = chunk.fully_lit_chunk;

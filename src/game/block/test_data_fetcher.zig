@@ -2,7 +2,7 @@ const data_fetcher = @This();
 
 test_chunk_data: std.AutoHashMap(chunk.worldPosition, []u32) = undefined,
 
-pub fn fetch(self: *data_fetcher, wp: chunk.worldPosition) ?lighting.datas {
+pub fn fetch(self: *data_fetcher, wp: chunk.worldPosition) ?chunk_traverser.datas {
     const d: []u32 = self.test_chunk_data.get(wp) orelse return null;
     const c_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
     @memcpy(c_data, d);
@@ -27,5 +27,5 @@ pub fn deinit(self: *data_fetcher) void {
 
 const std = @import("std");
 const block = @import("block.zig");
-const lighting = @import("lighting_ambient_edit.zig");
+const chunk_traverser = @import("chunk_traverser.zig");
 const chunk = block.chunk;

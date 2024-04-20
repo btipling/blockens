@@ -56,21 +56,19 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
     bd = block.BlockData.fromId(c_data[chunk_index]);
     bd.block_id = block_id;
     c_data[chunk_index] = bd.toId();
-    var l = lighting{
-        .wp = c.wp,
-        .pos = c.wp.vecFromWorldPosition(),
-        .fetcher = .{},
-        .allocator = game.state.allocator,
-    };
-    defer l.deinit();
-    l.datas[0] = .{
+    var traverser = chunk_traverser.init(game.state.allocator, .{}, c.wp, chunk_index, .{
         .wp = c.wp,
         .data = c_data,
+    });
+    defer traverser.deinit();
+
+    var l = lighting{
+        .traverser = &traverser,
     };
     if (block_id == air) {
-        l.set_removed_block_lighting(chunk_index);
+        l.set_removed_block_lighting();
     } else {
-        l.set_added_block_lighting(&bd, chunk_index);
+        l.set_added_block_lighting();
     }
     {
         c.mutex.lock();
@@ -79,8 +77,8 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
         c.updated = true;
     }
     var i: usize = 1;
-    while (i < l.num_extra_datas + 1) : (i += 1) {
-        const d = l.datas[i];
+    while (i < traverser.num_extra_datas + 1) : (i += 1) {
+        const d = traverser.datas[i];
         if (!d.fetchable) continue;
         const c_c_data = d.data orelse continue;
         const c_wp = d.wp;
@@ -224,6 +222,9 @@ pub const Chunk = struct {
     }
 };
 
+// To use when there is no chunk, just assume fully lit.
+pub const fully_lit_chunk: [chunkSize]u32 = [_]u32{0xFF_FFF_00} ** chunkSize;
+
 const std = @import("std");
 const zm = @import("zmath");
 const ztracy = @import("ztracy");
@@ -235,5 +236,7 @@ const block = @import("block.zig");
 const Chunker = @import("chunker.zig");
 const game_state = @import("../state.zig");
 const lighting = @import("lighting_ambient_edit.zig");
+const data_fetcher = @import("data_fetcher.zig");
+const chunk_traverser = @import("chunk_traverser.zig");
 
 pub const worldPosition = @import("world_position.zig");
