@@ -86,15 +86,17 @@ pub fn light_fall_around_block(self: *Lighting) void {
 
     while (self.traverser.position[0] < x_end) : (self.traverser.xPos()) {
         while (self.traverser.position[2] < z_end) : (self.traverser.zPos()) {
+            var ll: block.BlockLighingLevel = .full;
+            self.traverser.yPos();
+            if (self.traverser.current_bd.block_id != air) {
+                // No light falling here.
+                self.traverser.yMoveTo(y);
+                continue;
+            } else {
+                ll = self.traverser.current_bd.getFullAmbiance();
+            }
+            self.traverser.yMoveTo(y);
             while (true) {
-                var ll: block.BlockLighingLevel = .full;
-                {
-                    // FIXME: this can't be right.
-                    if (self.traverser.current_bd.block_id != air) break; // No light falling here.
-                    ll = self.traverser.current_bd.getFullAmbiance();
-                }
-                // FIXME: This check is weird, we just checked above, I think this is a bug:
-                // and explains some things :facepalm:
                 if (self.traverser.current_bd.block_id != air) {
                     // All done dropping light.
                     self.traverser.current_bd.setAmbient(.top, ll);
@@ -183,7 +185,7 @@ pub fn determine_block_ambience_around_block(self: *Lighting) void {
         self.traverser.xMoveTo(x);
     }
 
-    self.traverser.yMoveTo(y_end - 1);
+    self.traverser.yMoveTo(y_end);
     self.traverser.xMoveTo(x);
     self.traverser.zMoveTo(z);
 
@@ -197,7 +199,7 @@ pub fn determine_block_ambience_around_block(self: *Lighting) void {
                 if (self.traverser.world_location[1] == 0) break;
                 self.traverser.yNeg();
             }
-            self.traverser.yMoveTo(y_end - 1);
+            self.traverser.yMoveTo(y_end);
         }
         self.traverser.zMoveTo(z);
     }
@@ -215,7 +217,7 @@ pub fn set_surfaces_from_ambient(self: *Lighting) void {
     }
     self.traverser.xMoveTo(cached_pos[0]);
     {
-        self.traverser.yNeg();
+        self.traverser.xNeg();
         if (self.traverser.current_bd.block_id != air) bd.setAmbient(.left, .none);
         const c_ll = self.traverser.current_bd.getFullAmbiance();
         bd.setAmbient(.left, c_ll);

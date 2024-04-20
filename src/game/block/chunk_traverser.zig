@@ -25,6 +25,9 @@ og_bd: block.BlockData = undefined,
 datas: [8]datas = undefined,
 num_extra_datas: u8 = 0,
 allocator: std.mem.Allocator,
+num_traversals: u64 = 0,
+lowest_y: f32 = 1000,
+highest_y: f32 = -1000,
 
 const traverser = @This();
 
@@ -87,10 +90,11 @@ pub fn reset(self: *traverser) void {
 }
 
 pub fn xPos(self: *traverser) void {
+    self.num_traversals += 1;
     self.position[0] += 1;
     self.world_location[0] += 1;
     self.chunk_position[0] += 1;
-    if (self.chunk_position[0] > fl_chunk_dim) {
+    if (self.chunk_position[0] >= fl_chunk_dim) {
         self.chunk_position[0] = 0;
         self.current_wp = self.current_wp.getXPosWP();
         self.current_data = self.get_datas(self.current_wp) orelse fully_lit_chunk[0..];
@@ -100,6 +104,7 @@ pub fn xPos(self: *traverser) void {
 }
 
 pub fn xNeg(self: *traverser) void {
+    self.num_traversals += 1;
     self.position[0] -= 1;
     self.world_location[0] -= 1;
     self.chunk_position[0] -= 1;
@@ -127,19 +132,22 @@ pub fn xMoveTo(self: *traverser, x: f32) void {
 }
 
 pub fn yPos(self: *traverser) void {
+    self.num_traversals += 1;
     self.position[1] += 1;
     self.world_location[1] += 1;
     self.chunk_position[1] += 1;
-    if (self.chunk_position[1] > fl_chunk_dim) {
+    if (self.chunk_position[1] >= fl_chunk_dim) {
         self.chunk_position[1] = 0;
         self.current_wp = self.current_wp.getYPosWP();
         self.current_data = self.get_datas(self.current_wp) orelse fully_lit_chunk[0..];
     }
     self.current_ci = chunk.getIndexFromPositionV(self.chunk_position);
     self.current_bd = block.BlockData.fromId(self.current_data[self.current_ci]);
+    if (self.position[1] > self.highest_y) self.highest_y = self.position[1];
 }
 
 pub fn yNeg(self: *traverser) void {
+    self.num_traversals += 1;
     self.position[1] -= 1;
     self.world_location[1] -= 1;
     self.chunk_position[1] -= 1;
@@ -150,6 +158,7 @@ pub fn yNeg(self: *traverser) void {
     }
     self.current_ci = chunk.getIndexFromPositionV(self.chunk_position);
     self.current_bd = block.BlockData.fromId(self.current_data[self.current_ci]);
+    if (self.position[1] < self.lowest_y) self.lowest_y = self.position[1];
 }
 
 // yMoveTo - go to y in self.position, disregarding chunkDim boundaries
@@ -167,10 +176,11 @@ pub fn yMoveTo(self: *traverser, y: f32) void {
 }
 
 pub fn zPos(self: *traverser) void {
+    self.num_traversals += 1;
     self.position[2] += 1;
     self.world_location[2] += 1;
     self.chunk_position[2] += 1;
-    if (self.chunk_position[2] > fl_chunk_dim) {
+    if (self.chunk_position[2] >= fl_chunk_dim) {
         self.chunk_position[2] = 0;
         self.current_wp = self.current_wp.getZPosWP();
         self.current_data = self.get_datas(self.current_wp) orelse fully_lit_chunk[0..];
@@ -180,6 +190,7 @@ pub fn zPos(self: *traverser) void {
 }
 
 pub fn zNeg(self: *traverser) void {
+    self.num_traversals += 1;
     self.position[2] -= 1;
     self.world_location[2] -= 1;
     self.chunk_position[2] -= 1;
@@ -236,13 +247,20 @@ pub fn get_datas(self: *traverser, wp: chunk.worldPosition) ?[]u32 {
 
 pub fn debugPrint(self: traverser) void {
     std.debug.print("\n\n::chunk_traverser:: \n", .{});
+    std.debug.print("\t - og position: ({d}, {d}, {d})\n", .{ self.og_position[0], self.og_position[1], self.og_position[2] });
     std.debug.print("\t - position: ({d}, {d}, {d})\n", .{ self.position[0], self.position[1], self.position[2] });
     std.debug.print("\t - chunk_position: ({d}, {d}, {d})\n", .{ self.chunk_position[0], self.chunk_position[1], self.chunk_position[2] });
     std.debug.print("\t - world_location: ({d}, {d}, {d})\n", .{ self.world_location[0], self.world_location[1], self.world_location[2] });
     std.debug.print("\t - chunk_index: ({d})\n", .{self.current_ci});
+    std.debug.print("\t - og_ci: ({d})\n", .{self.og_ci});
     std.debug.print("\t - bd.block_id: {d}\n", .{self.current_bd.block_id});
+    std.debug.print("\t - og.block_id: {d}\n", .{self.og_bd.block_id});
     std.debug.print("\t - bd.ambient: {d}\n", .{self.current_bd.ambient});
-    std.debug.print("\n\n");
+    std.debug.print("\t - num_traversals: {d}\n", .{self.num_traversals});
+    std.debug.print("\t - lowest_y: {d}\n", .{self.lowest_y});
+    std.debug.print("\t - highest_y: {d}\n", .{self.highest_y});
+
+    std.debug.print("\n\n", .{});
 }
 
 const std = @import("std");

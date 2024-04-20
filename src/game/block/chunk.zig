@@ -65,10 +65,22 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
     var l = lighting{
         .traverser = &traverser,
     };
-    if (block_id == air) {
-        l.set_removed_block_lighting();
+
+    if (config.use_tracy) {
+        const tracy_zone = ztracy.ZoneNC(@src(), "LightAmbientEdit", 0xF0_00_f0_f0);
+        std.debug.print("in zone\n", .{});
+        defer tracy_zone.End();
+        if (block_id == air) {
+            l.set_removed_block_lighting();
+        } else {
+            l.set_added_block_lighting();
+        }
     } else {
-        l.set_added_block_lighting();
+        if (block_id == air) {
+            l.set_removed_block_lighting();
+        } else {
+            l.set_added_block_lighting();
+        }
     }
     {
         c.mutex.lock();
