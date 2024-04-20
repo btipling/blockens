@@ -68,6 +68,7 @@ pub fn utest_add_plane_at_x(
             var _y: usize = 0;
             while (_y < dimension) : (_y += 1) {
                 const y: f32 = @floatFromInt(_y);
+                std.debug.print("adding wall block at {d} {d} {d} {d}\n", .{ pos[0] + x, pos[1] + y, pos[2], pos[3] });
                 const ci = chunk.getIndexFromPositionV(.{ pos[0] + x, pos[1] + y, pos[2], pos[3] });
                 data[ci] = gd;
             }
