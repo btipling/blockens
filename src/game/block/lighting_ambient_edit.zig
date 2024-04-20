@@ -254,16 +254,6 @@ pub fn determine_block_surface_from_air(self: *Lighting) void {
 
 pub fn set_surfaces_from_ambient_air(self: *Lighting) void {
     const cached_pos = self.traverser.position;
-    // if (cached_pos[0] == 59) {
-    //     std.debug.print("bi: {d} - pos {d} {d} {d} {d} - ll: {}\n", .{
-    //         self.traverser.current_bd.block_id,
-    //         cached_pos[0],
-    //         cached_pos[1],
-    //         cached_pos[2],
-    //         cached_pos[3],
-    //         self.traverser.current_bd.getFullAmbiance(),
-    //     });
-    // }
     if (self.traverser.current_bd.block_id != air) return;
     const ll = self.traverser.current_bd.getFullAmbiance();
     xPos: {
@@ -297,24 +287,7 @@ pub fn set_surfaces_from_ambient_air(self: *Lighting) void {
     zPos: {
         self.traverser.zPos();
         if (self.traverser.current_bd.block_id == air) break :zPos;
-        // self.traverser.current_bd.setAmbient(.top, ll);
-        // self.traverser.current_bd.setAmbient(.bottom, ll);
-        // self.traverser.current_bd.setAmbient(.front, .full);
-        // self.traverser.current_bd.setAmbient(.back, .full);
         self.traverser.current_bd.setAmbient(.front, ll);
-        // if (@reduce(.And, self.traverser.chunk_position == @Vector(4, f32){ 59, 2, 0, 0 })) {
-        //     std.debug.print("\n\n\nYO: bi: {d} - pos {d} {d} {d} {d} - sf_ll: {} - ll: {} ambiant: {x} {x}\n\n\n", .{
-        //         self.traverser.current_bd.block_id,
-        //         self.traverser.chunk_position[0],
-        //         self.traverser.chunk_position[1],
-        //         self.traverser.chunk_position[2],
-        //         self.traverser.chunk_position[3],
-        //         self.traverser.current_bd.getSurfaceAmbience(.front),
-        //         ll,
-        //         (self.traverser.current_bd.ambient & 0x0F0) >> 6,
-        //         (self.traverser.current_bd.ambient ^ (0xFFF - 0x0C0)) >> 6,
-        //     });
-        // }
         self.traverser.saveBD();
     }
     self.traverser.zMoveTo(cached_pos[2]);
@@ -992,7 +965,7 @@ test "test block on chunk edge casts shadow on other chunks surfaces and chunk b
         std.debug.assert(test_data != null);
         const zp_data = test_data.?;
         const pos: @Vector(4, f32) = .{ 59, 2, 0, 0 };
-        try testing_utils.utest_expect_surface_light_at_v(zp_data, pos, .back, .bright);
+        try testing_utils.utest_expect_surface_light_at_v(zp_data, pos, .front, .bright);
     }
 }
 
