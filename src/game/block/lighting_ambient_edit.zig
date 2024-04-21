@@ -957,8 +957,7 @@ test "test block on chunk edge casts shadow on other chunks surfaces and chunk b
         std.debug.assert(test_data != null);
         const zp_data = test_data.?;
         const pos: @Vector(4, f32) = .{ 59, 2, 0, 0 };
-        // FIXME: why is this passing with .z_pos instead of .z_neg ??? it works in game.
-        try testing_utils.utest_expect_surface_light_at_v(zp_data, pos, .z_pos, .full);
+        try testing_utils.utest_expect_surface_light_at_v(zp_data, pos, .z_neg, .bright);
     }
 }
 
