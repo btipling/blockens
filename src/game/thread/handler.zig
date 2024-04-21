@@ -16,7 +16,8 @@ pub fn deinit() void {
 pub fn handle_incoming() !void {
     var i: u32 = 0;
     while (buffer.next_message()) |msg| {
-        switch (msg.type) {
+        const mt: buffer.buffer_message_type = @enumFromInt(msg.type);
+        switch (mt) {
             .chunk_gen => try handle_chunk_gen(msg),
             .chunk_mesh => handle_chunk_mesh(msg),
             .chunk_copy => handle_copy_chunk(msg),

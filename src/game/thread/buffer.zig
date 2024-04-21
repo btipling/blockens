@@ -26,7 +26,7 @@ pub const buffer_data = union(buffer_message_type) {
 pub const buffer_message = packed struct {
     id: u64 = 0,
     ts: i64 = 0,
-    type: buffer_message_type,
+    type: u3,
     flags: u16 = 0,
     data: u16 = 0,
 };
@@ -105,10 +105,11 @@ pub fn new_message(msg_type: buffer_message_type) buffer_message {
         id = 0;
     }
     id += 1;
+    const mt: u3 = @intFromEnum(msg_type);
     return .{
         .id = id,
         .ts = std.time.milliTimestamp(),
-        .type = msg_type,
+        .type = mt,
     };
 }
 
@@ -181,7 +182,8 @@ pub fn set_demo_chunk(msg: *buffer_message) void {
 }
 
 pub fn is_demo_chunk(msg: buffer_message) !bool {
-    if (msg.type != .chunk_gen) return BufferErr.Invalid;
+    const mt: buffer_message_type = @enumFromInt(msg.type);
+    if (mt != .chunk_gen) return BufferErr.Invalid;
     return (msg.flags & demo_chunk_flag) != 0x0;
 }
 
