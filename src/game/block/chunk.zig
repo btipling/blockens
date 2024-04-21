@@ -37,7 +37,7 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) ?worldPosition {
             .chunkData = cd,
         };
         game.state.ui.data.world_chunk_table_data.put(wp, new_ch_cfg) catch @panic("OOM");
-        return wp;
+        return null;
     };
     const c_data = game.state.allocator.alloc(u32, chunkSize) catch @panic("OOM");
     defer game.state.allocator.free(c_data);
