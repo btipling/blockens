@@ -120,7 +120,7 @@ fn setSurroundingAmbience(c_data: []u32, i: usize, level: block.BlockLighingLeve
         c_data,
         .{ block_index[0] + 1, block_index[1], block_index[2], block_index[3] },
         level,
-        .x_pos,
+        .x_neg,
     );
     setAmbient(
         c_data,
