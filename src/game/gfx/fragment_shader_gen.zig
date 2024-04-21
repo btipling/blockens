@@ -93,6 +93,7 @@ pub const FragmentShaderGen = struct {
             r.a("{\n");
             if (r.cfg.lighting_block_index != null) {
                 r.a("   vec4 bl_amb_frag = bl_ambient;\n");
+                r.a("   vec4 bl_light_frag = vec4(0, 0, 0, 1);\n");
             }
             // magenta to highlight shader without materials
             if (r.cfg.color) |c| {
@@ -118,7 +119,11 @@ pub const FragmentShaderGen = struct {
                 r.a(@embedFile("fragments/outline.fs.txt"));
             }
             if (r.cfg.lighting_block_index != null) {
-                r.a("   Color = min(Color * bl_amb_frag, vec4(1.0));\n");
+                r.a("   if (bl_light != 0) {\n");
+                r.a("       Color = min(Color * max(bl_amb_frag, bl_light_frag), vec4(1.0));\n");
+                r.a("   } else {\n");
+                r.a("       Color = min(Color * bl_amb_frag, vec4(1.0));\n");
+                r.a("   }\n");
             }
             r.a("    if (Color.a < 0.5) {\n");
             r.a("        discard;\n");

@@ -13,7 +13,9 @@
     // bl_surface_height
     // fragNormal
     // bl_amb_frag
+    // bl_light_frag
     // bl_block_ambient
+    // bl_block_lighting
 
     float surface_h = bl_surface_height;
     float surface_t = bl_surface_height * 2;
@@ -21,8 +23,9 @@
     float bl_frag_x = fragPos.x;
     float bl_frag_y = fragPos.y;
     float bl_frag_z = fragPos.z;
-    // bl_block_ambient has 12 bits of data. 2 bits are extracted per surface
+    // bl_block_ambient and bl_block_lighting have 12 bits of data. 2 bits are extracted per surface
     float bl_as = 1.0; // ambient surface value
+    float bl_light = 0; // light from blocks
     if (abs(fragNormal.x) > 0.5) {
         // side of voxel
         if (fragNormal.x > 0) {
@@ -30,11 +33,13 @@
             textColor = texture(texture1, vec2(fract(bl_frag_z), (fract(bl_frag_y * -1.0) * surface_h) + surface_h + texture_start));
             // xx00 0000 0000
             bl_as = float((bl_block_ambient & 0xC00u) >> 10)/3;
+            bl_light = float((bl_block_lighting & 0xC00u) >> 10)/3;
         } else {
             // left
             textColor = texture(texture1, vec2(fract(bl_frag_z * -1.0), (fract(bl_frag_y * -1.0) * surface_h) + surface_h + texture_start));
              // 00xx 0000 0000
             bl_as = float((bl_block_ambient & 0x300u) >> 8)/3;
+            bl_light = float((bl_block_lighting & 0x300u) >> 8)/3;
         }
     } else if (abs(fragNormal.y) > 0.5) {
         // top or bottom of voxel
@@ -43,11 +48,13 @@
             textColor = texture(texture1, vec2(fract(bl_frag_x), (fract(bl_frag_z * -1.0) * surface_h) + texture_start));
              // 0000 xx00 0000
             bl_as = float((bl_block_ambient & 0xC0u) >> 6)/3;
+            bl_light = float((bl_block_lighting & 0xC0u) >> 6)/3;
         } else {
             // bottom
             textColor = texture(texture1, vec2(fract(bl_frag_x), (fract(bl_frag_z * -1.0) * surface_h) + surface_t + texture_start));
              // 0000 00xx 0000
             bl_as = float((bl_block_ambient & 0x30u) >> 4)/3;
+            bl_light = float((bl_block_lighting & 0x30u) >> 4)/3;
         }
     } else {
         // front or back of voxel
@@ -56,11 +63,13 @@
             textColor = texture(texture1, vec2(fract(bl_frag_x * -1.0), (fract(bl_frag_y * -1.0) * surface_h) + surface_h + texture_start));
              // 0000 0000 xx00
             bl_as = float((bl_block_ambient & 0xCu) >> 2)/3;
+            bl_light = float((bl_block_lighting & 0xCu) >> 2)/3;
         } else {
             // back
             textColor = texture(texture1, vec2(fract(bl_frag_x), (fract(bl_frag_y * -1.0) * surface_h) + surface_h + texture_start));
              // 0000 0000 00xx
             bl_as = float((bl_block_ambient & 0x3u))/3;
+            bl_light = float((bl_block_lighting & 0x3u))/3;
         }
     } 
     float bl_as_min = 0.15;
@@ -68,3 +77,4 @@
         bl_as = bl_as_min; // Don't want completely black.
     }
     bl_amb_frag = bl_amb_frag * vec4(bl_as, bl_as, bl_as, 1);
+    bl_light_frag = vec4(bl_light, bl_light, bl_light, 1);

@@ -43,6 +43,7 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) ?worldPosition {
     const wp = worldPosition.getWorldPositionForWorldLocation(pos);
     const chunk_local_pos = chunkBlockPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
+    const block_info: *block.Block = game.state.blocks.blocks.get(block_id) orelse return null;
     // Get chunk from chunk state map:
     var bd: block.BlockData = undefined;
     var c = game.state.blocks.game_chunks.get(wp) orelse return null;
@@ -56,6 +57,9 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) ?worldPosition {
 
     bd = block.BlockData.fromId(c_data[chunk_index]);
     bd.block_id = block_id;
+    if (block_info.data.light_level != 0) {
+        bd.lighting = 0xFFF;
+    }
     c_data[chunk_index] = bd.toId();
     var traverser = chunk_traverser.init(game.state.allocator, .{}, c.wp, chunk_index, .{
         .wp = c.wp,
