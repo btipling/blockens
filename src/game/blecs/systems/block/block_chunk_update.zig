@@ -10,8 +10,6 @@ fn system() ecs.system_desc_t {
     return desc;
 }
 
-var current_block_id: u8 = 0;
-
 fn run(it: *ecs.iter_t) callconv(.C) void {
     const world = it.world;
     var updated_chunks: [10]?chunk.worldPosition = [_]?chunk.worldPosition{null} ** 10;

@@ -70,6 +70,24 @@ pub const BlockData = packed struct {
         }
     }
 
+    pub fn setFullLighting(self: *BlockData, level: BlockLighingLevel) void {
+        self.lighting = switch (level) {
+            .full => 0xFFF,
+            .bright => 0x0FF,
+            .dark => 0x00F,
+            .none => 0x000,
+        };
+    }
+
+    pub fn getFullLighting(self: BlockData) BlockLighingLevel {
+        switch (self.lighting) {
+            0xFFF => return .full,
+            0x0FF => return .bright,
+            0x00F => return .dark,
+            else => return .none,
+        }
+    }
+
     pub fn setSettingsAmbient(self: *BlockData) void {
         self.ambient = 0xFFF;
     }
@@ -197,7 +215,7 @@ pub const Blocks = struct {
     blocks: std.AutoHashMap(u8, *Block) = undefined,
     game_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
     settings_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
-    selected_block: u8 = 4,
+    selected_block: u8 = 12,
 };
 
 test "test fromId" {
@@ -229,6 +247,13 @@ test "test lighting surfaces works" {
     ll = .bright;
     bd2.setAmbient(.z_pos, ll);
     try std.testing.expectEqual(ll, bd2.getSurfaceAmbience(.z_pos));
+}
+
+test "fully lighting lights works" {
+    const block_id: u32 = 12;
+    var bd: BlockData = BlockData.fromId(block_id);
+    bd.setFullLighting(.full);
+    try std.testing.expectEqual(.full, bd.getFullLighting());
 }
 
 pub const chunk = @import("chunk.zig");
