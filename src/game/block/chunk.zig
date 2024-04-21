@@ -22,7 +22,8 @@ pub fn createEditedChunk(wp: worldPosition, pos: @Vector(4, f32), block_id: u8) 
     }
     const cd: []u32 = game.state.allocator.alloc(u32, fully_lit_chunk.len) catch @panic("OOM");
     @memcpy(cd, fully_lit_chunk[0..]);
-    cd[chunk_index] = block_id;
+    const bd: block.BlockData = .{ .block_id = block_id, .ambient = 0xFFF, .lighting = 0 };
+    cd[chunk_index] = bd.toId();
     const new_ch_cfg: game_state.chunkConfig = .{
         .id = 0,
         .scriptId = 0,

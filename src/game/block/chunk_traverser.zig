@@ -76,6 +76,7 @@ pub fn deinit(self: traverser) void {
     var i: usize = 1;
     while (i < self.num_extra_datas + 1) : (i += 1) {
         const d = self.datas[i];
+        if (!d.fetchable) continue;
         if (d.data) |cd| self.allocator.free(cd);
     }
 }
