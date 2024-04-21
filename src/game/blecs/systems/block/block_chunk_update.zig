@@ -39,12 +39,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     // Start refresh jobs for changed chunks.
     for (updated_chunks) |maybe_wp| {
         if (maybe_wp) |wp| {
-            // Check if we need to create or refresh the chunk by checking if it has an id in world_chunk_table_data.
-            const ch_cfg = game.state.ui.data.world_chunk_table_data.get(wp) orelse std.debug.panic(
-                "expected refreshed chunk to be in chunk table. {}",
-                .{wp},
-            );
-            if (ch_cfg.id == 0) std.debug.panic("failed to handled new chunk in chunk update in the wrong code path {}", .{wp});
             const c = game.state.blocks.game_chunks.get(wp) orelse std.debug.panic(
                 "expected chunk at this point\n",
                 .{},

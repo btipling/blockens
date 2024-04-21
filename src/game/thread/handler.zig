@@ -75,17 +75,18 @@ fn handle_chunk_mesh(msg: buffer.buffer_message) void {
     const world = mesh_data.world orelse return;
     const entity = mesh_data.entity orelse return;
     if (mesh_data.empty) {
+        if (entity == 0 or !blecs.ecs.is_alive(world, entity)) return;
         if (blecs.ecs.has_id(world, entity, blecs.ecs.id(blecs.components.gfx.ElementsRenderer))) {
             blecs.ecs.add(world, entity, blecs.components.gfx.NeedsDeletion);
         }
         return;
     }
-    if (entity != 0 and blecs.ecs.is_alive(world, entity)) {
-        blecs.ecs.add(world, entity, blecs.components.block.NeedsMeshRendering);
+    if (entity == 0 or !blecs.ecs.is_alive(world, entity)) {
+        const chunk_entity = init_chunk_entity(world, mesh_data.chunk);
+        blecs.ecs.add(world, chunk_entity, blecs.components.block.NeedsMeshRendering);
         return;
     }
-    const chunk_entity = init_chunk_entity(world, mesh_data.chunk);
-    blecs.ecs.add(world, chunk_entity, blecs.components.block.NeedsMeshRendering);
+    blecs.ecs.add(world, entity, blecs.components.block.NeedsMeshRendering);
 }
 
 fn handle_copy_chunk(msg: buffer.buffer_message) void {
