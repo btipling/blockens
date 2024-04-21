@@ -7,7 +7,7 @@ const air: u8 = 0;
 pub fn getBlockId(pos: @Vector(4, f32)) dataAtRes {
     const wp = worldPosition.getWorldPositionForWorldLocation(pos);
     const c = game.state.blocks.game_chunks.get(wp) orelse return .{ .read = true, .data = 0 };
-    const chunk_local_pos = chunkPosFromWorldLocation(pos);
+    const chunk_local_pos = chunkBlockPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
     return c.dataAt(chunk_index);
 }
@@ -18,7 +18,7 @@ pub fn getBlockId(pos: @Vector(4, f32)) dataAtRes {
 // Any updates must trigger an update within the same thread when done setting block ids on chunks.
 pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
     const wp = worldPosition.getWorldPositionForWorldLocation(pos);
-    const chunk_local_pos = chunkPosFromWorldLocation(pos);
+    const chunk_local_pos = chunkBlockPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
     // Get chunk from chunk state map:
     var bd: block.BlockData = undefined;
@@ -106,7 +106,7 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
     return wp;
 }
 
-pub fn chunkPosFromWorldLocation(loc: @Vector(4, f32)) @Vector(4, f32) {
+pub fn chunkBlockPosFromWorldLocation(loc: @Vector(4, f32)) @Vector(4, f32) {
     const cd: f32 = @floatFromInt(chunkDim);
     const changer: @Vector(4, f32) = @splat(cd);
     const p = @mod(loc, changer);

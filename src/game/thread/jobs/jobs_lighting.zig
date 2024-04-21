@@ -18,29 +18,35 @@ pub const LightingJob = struct {
 
     pub fn lightingJob(self: *@This()) void {
         var t_c: data.chunkData = .{};
+        var t_can_save = true;
         game.state.db.loadChunkData(self.world_id, self.x, 1, self.z, &t_c) catch {
-            self.finishJob();
-            return;
+            t_can_save = false;
+            t_c.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+            @memcpy(t_c.voxels, fully_lit_chunk[0..]);
         };
         defer game.state.allocator.free(t_c.voxels);
         var b_c: data.chunkData = .{};
+        var b_can_save = true;
         game.state.db.loadChunkData(self.world_id, self.x, 0, self.z, &b_c) catch {
-            self.finishJob();
-            return;
+            b_can_save = false;
+            b_c.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+            @memcpy(b_c.voxels, fully_lit_chunk[0..]);
         };
         defer game.state.allocator.free(b_c.voxels);
         const t_data: []u32 = t_c.voxels;
         const b_data: []u32 = b_c.voxels;
         lighting.light_fall(t_data, b_data);
         {
-            {
+            top: {
+                if (!t_can_save) break :top;
                 game.state.db.updateChunkData(
                     t_c.id,
                     t_c.scriptId,
                     t_data,
                 ) catch @panic("failed to save top chunk data after lighting");
             }
-            {
+            bot: {
+                if (!b_can_save) break :bot;
                 game.state.db.updateChunkData(
                     b_c.id,
                     b_c.scriptId,
@@ -82,3 +88,6 @@ const buffer = @import("../buffer.zig");
 const config = @import("config");
 const save_job = @import("jobs_save.zig");
 const lighting = @import("../../block/lighting_ambient_fall.zig");
+const block = @import("../../block/block.zig");
+const chunk = block.chunk;
+var fully_lit_chunk: [chunk.chunkSize]u32 = chunk.fully_lit_chunk;

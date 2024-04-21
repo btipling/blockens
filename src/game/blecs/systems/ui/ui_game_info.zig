@@ -109,8 +109,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 const p = wl.loc;
                 zgui.text("[block:{d},{d},{d}] ", .{ p[0], p[1], p[2] });
                 zgui.sameLine(.{});
-                const c_p = chunk.chunkPosFromWorldLocation(p);
-                zgui.text("[chunk block:{d},{d},{d}]", .{ c_p[0], c_p[1], c_p[2] });
+                const c_bp = chunk.chunkBlockPosFromWorldLocation(p);
+                zgui.text("[chunk block:{d},{d},{d}]", .{ c_bp[0], c_bp[1], c_bp[2] });
+                zgui.sameLine(.{});
+                const c_p = chunk.worldPosition.positionFromWorldLocation(p);
+                zgui.text("[chunk pos:{d},{d},{d}]", .{ c_p[0], c_p[1], c_p[2] });
             }
             zgui.end();
             zgui.popStyleColor(.{ .count = 2 });
