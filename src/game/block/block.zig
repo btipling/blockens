@@ -23,12 +23,12 @@ pub const BlockLighingLevel = enum {
 };
 
 pub const BlockSurface = enum {
-    top,
-    bottom,
-    front,
-    back,
-    left,
-    right,
+    x_pos,
+    x_neg,
+    y_pos,
+    y_neg,
+    z_pos,
+    z_neg,
 };
 
 pub const BlockData = packed struct {
@@ -83,27 +83,27 @@ pub const BlockData = packed struct {
         };
         var c: u12 = 0x03; // clear bits
         switch (surface) {
-            .top => {
+            .x_pos => {
                 c = c << 10;
                 l = l << 10;
             },
-            .bottom => {
+            .x_neg => {
                 c = c << 8;
                 l = l << 8;
             },
-            .front => {
+            .y_pos => {
                 c = c << 6;
                 l = l << 6;
             },
-            .back => {
+            .y_neg => {
                 c = c << 4;
                 l = l << 4;
             },
-            .left => {
+            .z_pos => {
                 c = c << 2;
                 l = l << 2;
             },
-            .right => {},
+            .z_neg => {},
         }
         const clear: u12 = 0xFFF ^ c;
         self.ambient = self.ambient & clear;
@@ -113,26 +113,26 @@ pub const BlockData = packed struct {
     pub fn getSurfaceAmbience(self: *const BlockData, surface: BlockSurface) BlockLighingLevel {
         var val: u12 = 0;
         switch (surface) {
-            .top => {
+            .x_pos => {
                 val = self.ambient >> 10;
             },
-            .bottom => {
+            .x_neg => {
                 val = (self.ambient | 0xC00) ^ (0xFFF - 0x300);
                 val = val >> 8;
             },
-            .front => {
+            .y_pos => {
                 val = self.ambient & 0x0F0;
                 val = val >> 6;
             },
-            .back => {
+            .y_neg => {
                 val = ((self.ambient | 0x0C0) & 0x0F0) ^ (0x0F0 - 0x030);
                 val = val >> 4;
             },
-            .left => {
+            .z_pos => {
                 val = self.ambient & 0x00F;
                 val = val >> 2;
             },
-            .right => {
+            .z_neg => {
                 val = ((self.ambient | 0x00C) & 0x00F) ^ (0xFFF - 0x003);
             },
         }
@@ -195,11 +195,12 @@ test "test lighting surfaces works" {
     const block_id: u32 = 1;
     var ll: BlockLighingLevel = .full;
     var bd: BlockData = BlockData.fromId(block_id);
-    bd.setAmbient(.front, ll);
-    try std.testing.expectEqual(ll, bd.getSurfaceAmbience(.front));
+    bd.setAmbient(.y_neg, ll);
+    try std.testing.expectEqual(ll, bd.getSurfaceAmbience(.y_neg));
     ll = .bright;
-    bd.setAmbient(.front, ll);
-    try std.testing.expectEqual(ll, bd.getSurfaceAmbience(.front));
+    bd.setAmbient(.y_neg, ll);
+    try std.testing.expectEqual(ll, bd.getSurfaceAmbience(.y_neg));
+    // FIXME: .z_neg fails
 }
 
 pub const chunk = @import("chunk.zig");

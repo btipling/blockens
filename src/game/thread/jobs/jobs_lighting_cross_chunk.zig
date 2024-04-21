@@ -126,39 +126,39 @@ pub const LightingCrossChunkJob = struct {
             if (x >= chunk.chunkDim) break :x_pos;
             const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
             if (c_ci >= chunk.chunkSize) std.debug.panic("invalid x_pos >= chunk size", .{});
-            self.lightFallDimensional(c_data, c_ci, ll, .left);
+            self.lightFallDimensional(c_data, c_ci, ll, .x_neg);
         }
         x_neg: {
             const x = pos[0] - 1;
             if (x < 0) break :x_neg;
             const c_ci = chunk.getIndexFromPositionV(.{ x, pos[1], pos[2], pos[3] });
-            self.lightFallDimensional(c_data, c_ci, ll, .right);
+            self.lightFallDimensional(c_data, c_ci, ll, .x_pos);
         }
         y_pos: {
             const y = pos[1] + 1;
             if (y >= chunk.chunkDim) break :y_pos;
             const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
             if (c_ci >= chunk.chunkSize) std.debug.panic("invalid y_pos >= chunk size", .{});
-            self.lightFallDimensional(c_data, c_ci, ll, .bottom);
+            self.lightFallDimensional(c_data, c_ci, ll, .y_neg);
         }
         y_neg: {
             const y = pos[1] - 1;
             if (y < 0) break :y_neg;
             const c_ci = chunk.getIndexFromPositionV(.{ pos[0], y, pos[2], pos[3] });
-            self.lightFallDimensional(c_data, c_ci, ll, .top);
+            self.lightFallDimensional(c_data, c_ci, ll, .y_pos);
         }
         z_pos: {
             const z = pos[2] + 1;
             if (z >= chunk.chunkDim) break :z_pos;
             const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
             if (c_ci >= chunk.chunkSize) std.debug.panic("invalid z_pos >= chunk size", .{});
-            self.lightFallDimensional(c_data, c_ci, ll, .front);
+            self.lightFallDimensional(c_data, c_ci, ll, .z_neg);
         }
         z_neg: {
             const z = pos[2] - 1;
             if (z < 0) break :z_neg;
             const c_ci = chunk.getIndexFromPositionV(.{ pos[0], pos[1], z, pos[3] });
-            self.lightFallDimensional(c_data, c_ci, ll, .back);
+            self.lightFallDimensional(c_data, c_ci, ll, .z_pos);
         }
     }
 
@@ -225,7 +225,7 @@ pub const LightingCrossChunkJob = struct {
                     var c_bd: block.BlockData = block.BlockData.fromId(c_data[c_i]);
                     const f_i = chunk.getIndexFromPositionV(.{ x, y, f_z, 0 });
                     const f_bd: block.BlockData = block.BlockData.fromId(f_data[f_i]);
-                    self.lightCrossing(c_data, c_i, &c_bd, f_bd, .back);
+                    self.lightCrossing(c_data, c_i, &c_bd, f_bd, .z_pos);
                 }
             }
         }
@@ -255,7 +255,7 @@ pub const LightingCrossChunkJob = struct {
                     var c_bd: block.BlockData = block.BlockData.fromId(c_data[c_i]);
                     const b_i = chunk.getIndexFromPositionV(.{ x, y, b_z, 0 });
                     const b_bd: block.BlockData = block.BlockData.fromId(b_data[b_i]);
-                    self.lightCrossing(c_data, c_i, &c_bd, b_bd, .front);
+                    self.lightCrossing(c_data, c_i, &c_bd, b_bd, .z_neg);
                 }
             }
         }
@@ -285,7 +285,7 @@ pub const LightingCrossChunkJob = struct {
                     var c_bd: block.BlockData = block.BlockData.fromId(c_data[c_i]);
                     const l_i = chunk.getIndexFromPositionV(.{ l_x, y, z, 0 });
                     const l_bd: block.BlockData = block.BlockData.fromId(l_data[l_i]);
-                    self.lightCrossing(c_data, c_i, &c_bd, l_bd, .right);
+                    self.lightCrossing(c_data, c_i, &c_bd, l_bd, .x_pos);
                 }
             }
         }
@@ -315,7 +315,7 @@ pub const LightingCrossChunkJob = struct {
                     var c_bd: block.BlockData = block.BlockData.fromId(c_data[c_i]);
                     const r_i = chunk.getIndexFromPositionV(.{ r_x, y, z, 0 });
                     const r_bd: block.BlockData = block.BlockData.fromId(r_data[r_i]);
-                    self.lightCrossing(c_data, c_i, &c_bd, r_bd, .left);
+                    self.lightCrossing(c_data, c_i, &c_bd, r_bd, .x_neg);
                 }
             }
         }

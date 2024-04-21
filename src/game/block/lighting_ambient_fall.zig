@@ -65,7 +65,7 @@ fn transferAmbianceToBelow(t_data: []u32, b_data: []u32) void {
             const bi = chunk.getIndexFromPositionV(.{ x, 63, z, 1 });
             var b_bd: block.BlockData = block.BlockData.fromId(b_data[bi]);
             if (b_bd.block_id == air) continue;
-            b_bd.setAmbient(.top, t_bd.getFullAmbiance());
+            b_bd.setAmbient(.y_pos, t_bd.getFullAmbiance());
             b_data[bi] = b_bd.toId();
         }
     }
@@ -108,37 +108,37 @@ fn setSurroundingAmbience(c_data: []u32, i: usize, level: block.BlockLighingLeve
         c_data,
         .{ block_index[0], block_index[1], block_index[2] + 1, block_index[3] },
         level,
-        .front,
+        .z_neg,
     );
     setAmbient(
         c_data,
         .{ block_index[0], block_index[1], block_index[2] - 1, block_index[3] },
         level,
-        .back,
+        .z_pos,
     );
     setAmbient(
         c_data,
         .{ block_index[0] + 1, block_index[1], block_index[2], block_index[3] },
         level,
-        .left,
+        .x_pos,
     );
     setAmbient(
         c_data,
         .{ block_index[0] - 1, block_index[1], block_index[2], block_index[3] },
         level,
-        .right,
+        .x_pos,
     );
     setAmbient(
         c_data,
         .{ block_index[0], block_index[1] - 1, block_index[2], block_index[3] },
         level,
-        .top,
+        .y_pos,
     );
     setAmbient(
         c_data,
         .{ block_index[0], block_index[1] + 1, block_index[2], block_index[3] },
         level,
-        .bottom,
+        .y_neg,
     );
 }
 
@@ -181,7 +181,7 @@ fn runY(c_data: []u32, x: isize, y: isize, z: isize) bool {
         c_data[chunk_index] = bd.toId();
         setSurroundingAmbience(c_data, chunk_index, .full);
     } else {
-        bd.setAmbient(.top, .full);
+        bd.setAmbient(.y_pos, .full);
         c_data[chunk_index] = bd.toId();
         return false;
     }
@@ -199,7 +199,7 @@ test "floating plane lighting test" {
     const plane_dim: usize = 5;
 
     // plane goes at top y, 5 blocks above floor on bot
-    testing_utils.utest_add_plane_at_y(t_data, plane_pos, plane_dim, .bottom, .full);
+    testing_utils.utest_add_plane_at_y(t_data, plane_pos, plane_dim, .y_neg, .full);
 
     testing_utils.utest_add_floor_at_y(b_data, 63, .full);
 
@@ -221,7 +221,7 @@ test "floating plane lighting test" {
                         plane_pos[2] + z,
                         plane_pos[3],
                     },
-                    .top,
+                    .y_pos,
                     .full,
                 );
             }
@@ -254,7 +254,7 @@ test "floating plane lighting test" {
                         plane_pos[2] + z,
                         plane_pos[3],
                     },
-                    .bottom,
+                    .y_neg,
                     expected_lighting[_x][_z],
                 );
             }
@@ -288,7 +288,7 @@ test "floating plane lighting test" {
                         plane_pos[2] + z,
                         plane_pos[3],
                     },
-                    .top,
+                    .y_pos,
                     expected_lighting[_x][_z],
                 );
             }

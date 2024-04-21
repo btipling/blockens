@@ -3,7 +3,7 @@ pub fn utest_add_floor_at_y(data: []u32, y: f32, ll: block.BlockLighingLevel) vo
         // set a lit ground floor across y = 63 on bottom chunk
         var ground_bd: block.BlockData = block.BlockData.fromId(1);
         ground_bd.setFullAmbiance(.none);
-        ground_bd.setAmbient(.top, ll);
+        ground_bd.setAmbient(.y_pos, ll);
         const gd: u32 = ground_bd.toId();
         var x: f32 = 0;
         while (x < chunk.chunkDim) : (x += 1) {
