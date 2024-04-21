@@ -73,7 +73,7 @@ fn updateChunk(
     updated_chunks: *[10]?chunk.worldPosition,
     cu: components.block.ChunkUpdate,
 ) !isize {
-    const wp = chunk.setBlockId(cu.pos, cu.block_id);
+    const wp = chunk.setBlockId(cu.pos, cu.block_id) orelse return -1;
     var update_at: isize = -1;
     for (updated_chunks, 0..) |maybe_wp, i| {
         const f_wp = maybe_wp orelse {

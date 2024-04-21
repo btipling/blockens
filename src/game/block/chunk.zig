@@ -16,32 +16,27 @@ pub fn getBlockId(pos: @Vector(4, f32)) dataAtRes {
 // game.state.ui.data.world_chunk_table_data should not be written to by another thread.
 // The copy job does read from this table. Should be fine? :O
 // Any updates must trigger an update within the same thread when done setting block ids on chunks.
-pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
+pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) ?worldPosition {
     const wp = worldPosition.getWorldPositionForWorldLocation(pos);
     const chunk_local_pos = chunkBlockPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
     // Get chunk from chunk state map:
     var bd: block.BlockData = undefined;
     var c = game.state.blocks.game_chunks.get(wp) orelse {
-        // Chunk not previously generated, but maybe we already updated it before generating:
-        var ch_cfg: game_state.chunkConfig = game.state.ui.data.world_chunk_table_data.get(wp) orelse {
-            const cd: []u32 = game.state.allocator.alloc(u32, fully_lit_chunk.len) catch @panic("OOM");
-            @memcpy(cd, fully_lit_chunk[0..]);
-            cd[chunk_index] = block_id;
-            const new_ch_cfg: game_state.chunkConfig = .{
-                .id = 0,
-                .scriptId = 0,
-                .chunkData = cd,
-            };
-            game.state.ui.data.world_chunk_table_data.put(wp, new_ch_cfg) catch @panic("OOM");
-            return wp;
+        if (game.state.ui.data.world_chunk_table_data.get(wp)) |_| {
+            // Chunk not previously generated, but maybe we already updated it before generating.
+            // Ignore edits untl that's done. Don't want two code paths to deal with updated but not yet generated nonsense.
+            return null;
+        }
+        const cd: []u32 = game.state.allocator.alloc(u32, fully_lit_chunk.len) catch @panic("OOM");
+        @memcpy(cd, fully_lit_chunk[0..]);
+        cd[chunk_index] = block_id;
+        const new_ch_cfg: game_state.chunkConfig = .{
+            .id = 0,
+            .scriptId = 0,
+            .chunkData = cd,
         };
-        bd = block.BlockData.fromId(block_id);
-        // no chunk, assume fully lit chunk.
-        bd.setFullAmbiance(block.BlockLighingLevel.full);
-        // TODO: need to check surrounding lighting
-        // Was previously updated, but not generated, just update the table.
-        ch_cfg.chunkData[chunk_index] = bd.toId();
+        game.state.ui.data.world_chunk_table_data.put(wp, new_ch_cfg) catch @panic("OOM");
         return wp;
     };
     const c_data = game.state.allocator.alloc(u32, chunkSize) catch @panic("OOM");
