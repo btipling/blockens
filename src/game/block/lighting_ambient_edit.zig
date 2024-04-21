@@ -4,16 +4,8 @@ traverser: *chunk_traverser,
 
 pub const Lighting = @This();
 
-pub fn set_removed_block_lighting(self: *Lighting) void {
-    self.darken_area_around_block();
-    self.light_fall_around_block();
-    self.determine_air_ambience_around_block();
-    self.determine_air_ambience_around_block();
-    self.determine_block_ambience_around_block();
-    self.determine_block_surface_from_air();
-}
-
-pub fn set_added_block_lighting(self: *Lighting) void {
+pub fn update_ambient_lighting(self: *Lighting) void {
+    self.traverser.reset();
     self.darken_area_around_block();
     self.light_fall_around_block();
     self.determine_air_ambience_around_block();
@@ -429,7 +421,7 @@ test "lighting basic remove block lighting fall" {
     var bd: block.BlockData = block.BlockData.fromId(t_data[ci]);
     bd.block_id = 0;
     t_data[ci] = bd.toId();
-    l.set_removed_block_lighting();
+    l.update_ambient_lighting();
 
     // validate that the block below's surface is now fully lit
     try testing_utils.utest_expect_surface_light_at_v(t_data, .{ _x, 0, _z, 0 }, .y_pos, .full);
@@ -474,7 +466,7 @@ test "lighting adding block across chunks darkness fall" {
     }
     var l: Lighting = .{ .traverser = &test_traverser };
 
-    l.set_added_block_lighting();
+    l.update_ambient_lighting();
     // validate that the block on chunk below's surface is now fully lit
     {
         // expected lighting to have fetched extra data for bottom chunk
@@ -523,7 +515,7 @@ test "lighting removing block across chunks lighting falls" {
     var bd: block.BlockData = block.BlockData.fromId(t_data[ci]);
     bd.block_id = 0;
     t_data[ci] = bd.toId();
-    l.set_removed_block_lighting();
+    l.update_ambient_lighting();
     // validate that the block on chunk below's surface is now fully lit
     {
         // expected lighting to have fetched extra data for bottom chunk
@@ -799,7 +791,7 @@ test "lighting plane building surface test" {
 
             var l: Lighting = .{ .traverser = &test_traverser };
             // Do the thing.
-            l.set_added_block_lighting();
+            l.update_ambient_lighting();
 
             // Check the thing got done.
             const bl_data = test_traverser.datas[1].data orelse @panic("expected data to be there");
@@ -938,7 +930,7 @@ test "test block on chunk edge casts shadow on other chunks surfaces and chunk b
     var bd: block.BlockData = block.BlockData.fromId(t_data[ci]);
     bd.block_id = 1;
     t_data[ci] = bd.toId();
-    l.set_added_block_lighting();
+    l.update_ambient_lighting();
     {
         // expected lighting to have fetched extra data for three chunks
         try std.testing.expectEqual(3, test_traverser.num_extra_datas);

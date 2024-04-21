@@ -43,7 +43,7 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) ?worldPosition {
     const wp = worldPosition.getWorldPositionForWorldLocation(pos);
     const chunk_local_pos = chunkBlockPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
-    const block_info: *block.Block = game.state.blocks.blocks.get(block_id) orelse return null;
+    const block_info: ?*const block.Block = game.state.blocks.blocks.get(block_id);
     // Get chunk from chunk state map:
     var bd: block.BlockData = undefined;
     var c = game.state.blocks.game_chunks.get(wp) orelse return null;
@@ -57,8 +57,12 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) ?worldPosition {
 
     bd = block.BlockData.fromId(c_data[chunk_index]);
     bd.block_id = block_id;
-    if (block_info.data.light_level != 0) {
-        bd.lighting = 0xFFF;
+    if (block_id != air) {
+        if (block_info) |bi| {
+            if (bi.data.light_level != 0) {
+                bd.setFullLighting(.full);
+            }
+        }
     }
     c_data[chunk_index] = bd.toId();
     var traverser = chunk_traverser.init(game.state.allocator, .{}, c.wp, chunk_index, .{
@@ -67,24 +71,33 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) ?worldPosition {
     });
     defer traverser.deinit();
 
-    var l = lighting{
-        .traverser = &traverser,
-    };
+    {
+        // ambient light
+        var al = ambient_lighting{
+            .traverser = &traverser,
+        };
 
-    if (config.use_tracy) {
-        const tracy_zone = ztracy.ZoneNC(@src(), "LightAmbientEdit", 0xF0_00_f0_f0);
-        std.debug.print("in zone\n", .{});
-        defer tracy_zone.End();
-        if (block_id == air) {
-            l.set_removed_block_lighting();
+        if (config.use_tracy) {
+            const tracy_zone = ztracy.ZoneNC(@src(), "LightAmbientEdit", 0xF0_00_f0_f0);
+            defer tracy_zone.End();
+            al.update_ambient_lighting();
         } else {
-            l.set_added_block_lighting();
+            al.update_ambient_lighting();
         }
-    } else {
-        if (block_id == air) {
-            l.set_removed_block_lighting();
+    }
+    {
+        // block light, always has to be done, because blocks can block light.
+        // ambient light
+        var bl = block_lighting{
+            .traverser = &traverser,
+        };
+
+        if (config.use_tracy) {
+            const tracy_zone = ztracy.ZoneNC(@src(), "LightBlockEdit", 0xF0_00_f0_f0);
+            defer tracy_zone.End();
+            bl.update_block_lighting();
         } else {
-            l.set_added_block_lighting();
+            bl.update_block_lighting();
         }
     }
     {
@@ -252,7 +265,8 @@ const game = @import("../game.zig");
 const block = @import("block.zig");
 const Chunker = @import("chunker.zig");
 const game_state = @import("../state.zig");
-const lighting = @import("lighting_ambient_edit.zig");
+const ambient_lighting = @import("lighting_ambient_edit.zig");
+const block_lighting = @import("lighting_block_light.zig");
 const data_fetcher = @import("data_fetcher.zig");
 const chunk_traverser = @import("chunk_traverser.zig");
 

@@ -137,7 +137,7 @@ fn changeBlock(direction: isize) void {
     while (it.next()) |e| {
         const block = e.value_ptr.*;
         if (block.id == game.state.blocks.selected_block) return;
-        last_block_id = block.id;
+        if (block.id > last_block_id) last_block_id = block.id;
     }
     game.state.blocks.selected_block = last_block_id;
 }
