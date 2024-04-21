@@ -4,16 +4,7 @@ traverser: *chunk_traverser,
 
 pub const Lighting = @This();
 
-pub fn set_removed_block_lighting(self: *Lighting) void {
-    self.darken_area_around_block();
-    self.light_fall_around_block();
-    self.determine_air_ambience_around_block();
-    self.determine_air_ambience_around_block();
-    self.determine_block_ambience_around_block();
-    self.determine_block_surface_from_air();
-}
-
-pub fn set_added_block_lighting(self: *Lighting) void {
+pub fn update_ambient_lighting(self: *Lighting) void {
     self.darken_area_around_block();
     self.light_fall_around_block();
     self.determine_air_ambience_around_block();

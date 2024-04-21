@@ -75,17 +75,9 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) ?worldPosition {
         const tracy_zone = ztracy.ZoneNC(@src(), "LightAmbientEdit", 0xF0_00_f0_f0);
         std.debug.print("in zone\n", .{});
         defer tracy_zone.End();
-        if (block_id == air) {
-            l.set_removed_block_lighting();
-        } else {
-            l.set_added_block_lighting();
-        }
+        l.update_ambient_lighting();
     } else {
-        if (block_id == air) {
-            l.set_removed_block_lighting();
-        } else {
-            l.set_added_block_lighting();
-        }
+        l.update_ambient_lighting();
     }
     {
         c.mutex.lock();
