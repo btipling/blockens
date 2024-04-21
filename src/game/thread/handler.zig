@@ -113,6 +113,15 @@ fn handle_copy_chunk(msg: buffer.buffer_message) void {
             game.state.allocator.destroy(c);
         }
         game.state.blocks.game_chunks.put(wp, copy_data.chunk) catch @panic("OOM");
+        if (copy_data.chunk.updated) {
+            if (blecs.ecs.get_mut(
+                game.state.world,
+                game.state.entities.player,
+                blecs.components.mob.Mob,
+            )) |m| {
+                m.last_saved = 0;
+            }
+        }
     }
 }
 

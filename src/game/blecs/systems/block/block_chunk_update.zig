@@ -44,16 +44,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 "expected refreshed chunk to be in chunk table. {}",
                 .{wp},
             );
-            if (ch_cfg.id == 0) {
-                // Haven't previously rendered this chunk.
-                _ = game.state.jobs.copyChunk(
-                    wp,
-                    ecs.new_id(game.state.world),
-                    false,
-                    true,
-                );
-                continue;
-            }
+            if (ch_cfg.id == 0) std.debug.panic("failed to handled new chunk in chunk update in the wrong code path {}", .{wp});
             const c = game.state.blocks.game_chunks.get(wp) orelse std.debug.panic(
                 "expected chunk at this point\n",
                 .{},
@@ -73,7 +64,13 @@ fn updateChunk(
     updated_chunks: *[10]?chunk.worldPosition,
     cu: components.block.ChunkUpdate,
 ) !isize {
-    const wp = chunk.setBlockId(cu.pos, cu.block_id) orelse return -1;
+    const wp = chunk.worldPosition.getWorldPositionForWorldLocation(cu.pos);
+    if (game.state.blocks.game_chunks.get(wp) == null) {
+        chunk.createEditedChunk(wp, cu.pos, cu.block_id);
+        ecs.delete(world, entity);
+        return -1;
+    }
+    _ = chunk.setBlockId(cu.pos, cu.block_id) orelse return -1;
     var update_at: isize = -1;
     for (updated_chunks, 0..) |maybe_wp, i| {
         const f_wp = maybe_wp orelse {
