@@ -75,6 +75,14 @@ pub const BlockData = packed struct {
     }
 
     pub fn setAmbient(self: *BlockData, surface: BlockSurface, level: BlockLighingLevel) void {
+        self.ambient = self.setLightValue(self.ambient, surface, level);
+    }
+
+    pub fn setLighting(self: *BlockData, surface: BlockSurface, level: BlockLighingLevel) void {
+        self.lighting = self.setLightValue(self.lighting, surface, level);
+    }
+
+    pub fn setLightValue(_: *BlockData, light: u12, surface: BlockSurface, level: BlockLighingLevel) u12 {
         var l: u12 = switch (level) {
             .full => 0x03,
             .bright => 0x02,
@@ -106,34 +114,42 @@ pub const BlockData = packed struct {
             .z_neg => {},
         }
         const clear: u12 = 0xFFF ^ c;
-        self.ambient = self.ambient & clear;
-        self.ambient = self.ambient | l;
+        const lo: u12 = light & clear;
+        return lo | l;
     }
 
     pub fn getSurfaceAmbience(self: *const BlockData, surface: BlockSurface) BlockLighingLevel {
+        return self.getLightValue(self.ambient, surface);
+    }
+
+    pub fn getSurfaceLighting(self: *const BlockData, surface: BlockSurface) BlockLighingLevel {
+        return self.getLightValue(self.lighting, surface);
+    }
+
+    pub fn getLightValue(_: *const BlockData, light: u12, surface: BlockSurface) BlockLighingLevel {
         var val: u12 = 0;
         switch (surface) {
             .x_pos => {
-                val = self.ambient >> 10;
+                val = light >> 10;
             },
             .x_neg => {
-                val = (self.ambient | 0xC00) ^ (0xFFF - 0x300);
+                val = (light | 0xC00) ^ (0xFFF - 0x300);
                 val = val >> 8;
             },
             .y_pos => {
-                val = self.ambient & 0x0F0;
+                val = light & 0x0F0;
                 val = val >> 6;
             },
             .y_neg => {
-                val = ((self.ambient | 0x0C0) & 0x0F0) ^ (0x0F0 - 0x030);
+                val = ((light | 0x0C0) & 0x0F0) ^ (0x0F0 - 0x030);
                 val = val >> 4;
             },
             .z_pos => {
-                val = self.ambient & 0x00F;
+                val = light & 0x00F;
                 val = val >> 2;
             },
             .z_neg => {
-                val = (self.ambient | 0x00C) & 0x003;
+                val = (light | 0x00C) & 0x003;
             },
         }
         switch (val) {
