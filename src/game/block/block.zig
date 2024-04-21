@@ -206,6 +206,13 @@ test "test lighting surfaces works" {
     ll = .bright;
     bd.setAmbient(.z_neg, ll);
     try std.testing.expectEqual(ll, bd.getSurfaceAmbience(.z_neg));
+
+    var bd2: BlockData = BlockData.fromId(block_id);
+    bd2.setAmbient(.z_pos, ll);
+    try std.testing.expectEqual(ll, bd2.getSurfaceAmbience(.z_pos));
+    ll = .bright;
+    bd2.setAmbient(.z_pos, ll);
+    try std.testing.expectEqual(ll, bd2.getSurfaceAmbience(.z_pos));
 }
 
 pub const chunk = @import("chunk.zig");
