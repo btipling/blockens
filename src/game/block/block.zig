@@ -133,7 +133,7 @@ pub const BlockData = packed struct {
                 val = val >> 2;
             },
             .z_neg => {
-                val = ((self.ambient | 0x00C) & 0x00F) ^ (0xFFF - 0x003);
+                val = (self.ambient | 0x00C) & 0x003;
             },
         }
         switch (val) {
@@ -200,7 +200,12 @@ test "test lighting surfaces works" {
     ll = .bright;
     bd.setAmbient(.y_neg, ll);
     try std.testing.expectEqual(ll, bd.getSurfaceAmbience(.y_neg));
-    // FIXME: .z_neg fails
+    ll = .full;
+    bd.setAmbient(.z_neg, ll);
+    try std.testing.expectEqual(ll, bd.getSurfaceAmbience(.z_neg));
+    ll = .bright;
+    bd.setAmbient(.z_neg, ll);
+    try std.testing.expectEqual(ll, bd.getSurfaceAmbience(.z_neg));
 }
 
 pub const chunk = @import("chunk.zig");
