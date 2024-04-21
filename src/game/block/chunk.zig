@@ -25,10 +25,9 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) worldPosition {
     var c = game.state.blocks.game_chunks.get(wp) orelse {
         // Chunk not previously generated, but maybe we already updated it before generating:
         var ch_cfg: game_state.chunkConfig = game.state.ui.data.world_chunk_table_data.get(wp) orelse {
-            var cr: [chunkSize]u32 = [_]u32{0} ** chunkSize;
-            cr[chunk_index] = block_id;
-            const cd: []u32 = game.state.allocator.alloc(u32, cr.len) catch @panic("OOM");
-            @memcpy(cd, &cr);
+            const cd: []u32 = game.state.allocator.alloc(u32, fully_lit_chunk.len) catch @panic("OOM");
+            @memcpy(cd, fully_lit_chunk[0..]);
+            cd[chunk_index] = block_id;
             const new_ch_cfg: game_state.chunkConfig = .{
                 .id = 0,
                 .scriptId = 0,
