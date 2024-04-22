@@ -109,6 +109,8 @@ pub const UIData = struct {
         0,
         0,
     },
+    load_percentage_lighting_initial: f16 = 0,
+    load_percentage_lighting_cross_chunk: f16 = 0,
 
     fn deinit(self: *UIData, allocator: std.mem.Allocator) void {
         self.texture_script_options.deinit();

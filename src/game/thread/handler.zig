@@ -134,6 +134,7 @@ fn handle_lighting(msg: buffer.buffer_message) void {
         buffer.buffer_data.lighting => |d| d,
         else => return,
     };
+    game.state.ui.data.load_percentage_lighting_initial = pr.percent;
     if (!pr.done) return;
     _ = game.state.jobs.lighting_cross_chunk(ld.world_id);
 }
@@ -145,6 +146,7 @@ fn handle_lighting_cross_chunk(msg: buffer.buffer_message) void {
         buffer.buffer_data.lighting => |d| d,
         else => return,
     };
+    game.state.ui.data.load_percentage_lighting_cross_chunk = pr.percent;
     if (!pr.done) return;
     std.debug.print("loading world\n", .{});
     ui_helpers.loadChunkDatas() catch @panic("unable to load chunk datas");
