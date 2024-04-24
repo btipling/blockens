@@ -40,14 +40,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 centerNext(ww);
                 var combo: bool = false;
                 var cw: bool = false;
-                for (game.state.ui.data.world_options.items, 0..) |worldOption, i| {
-                    var buffer: [game_state.max_world_name + 10]u8 = undefined;
+                for (game.state.ui.world_options.items, 0..) |worldOption, i| {
+                    var buffer: [ui.max_world_name + 10]u8 = undefined;
                     const selectableName = std.fmt.bufPrint(
                         &buffer,
                         "{d}: {s}",
                         .{ worldOption.id, worldOption.name },
                     ) catch unreachable;
-                    var name: [game_state.max_world_name:0]u8 = undefined;
+                    var name: [ui.max_world_name:0]u8 = undefined;
                     for (name, 0..) |_, ii| {
                         if (selectableName.len <= ii) {
                             name[ii] = 0;
@@ -55,12 +55,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         }
                         name[ii] = selectableName[ii];
                     }
-                    const loaded_world_id = game.state.ui.data.world_loaded_id;
+                    const loaded_world_id = game.state.ui.world_loaded_id;
                     if (i == 0) {
-                        var preview_name = &game.state.ui.data.world_loaded_name;
+                        var preview_name = &game.state.ui.world_loaded_name;
                         if (loaded_world_id == 0 or loaded_world_id == 1) {
                             default_world = worldOption.id;
-                            game.state.ui.data.world_loaded_id = default_world;
+                            game.state.ui.world_loaded_id = default_world;
                             preview_name = &name;
                         }
                         combo = zgui.beginCombo("##listbox", .{
@@ -83,11 +83,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     .w = 500,
                     .h = 100,
                 })) {
-                    if (game.state.ui.data.world_loaded_id == 0) game.state.ui.data.world_loaded_id = default_world;
-                    const loadedGame = game.state.ui.data.world_chunk_table_data.count() > 0;
+                    if (game.state.ui.world_loaded_id == 0) game.state.ui.world_loaded_id = default_world;
+                    const loadedGame = game.state.ui.world_chunk_table_data.count() > 0;
                     if (!loadedGame) {
                         screen_helpers.showLoadingScreen();
-                        _ = game.state.jobs.lighting(game.state.ui.data.world_loaded_id);
+                        _ = game.state.jobs.lighting(game.state.ui.world_loaded_id);
                     } else {
                         screen_helpers.showGameScreen();
                     }
@@ -105,10 +105,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     }
 }
 
-fn loadWorld(world_id: i32, name: [game_state.max_world_name:0]u8) void {
+fn loadWorld(world_id: i32, name: [ui.max_world_name:0]u8) void {
     std.debug.print("selecting world id: {d}\n", .{world_id});
-    game.state.ui.data.world_loaded_name = name;
-    game.state.ui.data.world_loaded_id = world_id;
+    game.state.ui.world_loaded_name = name;
+    game.state.ui.world_loaded_id = world_id;
 }
 
 fn centerNext(ww: f32) void {
@@ -124,7 +124,7 @@ const ecs = @import("zflecs");
 const zgui = @import("zgui");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
-const game_state = @import("../../../state.zig");
+const ui = @import("../../../ui.zig");
 const screen_helpers = @import("../screen_helpers.zig");
 const helpers = @import("ui_helpers.zig");
 const config = @import("../../../config.zig");

@@ -27,72 +27,72 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .flags = .{},
             })) {
                 if (zgui.inputFloat4("translation input", .{
-                    .v = &game.state.ui.data.demo_character_translation,
+                    .v = &game.state.ui.demo_character_translation,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }
                 if (zgui.sliderFloat4("translation slider", .{
-                    .v = &game.state.ui.data.demo_character_translation,
+                    .v = &game.state.ui.demo_character_translation,
                     .min = -10,
                     .max = 10,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }
                 if (zgui.inputFloat("scale input", .{
-                    .v = &game.state.ui.data.demo_character_scale,
+                    .v = &game.state.ui.demo_character_scale,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }
                 if (zgui.sliderFloat("scale slider", .{
-                    .v = &game.state.ui.data.demo_character_scale,
+                    .v = &game.state.ui.demo_character_scale,
                     .min = 0,
                     .max = 1,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }
                 if (zgui.inputFloat("rotation input x", .{
-                    .v = &game.state.ui.data.demo_character_rotation_x,
+                    .v = &game.state.ui.demo_character_rotation_x,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }
                 if (zgui.sliderFloat("rotation slider x", .{
-                    .v = &game.state.ui.data.demo_character_rotation_x,
+                    .v = &game.state.ui.demo_character_rotation_x,
                     .min = 0,
                     .max = 2,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }
                 if (zgui.inputFloat("rotation input y", .{
-                    .v = &game.state.ui.data.demo_character_rotation_y,
+                    .v = &game.state.ui.demo_character_rotation_y,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }
                 if (zgui.sliderFloat("rotation slider y", .{
-                    .v = &game.state.ui.data.demo_character_rotation_y,
+                    .v = &game.state.ui.demo_character_rotation_y,
                     .min = 0,
                     .max = 2,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }
                 if (zgui.inputFloat("rotation input z", .{
-                    .v = &game.state.ui.data.demo_character_rotation_z,
+                    .v = &game.state.ui.demo_character_rotation_z,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }
                 if (zgui.sliderFloat("rotation slider z", .{
-                    .v = &game.state.ui.data.demo_character_rotation_z,
+                    .v = &game.state.ui.demo_character_rotation_z,
                     .min = 0,
                     .max = 2,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }
                 if (zgui.inputFloat4("perspective translate input", .{
-                    .v = &game.state.ui.data.demo_character_pp_translation,
+                    .v = &game.state.ui.demo_character_pp_translation,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }
                 if (zgui.sliderFloat4("perspective translate slider", .{
-                    .v = &game.state.ui.data.demo_character_pp_translation,
+                    .v = &game.state.ui.demo_character_pp_translation,
                     .min = -1,
                     .max = 2,
                 })) {

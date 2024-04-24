@@ -267,7 +267,7 @@ pub fn clearDemoObjects() void {
 }
 
 pub fn initDemoCube() void {
-    if (game.state.ui.data.texture_rgba_data == null) {
+    if (game.state.ui.texture_rgba_data == null) {
         return;
     }
     const world = game.state.world;
@@ -276,7 +276,7 @@ pub fn initDemoCube() void {
     // Demo cube needs a little camera adjustment to be on the left side of the screen while keeping
     // the perspective centered at it.
     _ = ecs.set(world, game.state.entities.settings_camera, components.screen.PostPerspective, .{
-        .translation = game.state.ui.data.demo_cube_pp_translation,
+        .translation = game.state.ui.demo_cube_pp_translation,
     });
 
     const c_dc = helpers.new_child(world, settings_data);
@@ -285,10 +285,10 @@ pub fn initDemoCube() void {
     _ = ecs.set(world, c_dc, components.shape.Color, components.shape.Color.fromVec(cr_c));
     _ = ecs.set(world, c_dc, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
     _ = ecs.set(world, c_dc, components.shape.Rotation, .{
-        .rot = game.state.ui.data.demo_cube_rotation,
+        .rot = game.state.ui.demo_cube_rotation,
     });
     _ = ecs.set(world, c_dc, components.shape.Translation, .{
-        .translation = game.state.ui.data.demo_cube_translation,
+        .translation = game.state.ui.demo_cube_translation,
     });
     _ = ecs.set(world, c_dc, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 * 3 });
     ecs.add(world, c_dc, components.shape.NeedsSetup);
@@ -340,7 +340,7 @@ pub fn initDemoCube() void {
     _ = ecs.set(world, c_t1, components.shape.Shape, .{ .shape_type = .plane });
     _ = ecs.set(world, c_t1, components.shape.Color, components.shape.Color.fromVec(cr_c));
     _ = ecs.set(world, c_t1, components.shape.Scale, .{ .scale = @Vector(4, f32){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
-    _ = ecs.set(world, c_t1, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_tl });
+    _ = ecs.set(world, c_t1, components.shape.Translation, .{ .translation = game.state.ui.demo_cube_plane_1_tl });
     _ = ecs.set(world, c_t1, components.shape.DemoCubeTexture, .{ .beg = 0, .end = 16 * 16 });
     ecs.add(world, c_t1, components.shape.NeedsSetup);
 
@@ -348,7 +348,7 @@ pub fn initDemoCube() void {
     _ = ecs.set(world, c_t2, components.shape.Shape, .{ .shape_type = .plane });
     _ = ecs.set(world, c_t2, components.shape.Color, components.shape.Color.fromVec(cr_c));
     _ = ecs.set(world, c_t2, components.shape.Scale, .{ .scale = @Vector(4, f32){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
-    _ = ecs.set(world, c_t2, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_t2 });
+    _ = ecs.set(world, c_t2, components.shape.Translation, .{ .translation = game.state.ui.demo_cube_plane_1_t2 });
     _ = ecs.set(world, c_t2, components.shape.DemoCubeTexture, .{ .beg = 16 * 16, .end = 16 * 16 * 2 });
     _ = ecs.set(world, c_t2, components.shape.Rotation, .{
         .rot = zm.matToQuat(zm.rotationZ(1 * std.math.pi)),
@@ -360,7 +360,7 @@ pub fn initDemoCube() void {
     _ = ecs.set(world, c_t3, components.shape.Shape, .{ .shape_type = .plane });
     _ = ecs.set(world, c_t3, components.shape.Color, components.shape.Color.fromVec(cr_c));
     _ = ecs.set(world, c_t3, components.shape.Scale, .{ .scale = @Vector(4, f32){ p_scale * p_x_ratio, p_scale, p_scale, 0 } });
-    _ = ecs.set(world, c_t3, components.shape.Translation, .{ .translation = game.state.ui.data.demo_cube_plane_1_t3 });
+    _ = ecs.set(world, c_t3, components.shape.Translation, .{ .translation = game.state.ui.demo_cube_plane_1_t3 });
     _ = ecs.set(world, c_t3, components.shape.DemoCubeTexture, .{ .beg = 16 * 16 * 2, .end = 16 * 16 * 3 });
     ecs.add(world, c_t3, components.shape.NeedsSetup);
     initDemoTextureAtlas();
@@ -378,7 +378,7 @@ pub fn initDemoTextureAtlas() void {
         color.color[3],
         c_atlas,
     });
-    const atlas_rot = zm.rotationZ(game.state.ui.data.demo_atlas_rotation * std.math.pi * 2.0);
+    const atlas_rot = zm.rotationZ(game.state.ui.demo_atlas_rotation * std.math.pi * 2.0);
     _ = ecs.set(
         game.state.world,
         c_atlas,
@@ -387,8 +387,8 @@ pub fn initDemoTextureAtlas() void {
     );
     _ = ecs.set(world, c_atlas, components.shape.Shape, .{ .shape_type = .plane });
     _ = ecs.set(world, c_atlas, components.shape.Color, components.shape.Color.fromVec(cr_c));
-    _ = ecs.set(world, c_atlas, components.shape.Scale, .{ .scale = game.state.ui.data.demo_atlas_scale });
-    _ = ecs.set(world, c_atlas, components.shape.Translation, .{ .translation = game.state.ui.data.demo_atlas_translation });
+    _ = ecs.set(world, c_atlas, components.shape.Scale, .{ .scale = game.state.ui.demo_atlas_scale });
+    _ = ecs.set(world, c_atlas, components.shape.Translation, .{ .translation = game.state.ui.demo_atlas_translation });
     ecs.add(world, c_atlas, components.block.UseTextureAtlas);
     ecs.add(world, c_atlas, components.shape.NeedsSetup);
 }
@@ -399,18 +399,18 @@ pub fn initDemoChunkCamera() void {
     // Demo chunks also needs a camera adjustment to keep perspective centered on it
     const camera = game.state.entities.settings_camera;
     _ = ecs.set(world, camera, components.screen.PostPerspective, .{
-        .translation = game.state.ui.data.demo_chunk_pp_translation,
+        .translation = game.state.ui.demo_chunk_pp_translation,
     });
-    const chunk_scale = game.state.ui.data.demo_chunk_scale;
+    const chunk_scale = game.state.ui.demo_chunk_scale;
     _ = ecs.set(
         world,
         camera,
         components.screen.WorldScale,
         .{ .scale = @Vector(4, f32){ chunk_scale, chunk_scale, chunk_scale, 0 } },
     );
-    var chunk_rot = zm.rotationY(game.state.ui.data.demo_chunk_rotation_y * std.math.pi);
-    chunk_rot = zm.mul(chunk_rot, zm.rotationZ(game.state.ui.data.demo_chunk_rotation_z * std.math.pi * 2.0));
-    chunk_rot = zm.mul(chunk_rot, zm.rotationX(game.state.ui.data.demo_chunk_rotation_x * std.math.pi * 2.0));
+    var chunk_rot = zm.rotationY(game.state.ui.demo_chunk_rotation_y * std.math.pi);
+    chunk_rot = zm.mul(chunk_rot, zm.rotationZ(game.state.ui.demo_chunk_rotation_z * std.math.pi * 2.0));
+    chunk_rot = zm.mul(chunk_rot, zm.rotationX(game.state.ui.demo_chunk_rotation_x * std.math.pi * 2.0));
     _ = ecs.set(
         game.state.world,
         camera,
@@ -421,12 +421,12 @@ pub fn initDemoChunkCamera() void {
         world,
         camera,
         components.screen.WorldTranslation,
-        .{ .translation = game.state.ui.data.demo_chunk_translation },
+        .{ .translation = game.state.ui.demo_chunk_translation },
     );
 }
 
 pub fn initDemoChunk() void {
-    if (game.state.ui.data.chunk_demo_data == null) {
+    if (game.state.ui.chunk_demo_data == null) {
         return;
     }
     clearDemoObjects();
@@ -446,18 +446,18 @@ pub fn initDemoCharacterCamera() void {
     // Demo characters also needs a camera adjustment to keep perspective centered on it
     const camera = game.state.entities.settings_camera;
     _ = ecs.set(world, camera, components.screen.PostPerspective, .{
-        .translation = game.state.ui.data.demo_character_pp_translation,
+        .translation = game.state.ui.demo_character_pp_translation,
     });
-    const character_scale = game.state.ui.data.demo_character_scale;
+    const character_scale = game.state.ui.demo_character_scale;
     _ = ecs.set(
         world,
         camera,
         components.screen.WorldScale,
         .{ .scale = @Vector(4, f32){ character_scale, character_scale, character_scale, 0 } },
     );
-    var character_rot = zm.rotationY(game.state.ui.data.demo_character_rotation_y * std.math.pi);
-    character_rot = zm.mul(character_rot, zm.rotationZ(game.state.ui.data.demo_character_rotation_z * std.math.pi * 2.0));
-    character_rot = zm.mul(character_rot, zm.rotationX(game.state.ui.data.demo_character_rotation_x * std.math.pi * 2.0));
+    var character_rot = zm.rotationY(game.state.ui.demo_character_rotation_y * std.math.pi);
+    character_rot = zm.mul(character_rot, zm.rotationZ(game.state.ui.demo_character_rotation_z * std.math.pi * 2.0));
+    character_rot = zm.mul(character_rot, zm.rotationX(game.state.ui.demo_character_rotation_x * std.math.pi * 2.0));
     _ = ecs.set(
         game.state.world,
         camera,
@@ -468,7 +468,7 @@ pub fn initDemoCharacterCamera() void {
         world,
         camera,
         components.screen.WorldTranslation,
-        .{ .translation = game.state.ui.data.demo_character_translation },
+        .{ .translation = game.state.ui.demo_character_translation },
     );
 }
 
@@ -486,7 +486,7 @@ pub fn initDemoCharacter() void {
             .data_entity = settings_data,
         });
         _ = ecs.set(world, player, components.mob.Position, .{
-            .position = game.state.ui.data.demo_cube_translation,
+            .position = game.state.ui.demo_cube_translation,
         });
         const bounding_box = helpers.new_child(world, settings_data);
         ecs.add_pair(
@@ -521,7 +521,7 @@ pub fn initDemoCharacter() void {
 
 pub fn initPlayerCharacter() void {
     const world = game.state.world;
-    const world_id = game.state.ui.data.world_loaded_id;
+    const world_id = game.state.ui.world_loaded_id;
     const tpc = game.state.entities.third_person_camera;
     if (game.state.entities.player != 0) return;
     const player = ecs.new_entity(game.state.world, "Player");

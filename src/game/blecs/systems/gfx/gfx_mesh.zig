@@ -186,8 +186,8 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
                 var block_index: f32 = 0;
                 var num_blocks: f32 = 0;
                 if (er.block_id) |bi| {
-                    block_index = @floatFromInt(game.state.ui.data.texture_atlas_block_index[@intCast(bi)]);
-                    num_blocks = @floatFromInt(game.state.ui.data.texture_atlas_num_blocks);
+                    block_index = @floatFromInt(game.state.ui.texture_atlas_block_index[@intCast(bi)]);
+                    num_blocks = @floatFromInt(game.state.ui.texture_atlas_num_blocks);
                 }
                 var bd: [2]f32 = [_]f32{ block_index, num_blocks };
                 builder.addFloatAtLocation(block_data_loc, &bd, ii);
@@ -233,12 +233,12 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     if (config.use_tracy) ztracy.Message("writing textures to gpu");
     var texture: u32 = 0;
     if (er.demo_cube_texture) |dct| {
-        if (game.state.ui.data.texture_rgba_data) |d| {
+        if (game.state.ui.texture_rgba_data) |d| {
             texture = gfx.gl.Gl.initTextureFromColors(d[dct[0]..dct[1]]);
         }
     }
     if (er.has_block_texture_atlas) {
-        if (game.state.ui.data.texture_atlas_rgba_data) |d| {
+        if (game.state.ui.texture_atlas_rgba_data) |d| {
             texture = gfx.gl.Gl.initTextureAtlasFromColors(d);
         }
     } else if (er.block_id != null and game.state.blocks.blocks.contains(er.block_id.?)) {

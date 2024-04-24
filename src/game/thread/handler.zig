@@ -38,14 +38,14 @@ fn handle_chunk_gen(msg: buffer.buffer_message) !void {
         else => return,
     };
     const wp = chunk_data.wp orelse return;
-    var ch_cfg = game.state.ui.data.world_chunk_table_data.get(wp) orelse {
+    var ch_cfg = game.state.ui.world_chunk_table_data.get(wp) orelse {
         std.debug.panic("handled chunk gen for non existent chunk in chunk table\n", .{});
     };
     ch_cfg.chunkData = chunk_data.chunk_data;
-    if (game.state.ui.data.world_chunk_table_data.get(wp)) |cd| {
+    if (game.state.ui.world_chunk_table_data.get(wp)) |cd| {
         game.state.allocator.free(cd.chunkData);
     }
-    game.state.ui.data.world_chunk_table_data.put(wp, ch_cfg) catch @panic("OOM");
+    game.state.ui.world_chunk_table_data.put(wp, ch_cfg) catch @panic("OOM");
 }
 
 fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
@@ -57,8 +57,8 @@ fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
         buffer.buffer_data.chunk_gen => |d| d,
         else => return,
     };
-    if (game.state.ui.data.chunk_demo_data) |d| game.state.allocator.free(d);
-    game.state.ui.data.chunk_demo_data = chunk_data.chunk_data;
+    if (game.state.ui.chunk_demo_data) |d| game.state.allocator.free(d);
+    game.state.ui.chunk_demo_data = chunk_data.chunk_data;
     blecs.ecs.add(
         game.state.world,
         game.state.entities.screen,
@@ -134,7 +134,7 @@ fn handle_lighting(msg: buffer.buffer_message) void {
         buffer.buffer_data.lighting => |d| d,
         else => return,
     };
-    game.state.ui.data.load_percentage_lighting_initial = pr.percent;
+    game.state.ui.load_percentage_lighting_initial = pr.percent;
     if (!pr.done) return;
     _ = game.state.jobs.lighting_cross_chunk(ld.world_id);
 }
@@ -146,7 +146,7 @@ fn handle_lighting_cross_chunk(msg: buffer.buffer_message) void {
         buffer.buffer_data.lighting => |d| d,
         else => return,
     };
-    game.state.ui.data.load_percentage_lighting_cross_chunk = pr.percent;
+    game.state.ui.load_percentage_lighting_cross_chunk = pr.percent;
     if (!pr.done) return;
     std.debug.print("loading world\n", .{});
     ui_helpers.loadChunkDatas() catch @panic("unable to load chunk datas");

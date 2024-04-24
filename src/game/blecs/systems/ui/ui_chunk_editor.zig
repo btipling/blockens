@@ -62,17 +62,17 @@ fn drawControls() !void {
         zgui.sameLine(.{});
         zgui.pushItemWidth(75);
         _ = zgui.inputTextWithHint("##chunkXPos", .{
-            .buf = game.state.ui.data.chunk_x_buf[0..],
+            .buf = game.state.ui.chunk_x_buf[0..],
             .hint = "x",
         });
         zgui.sameLine(.{});
         _ = zgui.inputTextWithHint("##chunkYPos", .{
-            .buf = game.state.ui.data.chunk_y_buf[0..],
+            .buf = game.state.ui.chunk_y_buf[0..],
             .hint = "y",
         });
         zgui.sameLine(.{});
         _ = zgui.inputTextWithHint("##chunkZPos", .{
-            .buf = game.state.ui.data.chunk_z_buf[0..],
+            .buf = game.state.ui.chunk_z_buf[0..],
             .hint = "z",
         });
         zgui.popItemWidth();
@@ -83,7 +83,7 @@ fn drawControls() !void {
             try evalWorldChunkFunc();
         }
         if (zgui.colorEdit3("##Script color", .{
-            .col = &game.state.ui.data.chunk_script_color,
+            .col = &game.state.ui.chunk_script_color,
             .flags = .{
                 .picker_hue_bar = true,
             },
@@ -91,7 +91,7 @@ fn drawControls() !void {
         zgui.pushFont(game.state.ui.codeFont);
         zgui.pushItemWidth(500);
         _ = zgui.inputTextWithHint("##script name", .{
-            .buf = game.state.ui.data.chunk_name_buf[0..],
+            .buf = game.state.ui.chunk_name_buf[0..],
             .hint = "chunk_script",
         });
         zgui.popItemWidth();
@@ -121,7 +121,7 @@ fn drawControls() !void {
             try listChunkScripts();
         }
         zgui.popStyleVar(.{ .count = 1 });
-        if (helpers.scriptOptionsListBox(game.state.ui.data.chunk_script_options, .{})) |scriptOptionId| {
+        if (helpers.scriptOptionsListBox(game.state.ui.chunk_script_options, .{})) |scriptOptionId| {
             try loadChunkScriptFunc(scriptOptionId);
         }
     }
@@ -139,7 +139,7 @@ fn drawInput() !void {
     )) {
         zgui.pushFont(game.state.ui.codeFont);
         _ = zgui.inputTextMultiline(" ", .{
-            .buf = game.state.ui.data.chunk_buf[0..],
+            .buf = game.state.ui.chunk_buf[0..],
             .w = 1784,
             .h = 1900,
         });
@@ -171,17 +171,17 @@ fn floatFromChunkBuf(buf: []u8) f32 {
 }
 
 fn evalWorldChunkFunc() !void {
-    const x = floatFromChunkBuf(&game.state.ui.data.chunk_x_buf);
-    const y = floatFromChunkBuf(&game.state.ui.data.chunk_y_buf);
-    const z = floatFromChunkBuf(&game.state.ui.data.chunk_z_buf);
+    const x = floatFromChunkBuf(&game.state.ui.chunk_x_buf);
+    const y = floatFromChunkBuf(&game.state.ui.chunk_y_buf);
+    const z = floatFromChunkBuf(&game.state.ui.chunk_z_buf);
     std.debug.print("Writing chunk to world at position: {}, {}, {}\n", .{ x, y, z });
     const p = @Vector(4, f32){ x, y, z, 0 };
     const wp = chunk.worldPosition.initFromPositionV(p);
-    _ = game.state.jobs.generateWorldChunk(wp, &game.state.ui.data.chunk_buf);
+    _ = game.state.jobs.generateWorldChunk(wp, &game.state.ui.chunk_buf);
 }
 
 fn listChunkScripts() !void {
-    try game.state.db.listChunkScripts(&game.state.ui.data.chunk_script_options);
+    try game.state.db.listChunkScripts(&game.state.ui.chunk_script_options);
 }
 
 fn loadChunkScriptFunc(scriptId: i32) !void {
@@ -199,42 +199,42 @@ fn loadChunkScriptFunc(scriptId: i32) !void {
         }
         nameBuf[i] = c;
     }
-    game.state.ui.data.chunk_buf = script.Script.dataScriptToScript(scriptData.script);
-    game.state.ui.data.chunk_name_buf = nameBuf;
-    game.state.ui.data.chunk_script_color = scriptData.color;
+    game.state.ui.chunk_buf = script.Script.dataScriptToScript(scriptData.script);
+    game.state.ui.chunk_name_buf = nameBuf;
+    game.state.ui.chunk_script_color = scriptData.color;
     try evalChunkFunc();
-    game.state.ui.data.chunk_loaded_script_id = scriptId;
+    game.state.ui.chunk_loaded_script_id = scriptId;
 }
 
 fn saveChunkScriptFunc() !void {
-    const n = std.mem.indexOf(u8, &game.state.ui.data.chunk_name_buf, &([_]u8{0}));
+    const n = std.mem.indexOf(u8, &game.state.ui.chunk_name_buf, &([_]u8{0}));
     if (n) |i| {
         if (i < 3) {
             std.log.err("Script name is too short", .{});
             return;
         }
     }
-    try game.state.db.saveChunkScript(&game.state.ui.data.chunk_name_buf, &game.state.ui.data.chunk_buf, game.state.ui.data.chunk_script_color);
+    try game.state.db.saveChunkScript(&game.state.ui.chunk_name_buf, &game.state.ui.chunk_buf, game.state.ui.chunk_script_color);
     try listChunkScripts();
 }
 
 fn updateChunkScriptFunc() !void {
-    const n = std.mem.indexOf(u8, &game.state.ui.data.chunk_name_buf, &([_]u8{0}));
+    const n = std.mem.indexOf(u8, &game.state.ui.chunk_name_buf, &([_]u8{0}));
     if (n) |i| {
         if (i < 3) {
             std.log.err("Script name is too short", .{});
             return;
         }
     }
-    try game.state.db.updateChunkScript(game.state.ui.data.chunk_loaded_script_id, &game.state.ui.data.chunk_name_buf, &game.state.ui.data.chunk_buf, game.state.ui.data.chunk_script_color);
+    try game.state.db.updateChunkScript(game.state.ui.chunk_loaded_script_id, &game.state.ui.chunk_name_buf, &game.state.ui.chunk_buf, game.state.ui.chunk_script_color);
     try listChunkScripts();
-    try loadChunkScriptFunc(game.state.ui.data.chunk_loaded_script_id);
+    try loadChunkScriptFunc(game.state.ui.chunk_loaded_script_id);
 }
 
 fn deleteChunkScriptFunc() !void {
-    try game.state.db.deleteChunkScript(game.state.ui.data.chunk_loaded_script_id);
+    try game.state.db.deleteChunkScript(game.state.ui.chunk_loaded_script_id);
     try listChunkScripts();
-    game.state.ui.data.chunk_loaded_script_id = 0;
+    game.state.ui.chunk_loaded_script_id = 0;
 }
 
 const std = @import("std");

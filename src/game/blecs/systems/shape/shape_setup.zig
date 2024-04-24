@@ -118,7 +118,7 @@ const shaders = struct {
         }
         var block_index: usize = 0;
         if (e.block_id) |bi| {
-            block_index = game.state.ui.data.texture_atlas_block_index[@intCast(bi)];
+            block_index = game.state.ui.texture_atlas_block_index[@intCast(bi)];
         }
         const f_cfg = gfx.shadergen.fragment.FragmentShaderGen.fragmentShaderConfig{
             .debug = e.debug,

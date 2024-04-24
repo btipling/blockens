@@ -151,7 +151,7 @@ fn screenCameraSystem(
         m,
         mut_camera.elapsedTime,
         game.state.gfx.animation_data.animations_running,
-        game.state.ui.data.texture_atlas_num_blocks,
+        game.state.ui.texture_atlas_num_blocks,
         ubo,
     );
     ecs.remove(world, entity, components.screen.Updated);

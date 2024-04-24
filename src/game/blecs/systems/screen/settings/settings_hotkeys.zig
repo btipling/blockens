@@ -44,10 +44,10 @@ fn handleChunkHotKeys() void {
             game.state.entities.settings_camera,
             components.screen.WorldRotation,
         ) orelse return;
-        game.state.ui.data.demo_chunk_rotation_y += 0.012;
-        var chunk_rot = zm.rotationY(game.state.ui.data.demo_chunk_rotation_y * std.math.pi);
-        chunk_rot = zm.mul(chunk_rot, zm.rotationZ(game.state.ui.data.demo_chunk_rotation_z * std.math.pi * 2.0));
-        chunk_rot = zm.mul(chunk_rot, zm.rotationX(game.state.ui.data.demo_chunk_rotation_x * std.math.pi * 2.0));
+        game.state.ui.demo_chunk_rotation_y += 0.012;
+        var chunk_rot = zm.rotationY(game.state.ui.demo_chunk_rotation_y * std.math.pi);
+        chunk_rot = zm.mul(chunk_rot, zm.rotationZ(game.state.ui.demo_chunk_rotation_z * std.math.pi * 2.0));
+        chunk_rot = zm.mul(chunk_rot, zm.rotationX(game.state.ui.demo_chunk_rotation_x * std.math.pi * 2.0));
         world_rotation.rotation = zm.matToQuat(chunk_rot);
     }
     if (input.keys.holdKey(.right)) {
@@ -56,10 +56,10 @@ fn handleChunkHotKeys() void {
             game.state.entities.settings_camera,
             components.screen.WorldRotation,
         ) orelse return;
-        game.state.ui.data.demo_chunk_rotation_y -= 0.012;
-        var chunk_rot = zm.rotationY(game.state.ui.data.demo_chunk_rotation_y * std.math.pi);
-        chunk_rot = zm.mul(chunk_rot, zm.rotationZ(game.state.ui.data.demo_chunk_rotation_z * std.math.pi * 2.0));
-        chunk_rot = zm.mul(chunk_rot, zm.rotationX(game.state.ui.data.demo_chunk_rotation_x * std.math.pi * 2.0));
+        game.state.ui.demo_chunk_rotation_y -= 0.012;
+        var chunk_rot = zm.rotationY(game.state.ui.demo_chunk_rotation_y * std.math.pi);
+        chunk_rot = zm.mul(chunk_rot, zm.rotationZ(game.state.ui.demo_chunk_rotation_z * std.math.pi * 2.0));
+        chunk_rot = zm.mul(chunk_rot, zm.rotationX(game.state.ui.demo_chunk_rotation_x * std.math.pi * 2.0));
         world_rotation.rotation = zm.matToQuat(chunk_rot);
     }
 }
@@ -80,10 +80,10 @@ fn handleCharacterHotKeys() void {
                 game.state.entities.settings_camera,
                 components.screen.WorldRotation,
             ) orelse return;
-            game.state.ui.data.demo_character_rotation_y += char_speed;
-            var char_rot = zm.rotationY(game.state.ui.data.demo_character_rotation_y * std.math.pi);
-            char_rot = zm.mul(char_rot, zm.rotationZ(game.state.ui.data.demo_character_rotation_z * std.math.pi * 2.0));
-            char_rot = zm.mul(char_rot, zm.rotationX(game.state.ui.data.demo_character_rotation_x * std.math.pi * 2.0));
+            game.state.ui.demo_character_rotation_y += char_speed;
+            var char_rot = zm.rotationY(game.state.ui.demo_character_rotation_y * std.math.pi);
+            char_rot = zm.mul(char_rot, zm.rotationZ(game.state.ui.demo_character_rotation_z * std.math.pi * 2.0));
+            char_rot = zm.mul(char_rot, zm.rotationX(game.state.ui.demo_character_rotation_x * std.math.pi * 2.0));
             world_rotation.rotation = zm.matToQuat(char_rot);
         }
     }
@@ -101,10 +101,10 @@ fn handleCharacterHotKeys() void {
                 game.state.entities.settings_camera,
                 components.screen.WorldRotation,
             ) orelse return;
-            game.state.ui.data.demo_character_rotation_y -= char_speed;
-            var char_rot = zm.rotationY(game.state.ui.data.demo_character_rotation_y * std.math.pi);
-            char_rot = zm.mul(char_rot, zm.rotationZ(game.state.ui.data.demo_character_rotation_z * std.math.pi * 2.0));
-            char_rot = zm.mul(char_rot, zm.rotationX(game.state.ui.data.demo_character_rotation_x * std.math.pi * 2.0));
+            game.state.ui.demo_character_rotation_y -= char_speed;
+            var char_rot = zm.rotationY(game.state.ui.demo_character_rotation_y * std.math.pi);
+            char_rot = zm.mul(char_rot, zm.rotationZ(game.state.ui.demo_character_rotation_z * std.math.pi * 2.0));
+            char_rot = zm.mul(char_rot, zm.rotationX(game.state.ui.demo_character_rotation_x * std.math.pi * 2.0));
             world_rotation.rotation = zm.matToQuat(char_rot);
         }
     }
@@ -122,10 +122,10 @@ fn handleCharacterHotKeys() void {
                 game.state.entities.settings_camera,
                 components.screen.WorldRotation,
             ) orelse return;
-            game.state.ui.data.demo_character_rotation_z += char_speed;
-            var char_rot = zm.rotationY(game.state.ui.data.demo_character_rotation_y * std.math.pi);
-            char_rot = zm.mul(char_rot, zm.rotationZ(game.state.ui.data.demo_character_rotation_z * std.math.pi * 2.0));
-            char_rot = zm.mul(char_rot, zm.rotationX(game.state.ui.data.demo_character_rotation_x * std.math.pi * 2.0));
+            game.state.ui.demo_character_rotation_z += char_speed;
+            var char_rot = zm.rotationY(game.state.ui.demo_character_rotation_y * std.math.pi);
+            char_rot = zm.mul(char_rot, zm.rotationZ(game.state.ui.demo_character_rotation_z * std.math.pi * 2.0));
+            char_rot = zm.mul(char_rot, zm.rotationX(game.state.ui.demo_character_rotation_x * std.math.pi * 2.0));
             world_rotation.rotation = zm.matToQuat(char_rot);
         }
     }
@@ -143,10 +143,10 @@ fn handleCharacterHotKeys() void {
                 game.state.entities.settings_camera,
                 components.screen.WorldRotation,
             ) orelse return;
-            game.state.ui.data.demo_character_rotation_z -= char_speed;
-            var char_rot = zm.rotationY(game.state.ui.data.demo_character_rotation_y * std.math.pi);
-            char_rot = zm.mul(char_rot, zm.rotationZ(game.state.ui.data.demo_character_rotation_z * std.math.pi * 2.0));
-            char_rot = zm.mul(char_rot, zm.rotationX(game.state.ui.data.demo_character_rotation_x * std.math.pi * 2.0));
+            game.state.ui.demo_character_rotation_z -= char_speed;
+            var char_rot = zm.rotationY(game.state.ui.demo_character_rotation_y * std.math.pi);
+            char_rot = zm.mul(char_rot, zm.rotationZ(game.state.ui.demo_character_rotation_z * std.math.pi * 2.0));
+            char_rot = zm.mul(char_rot, zm.rotationX(game.state.ui.demo_character_rotation_x * std.math.pi * 2.0));
             world_rotation.rotation = zm.matToQuat(char_rot);
         }
     }

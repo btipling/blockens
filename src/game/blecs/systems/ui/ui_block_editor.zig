@@ -26,7 +26,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 drawBlockOptions() catch |e| {
                     std.debug.print("error with drawBlockOptions: {}\n", .{e});
                 };
-                if (game.state.ui.data.block_loaded_block_id != 0) {
+                if (game.state.ui.block_loaded_block_id != 0) {
                     zgui.sameLine(.{});
                     drawBlockEditor() catch |e| {
                         std.debug.print("error with drawBlockEditor: {}\n", .{e});
@@ -43,8 +43,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 }
 
 fn listBlocks() !void {
-    try game.state.db.listBlocks(&game.state.ui.data.block_options);
-    for (game.state.ui.data.block_options.items) |bo| {
+    try game.state.db.listBlocks(&game.state.ui.block_options);
+    for (game.state.ui.block_options.items) |bo| {
         if (!game.state.blocks.blocks.contains(bo.id)) {
             // detected a new block to load:
             entities.block.initBlock(bo.id);
@@ -54,11 +54,11 @@ fn listBlocks() !void {
 }
 
 fn listTextureScripts() !void {
-    try game.state.db.listTextureScripts(&game.state.ui.data.texture_script_options);
+    try game.state.db.listTextureScripts(&game.state.ui.texture_script_options);
 }
 
 fn saveBlock() !void {
-    const n = std.mem.indexOf(u8, &game.state.ui.data.block_create_name_buf, &([_]u8{0}));
+    const n = std.mem.indexOf(u8, &game.state.ui.block_create_name_buf, &([_]u8{0}));
     if (n) |i| {
         if (i < 3) {
             std.log.err("Block name is too short", .{});
@@ -66,11 +66,11 @@ fn saveBlock() !void {
         }
     }
     // Reset these on save.
-    game.state.ui.data.block_emits_light = false;
-    game.state.ui.data.block_transparent = false;
+    game.state.ui.block_emits_light = false;
+    game.state.ui.block_transparent = false;
     var emptyText = [_]u32{0} ** data.RGBAColorTextureSize;
     try game.state.db.saveBlock(
-        &game.state.ui.data.block_create_name_buf,
+        &game.state.ui.block_create_name_buf,
         @ptrCast(&emptyText),
         false,
         0,
@@ -94,23 +94,23 @@ fn loadBlock(block_id: u8) !void {
     const texture_rgba_data: []u32 = try game.state.allocator.alloc(u32, b.data.texture.len);
     @memcpy(texture_rgba_data, b.data.texture);
 
-    game.state.ui.data.block_emits_light = false;
-    if (b.data.light_level > 0) game.state.ui.data.block_emits_light = true;
-    game.state.ui.data.block_transparent = b.data.transparent;
+    game.state.ui.block_emits_light = false;
+    if (b.data.light_level > 0) game.state.ui.block_emits_light = true;
+    game.state.ui.block_transparent = b.data.transparent;
     std.debug.print("light: {d} transparent: {}\n", .{
         b.data.light_level,
         b.data.transparent,
     });
-    game.state.ui.data.block_create_name_buf = nameBuf;
-    game.state.ui.data.block_loaded_block_id = block_id;
-    if (game.state.ui.data.texture_rgba_data) |d| game.state.allocator.free(d);
-    game.state.ui.data.texture_rgba_data = texture_rgba_data;
+    game.state.ui.block_create_name_buf = nameBuf;
+    game.state.ui.block_loaded_block_id = block_id;
+    if (game.state.ui.texture_rgba_data) |d| game.state.allocator.free(d);
+    game.state.ui.texture_rgba_data = texture_rgba_data;
     entities.screen.initDemoCube();
 }
 
 fn evalTextureFunc() !void {
-    if (game.state.ui.data.texture_rgba_data) |d| game.state.allocator.free(d);
-    game.state.ui.data.texture_rgba_data = try game.state.script.evalTextureFunc(game.state.ui.data.texture_buf);
+    if (game.state.ui.texture_rgba_data) |d| game.state.allocator.free(d);
+    game.state.ui.texture_rgba_data = try game.state.script.evalTextureFunc(game.state.ui.texture_buf);
     entities.screen.initDemoCube();
 }
 
@@ -124,13 +124,13 @@ fn loadTextureScriptFunc(scriptId: i32) !void {
         }
         buf[i] = c;
     }
-    game.state.ui.data.texture_buf = buf;
-    game.state.ui.data.texture_loaded_script_id = scriptId;
+    game.state.ui.texture_buf = buf;
+    game.state.ui.texture_loaded_script_id = scriptId;
     try evalTextureFunc();
 }
 
 fn updateBlock() !void {
-    const n = std.mem.indexOf(u8, &game.state.ui.data.block_create_name_buf, &([_]u8{0}));
+    const n = std.mem.indexOf(u8, &game.state.ui.block_create_name_buf, &([_]u8{0}));
     if (n) |i| {
         if (i < 3) {
             std.log.err("Block name is too short", .{});
@@ -139,30 +139,30 @@ fn updateBlock() !void {
     }
 
     std.debug.print("light: {} transparent: {}\n", .{
-        game.state.ui.data.block_emits_light,
-        game.state.ui.data.block_transparent,
+        game.state.ui.block_emits_light,
+        game.state.ui.block_transparent,
     });
-    const texture_colors = game.state.ui.data.texture_rgba_data orelse return;
+    const texture_colors = game.state.ui.texture_rgba_data orelse return;
     var light_level: u8 = 0;
-    if (game.state.ui.data.block_emits_light) light_level = 1;
+    if (game.state.ui.block_emits_light) light_level = 1;
     try game.state.db.updateBlock(
-        game.state.ui.data.block_loaded_block_id,
-        &game.state.ui.data.block_create_name_buf,
+        game.state.ui.block_loaded_block_id,
+        &game.state.ui.block_create_name_buf,
         texture_colors,
-        game.state.ui.data.block_transparent,
+        game.state.ui.block_transparent,
         light_level,
     );
     // Need to update the game state blocks:
-    entities.block.initBlock(game.state.ui.data.block_loaded_block_id);
+    entities.block.initBlock(game.state.ui.block_loaded_block_id);
     try listBlocks();
-    try loadBlock(game.state.ui.data.block_loaded_block_id);
+    try loadBlock(game.state.ui.block_loaded_block_id);
 }
 
 fn deleteBlock() !void {
-    try game.state.db.deleteBlock(game.state.ui.data.block_loaded_block_id);
-    entities.block.deinitBlock(game.state.ui.data.block_loaded_block_id);
+    try game.state.db.deleteBlock(game.state.ui.block_loaded_block_id);
+    entities.block.deinitBlock(game.state.ui.block_loaded_block_id);
     try listBlocks();
-    game.state.ui.data.block_loaded_block_id = 0;
+    game.state.ui.block_loaded_block_id = 0;
 }
 
 fn drawBlockOptions() !void {
@@ -190,19 +190,19 @@ fn drawBlockConfig() !void {
         },
     )) {
         if (zgui.checkbox("transparent", .{
-            .v = &game.state.ui.data.block_transparent,
+            .v = &game.state.ui.block_transparent,
         })) {
             std.debug.print("transparent toggled light: {} transparent: {}\n", .{
-                game.state.ui.data.block_emits_light,
-                game.state.ui.data.block_transparent,
+                game.state.ui.block_emits_light,
+                game.state.ui.block_transparent,
             });
         }
         if (zgui.checkbox("emits light", .{
-            .v = &game.state.ui.data.block_emits_light,
+            .v = &game.state.ui.block_emits_light,
         })) {
             std.debug.print("emits light toggled, light: {} transparent: {}\n", .{
-                game.state.ui.data.block_emits_light,
-                game.state.ui.data.block_transparent,
+                game.state.ui.block_emits_light,
+                game.state.ui.block_transparent,
             });
         }
         zgui.endChild();
@@ -229,7 +229,7 @@ fn drawBlockEditor() !void {
         zgui.pushFont(game.state.ui.codeFont);
         zgui.pushItemWidth(400);
         _ = zgui.inputTextWithHint("Name", .{
-            .buf = game.state.ui.data.block_create_name_buf[0..],
+            .buf = game.state.ui.block_create_name_buf[0..],
             .hint = "block name",
         });
         if (zgui.button("Delete block", .{
@@ -245,7 +245,7 @@ fn drawBlockEditor() !void {
             .w = 800,
             .h = 1400,
         });
-        for (game.state.ui.data.texture_script_options.items) |scriptOption| {
+        for (game.state.ui.texture_script_options.items) |scriptOption| {
             var buffer: [script.maxLuaScriptNameSize + 10]u8 = undefined;
             const selectableName = try std.fmt.bufPrint(&buffer, "{d}: {s}", .{ scriptOption.id, scriptOption.name });
             var name: [script.maxLuaScriptNameSize:0]u8 = undefined;
@@ -285,7 +285,7 @@ fn drawBlockList() !void {
             .h = 1400,
         });
 
-        for (game.state.ui.data.block_options.items) |blockOption| {
+        for (game.state.ui.block_options.items) |blockOption| {
             var buffer: [data.maxBlockSizeName + 10]u8 = undefined;
             const selectableName = try std.fmt.bufPrint(&buffer, "{d}: {s}", .{ blockOption.id, blockOption.name });
             var name: [data.maxBlockSizeName:0]u8 = undefined;
@@ -301,7 +301,7 @@ fn drawBlockList() !void {
             }
         }
         zgui.endListBox();
-        if (game.state.ui.data.block_loaded_block_id != 0) {
+        if (game.state.ui.block_loaded_block_id != 0) {
             if (zgui.button("Update block", .{
                 .w = 450,
                 .h = 100,
@@ -339,7 +339,7 @@ fn drawCreateForm() !void {
         zgui.pushFont(game.state.ui.codeFont);
         zgui.pushItemWidth(400);
         _ = zgui.inputTextWithHint("Name", .{
-            .buf = game.state.ui.data.block_create_name_buf[0..],
+            .buf = game.state.ui.block_create_name_buf[0..],
             .hint = "block name",
         });
         zgui.popItemWidth();

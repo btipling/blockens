@@ -47,7 +47,7 @@ pub fn scriptOptionsListBox(scriptOptions: std.ArrayList(data.chunkScriptOption)
 
 pub fn loadChunksInWorld() void {
     entities.screen.clearWorld();
-    var instancedKeys = game.state.ui.data.world_chunk_table_data.keyIterator();
+    var instancedKeys = game.state.ui.world_chunk_table_data.keyIterator();
     while (instancedKeys.next()) |_k| {
         _ = game.state.jobs.copyChunk(_k.*, ecs.new_id(game.state.world), false, false);
     }
@@ -59,11 +59,11 @@ pub fn loadCharacterInWorld() void {
 }
 
 pub fn loadChunkDatas() !void {
-    var td = game.state.ui.data.world_chunk_table_data.valueIterator();
+    var td = game.state.ui.world_chunk_table_data.valueIterator();
     while (td.next()) |cc| {
         game.state.allocator.free(cc.*.chunkData);
     }
-    game.state.ui.data.world_chunk_table_data.clearAndFree();
+    game.state.ui.world_chunk_table_data.clearAndFree();
     for (0..2) |_i| {
         const y: i32 = @as(i32, @intCast(_i));
         for (0..config.worldChunkDims) |i| {
@@ -71,7 +71,7 @@ pub fn loadChunkDatas() !void {
             for (0..config.worldChunkDims) |ii| {
                 const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
                 var chunkData = data.chunkData{};
-                game.state.db.loadChunkData(game.state.ui.data.world_loaded_id, x, y, z, &chunkData) catch |err| {
+                game.state.db.loadChunkData(game.state.ui.world_loaded_id, x, y, z, &chunkData) catch |err| {
                     if (err == data.DataErr.NotFound) {
                         continue;
                     }
@@ -84,12 +84,12 @@ pub fn loadChunkDatas() !void {
                     0,
                 };
                 const wp = chunk.worldPosition.initFromPositionV(p);
-                const cfg = game_state.chunkConfig{
+                const cfg = ui.chunkConfig{
                     .id = chunkData.id,
                     .scriptId = chunkData.scriptId,
                     .chunkData = chunkData.voxels,
                 };
-                try game.state.ui.data.world_chunk_table_data.put(wp, cfg);
+                try game.state.ui.world_chunk_table_data.put(wp, cfg);
             }
         }
     }
@@ -102,7 +102,7 @@ const config = @import("../../../config.zig");
 const data = @import("../../../data/data.zig");
 const game = @import("../../../game.zig");
 const entities = @import("../../entities/entities.zig");
-const game_state = @import("../../../state.zig");
+const ui = @import("../../../ui.zig");
 const script = @import("../../../script/script.zig");
 const block = @import("../../../block/block.zig");
 const chunk = block.chunk;

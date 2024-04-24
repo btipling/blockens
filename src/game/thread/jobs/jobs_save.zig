@@ -31,7 +31,7 @@ pub const SaveJob = struct {
     }
 
     fn savePlayerPosition(self: *@This()) !void {
-        const loaded_world = game.state.ui.data.world_loaded_id;
+        const loaded_world = game.state.ui.world_loaded_id;
         const pp = self.data.player_position;
         const pl: [4]f32 = pp.loc;
         const dp: [4]f32 = default_pos;
@@ -44,8 +44,8 @@ pub const SaveJob = struct {
         defer c.mutex.unlock();
         if (!c.updated) return;
         c.updated = false;
-        var c_cfg = game.state.ui.data.world_chunk_table_data.get(c.wp) orelse return;
-        const loaded_world = game.state.ui.data.world_loaded_id;
+        var c_cfg = game.state.ui.world_chunk_table_data.get(c.wp) orelse return;
+        const loaded_world = game.state.ui.world_loaded_id;
         if (c_cfg.id == 0) {
             // save new chunk
             const p = chunk.worldPosition.vecFromWorldPosition(c.wp);
@@ -58,7 +58,7 @@ pub const SaveJob = struct {
             c_cfg.id = db_chunk_data.id;
             game.state.allocator.free(c_cfg.chunkData);
             c_cfg.chunkData = db_chunk_data.voxels;
-            try game.state.ui.data.world_chunk_table_data.put(c.wp, c_cfg);
+            try game.state.ui.world_chunk_table_data.put(c.wp, c_cfg);
             std.debug.print("new chunk saved\n", .{});
         } else {
             // update existing chunk

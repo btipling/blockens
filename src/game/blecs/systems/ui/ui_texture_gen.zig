@@ -74,12 +74,12 @@ fn drawInput() !void {
         zgui.pushFont(game.state.ui.codeFont);
         zgui.pushItemWidth(1000);
         _ = zgui.inputTextWithHint("Script name", .{
-            .buf = @ptrCast(&game.state.ui.data.texture_name_buf),
+            .buf = @ptrCast(&game.state.ui.texture_name_buf),
             .hint = "block_script",
         });
         zgui.popItemWidth();
         _ = zgui.inputTextMultiline(" ", .{
-            .buf = @ptrCast(&game.state.ui.data.texture_buf),
+            .buf = @ptrCast(&game.state.ui.texture_buf),
             .w = 1984,
             .h = 1840,
         });
@@ -107,7 +107,7 @@ fn drawScriptList() !void {
             .w = 800,
             .h = 1400,
         });
-        for (game.state.ui.data.texture_script_options.items) |scriptOption| {
+        for (game.state.ui.texture_script_options.items) |scriptOption| {
             var buffer: [script.maxLuaScriptNameSize + 10]u8 = undefined;
             const selectableName = try std.fmt.bufPrint(&buffer, "{d}: {s}", .{
                 scriptOption.id,
@@ -126,7 +126,7 @@ fn drawScriptList() !void {
             }
         }
         zgui.endListBox();
-        if (game.state.ui.data.texture_loaded_script_id != 0) {
+        if (game.state.ui.texture_loaded_script_id != 0) {
             if (zgui.button("Update script", .{
                 .w = 450,
                 .h = 100,
@@ -145,7 +145,7 @@ fn drawScriptList() !void {
 }
 
 fn listTextureScripts() !void {
-    try game.state.db.listTextureScripts(&game.state.ui.data.texture_script_options);
+    try game.state.db.listTextureScripts(&game.state.ui.texture_script_options);
 }
 
 fn loadTextureScriptFunc(scriptId: i32) !void {
@@ -165,20 +165,20 @@ fn loadTextureScriptFunc(scriptId: i32) !void {
         }
         buf[i] = c;
     }
-    game.state.ui.data.texture_buf = buf;
-    game.state.ui.data.texture_name_buf = nameBuf;
+    game.state.ui.texture_buf = buf;
+    game.state.ui.texture_name_buf = nameBuf;
     try evalTextureFunc();
-    game.state.ui.data.texture_loaded_script_id = scriptId;
+    game.state.ui.texture_loaded_script_id = scriptId;
 }
 
 fn evalTextureFunc() !void {
-    if (game.state.ui.data.texture_rgba_data) |d| game.state.allocator.free(d);
-    game.state.ui.data.texture_rgba_data = try game.state.script.evalTextureFunc(game.state.ui.data.texture_buf);
+    if (game.state.ui.texture_rgba_data) |d| game.state.allocator.free(d);
+    game.state.ui.texture_rgba_data = try game.state.script.evalTextureFunc(game.state.ui.texture_buf);
     entities.screen.initDemoCube();
 }
 
 fn saveTextureScriptFunc() !void {
-    const n = std.mem.indexOf(u8, &game.state.ui.data.texture_name_buf, &([_]u8{0}));
+    const n = std.mem.indexOf(u8, &game.state.ui.texture_name_buf, &([_]u8{0}));
     if (n) |i| {
         if (i < 3) {
             std.log.err("Script name is too short", .{});
@@ -186,14 +186,14 @@ fn saveTextureScriptFunc() !void {
         }
     }
     try game.state.db.saveTextureScript(
-        &game.state.ui.data.texture_name_buf,
-        &game.state.ui.data.texture_buf,
+        &game.state.ui.texture_name_buf,
+        &game.state.ui.texture_buf,
     );
     try listTextureScripts();
 }
 
 fn updateTextureScriptFunc() !void {
-    const n = std.mem.indexOf(u8, &game.state.ui.data.texture_name_buf, &([_]u8{0}));
+    const n = std.mem.indexOf(u8, &game.state.ui.texture_name_buf, &([_]u8{0}));
     if (n) |i| {
         if (i < 3) {
             std.log.err("Script name is too short", .{});
@@ -201,16 +201,16 @@ fn updateTextureScriptFunc() !void {
         }
     }
     try game.state.db.updateTextureScript(
-        game.state.ui.data.texture_loaded_script_id,
-        &game.state.ui.data.texture_name_buf,
-        &game.state.ui.data.texture_buf,
+        game.state.ui.texture_loaded_script_id,
+        &game.state.ui.texture_name_buf,
+        &game.state.ui.texture_buf,
     );
     try listTextureScripts();
-    try loadTextureScriptFunc(game.state.ui.data.texture_loaded_script_id);
+    try loadTextureScriptFunc(game.state.ui.texture_loaded_script_id);
 }
 
 fn deleteTextureScriptFunc() !void {
-    try game.state.db.deleteTextureScript(game.state.ui.data.texture_loaded_script_id);
+    try game.state.db.deleteTextureScript(game.state.ui.texture_loaded_script_id);
     try listTextureScripts();
-    game.state.ui.data.texture_loaded_script_id = 0;
+    game.state.ui.texture_loaded_script_id = 0;
 }

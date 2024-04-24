@@ -8,7 +8,7 @@ pub fn init() void {
 }
 
 pub fn initBlocks() void {
-    for (game.state.ui.data.block_options.items) |o| {
+    for (game.state.ui.block_options.items) |o| {
         const block_id: u8 = @intCast(o.id);
         initBlock(block_id);
     }
@@ -16,7 +16,7 @@ pub fn initBlocks() void {
 }
 
 pub fn deinitBlocks() void {
-    for (game.state.ui.data.block_options.items) |o| {
+    for (game.state.ui.block_options.items) |o| {
         const block_id: u8 = @intCast(o.id);
         deinitBlock(block_id);
     }
@@ -53,18 +53,18 @@ pub fn deinitBlock(block_id: u8) void {
 pub fn loadTextureAtlas() void {
     var ta = std.ArrayList(u32).init(game.state.allocator);
     defer ta.deinit();
-    game.state.ui.data.texture_atlas_block_index = [_]usize{0} ** MaxBlocks;
+    game.state.ui.texture_atlas_block_index = [_]usize{0} ** MaxBlocks;
     var it = game.state.blocks.blocks.valueIterator();
     var i: usize = 0;
     while (it.next()) |_b| {
         const b = _b.*;
         ta.appendSlice(b.data.texture) catch unreachable;
-        game.state.ui.data.texture_atlas_block_index[@intCast(b.id)] = i;
+        game.state.ui.texture_atlas_block_index[@intCast(b.id)] = i;
         i += 1;
     }
-    game.state.ui.data.texture_atlas_num_blocks = i;
-    if (game.state.ui.data.texture_atlas_rgba_data) |d| game.state.allocator.free(d);
-    game.state.ui.data.texture_atlas_rgba_data = ta.toOwnedSlice() catch unreachable;
+    game.state.ui.texture_atlas_num_blocks = i;
+    if (game.state.ui.texture_atlas_rgba_data) |d| game.state.allocator.free(d);
+    game.state.ui.texture_atlas_rgba_data = ta.toOwnedSlice() catch unreachable;
 }
 
 const std = @import("std");

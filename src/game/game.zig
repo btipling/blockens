@@ -13,9 +13,6 @@ const blecs = @import("blecs/blecs.zig");
 const input = @import("input/input.zig");
 const thread = @import("thread/thread.zig");
 
-const pressStart2PFont = @embedFile("assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
-const robotoMonoFont = @embedFile("assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
-
 fn framebufferSizeCallback(_: *glfw.Window, width: i32, height: i32) callconv(.C) void {
     std.debug.print("frame buffer resized {d} {d}", .{ width, height });
 }
@@ -160,26 +157,23 @@ pub const Game = struct {
         const glsl_version: [:0]const u8 = "#version 450";
         zgui.backend.initWithGlSlVersion(window, glsl_version);
         zmesh.init(allocator);
+        errdefer zmesh.deinit();
         zstbi.init(allocator);
+        errdefer zstbi.deinit();
         zstbi.setFlipVerticallyOnLoad(false);
-        const gameFont = zgui.io.addFontFromMemory(pressStart2PFont, std.math.floor(24.0 * 1.1));
-        const codeFont = zgui.io.addFontFromMemory(robotoMonoFont, std.math.floor(40.0 * 1.1));
-        zgui.io.setDefaultFont(gameFont);
 
         state = try allocator.create(gameState.Game);
         state.* = .{
             .allocator = allocator,
-            .ui = gameState.UI{
-                .codeFont = codeFont,
-                .gameFont = gameFont,
-            },
             .window = window,
             .window_width = window_width,
             .window_height = window_height,
         };
         try state.initInternals();
+        errdefer state.deinit();
 
         blecs.init();
+        errdefer blecs.ecs.fini(state.world);
 
         return .{};
     }

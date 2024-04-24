@@ -15,7 +15,7 @@ pub fn getBlockId(pos: @Vector(4, f32)) dataAtRes {
 pub fn createEditedChunk(wp: worldPosition, pos: @Vector(4, f32), block_id: u8) void {
     const chunk_local_pos = chunkBlockPosFromWorldLocation(pos);
     const chunk_index = getIndexFromPositionV(chunk_local_pos);
-    if (game.state.ui.data.world_chunk_table_data.get(wp) != null) {
+    if (game.state.ui.world_chunk_table_data.get(wp) != null) {
         // Chunk not previously generated, but maybe we already updated it before generating.
         // Ignore edits untl that's done. Don't want two code paths to deal with updated but not yet generated nonsense.
         return;
@@ -24,12 +24,12 @@ pub fn createEditedChunk(wp: worldPosition, pos: @Vector(4, f32), block_id: u8) 
     @memcpy(cd, fully_lit_chunk[0..]);
     const bd: block.BlockData = .{ .block_id = block_id, .ambient = 0xFFF, .lighting = 0 };
     cd[chunk_index] = bd.toId();
-    const new_ch_cfg: game_state.chunkConfig = .{
+    const new_ch_cfg: ui.chunkConfig = .{
         .id = 0,
         .scriptId = 0,
         .chunkData = cd,
     };
-    game.state.ui.data.world_chunk_table_data.put(wp, new_ch_cfg) catch @panic("OOM");
+    game.state.ui.world_chunk_table_data.put(wp, new_ch_cfg) catch @panic("OOM");
     _ = game.state.jobs.copyChunk(
         wp,
         blecs.ecs.new_id(game.state.world),
@@ -264,7 +264,7 @@ const gfx = @import("../gfx/gfx.zig");
 const game = @import("../game.zig");
 const block = @import("block.zig");
 const Chunker = @import("chunker.zig");
-const game_state = @import("../state.zig");
+const ui = @import("../ui.zig");
 const ambient_lighting = @import("lighting_ambient_edit.zig");
 const block_lighting = @import("lighting_block_light.zig");
 const data_fetcher = @import("data_fetcher.zig");

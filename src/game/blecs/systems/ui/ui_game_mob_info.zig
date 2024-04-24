@@ -40,7 +40,7 @@ fn showMobActions() !void {
         toggleBoundingBox();
     }
     if (zgui.inputFloat4("Set location", .{
-        .v = &game.state.ui.data.world_player_relocation,
+        .v = &game.state.ui.world_player_relocation,
     })) {
         std.debug.print("player relocation updated.\n", .{});
     }
@@ -81,7 +81,7 @@ fn relocatePlayer() void {
         game.state.entities.player,
         components.mob.Position,
     ) orelse return;
-    position.position = game.state.ui.data.world_player_relocation;
+    position.position = game.state.ui.world_player_relocation;
     ecs.add(game.state.world, game.state.entities.player, components.mob.NeedsUpdate);
 }
 
