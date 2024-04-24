@@ -102,7 +102,7 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
         mode.width,
         mode.height,
         cfg.game_name,
-        null,
+        m,
     ) catch |err| {
         std.log.err("Failed to create game window.", .{});
         return err;
@@ -110,7 +110,7 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     _ = window.setFramebufferSizeCallback(framebufferSizeCallback);
     window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
     glfw.makeContextCurrent(window);
-    glfw.swapInterval(0);
+    glfw.swapInterval(1);
     return window;
 }
 
