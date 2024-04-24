@@ -97,6 +97,14 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     const mode = try m.getVideoMode();
     window_width = @intCast(mode.width);
     window_height = @intCast(mode.height);
+    // const all = try m.getVideoModes();
+    // var i: usize = 0;
+    // while (i < all.len) : (i += 1) {
+    //     const m_ = all[i];
+    //     const h = m_.height;
+    //     const w = m_.width;
+    //     std.debug.print("{d} {d} {d}\n", .{ i, h, w });
+    // }
     std.debug.print("width: {d} height: {d}\n", .{ window_width, window_height });
     const window = glfw.Window.create(
         mode.width,

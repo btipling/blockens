@@ -45,9 +45,7 @@ fn endFall(world: *ecs.world_t, entity: ecs.entity_t) void {
     }
 }
 
-const starting_velocity: f32 = 0.0005;
-const gravity: f32 = 0.01;
-const max_velocity: f32 = 2;
+const acceleration: f32 = 30;
 fn dropMobAndEnd(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.Mob) bool {
     const mp: *components.mob.Position = ecs.get_mut(
         world,
@@ -56,15 +54,13 @@ fn dropMobAndEnd(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.
     ) orelse std.debug.panic("No position for mob\n", .{});
     ecs.add(world, entity, components.mob.NeedsUpdate);
     if (!ecs.has_id(world, entity, ecs.id(components.mob.Falling))) {
-        var updated_pos = mp.position;
-        updated_pos[1] -= starting_velocity;
-        mp.position = updated_pos;
+        const starting_y = mp.position[1];
         _ = ecs.set(
             world,
             entity,
             components.mob.Falling,
             .{
-                .velocity = starting_velocity,
+                .starting_y = starting_y,
                 .started = game.state.input.lastframe,
             },
         );
@@ -75,27 +71,36 @@ fn dropMobAndEnd(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.
         entity,
         components.mob.Falling,
     ) orelse std.debug.panic("expected falling to be present\n", .{});
-    const velocity = mf.velocity;
+
     const now: f32 = game.state.input.lastframe;
     const delta: f32 = now - mf.started;
-    var updated_pos = mp.position;
+    const total_fall_distance_so_far = 0.5 * acceleration * delta;
+    const new_y = mf.starting_y - total_fall_distance_so_far;
+    const distance_this_frame = mp.position[1] - new_y;
+    std.debug.assert(distance_this_frame > 0);
+
+    var changed_y = mp.position[1];
     const max_change_per_check: f32 = 0.05;
     var drop_change: f32 = max_change_per_check;
-    if (velocity < max_change_per_check) {
-        updated_pos[1] -= velocity;
-    } else {
-        while (drop_change < velocity) {
-            updated_pos[1] -= max_change_per_check;
-            drop_change += max_change_per_check;
-            if (checkMob(updated_pos, mob)) return true;
-        }
+    if (distance_this_frame < max_change_per_check) {
+        mp.position[1] = new_y;
+        return false;
     }
-    if (updated_pos[1] < 0) return true;
-    mp.position = updated_pos;
-    const new_velocity = velocity + gravity * delta;
-    if (new_velocity < max_velocity) {
-        mf.velocity = new_velocity;
+
+    while (new_y < changed_y) {
+        changed_y -= max_change_per_check;
+        drop_change += max_change_per_check;
+        if (changed_y < 0) return true;
+        if (checkMob(.{
+            mp.position[0],
+            changed_y,
+            mp.position[2],
+            mp.position[3],
+        }, mob)) return true;
+        mp.position[1] = changed_y;
     }
+
+    mp.position[1] = new_y;
     return false;
 }
 
