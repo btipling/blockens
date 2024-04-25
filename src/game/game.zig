@@ -76,6 +76,8 @@ const GL_DEBUG_OUTPUT_SYNCHRONOUS = 0x8242;
 const GL_DEBUG_OUTPUT = 0x92E0;
 
 pub var state: *gameState.Game = undefined;
+var window_width: u32 = 0;
+var window_height: u32 = 0;
 
 fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     glfw.windowHintTyped(.context_version_major, gl_major);
@@ -93,7 +95,10 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     const all = try m.getVideoModes();
     var mode: glfw.VideoMode = _m.*;
     _ = &mode;
-    // mode = all[34];
+    mode = all[34];
+
+    window_width = @intCast(mode.width);
+    window_height = @intCast(mode.height);
     var i: usize = 0;
     while (i < all.len) : (i += 1) {
         const m_ = all[i];
@@ -165,6 +170,8 @@ pub const Game = struct {
         state.* = .{
             .allocator = allocator,
             .window = window,
+            .window_width = window_width,
+            .window_height = window_height,
         };
         try state.initInternals();
         errdefer state.deinit();
@@ -203,7 +210,7 @@ pub const Game = struct {
                 break :main_loop;
             }
             {
-                gl.viewport(0, 0, @intFromFloat(state.ui.screen_size[0]), @intFromFloat(state.ui.screen_size[0]));
+                gl.viewport(0, 0, @intFromFloat(state.ui.screen_size[0]), @intFromFloat(state.ui.screen_size[1]));
             }
 
             if (config.use_tracy) {
