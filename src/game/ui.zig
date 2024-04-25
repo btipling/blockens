@@ -102,15 +102,12 @@ pub fn init(allocator: std.mem.Allocator) *UI {
     ui = allocator.create(UI) catch @panic("OOM");
 
     ui.* = .{
-        .gameFont = zgui.io.addFontFromMemory(pressStart2PFont, std.math.floor(24.0 * 1.1)),
-        .codeFont = zgui.io.addFontFromMemory(robotoMonoFont, std.math.floor(40.0 * 1.1)),
         .texture_script_options = std.ArrayList(data.scriptOption).init(allocator),
         .block_options = std.ArrayList(data.blockOption).init(allocator),
         .chunk_script_options = std.ArrayList(data.chunkScriptOption).init(allocator),
         .world_options = std.ArrayList(data.worldOption).init(allocator),
         .world_chunk_table_data = std.AutoHashMap(chunk.worldPosition, chunkConfig).init(allocator),
     };
-    zgui.io.setDefaultFont(ui.gameFont);
     return ui;
 }
 
@@ -136,6 +133,23 @@ pub fn setScreenSize(self: *UI, window: *glfw.Window) void {
         @floatFromInt(s[0]),
         @floatFromInt(s[1]),
     };
+    const reference_height: f32 = 1080;
+    const base_p2p_font_size: f32 = 12;
+    const base_roboto_font_size: f32 = 18;
+
+    self.gameFont = zgui.io.addFontFromMemory(
+        pressStart2PFont,
+        std.math.floor(
+            base_p2p_font_size * (self.screen_size[1] / reference_height),
+        ),
+    );
+    self.codeFont = zgui.io.addFontFromMemory(
+        robotoMonoFont,
+        std.math.floor(
+            base_roboto_font_size * (self.screen_size[1] / reference_height),
+        ),
+    );
+    zgui.io.setDefaultFont(self.gameFont);
 }
 
 const std = @import("std");
