@@ -38,7 +38,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 }
                 var default_world: i32 = 0;
 
-                centerNext(ww);
+                zgui.newLine();
+                zgui.sameLine(.{
+                    .offset_from_start_x = ww / 2 - game.state.ui.imguiWidth(225),
+                    .spacing = game.state.ui.imguiWidth(10),
+                });
                 var combo: bool = false;
                 var cw: bool = false;
                 for (game.state.ui.world_options.items, 0..) |worldOption, i| {
@@ -115,7 +119,7 @@ fn loadWorld(world_id: i32, name: [ui.max_world_name:0]u8) void {
 fn centerNext(ww: f32) void {
     zgui.newLine();
     zgui.sameLine(.{
-        .offset_from_start_x = ww / 2 - game.state.ui.imguiWidth(250),
+        .offset_from_start_x = ww / 2 - game.state.ui.imguiWidth(150),
         .spacing = game.state.ui.imguiWidth(10),
     });
 }

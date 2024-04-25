@@ -171,8 +171,8 @@ pub fn imguiY(self: *UI, y: f32) f32 {
 
 pub fn imguiButtonDims(self: *UI) [2]f32 {
     return .{
-        self.imguiWidth(500),
-        self.imguiHeight(100),
+        self.imguiWidth(250),
+        self.imguiHeight(75),
     };
 }
 

@@ -23,12 +23,12 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
-            const xPos: f32 = 700.0;
-            const yPos: f32 = 50.0;
+            const xPos: f32 = game.state.ui.imguiX(350);
+            const yPos: f32 = game.state.ui.imguiY(25);
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
-                .w = 2850,
-                .h = 2000,
+                .w = game.state.ui.imguiWidth(1425),
+                .h = game.state.ui.imguiHeight(1500),
             });
             if (zgui.begin("Texture Editor", .{
                 .flags = .{},
@@ -50,29 +50,30 @@ fn drawInput() !void {
     if (zgui.beginChild(
         "script_input",
         .{
-            .w = 2000,
-            .h = 2000,
+            .w = game.state.ui.imguiWidth(1000),
+            .h = game.state.ui.imguiHeight(1500),
             .border = true,
         },
     )) {
+        const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();
         zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
         if (zgui.button("Change texture", .{
-            .w = 450,
-            .h = 100,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try evalTextureFunc();
         }
         zgui.sameLine(.{});
-        if (zgui.button("Save new texture script", .{
-            .w = 650,
-            .h = 100,
+        if (zgui.button("Save new script", .{
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try saveTextureScriptFunc();
         }
         zgui.popStyleVar(.{ .count = 1 });
         zgui.sameLine(.{});
         zgui.pushFont(game.state.ui.codeFont);
-        zgui.pushItemWidth(1000);
+        zgui.pushItemWidth(game.state.ui.imguiWidth(500));
         _ = zgui.inputTextWithHint("Script name", .{
             .buf = @ptrCast(&game.state.ui.texture_name_buf),
             .hint = "block_script",
@@ -80,8 +81,8 @@ fn drawInput() !void {
         zgui.popItemWidth();
         _ = zgui.inputTextMultiline(" ", .{
             .buf = @ptrCast(&game.state.ui.texture_buf),
-            .w = 1984,
-            .h = 1840,
+            .w = game.state.ui.imguiWidth(984),
+            .h = game.state.ui.imguiHeight(1440),
         });
         zgui.popFont();
     }
@@ -89,23 +90,24 @@ fn drawInput() !void {
 }
 
 fn drawScriptList() !void {
+    const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();
     if (zgui.beginChild(
         "Saved scripts",
         .{
-            .w = 850,
-            .h = 1800,
+            .w = game.state.ui.imguiWidth(410),
+            .h = game.state.ui.imguiHeight(1800),
             .border = true,
         },
     )) {
         if (zgui.button("Refresh list", .{
-            .w = 450,
-            .h = 100,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try listTextureScripts();
         }
         _ = zgui.beginListBox("##listbox", .{
-            .w = 800,
-            .h = 1400,
+            .w = game.state.ui.imguiWidth(400),
+            .h = game.state.ui.imguiHeight(700),
         });
         for (game.state.ui.texture_script_options.items) |scriptOption| {
             var buffer: [script.maxLuaScriptNameSize + 10]u8 = undefined;
@@ -128,14 +130,14 @@ fn drawScriptList() !void {
         zgui.endListBox();
         if (game.state.ui.texture_loaded_script_id != 0) {
             if (zgui.button("Update script", .{
-                .w = 450,
-                .h = 100,
+                .w = btn_dms[0],
+                .h = btn_dms[1],
             })) {
                 try updateTextureScriptFunc();
             }
             if (zgui.button("Delete script", .{
-                .w = 450,
-                .h = 100,
+                .w = btn_dms[0],
+                .h = btn_dms[1],
             })) {
                 try deleteTextureScriptFunc();
             }

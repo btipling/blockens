@@ -1,19 +1,3 @@
-const std = @import("std");
-const glfw = @import("zglfw");
-const zgui = @import("zgui");
-const ztracy = @import("ztracy");
-const zopengl = @import("zopengl");
-const config = @import("config");
-const gl = zopengl.bindings;
-const zstbi = @import("zstbi");
-const zmesh = @import("zmesh");
-const cfg = @import("config.zig");
-const gameState = @import("state.zig");
-const blecs = @import("blecs/blecs.zig");
-const input = @import("input/input.zig");
-const thread = @import("thread/thread.zig");
-const ui = @import("ui.zig");
-
 fn framebufferSizeCallback(_: *glfw.Window, width: i32, height: i32) callconv(.C) void {
     std.debug.print("frame buffer resized {d} {d}", .{ width, height });
 }
@@ -266,3 +250,19 @@ pub const Game = struct {
         }
     }
 };
+
+const std = @import("std");
+const glfw = @import("zglfw");
+const zgui = @import("zgui");
+const ztracy = @import("ztracy");
+const zopengl = @import("zopengl");
+const config = @import("config");
+const gl = zopengl.bindings;
+const zstbi = @import("zstbi");
+const zmesh = @import("zmesh");
+const cfg = @import("config.zig");
+const gameState = @import("state.zig");
+const blecs = @import("blecs/blecs.zig");
+const input = @import("input/input.zig");
+const thread = @import("thread/thread.zig");
+const ui = @import("ui.zig");
