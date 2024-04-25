@@ -93,6 +93,8 @@ demo_character_pp_translation: @Vector(4, f32) = @Vector(4, f32){
 load_percentage_lighting_initial: f16 = 0,
 load_percentage_lighting_cross_chunk: f16 = 0,
 
+screen_size: [2]f32 = .{ 0, 0 },
+
 const UI = @This();
 pub var ui: *UI = undefined;
 
@@ -128,9 +130,18 @@ pub fn deinit(allocator: std.mem.Allocator) void {
     allocator.destroy(ui);
 }
 
+pub fn setScreenSize(self: *UI, window: *glfw.Window) void {
+    const s = window.getSize();
+    self.screen_size = .{
+        @floatFromInt(s[0]),
+        @floatFromInt(s[1]),
+    };
+}
+
 const std = @import("std");
 const zgui = @import("zgui");
 const zm = @import("zmath");
+const glfw = @import("zglfw");
 const data = @import("data/data.zig");
 const script = @import("script/script.zig");
 const blecs = @import("blecs/blecs.zig");

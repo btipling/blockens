@@ -175,6 +175,7 @@ pub const Game = struct {
         blecs.init();
         errdefer blecs.ecs.fini(state.world);
 
+        state.ui.setScreenSize(window);
         return .{};
     }
 
