@@ -127,13 +127,14 @@ pub fn deinit(allocator: std.mem.Allocator) void {
     allocator.destroy(ui);
 }
 
+const reference_height: f32 = 1080;
+const reference_width: f32 = 1920;
 pub fn setScreenSize(self: *UI, window: *glfw.Window) void {
     const s = window.getSize();
     self.screen_size = .{
         @floatFromInt(s[0]),
         @floatFromInt(s[1]),
     };
-    const reference_height: f32 = 1080;
     const base_p2p_font_size: f32 = 12;
     const base_roboto_font_size: f32 = 18;
 
@@ -150,6 +151,29 @@ pub fn setScreenSize(self: *UI, window: *glfw.Window) void {
         ),
     );
     zgui.io.setDefaultFont(self.gameFont);
+}
+
+pub fn imguiWidth(self: *UI, w: f32) f32 {
+    return std.math.floor(w * (self.screen_size[0] / reference_width));
+}
+
+pub fn imguiHeight(self: *UI, h: f32) f32 {
+    return std.math.floor(h * (self.screen_size[1] / reference_width));
+}
+
+pub fn imguiX(self: *UI, x: f32) f32 {
+    return std.math.floor(x * (self.screen_size[0] / reference_width));
+}
+
+pub fn imguiY(self: *UI, y: f32) f32 {
+    return std.math.floor(y * (self.screen_size[1] / reference_width));
+}
+
+pub fn imguiButtonDims(self: *UI) [2]f32 {
+    return .{
+        self.imguiWidth(500),
+        self.imguiHeight(100),
+    };
 }
 
 const std = @import("std");

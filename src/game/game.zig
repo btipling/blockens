@@ -92,8 +92,8 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     const _m = try m.getVideoMode();
     const all = try m.getVideoModes();
     var mode: glfw.VideoMode = _m.*;
-    // _ = &mode;
-    mode = all[34];
+    _ = &mode;
+    // mode = all[34];
     var i: usize = 0;
     while (i < all.len) : (i += 1) {
         const m_ = all[i];
