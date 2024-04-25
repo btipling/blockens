@@ -18,12 +18,12 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
-            const xPos: f32 = 50.0;
-            const yPos: f32 = 50.0;
+            const xPos: f32 = game.state.ui.imguiX(25);
+            const yPos: f32 = game.state.ui.imguiY(25);
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
-                .w = 3750,
-                .h = 2200,
+                .w = game.state.ui.imguiWidth(1800),
+                .h = game.state.ui.imguiHeight(1000),
             });
             zgui.setNextItemWidth(-1);
             if (zgui.begin("World Editor", .{
@@ -107,14 +107,15 @@ fn drawWorldOptions() !void {
     if (zgui.beginChild(
         "Saved Worlds",
         .{
-            .w = 510,
-            .h = 2100,
+            .w = game.state.ui.imguiWidth(255),
+            .h = game.state.ui.imguiHeight(900),
             .border = true,
         },
     )) {
+        const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();
         _ = zgui.beginListBox("##listbox", .{
-            .w = 500,
-            .h = 1290,
+            .w = game.state.ui.imguiWidth(250),
+            .h = game.state.ui.imguiHeight(450),
         });
         for (game.state.ui.world_options.items) |worldOption| {
             var buffer: [ui.max_world_name + 10]u8 = undefined;
@@ -132,16 +133,16 @@ fn drawWorldOptions() !void {
             }
         }
         zgui.endListBox();
-        zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
+        zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = game.state.ui.imguiPadding() });
         if (zgui.button("Refresh list", .{
-            .w = 500,
-            .h = 100,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try listWorlds();
         }
         if (zgui.button("Create world", .{
-            .w = 500,
-            .h = 100,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try saveWorld();
             const num_worlds = game.state.ui.world_options.items.len;
@@ -151,7 +152,7 @@ fn drawWorldOptions() !void {
             );
         }
         zgui.pushFont(game.state.ui.codeFont);
-        zgui.pushItemWidth(500);
+        zgui.pushItemWidth(game.state.ui.imguiWidth(250));
         _ = zgui.inputTextWithHint("##Name", .{
             .buf = game.state.ui.world_name_buf[0..],
             .hint = "world name",
@@ -160,27 +161,27 @@ fn drawWorldOptions() !void {
         zgui.popFont();
         if (game.state.ui.world_loaded_id != 0) {
             if (zgui.button("Update world", .{
-                .w = 500,
-                .h = 100,
+                .w = btn_dms[0],
+                .h = btn_dms[1],
             })) {
                 try updateWorld();
             }
             if (zgui.button("Delete world", .{
-                .w = 500,
-                .h = 100,
+                .w = btn_dms[0],
+                .h = btn_dms[1],
             })) {
                 try deleteWorld();
             }
             if (zgui.button("Save chunks", .{
-                .w = 500,
-                .h = 100,
+                .w = btn_dms[0],
+                .h = btn_dms[1],
             })) {
                 try saveChunkDatas();
             }
 
             if (zgui.button("Generate chunks", .{
-                .w = 500,
-                .h = 100,
+                .w = btn_dms[0],
+                .h = btn_dms[1],
             })) {
                 try evalChunksFunc();
             }
@@ -194,8 +195,8 @@ fn drawWorldConfig() !void {
     if (zgui.beginChild(
         "Configure World",
         .{
-            .w = 3250,
-            .h = 2100,
+            .w = game.state.ui.imguiWidth(1800),
+            .h = game.state.ui.imguiHeight(1000),
             .border = true,
         },
     )) {
@@ -210,7 +211,7 @@ fn drawTopDownChunkConfgOptions() !void {
     if (game.state.ui.world_chunk_y == 1) {
         enum_val = .above;
     }
-    zgui.setNextItemWidth(500);
+    zgui.setNextItemWidth(game.state.ui.imguiWidth(250));
     if (zgui.comboFromEnum("select y", &enum_val)) {
         if (game.state.ui.world_chunk_y == 1 and enum_val == .below) {
             game.state.ui.world_chunk_y = 0;
@@ -244,7 +245,10 @@ fn drawChunkConfigPopup() !?updateScriptConfigAt {
             zgui.closeCurrentPopup();
         }
         try listChunkScripts();
-        if (helpers.scriptOptionsListBox(game.state.ui.chunk_script_options, .{ .w = 700 })) |scriptOptionId| {
+        var params: helpers.ScriptOptionsParams = .{
+            .w = game.state.ui.imguiWidth(350),
+        };
+        if (helpers.scriptOptionsListBox(game.state.ui.chunk_script_options, &params)) |scriptOptionId| {
             std.debug.print("selected {d} for chunk at ({d},{d},{d})\n", .{
                 scriptOptionId,
                 game.state.ui.world_current_chunk[0],

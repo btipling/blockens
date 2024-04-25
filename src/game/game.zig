@@ -104,7 +104,7 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     _ = window.setFramebufferSizeCallback(framebufferSizeCallback);
     window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
     glfw.makeContextCurrent(window);
-    glfw.swapInterval(1);
+    glfw.swapInterval(0);
 
     return window;
 }

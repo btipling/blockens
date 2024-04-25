@@ -41,7 +41,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
                 .w = game.state.ui.screen_size[0],
-                .h = game.state.ui.imguiHeight(75),
+                .h = game.state.ui.imguiHeight(50),
             });
             zgui.setNextItemWidth(-1);
             zgui.pushStyleColor4f(.{ .idx = .window_bg, .c = [_]f32{ 1.00, 1.00, 1.00, 0.25 } });

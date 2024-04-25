@@ -158,7 +158,7 @@ pub fn imguiWidth(self: *UI, w: f32) f32 {
 }
 
 pub fn imguiHeight(self: *UI, h: f32) f32 {
-    return std.math.floor(h * (self.screen_size[1] / reference_width));
+    return std.math.floor(h * (self.screen_size[1] / reference_height));
 }
 
 pub fn imguiX(self: *UI, x: f32) f32 {
@@ -166,13 +166,20 @@ pub fn imguiX(self: *UI, x: f32) f32 {
 }
 
 pub fn imguiY(self: *UI, y: f32) f32 {
-    return std.math.floor(y * (self.screen_size[1] / reference_width));
+    return std.math.floor(y * (self.screen_size[1] / reference_height));
 }
 
 pub fn imguiButtonDims(self: *UI) [2]f32 {
     return .{
         self.imguiWidth(250),
-        self.imguiHeight(75),
+        self.imguiHeight(50),
+    };
+}
+
+pub fn imguiPadding(self: *UI) [2]f32 {
+    return .{
+        self.imguiWidth(5),
+        self.imguiHeight(5),
     };
 }
 

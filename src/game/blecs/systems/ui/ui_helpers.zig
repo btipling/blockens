@@ -1,9 +1,11 @@
-const ScriptOptionsParams = struct {
-    w: f32 = 500.0,
-    h: f32 = 900.0,
+pub const ScriptOptionsParams = struct {
+    w: f32 = 0,
+    h: f32 = 0,
 };
 
-pub fn scriptOptionsListBox(scriptOptions: std.ArrayList(data.chunkScriptOption), params: ScriptOptionsParams) ?i32 {
+pub fn scriptOptionsListBox(scriptOptions: std.ArrayList(data.chunkScriptOption), params: *ScriptOptionsParams) ?i32 {
+    if (params.w == 0) params.w = game.state.ui.imguiWidth(250);
+    if (params.h == 0) params.h = game.state.ui.imguiWidth(450);
     var rv: ?i32 = null;
     if (zgui.beginListBox("##chunk_script_options", .{
         .w = params.w,

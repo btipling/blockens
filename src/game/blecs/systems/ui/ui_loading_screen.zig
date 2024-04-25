@@ -14,11 +14,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
             const xPos: f32 = game.state.ui.imguiX(660);
-            const yPos: f32 = game.state.ui.imguiY(540);
+            const yPos: f32 = game.state.ui.imguiY(300);
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
                 .w = game.state.ui.imguiWidth(600),
-                .h = game.state.ui.imguiHeight(300),
+                .h = game.state.ui.imguiHeight(200),
             });
             if (zgui.begin("#LoadingScreen", .{
                 .flags = zgui.WindowFlags.no_decoration,

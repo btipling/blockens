@@ -23,10 +23,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
             if (zgui.beginMainMenuBar()) {
-                zgui.pushStyleVar2f(.{ .idx = .item_spacing, .v = [2]f32{
-                    game.state.ui.imguiWidth(20),
-                    game.state.ui.imguiHeight(20),
-                } });
+                zgui.pushStyleVar2f(.{ .idx = .item_spacing, .v = game.state.ui.imguiPadding() });
                 if (zgui.beginMenu("Game", true)) {
                     if (zgui.menuItem("Play", .{})) {
                         screen_helpers.showGameScreen();

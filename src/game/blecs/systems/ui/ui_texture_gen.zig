@@ -28,7 +28,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
                 .w = game.state.ui.imguiWidth(1425),
-                .h = game.state.ui.imguiHeight(1500),
+                .h = game.state.ui.imguiHeight(1000),
             });
             if (zgui.begin("Texture Editor", .{
                 .flags = .{},
@@ -51,7 +51,7 @@ fn drawInput() !void {
         "script_input",
         .{
             .w = game.state.ui.imguiWidth(1000),
-            .h = game.state.ui.imguiHeight(1500),
+            .h = game.state.ui.imguiHeight(1000),
             .border = true,
         },
     )) {
@@ -82,7 +82,7 @@ fn drawInput() !void {
         _ = zgui.inputTextMultiline(" ", .{
             .buf = @ptrCast(&game.state.ui.texture_buf),
             .w = game.state.ui.imguiWidth(984),
-            .h = game.state.ui.imguiHeight(1440),
+            .h = game.state.ui.imguiHeight(1000),
         });
         zgui.popFont();
     }
@@ -95,7 +95,7 @@ fn drawScriptList() !void {
         "Saved scripts",
         .{
             .w = game.state.ui.imguiWidth(410),
-            .h = game.state.ui.imguiHeight(1800),
+            .h = game.state.ui.imguiHeight(1000),
             .border = true,
         },
     )) {
