@@ -98,7 +98,7 @@ screen_size: [2]f32 = .{ 0, 0 },
 const UI = @This();
 pub var ui: *UI = undefined;
 
-pub fn init(allocator: std.mem.Allocator) *UI {
+pub fn init(allocator: std.mem.Allocator) void {
     ui = allocator.create(UI) catch @panic("OOM");
 
     ui.* = .{
@@ -108,7 +108,6 @@ pub fn init(allocator: std.mem.Allocator) *UI {
         .world_options = std.ArrayList(data.worldOption).init(allocator),
         .world_chunk_table_data = std.AutoHashMap(chunk.worldPosition, chunkConfig).init(allocator),
     };
-    return ui;
 }
 
 pub fn deinit(allocator: std.mem.Allocator) void {
@@ -129,6 +128,7 @@ pub fn deinit(allocator: std.mem.Allocator) void {
 
 const reference_height: f32 = 1080;
 const reference_width: f32 = 1920;
+
 pub fn setScreenSize(self: *UI, window: *glfw.Window) void {
     const s = window.getSize();
     self.screen_size = .{

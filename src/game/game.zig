@@ -12,6 +12,7 @@ const gameState = @import("state.zig");
 const blecs = @import("blecs/blecs.zig");
 const input = @import("input/input.zig");
 const thread = @import("thread/thread.zig");
+const ui = @import("ui.zig");
 
 fn framebufferSizeCallback(_: *glfw.Window, width: i32, height: i32) callconv(.C) void {
     std.debug.print("frame buffer resized {d} {d}", .{ width, height });
@@ -120,6 +121,7 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
     glfw.makeContextCurrent(window);
     glfw.swapInterval(1);
+
     return window;
 }
 
@@ -158,6 +160,11 @@ pub const Game = struct {
 
         zgui.init(allocator);
         errdefer zgui.deinit();
+
+        ui.init(allocator);
+        errdefer ui.deinit(allocator);
+        ui.ui.setScreenSize(window);
+
         const glsl_version: [:0]const u8 = "#version 450";
         zgui.backend.initWithGlSlVersion(window, glsl_version);
         zmesh.init(allocator);
@@ -172,14 +179,13 @@ pub const Game = struct {
             .window = window,
             .window_width = window_width,
             .window_height = window_height,
+            .ui = ui.ui,
         };
         try state.initInternals();
         errdefer state.deinit();
 
         blecs.init();
         errdefer blecs.ecs.fini(state.world);
-
-        state.ui.setScreenSize(window);
         return .{};
     }
 

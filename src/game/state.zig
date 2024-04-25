@@ -45,8 +45,6 @@ pub const Game = struct {
     quit: bool = false,
 
     pub fn initInternals(self: *Game) !void {
-        self.ui = ui.init(self.allocator);
-        errdefer ui.deinit(self.allocator);
         self.gfx = gfx.init(self.allocator);
         errdefer gfx.deinit(self.allocator);
         self.blocks = block.init(self.allocator);
