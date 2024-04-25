@@ -23,7 +23,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
             if (zgui.beginMainMenuBar()) {
-                zgui.pushStyleVar2f(.{ .idx = .item_spacing, .v = [2]f32{ 20.0, 20.0 } });
+                zgui.pushStyleVar2f(.{ .idx = .item_spacing, .v = game.state.ui.imguiPadding() });
                 if (zgui.beginMenu("Game", true)) {
                     if (zgui.menuItem("Play", .{})) {
                         screen_helpers.showGameScreen();
@@ -79,7 +79,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     zgui.endMenu();
                 }
                 const ww = zgui.getWindowWidth();
-                zgui.sameLine(.{ .offset_from_start_x = ww - 50.0 });
+                zgui.sameLine(.{ .offset_from_start_x = ww - game.state.ui.imguiWidth(50) });
                 if (zgui.menuItem("X", .{})) {
                     game.state.quit = true;
                 }

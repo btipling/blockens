@@ -93,23 +93,21 @@ demo_character_pp_translation: @Vector(4, f32) = @Vector(4, f32){
 load_percentage_lighting_initial: f16 = 0,
 load_percentage_lighting_cross_chunk: f16 = 0,
 
+screen_size: [2]f32 = .{ 0, 0 },
+
 const UI = @This();
 pub var ui: *UI = undefined;
 
-pub fn init(allocator: std.mem.Allocator) *UI {
+pub fn init(allocator: std.mem.Allocator) void {
     ui = allocator.create(UI) catch @panic("OOM");
 
     ui.* = .{
-        .gameFont = zgui.io.addFontFromMemory(pressStart2PFont, std.math.floor(24.0 * 1.1)),
-        .codeFont = zgui.io.addFontFromMemory(robotoMonoFont, std.math.floor(40.0 * 1.1)),
         .texture_script_options = std.ArrayList(data.scriptOption).init(allocator),
         .block_options = std.ArrayList(data.blockOption).init(allocator),
         .chunk_script_options = std.ArrayList(data.chunkScriptOption).init(allocator),
         .world_options = std.ArrayList(data.worldOption).init(allocator),
         .world_chunk_table_data = std.AutoHashMap(chunk.worldPosition, chunkConfig).init(allocator),
     };
-    zgui.io.setDefaultFont(ui.gameFont);
-    return ui;
 }
 
 pub fn deinit(allocator: std.mem.Allocator) void {
@@ -128,9 +126,67 @@ pub fn deinit(allocator: std.mem.Allocator) void {
     allocator.destroy(ui);
 }
 
+const reference_height: f32 = 1080;
+const reference_width: f32 = 1920;
+
+pub fn setScreenSize(self: *UI, window: *glfw.Window) void {
+    const s = window.getSize();
+    self.screen_size = .{
+        @floatFromInt(s[0]),
+        @floatFromInt(s[1]),
+    };
+    const base_p2p_font_size: f32 = 12;
+    const base_roboto_font_size: f32 = 18;
+
+    self.gameFont = zgui.io.addFontFromMemory(
+        pressStart2PFont,
+        std.math.floor(
+            base_p2p_font_size * (self.screen_size[1] / reference_height),
+        ),
+    );
+    self.codeFont = zgui.io.addFontFromMemory(
+        robotoMonoFont,
+        std.math.floor(
+            base_roboto_font_size * (self.screen_size[1] / reference_height),
+        ),
+    );
+    zgui.io.setDefaultFont(self.gameFont);
+}
+
+pub fn imguiWidth(self: *UI, w: f32) f32 {
+    return std.math.floor(w * (self.screen_size[0] / reference_width));
+}
+
+pub fn imguiHeight(self: *UI, h: f32) f32 {
+    return std.math.floor(h * (self.screen_size[1] / reference_height));
+}
+
+pub fn imguiX(self: *UI, x: f32) f32 {
+    return std.math.floor(x * (self.screen_size[0] / reference_width));
+}
+
+pub fn imguiY(self: *UI, y: f32) f32 {
+    return std.math.floor(y * (self.screen_size[1] / reference_height));
+}
+
+pub fn imguiButtonDims(self: *UI) [2]f32 {
+    return .{
+        self.imguiWidth(250),
+        self.imguiHeight(50),
+    };
+}
+
+pub fn imguiPadding(self: *UI) [2]f32 {
+    return .{
+        self.imguiWidth(5),
+        self.imguiHeight(5),
+    };
+}
+
 const std = @import("std");
 const zgui = @import("zgui");
 const zm = @import("zmath");
+const glfw = @import("zglfw");
 const data = @import("data/data.zig");
 const script = @import("script/script.zig");
 const blecs = @import("blecs/blecs.zig");

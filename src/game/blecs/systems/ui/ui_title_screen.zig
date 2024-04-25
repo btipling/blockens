@@ -13,16 +13,17 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
-            const xPos: f32 = 1500.0;
-            const yPos: f32 = 800.0;
+            const xPos: f32 = game.state.ui.imguiX(660);
+            const yPos: f32 = game.state.ui.imguiY(300);
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
-                .w = 800,
-                .h = 500,
+                .w = game.state.ui.imguiWidth(600),
+                .h = game.state.ui.imguiHeight(300),
             });
             if (zgui.begin("#TitleScreen", .{
                 .flags = zgui.WindowFlags.no_decoration,
             })) {
+                const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();
                 zgui.text("Blockens!", .{});
                 const ww = zgui.getWindowWidth();
                 zgui.newLine();
@@ -30,14 +31,18 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
                 centerNext(ww);
                 if (zgui.button("Settings", .{
-                    .w = 500,
-                    .h = 100,
+                    .w = btn_dms[0],
+                    .h = btn_dms[1],
                 })) {
                     screen_helpers.showWorldEditor();
                 }
                 var default_world: i32 = 0;
 
-                centerNext(ww);
+                zgui.newLine();
+                zgui.sameLine(.{
+                    .offset_from_start_x = ww / 2 - game.state.ui.imguiWidth(225),
+                    .spacing = game.state.ui.imguiWidth(10),
+                });
                 var combo: bool = false;
                 var cw: bool = false;
                 for (game.state.ui.world_options.items, 0..) |worldOption, i| {
@@ -80,8 +85,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
                 centerNext(ww);
                 if (zgui.button("Play", .{
-                    .w = 500,
-                    .h = 100,
+                    .w = btn_dms[0],
+                    .h = btn_dms[1],
                 })) {
                     if (game.state.ui.world_loaded_id == 0) game.state.ui.world_loaded_id = default_world;
                     const loadedGame = game.state.ui.world_chunk_table_data.count() > 0;
@@ -94,8 +99,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 }
                 centerNext(ww);
                 if (zgui.button("Exit", .{
-                    .w = 500,
-                    .h = 100,
+                    .w = btn_dms[0],
+                    .h = btn_dms[1],
                 })) {
                     game.state.quit = true;
                 }
@@ -114,8 +119,8 @@ fn loadWorld(world_id: i32, name: [ui.max_world_name:0]u8) void {
 fn centerNext(ww: f32) void {
     zgui.newLine();
     zgui.sameLine(.{
-        .offset_from_start_x = ww / 2 - 250,
-        .spacing = 20,
+        .offset_from_start_x = ww / 2 - game.state.ui.imguiWidth(150),
+        .spacing = game.state.ui.imguiWidth(10),
     });
 }
 

@@ -1,18 +1,3 @@
-const std = @import("std");
-const glfw = @import("zglfw");
-const zgui = @import("zgui");
-const ztracy = @import("ztracy");
-const zopengl = @import("zopengl");
-const config = @import("config");
-const gl = zopengl.bindings;
-const zstbi = @import("zstbi");
-const zmesh = @import("zmesh");
-const cfg = @import("config.zig");
-const gameState = @import("state.zig");
-const blecs = @import("blecs/blecs.zig");
-const input = @import("input/input.zig");
-const thread = @import("thread/thread.zig");
-
 fn framebufferSizeCallback(_: *glfw.Window, width: i32, height: i32) callconv(.C) void {
     std.debug.print("frame buffer resized {d} {d}", .{ width, height });
 }
@@ -91,23 +76,27 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     glfw.windowHintTyped(.maximized, false);
     glfw.windowHintTyped(.decorated, true);
     const m = glfw.Monitor.getPrimary().?;
-    const mode = try m.getVideoMode();
+    const _m = try m.getVideoMode();
+    const all = try m.getVideoModes();
+    var mode: glfw.VideoMode = _m.*;
+    _ = &mode;
+    mode = all[34];
+
     window_width = @intCast(mode.width);
     window_height = @intCast(mode.height);
-    // const all = try m.getVideoModes();
-    // var i: usize = 0;
-    // while (i < all.len) : (i += 1) {
-    //     const m_ = all[i];
-    //     const h = m_.height;
-    //     const w = m_.width;
-    //     std.debug.print("{d} {d} {d}\n", .{ i, h, w });
-    // }
-    std.debug.print("width: {d} height: {d}\n", .{ window_width, window_height });
+    var i: usize = 0;
+    while (i < all.len) : (i += 1) {
+        const m_ = all[i];
+        const h = m_.height;
+        const w = m_.width;
+        std.debug.print("{d} {d} {d}\n", .{ i, h, w });
+    }
     const window = glfw.Window.create(
         mode.width,
         mode.height,
         cfg.game_name,
-        m,
+        null,
+        // m,
     ) catch |err| {
         std.log.err("Failed to create game window.", .{});
         return err;
@@ -115,7 +104,8 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     _ = window.setFramebufferSizeCallback(framebufferSizeCallback);
     window.setInputMode(glfw.InputMode.cursor, glfw.Cursor.Mode.disabled);
     glfw.makeContextCurrent(window);
-    glfw.swapInterval(1);
+    glfw.swapInterval(0);
+
     return window;
 }
 
@@ -154,6 +144,11 @@ pub const Game = struct {
 
         zgui.init(allocator);
         errdefer zgui.deinit();
+
+        ui.init(allocator);
+        errdefer ui.deinit(allocator);
+        ui.ui.setScreenSize(window);
+
         const glsl_version: [:0]const u8 = "#version 450";
         zgui.backend.initWithGlSlVersion(window, glsl_version);
         zmesh.init(allocator);
@@ -168,13 +163,13 @@ pub const Game = struct {
             .window = window,
             .window_width = window_width,
             .window_height = window_height,
+            .ui = ui.ui,
         };
         try state.initInternals();
         errdefer state.deinit();
 
         blecs.init();
         errdefer blecs.ecs.fini(state.world);
-
         return .{};
     }
 
@@ -205,7 +200,7 @@ pub const Game = struct {
                 break :main_loop;
             }
             {
-                gl.viewport(0, 0, @intCast(window_width), @intCast(window_height));
+                gl.viewport(0, 0, @intFromFloat(state.ui.screen_size[0]), @intFromFloat(state.ui.screen_size[1]));
             }
 
             if (config.use_tracy) {
@@ -255,3 +250,19 @@ pub const Game = struct {
         }
     }
 };
+
+const std = @import("std");
+const glfw = @import("zglfw");
+const zgui = @import("zgui");
+const ztracy = @import("ztracy");
+const zopengl = @import("zopengl");
+const config = @import("config");
+const gl = zopengl.bindings;
+const zstbi = @import("zstbi");
+const zmesh = @import("zmesh");
+const cfg = @import("config.zig");
+const gameState = @import("state.zig");
+const blecs = @import("blecs/blecs.zig");
+const input = @import("input/input.zig");
+const thread = @import("thread/thread.zig");
+const ui = @import("ui.zig");
