@@ -40,8 +40,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const yPos: f32 = 0;
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
-                .w = @floatFromInt(game.state.window_width),
-                .h = 75,
+                .w = game.state.ui.screen_size[0],
+                .h = game.state.ui.imguiHeight(75),
             });
             zgui.setNextItemWidth(-1);
             zgui.pushStyleColor4f(.{ .idx = .window_bg, .c = [_]f32{ 1.00, 1.00, 1.00, 0.25 } });
