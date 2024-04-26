@@ -13,12 +13,12 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
-            const xPos: f32 = 700.0;
-            const yPos: f32 = 50.0;
+            const xPos: f32 = game.state.ui.imguiX(350);
+            const yPos: f32 = game.state.ui.imguiY(25);
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
-                .w = 2850,
-                .h = 2000,
+                .w = game.state.ui.imguiWidth(1425),
+                .h = game.state.ui.imguiHeight(1000),
             });
             if (zgui.begin("Block Editor", .{
                 .flags = .{},
@@ -169,8 +169,8 @@ fn drawBlockOptions() !void {
     if (zgui.beginChild(
         "Saved Blocks",
         .{
-            .w = 850,
-            .h = 1800,
+            .w = game.state.ui.imguiWidth(425),
+            .h = game.state.ui.imguiHeight(950),
             .border = true,
         },
     )) {
@@ -184,8 +184,8 @@ fn drawBlockConfig() !void {
     if (zgui.beginChild(
         "Configure Block",
         .{
-            .w = 1800,
-            .h = 1800,
+            .w = game.state.ui.imguiWidth(900),
+            .h = game.state.ui.imguiHeight(950),
             .border = true,
         },
     )) {
@@ -210,31 +210,32 @@ fn drawBlockConfig() !void {
 }
 
 fn drawBlockEditor() !void {
+    const btn_dims: [2]f32 = game.state.ui.imguiButtonDims();
     if (zgui.beginChild(
         "Configure Block",
         .{
-            .w = 1800,
-            .h = 1800,
+            .w = game.state.ui.imguiWidth(900),
+            .h = game.state.ui.imguiHeight(950),
             .border = true,
         },
     )) {
-        zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
+        zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = game.state.ui.imguiPadding() });
         if (zgui.button("Update block", .{
-            .w = 500,
-            .h = 100,
+            .w = btn_dims[0],
+            .h = btn_dims[1],
         })) {
             try updateBlock();
         }
         zgui.popStyleVar(.{ .count = 1 });
         zgui.pushFont(game.state.ui.codeFont);
-        zgui.pushItemWidth(400);
+        zgui.pushItemWidth(game.state.ui.imguiWidth(200));
         _ = zgui.inputTextWithHint("Name", .{
             .buf = game.state.ui.block_create_name_buf[0..],
             .hint = "block name",
         });
         if (zgui.button("Delete block", .{
-            .w = 450,
-            .h = 100,
+            .w = btn_dims[0],
+            .h = btn_dims[1],
         })) {
             try deleteBlock();
         }
@@ -242,8 +243,8 @@ fn drawBlockEditor() !void {
         zgui.popFont();
         zgui.text("Select a texture", .{});
         _ = zgui.beginListBox("##listbox", .{
-            .w = 800,
-            .h = 1400,
+            .w = game.state.ui.imguiWidth(400),
+            .h = game.state.ui.imguiHeight(700),
         });
         for (game.state.ui.texture_script_options.items) |scriptOption| {
             var buffer: [script.maxLuaScriptNameSize + 10]u8 = undefined;
@@ -266,23 +267,24 @@ fn drawBlockEditor() !void {
 }
 
 fn drawBlockList() !void {
+    const btn_dims: [2]f32 = game.state.ui.imguiButtonDims();
     if (zgui.beginChild(
         "Blocks",
         .{
-            .w = 850,
-            .h = 1450,
+            .w = game.state.ui.imguiWidth(425),
+            .h = game.state.ui.imguiHeight(625),
             .border = false,
         },
     )) {
         if (zgui.button("Refresh list", .{
-            .w = 450,
-            .h = 100,
+            .w = btn_dims[0],
+            .h = btn_dims[1],
         })) {
             try listBlocks();
         }
         _ = zgui.beginListBox("##listbox", .{
-            .w = 800,
-            .h = 1400,
+            .w = game.state.ui.imguiWidth(400),
+            .h = game.state.ui.imguiHeight(450),
         });
 
         for (game.state.ui.block_options.items) |blockOption| {
@@ -303,14 +305,14 @@ fn drawBlockList() !void {
         zgui.endListBox();
         if (game.state.ui.block_loaded_block_id != 0) {
             if (zgui.button("Update block", .{
-                .w = 450,
-                .h = 100,
+                .w = btn_dims[0],
+                .h = btn_dims[1],
             })) {
                 try updateBlock();
             }
             if (zgui.button("Delete block", .{
-                .w = 450,
-                .h = 100,
+                .w = btn_dims[0],
+                .h = btn_dims[1],
             })) {
                 try deleteBlock();
             }
@@ -320,24 +322,25 @@ fn drawBlockList() !void {
 }
 
 fn drawCreateForm() !void {
+    const btn_dims: [2]f32 = game.state.ui.imguiButtonDims();
     if (zgui.beginChild(
         "Create Block",
         .{
-            .w = 850,
-            .h = 1800,
+            .w = game.state.ui.imguiWidth(425),
+            .h = game.state.ui.imguiHeight(250),
             .border = false,
         },
     )) {
-        zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
+        zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = game.state.ui.imguiPadding() });
         if (zgui.button("Create block", .{
-            .w = 500,
-            .h = 100,
+            .w = btn_dims[0],
+            .h = btn_dims[1],
         })) {
             try saveBlock();
         }
         zgui.popStyleVar(.{ .count = 1 });
         zgui.pushFont(game.state.ui.codeFont);
-        zgui.pushItemWidth(400);
+        zgui.pushItemWidth(game.state.ui.imguiWidth(200));
         _ = zgui.inputTextWithHint("Name", .{
             .buf = game.state.ui.block_create_name_buf[0..],
             .hint = "block name",

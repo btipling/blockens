@@ -79,7 +79,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     zgui.endMenu();
                 }
                 const ww = zgui.getWindowWidth();
-                zgui.sameLine(.{ .offset_from_start_x = ww - game.state.ui.imguiWidth(50) });
+                zgui.sameLine(.{ .offset_from_start_x = ww - game.state.ui.imguiWidth(30) });
                 if (zgui.menuItem("X", .{})) {
                     game.state.quit = true;
                 }
