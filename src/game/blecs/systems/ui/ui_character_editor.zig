@@ -25,12 +25,12 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
-            const xPos: f32 = 2200.0;
-            const yPos: f32 = 50.0;
+            const xPos: f32 = game.state.ui.imguiX(1100);
+            const yPos: f32 = game.state.ui.imguiY(25);
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
-                .w = 1600,
-                .h = 2000,
+                .w = game.state.ui.imguiWidth(800),
+                .h = game.state.ui.imguiHeight(1000),
             });
             zgui.setNextItemWidth(-1);
             if (zgui.begin("Character Designer", .{
@@ -49,36 +49,37 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 }
 
 fn drawControls() !void {
+    const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();
     if (zgui.beginChild(
-        "Saved Worlds",
+        "Controls",
         .{
-            .w = 610,
-            .h = 2100,
+            .w = game.state.ui.imguiWidth(305),
+            .h = game.state.ui.imguiHeight(900),
             .border = true,
         },
     )) {
-        zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
+        zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = game.state.ui.imguiPadding() });
         if (zgui.button("Generate character", .{
-            .w = 600,
-            .h = 100,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try generateCharacter();
         }
         if (zgui.button("Toggle walking", .{
-            .w = 600,
-            .h = 100,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try toggleWalking();
         }
         if (zgui.button("Toggle Bounding Box", .{
-            .w = 600,
-            .h = 100,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try toggleBoundingBox();
         }
         if (zgui.button("Toggle Wireframe", .{
-            .w = 600,
-            .h = 100,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             toggleWireframe();
         }
