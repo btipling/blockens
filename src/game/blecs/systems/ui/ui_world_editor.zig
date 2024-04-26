@@ -348,7 +348,10 @@ fn drawChunkConfigColumn(p: @Vector(4, f32), w: f32, h: f32) !void {
             pmin = zgui.getCursorScreenPos();
             const yStart = pmin[1] - h;
             pmin[1] = yStart;
-            pmax = [2]f32{ pmin[0] + 50, yStart + 50 };
+            pmax = [2]f32{
+                pmin[0] + game.state.ui.imguiWidth(25),
+                yStart + game.state.ui.imguiHeight(25),
+            };
             dl.addRectFilled(.{ .pmin = pmin, .pmax = pmax, .col = ci.col });
             if (hovering and zgui.beginTooltip()) {
                 zgui.text("{s}", .{ci.name[0.. :0]});
@@ -359,9 +362,12 @@ fn drawChunkConfigColumn(p: @Vector(4, f32), w: f32, h: f32) !void {
 }
 
 fn drawTopDownChunkConfig() !void {
-    const colWidth: f32 = 1500 / config.worldChunkDims;
+    const colWidth: f32 = game.state.ui.imguiWidth(750) / config.worldChunkDims;
     if (zgui.beginTable("chunks", .{
-        .outer_size = .{ 1500, 1500 },
+        .outer_size = .{
+            game.state.ui.imguiWidth(750),
+            game.state.ui.imguiHeight(750),
+        },
         .column = config.worldChunkDims + 1,
     })) {
         zgui.tableSetupColumn("z, x", .{});
