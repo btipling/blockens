@@ -80,10 +80,9 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     const all = try m.getVideoModes();
     var mode: glfw.VideoMode = _m.*;
     _ = &mode;
-    mode = all[34];
+    // mode = all[34];
+    mode = all[53];
 
-    window_width = @intCast(mode.width);
-    window_height = @intCast(mode.height);
     var i: usize = 0;
     while (i < all.len) : (i += 1) {
         const m_ = all[i];
@@ -161,8 +160,6 @@ pub const Game = struct {
         state.* = .{
             .allocator = allocator,
             .window = window,
-            .window_width = window_width,
-            .window_height = window_height,
             .ui = ui.ui,
         };
         try state.initInternals();

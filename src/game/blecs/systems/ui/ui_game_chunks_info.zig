@@ -41,7 +41,10 @@ fn showChunkList() !void {
                 .resizable = true,
             },
             .column = 4,
-            .outer_size = .{ 2000, 500 },
+            .outer_size = .{
+                game.state.ui.imguiWidth(1000),
+                game.state.ui.imguiHeight(250),
+            },
         },
     )) {
         const world = game.state.world;
