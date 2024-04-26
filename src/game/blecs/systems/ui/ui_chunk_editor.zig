@@ -13,12 +13,12 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
-            const xPos: f32 = 1200.0;
-            const yPos: f32 = 50.0;
+            const xPos: f32 = game.state.ui.imguiX(600);
+            const yPos: f32 = game.state.ui.imguiY(25);
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
-                .w = 2600,
-                .h = 2000,
+                .w = game.state.ui.imguiWidth(1300),
+                .h = game.state.ui.imguiHeight(1000),
             });
             if (zgui.begin("Chunk Editor", .{
                 .flags = .{},
@@ -37,30 +37,31 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 }
 
 fn drawControls() !void {
+    const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();
     if (zgui.beginChild(
-        "Create World",
+        "Create Chunk",
         .{
-            .w = 700,
-            .h = 1950,
+            .w = game.state.ui.imguiWidth(350),
+            .h = game.state.ui.imguiHeight(975),
             .border = false,
         },
     )) {
-        zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = [2]f32{ 10.0, 10.0 } });
+        zgui.pushStyleVar2f(.{ .idx = .frame_padding, .v = game.state.ui.imguiPadding() });
         if (zgui.button("Generate chunk", .{
-            .w = 500,
-            .h = 75,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try evalChunkFunc();
         }
         if (zgui.button("Toggle wireframe", .{
-            .w = 500,
-            .h = 75,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             toggleWireframe();
         }
         zgui.text("Chunk xyz:", .{});
         zgui.sameLine(.{});
-        zgui.pushItemWidth(75);
+        zgui.pushItemWidth(game.state.ui.imguiWidth(35));
         _ = zgui.inputTextWithHint("##chunkXPos", .{
             .buf = game.state.ui.chunk_x_buf[0..],
             .hint = "x",
@@ -77,8 +78,8 @@ fn drawControls() !void {
         });
         zgui.popItemWidth();
         if (zgui.button("Generate to world", .{
-            .w = 500,
-            .h = 75,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try evalWorldChunkFunc();
         }
@@ -89,7 +90,7 @@ fn drawControls() !void {
             },
         })) {}
         zgui.pushFont(game.state.ui.codeFont);
-        zgui.pushItemWidth(500);
+        zgui.pushItemWidth(game.state.ui.imguiWidth(250));
         _ = zgui.inputTextWithHint("##script name", .{
             .buf = game.state.ui.chunk_name_buf[0..],
             .hint = "chunk_script",
@@ -97,26 +98,26 @@ fn drawControls() !void {
         zgui.popItemWidth();
         zgui.popFont();
         if (zgui.button("Create script", .{
-            .w = 500,
-            .h = 75,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try saveChunkScriptFunc();
         }
         if (zgui.button("Update script", .{
-            .w = 500,
-            .h = 75,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try updateChunkScriptFunc();
         }
         if (zgui.button("Delete script", .{
-            .w = 500,
-            .h = 75,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try deleteChunkScriptFunc();
         }
         if (zgui.button("Refresh list", .{
-            .w = 500,
-            .h = 100,
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             try listChunkScripts();
         }
@@ -133,16 +134,16 @@ fn drawInput() !void {
     if (zgui.beginChild(
         "script_input",
         .{
-            .w = 1800,
-            .h = 1950,
+            .w = game.state.ui.imguiWidth(900),
+            .h = game.state.ui.imguiHeight(975),
             .border = true,
         },
     )) {
         zgui.pushFont(game.state.ui.codeFont);
         _ = zgui.inputTextMultiline(" ", .{
             .buf = game.state.ui.chunk_buf[0..],
-            .w = 1784,
-            .h = 1900,
+            .w = game.state.ui.imguiWidth(884),
+            .h = game.state.ui.imguiHeight(950),
         });
         zgui.popFont();
     }
