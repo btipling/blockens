@@ -34,8 +34,8 @@ pub fn scriptOptionsListBox(scriptOptions: std.ArrayList(data.chunkScriptOption)
             var dl = zgui.getWindowDrawList();
             const pmin = zgui.getCursorScreenPos();
             const pmax = [2]f32{
-                pmin[0] + game.state.ui.imguiWidth(17),
-                pmin[1] + game.state.ui.imguiHeight(15),
+                pmin[0] + game.state.ui.imguiWidth(10),
+                pmin[1] + game.state.ui.imguiHeight(10),
             };
             const col = zgui.colorConvertFloat4ToU32(.{ scriptOption.color[0], scriptOption.color[1], scriptOption.color[2], 1.0 });
             dl.addRectFilled(.{ .pmin = pmin, .pmax = pmax, .col = col });

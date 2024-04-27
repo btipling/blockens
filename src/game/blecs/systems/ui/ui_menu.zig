@@ -25,8 +25,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (zgui.beginMainMenuBar()) {
                 zgui.pushStyleVar2f(.{ .idx = .item_spacing, .v = game.state.ui.imguiPadding() });
                 if (zgui.beginMenu("Game", true)) {
-                    if (zgui.menuItem("Play", .{})) {
-                        screen_helpers.showGameScreen();
+                    if (zgui.menuItem("Title screen", .{})) {
+                        screen_helpers.showTitleScreen();
                     }
                     if (zgui.menuItem("Exit", .{})) {
                         game.state.quit = true;

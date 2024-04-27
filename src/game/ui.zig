@@ -1,7 +1,7 @@
 pub const max_world_name = 20;
 
-const pressStart2PFont = @embedFile("assets/fonts/PressStart2P/PressStart2P-Regular.ttf");
 const robotoMonoFont = @embedFile("assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
+const proggyCleanFont = @embedFile("assets/fonts/ProggyClean/ProggyClean.ttf");
 
 pub const chunkConfig = struct {
     id: i32 = 0, // from sqlite
@@ -141,13 +141,13 @@ pub fn setScreenSize(self: *UI, window: *glfw.Window) void {
         @floatFromInt(s[0]),
         @floatFromInt(s[1]),
     };
-    const base_p2p_font_size: f32 = 12;
+    const base_proggy_clean_font_size: f32 = 14;
     const base_roboto_font_size: f32 = 18;
 
     self.gameFont = zgui.io.addFontFromMemory(
-        pressStart2PFont,
+        proggyCleanFont,
         std.math.floor(
-            base_p2p_font_size * (self.screen_size[1] / reference_height),
+            base_proggy_clean_font_size * (self.screen_size[1] / reference_height),
         ),
     );
     self.codeFont = zgui.io.addFontFromMemory(

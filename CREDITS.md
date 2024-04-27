@@ -34,3 +34,17 @@ MIT License
 Copyright (c) 2023 nDimensional Studios
 
 Used for sqlite
+
+## Fonts
+
+### ProggyClean.ttf
+
+MIT License
+
+Copyright Tristan Grimmer
+
+### Roboto Mono
+
+Copyright Christian Robertson
+
+Apache License
