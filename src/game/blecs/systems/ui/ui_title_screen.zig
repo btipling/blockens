@@ -41,26 +41,26 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 centerNext(ww);
                 var combo: bool = false;
                 var cw: bool = false;
-                for (game.state.ui.world_options.items, 0..) |worldOption, i| {
+                for (game.state.ui.world_options.items, 0..) |world_opt, i| {
                     var buffer: [ui.max_world_name + 10]u8 = undefined;
-                    const selectableName = std.fmt.bufPrint(
+                    const selectable_name = std.fmt.bufPrint(
                         &buffer,
                         "{d}: {s}",
-                        .{ worldOption.id, worldOption.name },
+                        .{ world_opt.id, world_opt.name },
                     ) catch unreachable;
                     var name: [ui.max_world_name:0]u8 = undefined;
                     for (name, 0..) |_, ii| {
-                        if (selectableName.len <= ii) {
+                        if (selectable_name.len <= ii) {
                             name[ii] = 0;
                             break;
                         }
-                        name[ii] = selectableName[ii];
+                        name[ii] = selectable_name[ii];
                     }
                     const loaded_world_id = game.state.ui.world_loaded_id;
                     if (i == 0) {
                         var preview_name = &game.state.ui.world_loaded_name;
                         if (loaded_world_id == 0 or loaded_world_id == 1) {
-                            default_world = worldOption.id;
+                            default_world = world_opt.id;
                             game.state.ui.world_loaded_id = default_world;
                             preview_name = &name;
                         }
@@ -71,9 +71,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         cw = zgui.beginPopupContextWindow();
                     }
                     if (combo) {
-                        const selected = worldOption.id == loaded_world_id;
+                        const selected = world_opt.id == loaded_world_id;
                         if (zgui.selectable(&name, .{ .selected = selected })) {
-                            loadWorld(worldOption.id, name);
+                            loadWorld(world_opt.id, name);
                         }
                     }
                 }
