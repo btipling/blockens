@@ -28,6 +28,12 @@ block_emits_light: bool = false,
 block_transparent: bool = false,
 block_loaded_block_id: u8 = 0,
 
+display_settings_fullscreen: bool = false,
+display_settings_maximized: bool = true,
+display_settings_decorated: bool = false,
+display_settings_width: i32 = 0,
+display_settings_height: i32 = 0,
+
 chunk_name_buf: [script.maxLuaScriptNameSize]u8 = std.mem.zeroes([script.maxLuaScriptNameSize]u8),
 chunk_buf: [script.maxLuaScriptSize]u8 = std.mem.zeroes([script.maxLuaScriptSize]u8),
 chunk_x_buf: [5]u8 = std.mem.zeroes([5]u8),
