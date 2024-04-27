@@ -1,5 +1,5 @@
 UPDATE
-    block
+    display_settings
 SET
     fullscreen = :fullscreen,
     maximized = :maximized,

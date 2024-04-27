@@ -1165,6 +1165,7 @@ pub const Data = struct {
     ) !void {
         var update_stmt = try self.db.prepare(
             struct {
+                id: i32,
                 fullscreen: i32,
                 maximized: i32,
                 decorated: i32,

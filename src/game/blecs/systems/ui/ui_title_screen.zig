@@ -47,7 +47,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         &buffer,
                         "{d}: {s}",
                         .{ world_opt.id, world_opt.name },
-                    ) catch unreachable;
+                    ) catch @panic("invalid buffer size");
                     var name: [ui.max_world_name:0]u8 = undefined;
                     for (name, 0..) |_, ii| {
                         if (selectable_name.len <= ii) {

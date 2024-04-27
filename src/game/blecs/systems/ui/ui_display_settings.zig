@@ -23,6 +23,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (zgui.begin("DisplaymSettings", .{
                 .flags = zgui.WindowFlags.no_decoration,
             })) {
+                const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();
                 const ww = zgui.getWindowWidth();
                 zgui.text("Changes require a restart.", .{});
 
@@ -47,32 +48,84 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 const m = glfw.Monitor.getPrimary() orelse @panic("no primary monitor");
                 const all = m.getVideoModes() catch @panic("no video modes for monitor");
 
-                zgui.setNextItemWidth(game.state.ui.imguiWidth(250));
-                combo = zgui.beginCombo("##listbox", .{
-                    .preview_value = "lol",
-                });
-                cw = zgui.beginPopupContextWindow();
+                const size_option = struct {
+                    w: i32,
+                    h: i32,
+                };
+                var num_options: usize = 0;
+                var options: [100]size_option = undefined;
 
-                if (combo) {
+                var selected_index: isize = -1;
+                var preview_value: []const u8 = "Not selected";
+                {
                     var i: usize = 0;
                     while (i < all.len) : (i += 1) {
-                        const m_ = all[i];
-                        const h = m_.height;
-                        const w = m_.width;
-                        var buf: [100]u8 = [_]u8{0} ** 100;
-                        const selectable_name = std.fmt.bufPrint(
-                            &buf,
-                            "{d} x {d}",
-                            .{ w, h },
-                        ) catch unreachable;
+                        outer: {
+                            const vm = all[i];
+                            const w: i32 = @intCast(vm.width);
+                            const h: i32 = @intCast(vm.height);
+                            var ii: usize = 0;
 
-                        if (zgui.selectable(@ptrCast(selectable_name), .{ .selected = false })) {
-                            std.debug.print("Selected: {d}, {d}\n", .{ w, h });
+                            while (ii < num_options) : (ii += 1) {
+                                const no = options[ii];
+                                if (no.w == w and no.h == h) break :outer;
+                            }
+                            options[num_options] = .{ .w = w, .h = h };
+                            num_options += 1;
+
+                            if (game.state.ui.display_settings_width != w or game.state.ui.display_settings_height != h) continue;
+
+                            var pb_buf: [100]u8 = [_]u8{0} ** 100;
+                            preview_value = std.fmt.bufPrint(
+                                &pb_buf,
+                                "{d} x {d}",
+                                .{ w, h },
+                            ) catch @panic("invalid buffer size");
+                            selected_index = @intCast(num_options);
+                        }
+                    }
+                }
+
+                zgui.setNextItemWidth(game.state.ui.imguiWidth(250));
+                cw = zgui.beginPopupContextWindow();
+                combo = zgui.beginCombo("##listbox", .{
+                    .preview_value = @ptrCast(preview_value),
+                });
+                if (combo) {
+                    var i: usize = 0;
+                    while (i < num_options) : (i += 1) {
+                        const o = options[i];
+                        var sn_buf: [100]u8 = [_]u8{0} ** 100;
+                        const selectable_name = std.fmt.bufPrint(
+                            &sn_buf,
+                            "{d} x {d}",
+                            .{ o.w, o.h },
+                        ) catch @panic("invalid buffer size");
+
+                        if (zgui.selectable(@ptrCast(selectable_name), .{
+                            .selected = i == @as(usize, @intCast(selected_index)),
+                        })) {
+                            std.debug.print("Selected: {d}, {d}\n", .{ o.w, o.h });
+                            game.state.ui.display_settings_width = @intCast(o.w);
+                            game.state.ui.display_settings_height = @intCast(o.h);
                         }
                     }
                 }
                 if (cw) zgui.endPopup();
                 if (combo) zgui.endCombo();
+                centerNext(ww);
+                if (zgui.button("Save", .{
+                    .w = btn_dms[0],
+                    .h = btn_dms[1],
+                })) {
+                    game.state.db.updateDisplaySettings(
+                        game.state.ui.display_settings_fullscreen,
+                        game.state.ui.display_settings_maximized,
+                        game.state.ui.display_settings_decorated,
+                        game.state.ui.display_settings_width,
+                        game.state.ui.display_settings_height,
+                    ) catch @panic("DB Err");
+                }
             }
             zgui.end();
         }

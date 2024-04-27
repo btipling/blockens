@@ -67,17 +67,10 @@ var window_height: u32 = 0;
 fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     const m = glfw.Monitor.getPrimary() orelse @panic("no primary monitor");
     const vm = try m.getVideoMode();
-    const all = try m.getVideoModes();
-    var i: usize = 0;
-    while (i < all.len) : (i += 1) {
-        const m_ = all[i];
-        const h = m_.height;
-        const w = m_.width;
-        std.debug.print("{d} {d} {d}\n", .{ i, h, w });
-    }
     var fullscreen_monitor: ?*glfw.Monitor = null;
-    var mode: glfw.VideoMode = vm.*;
-    _ = &mode;
+    const mode: glfw.VideoMode = vm.*;
+    state.ui.display_settings_width = @intCast(mode.width);
+    state.ui.display_settings_height = @intCast(mode.height);
     load_display_settings: {
         var display_settings: data.display_settings = .{};
         state.db.loadDisplaySettings(&display_settings) catch |load_err| {
