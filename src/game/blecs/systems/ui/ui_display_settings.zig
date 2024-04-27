@@ -18,7 +18,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
                 .w = game.state.ui.imguiWidth(600),
-                .h = game.state.ui.imguiHeight(200),
+                .h = game.state.ui.imguiHeight(300),
             });
             if (zgui.begin("DisplaymSettings", .{
                 .flags = zgui.WindowFlags.no_decoration,
@@ -68,7 +68,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
                             while (ii < num_options) : (ii += 1) {
                                 const no = options[ii];
-                                if (no.w == w and no.h == h) break :outer;
+                                if (no.w == w and no.h == h) {
+                                    break :outer;
+                                }
                             }
                             options[num_options] = .{ .w = w, .h = h };
                             num_options += 1;
@@ -79,7 +81,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                             preview_value = std.fmt.bufPrint(
                                 &pb_buf,
                                 "{d} x {d}",
-                                .{ w, h },
+                                .{ h, w },
                             ) catch @panic("invalid buffer size");
                             selected_index = @intCast(num_options);
                         }
@@ -99,7 +101,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         const selectable_name = std.fmt.bufPrint(
                             &sn_buf,
                             "{d} x {d}",
-                            .{ o.w, o.h },
+                            .{ o.h, o.w },
                         ) catch @panic("invalid buffer size");
 
                         if (zgui.selectable(@ptrCast(selectable_name), .{
@@ -125,6 +127,15 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         game.state.ui.display_settings_width,
                         game.state.ui.display_settings_height,
                     ) catch @panic("DB Err");
+                    screen_helpers.showTitleScreen();
+                }
+
+                centerNext(ww);
+                if (zgui.button("Cancel", .{
+                    .w = btn_dms[0],
+                    .h = btn_dms[1],
+                })) {
+                    screen_helpers.showTitleScreen();
                 }
             }
             zgui.end();
@@ -135,7 +146,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 fn centerNext(ww: f32) void {
     zgui.newLine();
     zgui.sameLine(.{
-        .offset_from_start_x = ww / 2 - game.state.ui.imguiWidth(100),
+        .offset_from_start_x = ww / 2 - game.state.ui.imguiWidth(125),
         .spacing = game.state.ui.imguiWidth(10),
     });
 }
@@ -145,4 +156,5 @@ const ecs = @import("zflecs");
 const zgui = @import("zgui");
 const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
+const screen_helpers = @import("../screen_helpers.zig");
 const game = @import("../../../game.zig");

@@ -123,7 +123,7 @@ fn loadWorld(world_id: i32, name: [ui.max_world_name:0]u8) void {
 fn centerNext(ww: f32) void {
     zgui.newLine();
     zgui.sameLine(.{
-        .offset_from_start_x = ww / 2 - game.state.ui.imguiWidth(150),
+        .offset_from_start_x = ww / 2 - game.state.ui.imguiWidth(125),
         .spacing = game.state.ui.imguiWidth(10),
     });
 }
