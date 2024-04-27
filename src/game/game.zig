@@ -64,24 +64,10 @@ pub var state: *gameState.Game = undefined;
 var window_width: u32 = 0;
 var window_height: u32 = 0;
 
-fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
-    glfw.windowHintTyped(.context_version_major, gl_major);
-    glfw.windowHintTyped(.context_version_minor, gl_minor);
-    glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
-    glfw.windowHintTyped(.opengl_forward_compat, false);
-    glfw.windowHintTyped(.client_api, .opengl_api);
-    glfw.windowHintTyped(.doublebuffer, true);
-    glfw.windowHintTyped(.resizable, false);
-    glfw.windowHintTyped(.focused, true);
-    glfw.windowHintTyped(.maximized, false);
-    glfw.windowHintTyped(.decorated, true);
-    const m = glfw.Monitor.getPrimary().?;
-    const _m = try m.getVideoMode();
+fn initWindow(db: *data.Data, gl_major: u8, gl_minor: u8) !*glfw.Window {
+    const m = glfw.Monitor.getPrimary() orelse @panic("no primary monitor");
+    const vm = try m.getVideoMode();
     const all = try m.getVideoModes();
-    var mode: glfw.VideoMode = _m.*;
-    _ = &mode;
-    // mode = all[34];
-
     var i: usize = 0;
     while (i < all.len) : (i += 1) {
         const m_ = all[i];
@@ -89,12 +75,51 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
         const w = m_.width;
         std.debug.print("{d} {d} {d}\n", .{ i, h, w });
     }
+    var fullscreen_monitor: ?*glfw.Monitor = null;
+    var mode: glfw.VideoMode = vm.*;
+    var screen_width: c_int = mode.width;
+    var screen_height: c_int = mode.height;
+    var maximized = true;
+    var decorated = false;
+    _ = &mode;
+    load_display_settings: {
+        var display_settings: data.display_settings = .{};
+        db.loadDisplaySettings(&display_settings) catch |load_err| {
+            switch (load_err) {
+                data.DataErr.NotFound => {
+                    db.saveDisplaySettings(
+                        false,
+                        true,
+                        false,
+                        @intCast(screen_width),
+                        @intCast(screen_height),
+                    ) catch |save_err| return save_err;
+                    break :load_display_settings;
+                },
+                else => return load_err,
+            }
+        };
+        if (display_settings.fullscreen) fullscreen_monitor = m;
+        maximized = display_settings.maximized;
+        decorated = display_settings.decorated;
+        screen_width = @intCast(display_settings.width);
+        screen_height = @intCast(display_settings.height);
+    }
+
+    glfw.windowHintTyped(.context_version_major, gl_major);
+    glfw.windowHintTyped(.context_version_minor, gl_minor);
+    glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
+    glfw.windowHintTyped(.opengl_forward_compat, false);
+    glfw.windowHintTyped(.client_api, .opengl_api);
+    glfw.windowHintTyped(.doublebuffer, true);
+    glfw.windowHintTyped(.resizable, false);
+    glfw.windowHintTyped(.maximized, maximized);
+    glfw.windowHintTyped(.decorated, decorated);
     const window = glfw.Window.create(
         mode.width,
         mode.height,
         cfg.game_name,
-        null,
-        // m,
+        fullscreen_monitor,
     ) catch |err| {
         std.log.err("Failed to create game window.", .{});
         return err;
@@ -126,6 +151,12 @@ fn initGL(gl_major: u8, gl_minor: u8, _: *glfw.Window) !void {
 
 pub const Game = struct {
     pub fn init(allocator: std.mem.Allocator) !Game {
+        var db = try data.Data.init(allocator);
+        errdefer db.deinit();
+        db.ensureSchema() catch |err| {
+            std.log.err("Failed to ensure schema: {}\n", .{err});
+            return err;
+        };
         // TODO: Move more of run into init and create a separate render loop in a thread
         // as in https://github.com/btipling/3d-zig-game/blob/master/src/main.zig (forked from AlxHnr)
         glfw.init() catch @panic("Unable to init glfw");
@@ -133,7 +164,7 @@ pub const Game = struct {
         const gl_major = 4;
         const gl_minor = 6;
 
-        const window = try initWindow(gl_major, gl_minor);
+        const window = try initWindow(&db, gl_major, gl_minor);
 
         try initGL(gl_major, gl_minor, window);
 
@@ -160,6 +191,7 @@ pub const Game = struct {
             .allocator = allocator,
             .window = window,
             .ui = ui.ui,
+            .db = db,
         };
         try state.initInternals();
         errdefer state.deinit();
@@ -257,6 +289,7 @@ const gl = zopengl.bindings;
 const zstbi = @import("zstbi");
 const zmesh = @import("zmesh");
 const cfg = @import("config.zig");
+const data = @import("data/data.zig");
 const gameState = @import("state.zig");
 const blecs = @import("blecs/blecs.zig");
 const input = @import("input/input.zig");

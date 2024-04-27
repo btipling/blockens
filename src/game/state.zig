@@ -51,10 +51,11 @@ pub const Game = struct {
         errdefer self.jobs.deinit();
         try self.initScript();
         errdefer self.deinit();
-        try self.initDb();
-        errdefer self.deinit();
+
+        try self.setupDB();
         try self.populateUIOptions();
         self.jobs.start();
+
         try thread.handler.init();
         errdefer thread.handler.deinit();
         try thread.buffer.init(self.allocator);
@@ -72,13 +73,7 @@ pub const Game = struct {
         thread.handler.deinit();
     }
 
-    pub fn initDb(self: *Game) !void {
-        errdefer self.script.deinit();
-        self.db = try data.Data.init(self.allocator);
-        self.db.ensureSchema() catch |err| {
-            std.log.err("Failed to ensure schema: {}\n", .{err});
-            return err;
-        };
+    pub fn setupDB(self: *Game) !void {
         const had_world = self.db.ensureDefaultWorld() catch |err| {
             std.log.err("Failed to ensure default world: {}\n", .{err});
             return err;

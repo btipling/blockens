@@ -169,6 +169,14 @@ pub const chunkData = struct {
     voxels: []u32 = undefined,
 };
 
+pub const display_settings = struct {
+    fullscreen: bool = false,
+    maximized: bool = true,
+    decorated: bool = false,
+    width: i32 = 0,
+    height: i32 = 0,
+};
+
 pub const Data = struct {
     db: sqlite.Database,
     allocator: std.mem.Allocator,
@@ -193,6 +201,7 @@ pub const Data = struct {
             createChunkScriptTable,
             createChunkDataTable,
             create_player_pos_table,
+            create_display_settings_table,
         };
         for (createTableQueries) |query| {
             self.db.exec(query, .{}) catch |err| {
@@ -1099,5 +1108,122 @@ pub const Data = struct {
             std.log.err("Failed to delete player position: {}", .{err});
             return err;
         };
+    }
+
+    const create_display_settings_table = @embedFile("./sql/display_settings/create.sql");
+    const insert_display_settings_stmt = @embedFile("./sql/display_settings/insert.sql");
+    const update_display_settings_stmt = @embedFile("./sql/display_settings/update.sql");
+    const select_display_settings_stmt = @embedFile("./sql/display_settings/select.sql");
+    const list_display_settings_stmt = @embedFile("./sql/display_settings/list.sql");
+    const delete_display_settings_stmt = @embedFile("./sql/display_settings/delete.sql");
+
+    pub fn saveDisplaySettings(
+        self: *Data,
+        fullscreen: bool,
+        maximized: bool,
+        decorated: bool,
+        width: i32,
+        height: i32,
+    ) !void {
+        var insert_stmt = try self.db.prepare(
+            struct {
+                fullscreen: i32,
+                maximized: i32,
+                decorated: i32,
+                width: i32,
+                height: i32,
+            },
+            void,
+            insert_display_settings_stmt,
+        );
+        defer insert_stmt.deinit();
+
+        const fs: i32 = if (fullscreen) (1) else 0;
+        const mx: i32 = if (maximized) (1) else 0;
+        const dr: i32 = if (decorated) (1) else 0;
+        insert_stmt.exec(
+            .{
+                .fullscreen = fs,
+                .maximized = mx,
+                .decorated = dr,
+                .width = width,
+                .height = height,
+            },
+        ) catch |err| {
+            std.log.err("Failed to insert display settings: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn updateDisplaySettings(
+        self: *Data,
+        fullscreen: bool,
+        maximized: bool,
+        decorated: bool,
+        width: i32,
+        height: i32,
+    ) !void {
+        var update_stmt = try self.db.prepare(
+            struct {
+                fullscreen: i32,
+                maximized: i32,
+                decorated: i32,
+                width: i32,
+                height: i32,
+            },
+            void,
+            update_display_settings_stmt,
+        );
+        defer update_stmt.deinit();
+
+        const fs: i32 = if (fullscreen) (1) else 0;
+        const mx: i32 = if (maximized) (1) else 0;
+        const dr: i32 = if (decorated) (1) else 0;
+        update_stmt.exec(
+            .{
+                .id = 1,
+                .fullscreen = fs,
+                .maximized = mx,
+                .decorated = dr,
+                .width = width,
+                .height = height,
+            },
+        ) catch |err| {
+            std.log.err("Failed to update block: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn loadDisplaySettings(self: *Data, ds: *display_settings) !void {
+        var select_stmt = try self.db.prepare(
+            struct {
+                id: i32,
+            },
+            struct {
+                fullscreen: i32,
+                maximized: i32,
+                decorated: i32,
+                width: i32,
+                height: i32,
+            },
+            select_display_settings_stmt,
+        );
+        defer select_stmt.deinit();
+
+        {
+            try select_stmt.bind(.{ .id = 1 });
+            defer select_stmt.reset();
+
+            while (try select_stmt.step()) |r| {
+                ds.fullscreen = r.fullscreen == 1;
+                ds.maximized = r.maximized == 1;
+                ds.decorated = r.decorated == 1;
+                ds.width = r.width;
+                ds.height = r.height;
+                return;
+            }
+        }
+
+        return DataErr.NotFound;
     }
 };
