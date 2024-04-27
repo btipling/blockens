@@ -38,11 +38,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 }
                 var default_world: i32 = 0;
 
-                zgui.newLine();
-                zgui.sameLine(.{
-                    .offset_from_start_x = ww / 2 - game.state.ui.imguiWidth(225),
-                    .spacing = game.state.ui.imguiWidth(10),
-                });
+                centerNext(ww);
                 var combo: bool = false;
                 var cw: bool = false;
                 for (game.state.ui.world_options.items, 0..) |worldOption, i| {
@@ -68,6 +64,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                             game.state.ui.world_loaded_id = default_world;
                             preview_name = &name;
                         }
+                        zgui.setNextItemWidth(game.state.ui.imguiWidth(250));
                         combo = zgui.beginCombo("##listbox", .{
                             .preview_value = preview_name,
                         });
