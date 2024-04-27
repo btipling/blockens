@@ -95,6 +95,13 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                 }
                 centerNext(ww);
+                if (zgui.button("Display Settings", .{
+                    .w = btn_dms[0],
+                    .h = btn_dms[1],
+                })) {
+                    screen_helpers.showDisplaySettingsScreen();
+                }
+                centerNext(ww);
                 if (zgui.button("Exit", .{
                     .w = btn_dms[0],
                     .h = btn_dms[1],

@@ -6,6 +6,7 @@ pub fn init() void {
     chunk_editor.init();
     title_screen.init();
     loading_screen.init();
+    display_settings.init();
     character_editor.init();
     world_editor.init();
     demo_cube.init();
@@ -24,6 +25,7 @@ const block_editor = @import("ui_block_editor.zig");
 const chunk_editor = @import("ui_chunk_editor.zig");
 const title_screen = @import("ui_title_screen.zig");
 const loading_screen = @import("ui_loading_screen.zig");
+const display_settings = @import("ui_display_settings.zig");
 const character_editor = @import("ui_character_editor.zig");
 const world_editor = @import("ui_world_editor.zig");
 const demo_cube = @import("ui_demo_cube.zig");

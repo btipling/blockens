@@ -74,6 +74,7 @@ pub const WorldEditor = struct {};
 pub const TitleScreen = struct {};
 pub const LightingEditor = struct {};
 pub const LoadingScreen = struct {};
+pub const DisplaySettings = struct {};
 
 pub fn init() void {
     const world = game.state.world;
@@ -113,6 +114,7 @@ pub fn init() void {
     ecs.TAG(world, WorldEditor);
     ecs.TAG(world, TitleScreen);
     ecs.TAG(world, LoadingScreen);
+    ecs.TAG(world, DisplaySettings);
 }
 
 const ecs = @import("zflecs");

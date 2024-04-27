@@ -26,6 +26,10 @@ pub fn showLoadingScreen() void {
     showSettingsScreen(blecs.components.screen.LoadingScreen);
 }
 
+pub fn showDisplaySettingsScreen() void {
+    showSettingsScreen(blecs.components.screen.DisplaySettings);
+}
+
 pub fn toggleScreens() void {
     const world = game.state.world;
     const screen: *const blecs.components.screen.Screen = blecs.ecs.get(
