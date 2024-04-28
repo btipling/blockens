@@ -909,7 +909,6 @@ pub const Data = struct {
     };
 
     pub fn getWorldDataForChunkId(self: *Data, id: i32) !worldData {
-        std.debug.print("wtf id: {d}\n", .{id});
         var selectStmt = try self.db.prepare(
             struct {
                 id: i32,

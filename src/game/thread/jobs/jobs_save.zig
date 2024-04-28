@@ -53,6 +53,7 @@ pub const SaveJob = struct {
     }
 
     fn _saveChunk(_: *@This(), voxels: []u32, wp: chunk.worldPosition) !void {
+        defer game.state.allocator.free(voxels);
         var c_cfg = game.state.ui.world_chunk_table_data.get(wp) orelse return;
         const loaded_world = game.state.ui.world_loaded_id;
         if (c_cfg.id == 0) {

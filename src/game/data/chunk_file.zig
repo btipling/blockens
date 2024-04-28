@@ -110,7 +110,7 @@ pub fn filePath(world_id: i32, x: i32, z: i32) ![500:0]u8 {
             if (x < 0) "n" else "p",
             @abs(x),
             if (z < 0) "n" else "p",
-            z,
+            @abs(z),
         },
     );
     return buffer;
