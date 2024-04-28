@@ -39,30 +39,39 @@ pub const SaveJob = struct {
         try game.state.db.updatePlayerPosition(loaded_world, pp.loc, pp.rotation, pp.angle);
     }
 
-    fn saveChunk(_: *@This(), c: *chunk.Chunk) !void {
-        c.mutex.lock();
-        defer c.mutex.unlock();
+    fn saveChunk(self: *@This(), c: *chunk.Chunk) !void {
         if (!c.updated) return;
-        c.updated = false;
-        var c_cfg = game.state.ui.world_chunk_table_data.get(c.wp) orelse return;
+        var voxels: []u32 = undefined;
+        const wp: chunk.worldPosition = c.wp;
+        {
+            c.mutex.lock();
+            defer c.mutex.unlock();
+            voxels = game.state.allocator.dupe(u32, c.data) catch @panic("OOM");
+            c.updated = false;
+        }
+        return self._saveChunk(voxels, wp);
+    }
+
+    fn _saveChunk(_: *@This(), voxels: []u32, wp: chunk.worldPosition) !void {
+        var c_cfg = game.state.ui.world_chunk_table_data.get(wp) orelse return;
         const loaded_world = game.state.ui.world_loaded_id;
         if (c_cfg.id == 0) {
             // save new chunk
-            const p = chunk.worldPosition.vecFromWorldPosition(c.wp);
+            const p = chunk.worldPosition.vecFromWorldPosition(wp);
             const x: i32 = @intFromFloat(@floor(p[0]));
             const y: i32 = @intFromFloat(@floor(p[1]));
             const z: i32 = @intFromFloat(@floor(p[2]));
-            try game.state.db.saveChunkData(loaded_world, x, y, z, c_cfg.scriptId, c.data);
+            try game.state.db.saveChunkData(loaded_world, x, y, z, c_cfg.scriptId, voxels);
             var db_chunk_data: data.chunkData = .{};
             try game.state.db.loadChunkData(loaded_world, x, y, z, &db_chunk_data);
             c_cfg.id = db_chunk_data.id;
             game.state.allocator.free(c_cfg.chunkData);
             c_cfg.chunkData = db_chunk_data.voxels;
-            try game.state.ui.world_chunk_table_data.put(c.wp, c_cfg);
+            try game.state.ui.world_chunk_table_data.put(wp, c_cfg);
             std.debug.print("new chunk saved\n", .{});
         } else {
             // update existing chunk
-            try game.state.db.updateChunkData(c_cfg.id, c_cfg.scriptId, c.data);
+            try game.state.db.updateChunkData(c_cfg.id, c_cfg.scriptId, voxels);
             std.debug.print("updated chunk saved\n", .{});
         }
     }

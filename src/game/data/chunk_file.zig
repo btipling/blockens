@@ -99,7 +99,7 @@ pub fn initWorldSave(is_absolute: bool, world_id: i32) void {
 }
 
 pub fn filePath(world_id: i32, x: i32, z: i32) ![500:0]u8 {
-    var buffer: [500:0]u8 = std.mem.zeroes(u8);
+    var buffer: [500:0]u8 = std.mem.zeroes([500:0]u8);
     _ = try std.fmt.bufPrint(
         &buffer,
         "{s}/{s}/w_{d}/cd_{s}{d}_{s}{d}.gz",
@@ -126,6 +126,7 @@ pub fn saveChunkData(
 ) void {
     const file_path = filePath(world_id, x, z) catch |e| {
         std.log.err("unable to create file name to save chunk. {}\n", .{e});
+        return;
     };
     const fpath = std.mem.sliceTo(file_path[0..], 0);
     const flags: std.fs.File.CreateFlags = .{
@@ -137,7 +138,7 @@ pub fn saveChunkData(
         return;
     };
     defer fh.close();
-    var c: *compress.Compress = compress.init(allocator, top_chunk, bottom_chunk);
+    var c: *Compress = Compress.init(allocator, top_chunk, bottom_chunk);
     defer c.deinit();
     c.compress(fh.writer()) catch |e| {
         std.log.err("unable to compress chunk. {}\n", .{e});
@@ -147,4 +148,4 @@ pub fn saveChunkData(
 
 const std = @import("std");
 const block = @import("../block/block.zig");
-const compress = block.compress;
+const Compress = block.compress;

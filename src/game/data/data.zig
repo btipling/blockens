@@ -6,10 +6,8 @@ pub const RGBAColorTextureSize = 3 * 16 * 16; // 768
 // 768 i32s fit into 3072 u8s
 pub const TextureBlobArrayStoreSize = 3072;
 
-pub const chunkDim = 64;
-pub const chunkSize = chunkDim * chunkDim * chunkDim;
 // each i32 fits into 4 u8s
-pub const ChunkBlobArrayStoreSize = chunkSize * 4;
+pub const ChunkBlobArrayStoreSize = game_chunk.chunkSize * 4;
 
 pub const maxBlockSizeName = 20;
 
@@ -757,7 +755,7 @@ pub const Data = struct {
     }
 
     fn blobToChunk(self: *Data, blob: sqlite.Blob) []u32 {
-        var chunk: [chunkSize]u32 = undefined;
+        var chunk: [game_chunk.chunkSize]u32 = undefined;
         for (chunk, 0..) |_, i| {
             const offset = i * 4;
             const a = @as(u32, @intCast(blob.data[offset]));
@@ -770,6 +768,65 @@ pub const Data = struct {
         const rv: []u32 = self.allocator.alloc(u32, chunk.len) catch unreachable;
         @memcpy(rv, &chunk);
         return rv;
+    }
+
+    pub fn saveChunkToFile(
+        self: *Data,
+        world_id: i32,
+        x: i32,
+        y: i32,
+        z: i32,
+        voxels: []u32,
+    ) !void {
+        // _ = self;
+        // _ = world_id;
+        // _ = x;
+        // _ = y;
+        // _ = z;
+        // _ = voxels;
+        var top_chunk: []u64 = self.allocator.alloc(u64, game_chunk.chunkSize) catch @panic("OOM");
+        defer self.allocator.free(top_chunk);
+        var bottom_chunk: []u64 = self.allocator.alloc(u64, game_chunk.chunkSize) catch @panic("OOM");
+        defer self.allocator.free(bottom_chunk);
+        if (y == 0) {
+            var td: chunkData = .{};
+            var should_free = true;
+            self.loadChunkData(world_id, x, 1, z, &td) catch |e| {
+                switch (e) {
+                    DataErr.NotFound => {
+                        td.voxels = @ptrCast(@constCast(game_chunk.fully_lit_chunk[0..]));
+                        should_free = false;
+                    },
+                    else => return e,
+                }
+            };
+            defer if (should_free) self.allocator.free(td.voxels);
+            var i: usize = 0;
+            while (i < td.voxels.len) : (i += 1) {
+                top_chunk[i] = @intCast(td.voxels[i]);
+                bottom_chunk[i] = @intCast(voxels[i]);
+            }
+        } else {
+            var bd: chunkData = .{};
+            var should_free = true;
+            self.loadChunkData(world_id, x, 0, z, &bd) catch |e| {
+                switch (e) {
+                    DataErr.NotFound => {
+                        bd.voxels = @ptrCast(@constCast(game_chunk.fully_lit_chunk[0..]));
+                        should_free = false;
+                    },
+                    else => return e,
+                }
+            };
+            defer if (should_free) self.allocator.free(bd.voxels);
+            var i: usize = 0;
+            while (i < bd.voxels.len) : (i += 1) {
+                top_chunk[i] = @intCast(voxels[i]);
+                bottom_chunk[i] = @intCast(bd.voxels[i]);
+            }
+        }
+        chunk_file.saveChunkData(self.allocator, world_id, x, z, top_chunk, bottom_chunk);
+        return;
     }
 
     pub fn saveChunkData(
@@ -809,6 +866,8 @@ pub const Data = struct {
             std.log.err("Failed to insert chunkdata: {}", .{err});
             return err;
         };
+
+        try self.saveChunkToFile(world_id, x, y, z, voxels);
     }
 
     pub fn updateChunkData(self: *Data, id: i32, script_id: i32, voxels: []u32) !void {
@@ -834,6 +893,54 @@ pub const Data = struct {
             std.log.err("Failed to update chunkdata: {}", .{err});
             return err;
         };
+        if (id == 0) return;
+        const wd = self.getWorldDataForChunkId(id) catch |e| {
+            std.log.err("Failed to fetch world data. {}\n", .{e});
+            return e;
+        };
+        try self.saveChunkToFile(wd.world_id, wd.x, wd.y, wd.z, voxels);
+    }
+
+    const worldData = struct {
+        world_id: i32,
+        x: i32,
+        z: i32,
+        y: i32,
+    };
+
+    pub fn getWorldDataForChunkId(self: *Data, id: i32) !worldData {
+        std.debug.print("wtf id: {d}\n", .{id});
+        var selectStmt = try self.db.prepare(
+            struct {
+                id: i32,
+            },
+            struct {
+                world_id: i32,
+                x: i32,
+                y: i32,
+                z: i32,
+            },
+            selectWorldDataForIdStmt,
+        );
+        defer selectStmt.deinit();
+
+        {
+            try selectStmt.bind(.{
+                .id = id,
+            });
+            defer selectStmt.reset();
+
+            while (try selectStmt.step()) |row| {
+                return .{
+                    .world_id = row.world_id,
+                    .x = row.x,
+                    .y = row.y,
+                    .z = row.z,
+                };
+            }
+        }
+
+        return DataErr.NotFound;
     }
 
     pub fn loadChunkData(self: *Data, world_id: i32, x: i32, y: i32, z: i32, data: *chunkData) !void {
@@ -1224,6 +1331,7 @@ const createChunkDataTable = @embedFile("./sql/chunk/create.sql");
 const insertChunkDataStmt = @embedFile("./sql/chunk/insert.sql");
 const updateChunkDataStmt = @embedFile("./sql/chunk/update.sql");
 const selectChunkDataByIDStmt = @embedFile("./sql/chunk/select_by_id.sql");
+const selectWorldDataForIdStmt = @embedFile("./sql/chunk/select_world_data_for_id.sql");
 const selectChunkDataByCoordsStmt = @embedFile("./sql/chunk/select_by_coords.sql");
 const listChunkDataStmt = @embedFile("./sql/chunk/list.sql");
 const deleteChunkDataStmt = @embedFile("./sql/chunk/delete.sql");
@@ -1231,5 +1339,8 @@ const delete_chunk_data_by_id_stmt = @embedFile("./sql/chunk/delete_by_id.sql");
 
 const std = @import("std");
 const sqlite = @import("sqlite");
+const game_block = @import("../block/block.zig");
+const game_chunk = game_block.chunk;
+const chunk_big = game_chunk.big;
 
 pub const chunk_file = @import("chunk_file.zig");
