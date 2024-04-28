@@ -1,6 +1,6 @@
 wp: worldPosition,
 entity: blecs.ecs.entity_t = 0,
-data: []u64 = undefined,
+data: []u32 = undefined,
 allocator: std.mem.Allocator,
 
 const Chunk = @This();

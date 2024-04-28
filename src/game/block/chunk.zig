@@ -271,4 +271,4 @@ const data_fetcher = @import("data_fetcher.zig");
 const chunk_traverser = @import("chunk_traverser.zig");
 
 pub const worldPosition = @import("world_position.zig");
-pub const big = @import("chunk_big.zig");
+pub const v2 = @import("chunk_v2.zig");
