@@ -31,86 +31,79 @@ pub fn deinit(self: *Compressor) void {
     self.allocator.destroy(self);
 }
 
-fn initFromBytes(allocator: std.mem.Allocator, buffer: []const u8) *Compressor {
+fn initFromCompressed(allocator: std.mem.Allocator, reader: anytype) *Compressor {
+    // Create bufer to read decompressed bits into
+    const needed_space: usize = @sizeOf(compressorData) + chunk.chunkSize * @sizeOf(u64) * 2;
+    const buffer: []u8 = allocator.alloc(u8, needed_space) catch @panic("OOM");
+    defer allocator.free(buffer);
+
+    // Decompress the bits into the buffer
+    var fbs = std.io.fixedBufferStream(buffer);
+    std.compress.gzip.decompress(reader, fbs.writer()) catch @panic("decompressing chunks failed");
+
+    // Create a compressor instance
     const c: *Compressor = allocator.create(Compressor) catch @panic("OOM");
     c.* = .{
         .allocator = allocator,
     };
+
+    // Convert buffer to compressor data
     var i: usize = @sizeOf(compressorData);
+
+    // First the header
     const data_bytes: []const u8 = buffer[0..i];
-    const top_chunk_bytes: []align(8) const u8 = @alignCast(buffer[i .. i + chunk_byte_size]);
-    i += chunk_byte_size;
-    const bottom_chunk_bytes: []align(8) const u8 = @alignCast(buffer[i .. i + chunk_byte_size]);
     c.data = std.mem.bytesToValue(compressorData, data_bytes);
+
+    // Top chunk bits
+    const top_chunk_bytes: []align(8) const u8 = @alignCast(buffer[i .. i + chunk_byte_size]);
+    // Dupe the bits to deallocate separately
     c.top_chunk = allocator.dupe(
         u64,
         std.mem.bytesAsSlice(u64, top_chunk_bytes),
     ) catch @panic("OOM");
+
+    // Bottom chunk bits
+    i += chunk_byte_size;
+    const bottom_chunk_bytes: []align(8) const u8 = @alignCast(buffer[i .. i + chunk_byte_size]);
+    // Dupe these too
     c.bottom_chunk = allocator.dupe(
         u64,
         std.mem.bytesAsSlice(u64, bottom_chunk_bytes),
     ) catch @panic("OOM");
+
     return c;
 }
 
-fn initFromReader(allocator: std.mem.Allocator, reader: anytype) *Compressor {
-    const buffer: []u8 = allocator.alloc(
-        u8,
-        chunk_byte_size + chunk_byte_size + @sizeOf(compressorData),
-    ) catch @panic("OOM");
-    defer allocator.free(buffer);
-    _ = reader.readAll(@ptrCast(buffer)) catch @panic("read all error");
-    return initFromBytes(allocator, buffer);
-}
+fn compress(self: *Compressor, writer: anytype) void {
+    // Setup the data to compress
 
-// caller owns bytes
-fn toBytes(self: *Compressor) []const u8 {
+    // Convert all the props to bits
     const data_bytes: []align(4) const u8 = std.mem.sliceAsBytes(([_]compressorData{self.data})[0..]);
     const top_chunk_bytes: []align(4) const u8 = std.mem.sliceAsBytes(self.top_chunk);
     const bottom_chunk_bytes: []align(4) const u8 = std.mem.sliceAsBytes(self.bottom_chunk);
-    return std.mem.concat(self.allocator, u8, &[_][]const u8{
+
+    // Concat to put into one slice
+    const b = std.mem.concat(self.allocator, u8, &[_][]const u8{
         data_bytes,
         top_chunk_bytes,
         bottom_chunk_bytes,
     }) catch @panic("OOM");
+    defer self.allocator.free(b);
+
+    // Create a reader to use to compress from
+    var r = std.io.fixedBufferStream(b);
+
+    // Create a compressor
+    var cmp = std.compress.gzip.compressor(
+        writer,
+        .{ .level = .default },
+    ) catch @panic("compressor init failed");
+
+    cmp.compress(r.reader()) catch @panic("compression failed");
+    cmp.finish() catch @panic("compression failed to finish");
 }
 
-fn toWriter(self: *Compressor) std.io.FixedBufferStream([]const u8) {
-    const buffer = self.toBytes();
-    const s: std.io.FixedBufferStream([]const u8) = .{
-        .buffer = buffer,
-        .pos = 0,
-    };
-    return s;
-}
-
-test "toBytes and initFromBytes" {
-    const b1_block_id: u9 = 2;
-    const b2_block_id: u9 = 3;
-    const bb1_loc: usize = 101;
-    const bb2_loc: usize = 202;
-    const bb1: BigBlock.BlockData = BigBlock.BlockData.fromId(b1_block_id);
-    const bb2: BigBlock.BlockData = BigBlock.BlockData.fromId(b2_block_id);
-
-    var top_chunk: []u64 = std.testing.allocator.dupe(u64, BigChunk.fully_lit_chunk[0..]) catch @panic("OOM");
-    defer std.testing.allocator.free(top_chunk);
-    var bottom_chunk: []u64 = std.testing.allocator.dupe(u64, BigChunk.fully_lit_chunk[0..]) catch @panic("OOM");
-    defer std.testing.allocator.free(bottom_chunk);
-    top_chunk[bb1_loc] = bb1.toId();
-    bottom_chunk[bb2_loc] = bb2.toId();
-    const c1: *Compressor = init(std.testing.allocator, top_chunk[0..], bottom_chunk[0..]);
-    defer c1.deinit();
-    const buffer = c1.toBytes();
-    defer std.testing.allocator.free(buffer);
-    const c2: *Compressor = initFromBytes(std.testing.allocator, buffer);
-    defer c2.deinit();
-    const retrieved_bb1: BigBlock.BlockData = BigBlock.BlockData.fromId(c2.top_chunk[bb1_loc]);
-    const retrieved_bb2: BigBlock.BlockData = BigBlock.BlockData.fromId(c2.bottom_chunk[bb2_loc]);
-    try std.testing.expectEqual(b1_block_id, retrieved_bb1.block_id);
-    try std.testing.expectEqual(b2_block_id, retrieved_bb2.block_id);
-}
-
-test "toWriter and initFromReader" {
+test "compress and initFromCompressed" {
     const b1_block_id: u9 = 9;
     const b2_block_id: u9 = 13;
     const bb1_loc: usize = 301;
@@ -125,9 +118,12 @@ test "toWriter and initFromReader" {
     bottom_chunk[bb2_loc] = bb2.toId();
     const c1: *Compressor = init(std.testing.allocator, top_chunk[0..], bottom_chunk[0..]);
     defer c1.deinit();
-    var s = c1.toWriter();
-    defer std.testing.allocator.free(s.buffer);
-    const c2: *Compressor = initFromReader(std.testing.allocator, s.reader());
+    var al = std.ArrayList(u8).init(std.testing.allocator);
+    defer al.deinit();
+    c1.compress(al.writer());
+
+    var fbs = std.io.fixedBufferStream(al.items);
+    const c2: *Compressor = initFromCompressed(std.testing.allocator, fbs.reader());
     defer c2.deinit();
     const retrieved_bb1: BigBlock.BlockData = BigBlock.BlockData.fromId(c2.top_chunk[bb1_loc]);
     const retrieved_bb2: BigBlock.BlockData = BigBlock.BlockData.fromId(c2.bottom_chunk[bb2_loc]);
