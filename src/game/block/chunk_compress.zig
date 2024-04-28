@@ -104,27 +104,37 @@ fn compress(self: *Compressor, writer: anytype) void {
 }
 
 test "compress and initFromCompressed" {
+    // Set test data
     const b1_block_id: u9 = 9;
     const b2_block_id: u9 = 13;
     const bb1_loc: usize = 301;
     const bb2_loc: usize = 402;
     const bb1: BigBlock.BlockData = BigBlock.BlockData.fromId(b1_block_id);
     const bb2: BigBlock.BlockData = BigBlock.BlockData.fromId(b2_block_id);
+
+    // Create chunk data
     var top_chunk: []u64 = std.testing.allocator.dupe(u64, BigChunk.fully_lit_chunk[0..]) catch @panic("OOM");
     defer std.testing.allocator.free(top_chunk);
     var bottom_chunk: []u64 = std.testing.allocator.dupe(u64, BigChunk.fully_lit_chunk[0..]) catch @panic("OOM");
     defer std.testing.allocator.free(bottom_chunk);
+
+    // Set test data on chunks
     top_chunk[bb1_loc] = bb1.toId();
     bottom_chunk[bb2_loc] = bb2.toId();
+
+    // Set compressor that compresses
     const c1: *Compressor = init(std.testing.allocator, top_chunk[0..], bottom_chunk[0..]);
     defer c1.deinit();
     var al = std.ArrayList(u8).init(std.testing.allocator);
     defer al.deinit();
     c1.compress(al.writer());
 
+    // Set compressor that decompresses
     var fbs = std.io.fixedBufferStream(al.items);
     const c2: *Compressor = initFromCompressed(std.testing.allocator, fbs.reader());
     defer c2.deinit();
+
+    // Validate the compressed data is what was decompressed
     const retrieved_bb1: BigBlock.BlockData = BigBlock.BlockData.fromId(c2.top_chunk[bb1_loc]);
     const retrieved_bb2: BigBlock.BlockData = BigBlock.BlockData.fromId(c2.bottom_chunk[bb2_loc]);
     try std.testing.expectEqual(b1_block_id, retrieved_bb1.block_id);
