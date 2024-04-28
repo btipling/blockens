@@ -1,9 +1,9 @@
 // represented by a u64
 pub const BlockData = packed struct {
     block_id: u9, // 9 512 values for 512 different block types
-    dim: u1, // 10 any light nearby
-    ambient: u12, // 22 ambient light
-    lighting: u12, // 34 lamp light
+    ambient: u12, // 21 ambient light
+    lighting: u12, // 33 lamp light
+    dim: u1, // 34 any light nearby
     translucent: u1, // 35 spreads light
     orientation: u3, // 38 which way up is
     rotation: u2, // 40 which way block is rotated
