@@ -249,6 +249,7 @@ pub const Data = struct {
             defer listStmt.reset();
 
             while (try listStmt.step()) |row| {
+                chunk_file.initWorldSave(false, row.id);
                 try data.append(
                     worldOption{
                         .id = row.id,
