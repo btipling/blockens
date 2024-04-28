@@ -171,6 +171,7 @@ pub const Data = struct {
     }
 
     pub fn ensureDefaultWorld(self: *Data) !bool {
+        chunk_file.initWorldSave(false, 1);
         if (try self.countWorlds() < 1) {
             try saveWorld(self, "default");
             return false;
