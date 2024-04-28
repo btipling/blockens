@@ -1,45 +1,3 @@
-const std = @import("std");
-const sqlite = @import("sqlite");
-
-const createWorldTable = @embedFile("./sql/world/create.sql");
-const insertWorldStmt = @embedFile("./sql/world/insert.sql");
-const selectWorldByNameStmt = @embedFile("./sql/world/select_by_name.sql");
-const selectWorldByIdStmt = @embedFile("./sql/world/select_by_id.sql");
-const listWorldStmt = @embedFile("./sql/world/list.sql");
-const updateWorldStmt = @embedFile("./sql/world/update.sql");
-const deleteWorldStmt = @embedFile("./sql/world/delete.sql");
-const countWorldsStmt = @embedFile("./sql/world/count_worlds.sql");
-
-const createTextureScriptTable = @embedFile("./sql/texture_script/create.sql");
-const insertTextureScriptStmt = @embedFile("./sql/texture_script/insert.sql");
-const updateTextureScriptStmt = @embedFile("./sql/texture_script/update.sql");
-const selectTextureStmt = @embedFile("./sql/texture_script/select.sql");
-const listTextureStmt = @embedFile("./sql/texture_script/list.sql");
-const deleteTextureStmt = @embedFile("./sql/texture_script/delete.sql");
-
-const createChunkScriptTable = @embedFile("./sql/chunk_script/create.sql");
-const insertChunkScriptStmt = @embedFile("./sql/chunk_script/insert.sql");
-const updateChunkScriptStmt = @embedFile("./sql/chunk_script/update.sql");
-const selectChunkStmt = @embedFile("./sql/chunk_script/select.sql");
-const listChunkStmt = @embedFile("./sql/chunk_script/list.sql");
-const deleteChunkStmt = @embedFile("./sql/chunk_script/delete.sql");
-
-const createBlockTable = @embedFile("./sql/block/create.sql");
-const insertBlockStmt = @embedFile("./sql/block/insert.sql");
-const updateBlockStmt = @embedFile("./sql/block/update.sql");
-const selectBlockStmt = @embedFile("./sql/block/select.sql");
-const listBlockStmt = @embedFile("./sql/block/list.sql");
-const deleteBlockStmt = @embedFile("./sql/block/delete.sql");
-
-const createChunkDataTable = @embedFile("./sql/chunk/create.sql");
-const insertChunkDataStmt = @embedFile("./sql/chunk/insert.sql");
-const updateChunkDataStmt = @embedFile("./sql/chunk/update.sql");
-const selectChunkDataByIDStmt = @embedFile("./sql/chunk/select_by_id.sql");
-const selectChunkDataByCoordsStmt = @embedFile("./sql/chunk/select_by_coords.sql");
-const listChunkDataStmt = @embedFile("./sql/chunk/list.sql");
-const deleteChunkDataStmt = @embedFile("./sql/chunk/delete.sql");
-const delete_chunk_data_by_id_stmt = @embedFile("./sql/chunk/delete_by_id.sql");
-
 pub const DataErr = error{
     NotFound,
 };
@@ -182,6 +140,7 @@ pub const Data = struct {
     allocator: std.mem.Allocator,
 
     pub fn init(allocator: std.mem.Allocator) !Data {
+        chunk_file.initSaves(false);
         const db = try sqlite.Database.init(.{ .path = "./gamedata.db" });
         return Data{
             .db = db,
@@ -1228,3 +1187,47 @@ pub const Data = struct {
         return DataErr.NotFound;
     }
 };
+
+const createWorldTable = @embedFile("./sql/world/create.sql");
+const insertWorldStmt = @embedFile("./sql/world/insert.sql");
+const selectWorldByNameStmt = @embedFile("./sql/world/select_by_name.sql");
+const selectWorldByIdStmt = @embedFile("./sql/world/select_by_id.sql");
+const listWorldStmt = @embedFile("./sql/world/list.sql");
+const updateWorldStmt = @embedFile("./sql/world/update.sql");
+const deleteWorldStmt = @embedFile("./sql/world/delete.sql");
+const countWorldsStmt = @embedFile("./sql/world/count_worlds.sql");
+
+const createTextureScriptTable = @embedFile("./sql/texture_script/create.sql");
+const insertTextureScriptStmt = @embedFile("./sql/texture_script/insert.sql");
+const updateTextureScriptStmt = @embedFile("./sql/texture_script/update.sql");
+const selectTextureStmt = @embedFile("./sql/texture_script/select.sql");
+const listTextureStmt = @embedFile("./sql/texture_script/list.sql");
+const deleteTextureStmt = @embedFile("./sql/texture_script/delete.sql");
+
+const createChunkScriptTable = @embedFile("./sql/chunk_script/create.sql");
+const insertChunkScriptStmt = @embedFile("./sql/chunk_script/insert.sql");
+const updateChunkScriptStmt = @embedFile("./sql/chunk_script/update.sql");
+const selectChunkStmt = @embedFile("./sql/chunk_script/select.sql");
+const listChunkStmt = @embedFile("./sql/chunk_script/list.sql");
+const deleteChunkStmt = @embedFile("./sql/chunk_script/delete.sql");
+
+const createBlockTable = @embedFile("./sql/block/create.sql");
+const insertBlockStmt = @embedFile("./sql/block/insert.sql");
+const updateBlockStmt = @embedFile("./sql/block/update.sql");
+const selectBlockStmt = @embedFile("./sql/block/select.sql");
+const listBlockStmt = @embedFile("./sql/block/list.sql");
+const deleteBlockStmt = @embedFile("./sql/block/delete.sql");
+
+const createChunkDataTable = @embedFile("./sql/chunk/create.sql");
+const insertChunkDataStmt = @embedFile("./sql/chunk/insert.sql");
+const updateChunkDataStmt = @embedFile("./sql/chunk/update.sql");
+const selectChunkDataByIDStmt = @embedFile("./sql/chunk/select_by_id.sql");
+const selectChunkDataByCoordsStmt = @embedFile("./sql/chunk/select_by_coords.sql");
+const listChunkDataStmt = @embedFile("./sql/chunk/list.sql");
+const deleteChunkDataStmt = @embedFile("./sql/chunk/delete.sql");
+const delete_chunk_data_by_id_stmt = @embedFile("./sql/chunk/delete_by_id.sql");
+
+const std = @import("std");
+const sqlite = @import("sqlite");
+
+pub const chunk_file = @import("chunk_file.zig");

@@ -7,7 +7,7 @@ top_chunk: []u64 = undefined,
 bottom_chunk: []u64 = undefined,
 allocator: std.mem.Allocator,
 
-const Compressor = @This();
+const Compress = @This();
 const chunk_byte_size: usize = chunk.chunkSize * @sizeOf(u64);
 
 const compressorData = packed struct {
@@ -15,8 +15,8 @@ const compressorData = packed struct {
     padding: u56 = 0, // reserved for later and u64 alignment
 };
 
-pub fn init(allocator: std.mem.Allocator, top_chunk: []u64, bottom_chunk: []u64) *Compressor {
-    const c: *Compressor = allocator.create(Compressor) catch @panic("OOM");
+pub fn init(allocator: std.mem.Allocator, top_chunk: []u64, bottom_chunk: []u64) *Compress {
+    const c: *Compress = allocator.create(Compress) catch @panic("OOM");
     c.* = .{
         .allocator = allocator,
         .top_chunk = allocator.dupe(u64, top_chunk) catch @panic("OOM"),
@@ -25,13 +25,13 @@ pub fn init(allocator: std.mem.Allocator, top_chunk: []u64, bottom_chunk: []u64)
     return c;
 }
 
-pub fn deinit(self: *Compressor) void {
+pub fn deinit(self: *Compress) void {
     self.allocator.free(self.top_chunk);
     self.allocator.free(self.bottom_chunk);
     self.allocator.destroy(self);
 }
 
-fn initFromCompressed(allocator: std.mem.Allocator, reader: anytype) *Compressor {
+pub fn initFromCompressed(allocator: std.mem.Allocator, reader: anytype) !*Compress {
     // Create bufer to read decompressed bits into
     const needed_space: usize = @sizeOf(compressorData) + chunk.chunkSize * @sizeOf(u64) * 2;
     const buffer: []u8 = allocator.alloc(u8, needed_space) catch @panic("OOM");
@@ -39,10 +39,10 @@ fn initFromCompressed(allocator: std.mem.Allocator, reader: anytype) *Compressor
 
     // Decompress the bits into the buffer
     var fbs = std.io.fixedBufferStream(buffer);
-    std.compress.gzip.decompress(reader, fbs.writer()) catch @panic("decompressing chunks failed");
+    try std.compress.gzip.decompress(reader, fbs.writer());
 
     // Create a compressor instance
-    const c: *Compressor = allocator.create(Compressor) catch @panic("OOM");
+    const c: *Compress = allocator.create(Compress) catch @panic("OOM");
     c.* = .{
         .allocator = allocator,
     };
@@ -74,7 +74,7 @@ fn initFromCompressed(allocator: std.mem.Allocator, reader: anytype) *Compressor
     return c;
 }
 
-fn compress(self: *Compressor, writer: anytype) void {
+pub fn compress(self: *Compress, writer: anytype) !void {
     // Setup the data to compress
 
     // Convert all the props to bits
@@ -94,10 +94,10 @@ fn compress(self: *Compressor, writer: anytype) void {
     var r = std.io.fixedBufferStream(b);
 
     // Create a compressor
-    var cmp = std.compress.gzip.compressor(
+    var cmp = try std.compress.gzip.compressor(
         writer,
         .{ .level = .default },
-    ) catch @panic("compressor init failed");
+    );
 
     cmp.compress(r.reader()) catch @panic("compression failed");
     cmp.finish() catch @panic("compression failed to finish");
@@ -123,7 +123,7 @@ test "compress and initFromCompressed" {
     bottom_chunk[bb2_loc] = bb2.toId();
 
     // Set compressor that compresses
-    const c1: *Compressor = init(std.testing.allocator, top_chunk[0..], bottom_chunk[0..]);
+    const c1: *Compress = init(std.testing.allocator, top_chunk[0..], bottom_chunk[0..]);
     defer c1.deinit();
     var al = std.ArrayList(u8).init(std.testing.allocator);
     defer al.deinit();
@@ -131,7 +131,7 @@ test "compress and initFromCompressed" {
 
     // Set compressor that decompresses
     var fbs = std.io.fixedBufferStream(al.items);
-    const c2: *Compressor = initFromCompressed(std.testing.allocator, fbs.reader());
+    const c2: *Compress = initFromCompressed(std.testing.allocator, fbs.reader());
     defer c2.deinit();
 
     // Validate the compressed data is what was decompressed
