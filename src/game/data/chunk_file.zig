@@ -146,6 +146,36 @@ pub fn saveChunkData(
     };
 }
 
+pub fn loadChunkData(
+    allocator: std.mem.Allocator,
+    world_id: i32,
+    x: i32,
+    z: i32,
+    top_chunk: []u64,
+    bottom_chunk: []u64,
+) void {
+    const file_path = filePath(world_id, x, z) catch |e| {
+        std.log.err("unable to create file name to get chunk.({d}, {d}) {}\n", .{ x, z, e });
+        return;
+    };
+    const fpath = std.mem.sliceTo(file_path[0..], 0);
+    const flags: std.fs.File.OpenFlags = .{
+        .mode = .read_only,
+        .lock = .none,
+    };
+    var fh = std.fs.cwd().openFile(fpath, flags) catch |e| {
+        std.log.err("unable to open file to get chunk. ({d}, {d}) {}\n", .{ x, z, e });
+        return;
+    };
+    defer fh.close();
+    var c: *Compress = try Compress.initFromCompressed(allocator, fh.reader()) catch |e| {
+        std.log.err("unable to decompress chunk. ({d}, {d}) {}\n", .{ x, z, e });
+    };
+    defer c.deinit();
+    @memcpy(top_chunk, c.top_chunk);
+    @memcpy(bottom_chunk, c.bottom_chunk);
+}
+
 const std = @import("std");
 const block = @import("../block/block.zig");
 const Compress = block.compress;

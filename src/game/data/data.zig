@@ -778,12 +778,6 @@ pub const Data = struct {
         z: i32,
         voxels: []u32,
     ) !void {
-        // _ = self;
-        // _ = world_id;
-        // _ = x;
-        // _ = y;
-        // _ = z;
-        // _ = voxels;
         var top_chunk: []u64 = self.allocator.alloc(u64, game_chunk.chunkSize) catch @panic("OOM");
         defer self.allocator.free(top_chunk);
         var bottom_chunk: []u64 = self.allocator.alloc(u64, game_chunk.chunkSize) catch @panic("OOM");
