@@ -38,37 +38,37 @@ pub const LightingCrossChunkJob = struct {
     }
 
     pub fn lightingCrossChunkJob(self: *@This()) void {
-        // const t_block_data: []u32, const bt_block_data: []u32 = self.cData(self.x, self.z);
-        // defer game.state.allocator.free(t_block_data);
-        // defer game.state.allocator.free(bt_block_data);
-        // {
-        //     const wp = chunk.worldPosition.initFromPositionV(.{
-        //         @floatFromInt(self.x),
-        //         1,
-        //         @floatFromInt(self.z),
-        //         0,
-        //     });
-        //     self.fixCrossChunkLighting(wp, t_block_data, bt_block_data);
-        // }
-        // {
-        //     const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
-        //     defer game.state.allocator.free(top_chunk);
-        //     const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
-        //     defer game.state.allocator.free(bottom_chunk);
-        //     var i: usize = 0;
-        //     while (i < chunk.chunkSize) : (i += 1) {
-        //         top_chunk[i] = @intCast(t_block_data[i]);
-        //         bottom_chunk[i] = @intCast(bt_block_data[i]);
-        //     }
-        //     data.chunk_file.saveChunkData(
-        //         game.state.allocator,
-        //         self.world_id,
-        //         self.x,
-        //         self.z,
-        //         top_chunk,
-        //         bottom_chunk,
-        //     );
-        // }
+        const t_block_data: []u32, const bt_block_data: []u32 = self.cData(self.x, self.z);
+        defer game.state.allocator.free(t_block_data);
+        defer game.state.allocator.free(bt_block_data);
+        {
+            const wp = chunk.worldPosition.initFromPositionV(.{
+                @floatFromInt(self.x),
+                1,
+                @floatFromInt(self.z),
+                0,
+            });
+            self.fixCrossChunkLighting(wp, t_block_data, bt_block_data);
+        }
+        {
+            const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.allocator.free(top_chunk);
+            const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.allocator.free(bottom_chunk);
+            var i: usize = 0;
+            while (i < chunk.chunkSize) : (i += 1) {
+                top_chunk[i] = @intCast(t_block_data[i]);
+                bottom_chunk[i] = @intCast(bt_block_data[i]);
+            }
+            data.chunk_file.saveChunkData(
+                game.state.allocator,
+                self.world_id,
+                self.x,
+                self.z,
+                top_chunk,
+                bottom_chunk,
+            );
+        }
         self.finishJob();
     }
 

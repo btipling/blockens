@@ -35,30 +35,30 @@ pub const LightingJob = struct {
     }
 
     pub fn lightingJob(self: *@This()) void {
-        // const t_data: []u32, const b_data: []u32 = self.cData(self.x, self.z);
-        // defer game.state.allocator.free(t_data);
-        // defer game.state.allocator.free(b_data);
+        const t_data: []u32, const b_data: []u32 = self.cData(self.x, self.z);
+        defer game.state.allocator.free(t_data);
+        defer game.state.allocator.free(b_data);
 
-        // lighting.light_fall(t_data, b_data);
-        // {
-        //     const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
-        //     defer game.state.allocator.free(top_chunk);
-        //     const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
-        //     defer game.state.allocator.free(bottom_chunk);
-        //     var i: usize = 0;
-        //     while (i < chunk.chunkSize) : (i += 1) {
-        //         top_chunk[i] = @intCast(t_data[i]);
-        //         bottom_chunk[i] = @intCast(b_data[i]);
-        //     }
-        //     data.chunk_file.saveChunkData(
-        //         game.state.allocator,
-        //         self.world_id,
-        //         self.x,
-        //         self.z,
-        //         top_chunk,
-        //         bottom_chunk,
-        //     );
-        // }
+        lighting.light_fall(t_data, b_data);
+        {
+            const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.allocator.free(top_chunk);
+            const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.allocator.free(bottom_chunk);
+            var i: usize = 0;
+            while (i < chunk.chunkSize) : (i += 1) {
+                top_chunk[i] = @intCast(t_data[i]);
+                bottom_chunk[i] = @intCast(b_data[i]);
+            }
+            data.chunk_file.saveChunkData(
+                game.state.allocator,
+                self.world_id,
+                self.x,
+                self.z,
+                top_chunk,
+                bottom_chunk,
+            );
+        }
         self.finishJob();
     }
 

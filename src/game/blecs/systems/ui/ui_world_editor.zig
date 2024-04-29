@@ -418,6 +418,8 @@ fn evalChunksFunc() !void {
         } else {
             var scriptData: data.chunkScript = undefined;
             game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData) catch {
+                @memset(ch_cfg.chunkData, 0);
+                game.state.ui.world_chunk_table_data.put(wp, ch_cfg) catch @panic("OOM");
                 continue;
             };
             ch_script = script.Script.dataScriptToScript(scriptData.script);
@@ -444,20 +446,22 @@ fn saveChunkDatas() !void {
             const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
             defer game.state.allocator.free(bottom_chunk);
             if (game.state.ui.world_chunk_table_data.get(wp_t)) |ch_cfg| {
-                var ci: usize = 0;
-                while (ci < chunk.chunkSize) : (ci += 1) top_chunk[ci] = @intCast(ch_cfg.chunkData[ci]);
                 if (ch_cfg.id != 0) {
+                    var ci: usize = 0;
+                    while (ci < chunk.chunkSize) : (ci += 1) top_chunk[ci] = @intCast(ch_cfg.chunkData[ci]);
                     try game.state.db.updateChunkMetadata(ch_cfg.id, ch_cfg.scriptId);
                 } else {
+                    @memset(top_chunk, 0);
                     try game.state.db.saveChunkMetadata(w_id, x, 1, z, ch_cfg.scriptId);
                 }
             }
             if (game.state.ui.world_chunk_table_data.get(wp_b)) |ch_cfg| {
-                var ci: usize = 0;
-                while (ci < chunk.chunkSize) : (ci += 1) bottom_chunk[ci] = @intCast(ch_cfg.chunkData[ci]);
                 if (ch_cfg.id != 0) {
+                    var ci: usize = 0;
+                    while (ci < chunk.chunkSize) : (ci += 1) bottom_chunk[ci] = @intCast(ch_cfg.chunkData[ci]);
                     try game.state.db.updateChunkMetadata(ch_cfg.id, ch_cfg.scriptId);
                 } else {
+                    @memset(bottom_chunk, 0);
                     try game.state.db.saveChunkMetadata(w_id, x, 0, z, ch_cfg.scriptId);
                 }
             }

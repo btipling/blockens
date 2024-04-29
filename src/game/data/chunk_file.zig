@@ -131,7 +131,6 @@ pub fn saveChunkData(
     const fpath = std.mem.sliceTo(file_path[0..], 0);
     const flags: std.fs.File.CreateFlags = .{
         .lock = .exclusive,
-        .lock_nonblocking = true,
     };
     var fh = std.fs.cwd().createFile(fpath, flags) catch |e| {
         std.log.err("unable to save chunk. {}\n", .{e});
@@ -157,6 +156,8 @@ pub fn loadChunkData(
 ) void {
     const file_path = filePath(world_id, x, z) catch |e| {
         std.log.err("unable to create file name to get chunk.({d}, {d}) {}\n", .{ x, z, e });
+        @memset(top_chunk, 0);
+        @memset(bottom_chunk, 0);
         return;
     };
     const fpath = std.mem.sliceTo(file_path[0..], 0);
@@ -166,11 +167,15 @@ pub fn loadChunkData(
     };
     var fh = std.fs.cwd().openFile(fpath, flags) catch |e| {
         std.log.err("unable to open file to get chunk. ({d}, {d}) {}\n", .{ x, z, e });
+        @memset(top_chunk, 0);
+        @memset(bottom_chunk, 0);
         return;
     };
     defer fh.close();
     var c: *Compress = Compress.initFromCompressed(allocator, fh.reader()) catch |e| {
         std.log.err("unable to decompress chunk. ({d}, {d}) {}\n", .{ x, z, e });
+        @memset(top_chunk, 0);
+        @memset(bottom_chunk, 0);
         return;
     };
     defer c.deinit();
