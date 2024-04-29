@@ -168,8 +168,9 @@ pub fn loadChunkData(
         return;
     };
     defer fh.close();
-    var c: *Compress = try Compress.initFromCompressed(allocator, fh.reader()) catch |e| {
+    var c: *Compress = Compress.initFromCompressed(allocator, fh.reader()) catch |e| {
         std.log.err("unable to decompress chunk. ({d}, {d}) {}\n", .{ x, z, e });
+        return;
     };
     defer c.deinit();
     @memcpy(top_chunk, c.top_chunk);

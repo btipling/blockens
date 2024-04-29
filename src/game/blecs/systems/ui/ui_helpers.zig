@@ -78,9 +78,11 @@ pub fn loadChunkDatas() !void {
             var chunkDataBot: data.chunkData = .{};
             game.state.db.loadChunkData(w_id, x, 1, z, &chunkDataTop) catch |err| {
                 if (err != data.DataErr.NotFound) return err;
+                chunkDataTop.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
             };
             game.state.db.loadChunkData(w_id, x, 0, z, &chunkDataBot) catch |err| {
                 if (err != data.DataErr.NotFound) return err;
+                chunkDataBot.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
             };
             const _x: f32 = @floatFromInt(x);
             const _z: f32 = @floatFromInt(z);
@@ -88,6 +90,19 @@ pub fn loadChunkDatas() !void {
             const p_b = @Vector(4, f32){ _x, 0, _z, 0 };
             const wp_t = chunk.worldPosition.initFromPositionV(p_t);
             const wp_b = chunk.worldPosition.initFromPositionV(p_b);
+            {
+                const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+                defer game.state.allocator.free(top_chunk);
+                const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+                defer game.state.allocator.free(bottom_chunk);
+                data.chunk_file.loadChunkData(game.state.allocator, w_id, x, z, top_chunk, bottom_chunk);
+                var ci: usize = 0;
+                while (ci < chunk.chunkSize) : (ci += 1) {
+                    chunkDataTop.voxels[ci] = @truncate(top_chunk[ci]);
+                    chunkDataBot.voxels[ci] = @truncate(bottom_chunk[ci]);
+                }
+            }
+
             const cfg_t = ui.chunkConfig{
                 .id = chunkDataTop.id,
                 .scriptId = chunkDataTop.scriptId,
@@ -98,8 +113,8 @@ pub fn loadChunkDatas() !void {
                 .scriptId = chunkDataBot.scriptId,
                 .chunkData = chunkDataBot.voxels,
             };
-            if (cfg_t.id != 0) try game.state.ui.world_chunk_table_data.put(wp_t, cfg_t);
-            if (cfg_b.id != 0) try game.state.ui.world_chunk_table_data.put(wp_b, cfg_b);
+            try game.state.ui.world_chunk_table_data.put(wp_t, cfg_t);
+            try game.state.ui.world_chunk_table_data.put(wp_b, cfg_b);
         }
     }
 }
