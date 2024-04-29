@@ -69,33 +69,37 @@ pub fn loadChunkDatas() !void {
         game.state.allocator.free(cc.*.chunkData);
     }
     game.state.ui.world_chunk_table_data.clearAndFree();
-    for (0..2) |_i| {
-        const y: i32 = @as(i32, @intCast(_i));
-        for (0..config.worldChunkDims) |i| {
-            const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
-            for (0..config.worldChunkDims) |ii| {
-                const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
-                var chunkData = data.chunkData{};
-                game.state.db.loadChunkData(game.state.ui.world_loaded_id, x, y, z, &chunkData) catch |err| {
-                    if (err == data.DataErr.NotFound) {
-                        continue;
-                    }
-                    return err;
-                };
-                const p = @Vector(4, f32){
-                    @as(f32, @floatFromInt(x)),
-                    @as(f32, @floatFromInt(y)),
-                    @as(f32, @floatFromInt(z)),
-                    0,
-                };
-                const wp = chunk.worldPosition.initFromPositionV(p);
-                const cfg = ui.chunkConfig{
-                    .id = chunkData.id,
-                    .scriptId = chunkData.scriptId,
-                    .chunkData = chunkData.voxels,
-                };
-                try game.state.ui.world_chunk_table_data.put(wp, cfg);
-            }
+    const w_id: i32 = game.state.ui.world_loaded_id;
+    for (0..config.worldChunkDims) |i| {
+        const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
+        for (0..config.worldChunkDims) |ii| {
+            const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
+            var chunkDataTop: data.chunkData = .{};
+            var chunkDataBot: data.chunkData = .{};
+            game.state.db.loadChunkData(w_id, x, 1, z, &chunkDataTop) catch |err| {
+                if (err != data.DataErr.NotFound) return err;
+            };
+            game.state.db.loadChunkData(w_id, x, 0, z, &chunkDataBot) catch |err| {
+                if (err != data.DataErr.NotFound) return err;
+            };
+            const _x: f32 = @floatFromInt(x);
+            const _z: f32 = @floatFromInt(z);
+            const p_t = @Vector(4, f32){ _x, 1, _z, 0 };
+            const p_b = @Vector(4, f32){ _x, 0, _z, 0 };
+            const wp_t = chunk.worldPosition.initFromPositionV(p_t);
+            const wp_b = chunk.worldPosition.initFromPositionV(p_b);
+            const cfg_t = ui.chunkConfig{
+                .id = chunkDataTop.id,
+                .scriptId = chunkDataTop.scriptId,
+                .chunkData = chunkDataTop.voxels,
+            };
+            const cfg_b = ui.chunkConfig{
+                .id = chunkDataBot.id,
+                .scriptId = chunkDataBot.scriptId,
+                .chunkData = chunkDataBot.voxels,
+            };
+            if (cfg_t.id != 0) try game.state.ui.world_chunk_table_data.put(wp_t, cfg_t);
+            if (cfg_b.id != 0) try game.state.ui.world_chunk_table_data.put(wp_b, cfg_b);
         }
     }
 }
