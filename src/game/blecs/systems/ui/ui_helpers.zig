@@ -75,13 +75,21 @@ pub fn loadChunkDatas() !void {
         for (0..config.worldChunkDims) |ii| {
             const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
             var chunkDataTop: data.chunkData = .{};
+            chunkDataTop.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
             var chunkDataBot: data.chunkData = .{};
-            game.state.db.loadChunkData(w_id, x, 1, z, &chunkDataTop) catch |err| {
-                if (err != data.DataErr.NotFound) return err;
+            chunkDataBot.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+            game.state.db.loadChunkMetadata(w_id, x, 1, z, &chunkDataTop) catch |err| {
+                if (err != data.DataErr.NotFound) {
+                    std.log.err("unable to load chunk datas ({d}, 1, {d}): {}\n", .{ x, z, err });
+                    return err;
+                }
                 chunkDataTop.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
             };
-            game.state.db.loadChunkData(w_id, x, 0, z, &chunkDataBot) catch |err| {
-                if (err != data.DataErr.NotFound) return err;
+            game.state.db.loadChunkMetadata(w_id, x, 0, z, &chunkDataBot) catch |err| {
+                if (err != data.DataErr.NotFound) {
+                    std.log.err("unable to load chunk datas ({d}, 0, {d}): {}\n", .{ x, z, err });
+                    return err;
+                }
                 chunkDataBot.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
             };
             const _x: f32 = @floatFromInt(x);

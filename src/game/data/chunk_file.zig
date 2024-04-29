@@ -144,6 +144,7 @@ pub fn saveChunkData(
         std.log.err("unable to compress chunk. {}\n", .{e});
         return;
     };
+    std.debug.print("saved chunk ({d}, {d})\n", .{ x, z });
 }
 
 pub fn loadChunkData(
@@ -161,7 +162,7 @@ pub fn loadChunkData(
     const fpath = std.mem.sliceTo(file_path[0..], 0);
     const flags: std.fs.File.OpenFlags = .{
         .mode = .read_only,
-        .lock = .none,
+        .lock = .exclusive,
     };
     var fh = std.fs.cwd().openFile(fpath, flags) catch |e| {
         std.log.err("unable to open file to get chunk. ({d}, {d}) {}\n", .{ x, z, e });

@@ -417,48 +417,51 @@ fn evalChunksFunc() !void {
             ch_script = sc;
         } else {
             var scriptData: data.chunkScript = undefined;
-            game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData) catch unreachable;
+            game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData) catch {
+                continue;
+            };
             ch_script = script.Script.dataScriptToScript(scriptData.script);
-            scriptCache.put(ch_cfg.scriptId, ch_script) catch unreachable;
+            scriptCache.put(ch_cfg.scriptId, ch_script) catch @panic("OOM");
         }
         _ = game.state.jobs.generateWorldChunk(wp, &ch_script);
     }
 }
 
 fn saveChunkDatas() !void {
+    const w_id: i32 = game.state.ui.world_loaded_id;
     for (0..config.worldChunkDims) |i| {
         const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
-        inner: for (0..config.worldChunkDims) |ii| {
+        for (0..config.worldChunkDims) |ii| {
             const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
-            const y = game.state.ui.world_chunk_y;
-            const p = @Vector(4, f32){
-                @as(f32, @floatFromInt(x)),
-                @as(f32, @floatFromInt(y)),
-                @as(f32, @floatFromInt(z)),
-                0,
-            };
-            const wp = chunk.worldPosition.initFromPositionV(p);
-            if (game.state.ui.world_chunk_table_data.get(wp)) |ch_cfg| {
+            const _x: f32 = @floatFromInt(x);
+            const _z: f32 = @floatFromInt(z);
+            const p_t = @Vector(4, f32){ _x, 1, _z, 0 };
+            const p_b = @Vector(4, f32){ _x, 0, _z, 0 };
+            const wp_t = chunk.worldPosition.initFromPositionV(p_t);
+            const wp_b = chunk.worldPosition.initFromPositionV(p_b);
+            const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.allocator.free(top_chunk);
+            const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.allocator.free(bottom_chunk);
+            if (game.state.ui.world_chunk_table_data.get(wp_t)) |ch_cfg| {
+                var ci: usize = 0;
+                while (ci < chunk.chunkSize) : (ci += 1) top_chunk[ci] = @intCast(ch_cfg.chunkData[ci]);
                 if (ch_cfg.id != 0) {
-                    // update
-                    try game.state.db.updateChunkData(
-                        ch_cfg.id,
-                        ch_cfg.scriptId,
-                        ch_cfg.chunkData,
-                    );
-                    continue :inner;
+                    try game.state.db.updateChunkMetadata(ch_cfg.id, ch_cfg.scriptId);
+                } else {
+                    try game.state.db.saveChunkMetadata(w_id, x, 1, z, ch_cfg.scriptId);
                 }
-                // insert
-                try game.state.db.saveChunkData(
-                    game.state.ui.world_loaded_id,
-                    x,
-                    y,
-                    z,
-                    ch_cfg.scriptId,
-                    ch_cfg.chunkData,
-                );
-                continue :inner;
             }
+            if (game.state.ui.world_chunk_table_data.get(wp_b)) |ch_cfg| {
+                var ci: usize = 0;
+                while (ci < chunk.chunkSize) : (ci += 1) bottom_chunk[ci] = @intCast(ch_cfg.chunkData[ci]);
+                if (ch_cfg.id != 0) {
+                    try game.state.db.updateChunkMetadata(ch_cfg.id, ch_cfg.scriptId);
+                } else {
+                    try game.state.db.saveChunkMetadata(w_id, x, 0, z, ch_cfg.scriptId);
+                }
+            }
+            data.chunk_file.saveChunkData(game.state.allocator, w_id, x, z, top_chunk, bottom_chunk);
         }
     }
 }
