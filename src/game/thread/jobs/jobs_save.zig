@@ -30,7 +30,6 @@ pub const SaveJob = struct {
     pub fn saveJob(self: *@This()) void {
         self.savePlayerPosition() catch std.debug.print("unable to save player position\n", .{});
         for (self.data.chunks_updated) |cc| {
-            std.debug.print("saving chunk in save jobs wtf\n", .{});
             if (cc) |c| self.saveChunk(c) catch @panic("nope");
         }
     }

@@ -83,14 +83,12 @@ pub fn loadChunkDatas() !void {
                     std.log.err("unable to load chunk datas ({d}, 1, {d}): {}\n", .{ x, z, err });
                     return err;
                 }
-                chunkDataTop.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
             };
             game.state.db.loadChunkMetadata(w_id, x, 0, z, &chunkDataBot) catch |err| {
                 if (err != data.DataErr.NotFound) {
                     std.log.err("unable to load chunk datas ({d}, 0, {d}): {}\n", .{ x, z, err });
                     return err;
                 }
-                chunkDataBot.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
             };
             const _x: f32 = @floatFromInt(x);
             const _z: f32 = @floatFromInt(z);

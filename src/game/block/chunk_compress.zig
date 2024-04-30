@@ -39,7 +39,12 @@ pub fn initFromCompressed(allocator: std.mem.Allocator, reader: anytype) !*Compr
 
     // Decompress the bits into the buffer
     var fbs = std.io.fixedBufferStream(buffer);
-    try std.compress.gzip.decompress(reader, fbs.writer());
+    std.compress.gzip.decompress(reader, fbs.writer()) catch |err| {
+        if (err == error.EndOfStream) {
+            std.debug.print("EOS bytes written: fbs {d}\n", .{fbs.pos});
+        }
+        return err;
+    };
 
     // Create a compressor instance
     const c: *Compress = allocator.create(Compress) catch @panic("OOM");
@@ -99,8 +104,8 @@ pub fn compress(self: *Compress, writer: anytype) !void {
         .{ .level = .default },
     );
 
-    cmp.compress(r.reader()) catch @panic("compression failed");
-    cmp.finish() catch @panic("compression failed to finish");
+    try cmp.compress(r.reader());
+    try cmp.finish();
 }
 
 test "compress and initFromCompressed" {
