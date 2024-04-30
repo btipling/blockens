@@ -272,3 +272,4 @@ const chunk_traverser = @import("chunk_traverser.zig");
 
 pub const worldPosition = @import("world_position.zig");
 pub const big = @import("chunk_big.zig");
+pub const column = @import("chunk_column.zig");

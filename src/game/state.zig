@@ -90,28 +90,40 @@ pub const Game = struct {
             dirt_texture_script[i] = c;
         }
         const dirt_texture = try self.script.evalTextureFunc(dirt_texture_script);
+        defer self.allocator.free(dirt_texture.?);
         var grass_texture_script = [_]u8{0} ** script.maxLuaScriptSize;
         const gtsb = @embedFile("script/lua/gen_grass_texture.lua");
         for (gtsb, 0..) |c, i| {
             grass_texture_script[i] = c;
         }
         const grass_texture = try self.script.evalTextureFunc(grass_texture_script);
+        defer self.allocator.free(grass_texture.?);
         if (dirt_texture == null or grass_texture == null) std.debug.panic("couldn't generate lua textures!\n", .{});
         try self.db.saveBlock("dirt", @ptrCast(dirt_texture.?), false, 0);
         try self.db.saveBlock("grass", @ptrCast(grass_texture.?), false, 0);
         const default_chunk_script: []const u8 = @embedFile("script/lua/chunk_gen_default.lua");
         try self.db.saveChunkScript("default", default_chunk_script, .{ 0, 1, 0 });
-        const chunk_data = try self.script.evalChunkFunc(default_chunk_script);
-        try self.db.saveChunkData(1, 0, 0, 0, 1, chunk_data);
-
-        var c: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
-        const chunk_top_data: []u32 = try self.allocator.alloc(u32, c.len);
-        @memcpy(chunk_top_data, &c);
-        try self.db.saveChunkData(1, 0, 1, 0, 1, chunk_top_data);
-        self.allocator.free(chunk_data);
-        self.allocator.free(chunk_top_data);
-        self.allocator.free(dirt_texture.?);
-        self.allocator.free(grass_texture.?);
+        {
+            var c: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
+            const top_chunk: []u32 = try self.allocator.alloc(u32, c.len);
+            defer self.allocator.free(top_chunk);
+            const big_top_chunk: []u64 = try self.allocator.alloc(u64, c.len);
+            defer self.allocator.free(big_top_chunk);
+            @memcpy(top_chunk, &c);
+            const bottom_chunk = try self.script.evalChunkFunc(default_chunk_script);
+            defer self.allocator.free(bottom_chunk);
+            const big_bottom_chunk: []u64 = try self.allocator.alloc(u64, c.len);
+            defer self.allocator.free(big_bottom_chunk);
+            defer self.allocator.free(bottom_chunk);
+            try self.db.saveChunkMetadata(1, 0, 1, 0, 1);
+            try self.db.saveChunkMetadata(1, 0, 0, 0, 1);
+            var i: usize = 0;
+            while (i < chunk.chunkSize) : (i += 1) {
+                big_top_chunk[i] = @intCast(top_chunk[i]);
+                big_bottom_chunk[i] = @intCast(bottom_chunk[i]);
+            }
+            data.chunk_file.saveChunkData(self.allocator, 1, 0, 0, big_top_chunk, big_bottom_chunk);
+        }
     }
 
     pub fn initInitialPlayer(self: *Game, world_id: i32) !void {

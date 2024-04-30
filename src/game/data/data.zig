@@ -736,40 +736,6 @@ pub const Data = struct {
         };
     }
 
-    // chunk crud:
-    fn chunkToBlob(chunk: []u32) [ChunkBlobArrayStoreSize]u8 {
-        var blob: [ChunkBlobArrayStoreSize]u8 = undefined;
-        for (chunk, 0..) |t, i| {
-            const u = @as(u32, @bitCast(t));
-            const offset = i * 4;
-            const a = @as(u8, @truncate(u >> 24));
-            const b = @as(u8, @truncate(u >> 16));
-            const c = @as(u8, @truncate(u >> 8));
-            const d = @as(u8, @truncate(u));
-            blob[offset] = a;
-            blob[offset + 1] = b;
-            blob[offset + 2] = c;
-            blob[offset + 3] = d;
-        }
-        return blob;
-    }
-
-    fn blobToChunk(self: *Data, blob: sqlite.Blob) []u32 {
-        var chunk: [game_chunk.chunkSize]u32 = undefined;
-        for (chunk, 0..) |_, i| {
-            const offset = i * 4;
-            const a = @as(u32, @intCast(blob.data[offset]));
-            const b = @as(u32, @intCast(blob.data[offset + 1]));
-            const c = @as(u32, @intCast(blob.data[offset + 2]));
-            const d = @as(u32, @intCast(blob.data[offset + 3]));
-            const cd: u32 = a << 24 | b << 16 | c << 8 | d;
-            chunk[i] = @bitCast(cd);
-        }
-        const rv: []u32 = self.allocator.alloc(u32, chunk.len) catch unreachable;
-        @memcpy(rv, &chunk);
-        return rv;
-    }
-
     pub fn saveChunkToFile(
         self: *Data,
         world_id: i32,
@@ -823,14 +789,13 @@ pub const Data = struct {
         return;
     }
 
-    pub fn saveChunkData(
+    pub fn saveChunkMetadata(
         self: *Data,
         world_id: i32,
         x: i32,
         y: i32,
         z: i32,
         scriptId: i32,
-        voxels: []u32,
     ) !void {
         var insertStmt = try self.db.prepare(
             struct {
@@ -839,14 +804,12 @@ pub const Data = struct {
                 y: i32,
                 z: i32,
                 script_id: i32,
-                voxels: sqlite.Blob,
             },
             void,
             insertChunkDataStmt,
         );
         defer insertStmt.deinit();
 
-        var t = chunkToBlob(voxels);
         insertStmt.exec(
             .{
                 .world_id = world_id,
@@ -854,45 +817,33 @@ pub const Data = struct {
                 .y = y,
                 .z = z,
                 .script_id = scriptId,
-                .voxels = sqlite.blob(&t),
             },
         ) catch |err| {
             std.log.err("Failed to insert chunkdata: {}", .{err});
             return err;
         };
-
-        try self.saveChunkToFile(world_id, x, y, z, voxels);
     }
 
-    pub fn updateChunkData(self: *Data, id: i32, script_id: i32, voxels: []u32) !void {
+    pub fn updateChunkMetadata(self: *Data, id: i32, script_id: i32) !void {
         var updateStmt = try self.db.prepare(
             struct {
                 id: i32,
                 script_id: i32,
-                voxels: sqlite.Blob,
             },
             void,
             updateChunkDataStmt,
         );
         defer updateStmt.deinit();
 
-        var c = chunkToBlob(voxels);
         updateStmt.exec(
             .{
                 .id = id,
                 .script_id = script_id,
-                .voxels = sqlite.blob(&c),
             },
         ) catch |err| {
             std.log.err("Failed to update chunkdata: {}", .{err});
             return err;
         };
-        if (id == 0) return;
-        const wd = self.getWorldDataForChunkId(id) catch |e| {
-            std.log.err("Failed to fetch world data. {}\n", .{e});
-            return e;
-        };
-        try self.saveChunkToFile(wd.world_id, wd.x, wd.y, wd.z, voxels);
     }
 
     const worldData = struct {
@@ -936,7 +887,7 @@ pub const Data = struct {
         return DataErr.NotFound;
     }
 
-    pub fn loadChunkData(self: *Data, world_id: i32, x: i32, y: i32, z: i32, data: *chunkData) !void {
+    pub fn loadChunkMetadata(self: *Data, world_id: i32, x: i32, y: i32, z: i32, data: *chunkData) !void {
         var selectStmt = try self.db.prepare(
             struct {
                 x: i32,
@@ -951,7 +902,6 @@ pub const Data = struct {
                 y: i32,
                 z: i32,
                 script_id: i32,
-                voxels: sqlite.Blob,
             },
             selectChunkDataByCoordsStmt,
         );
@@ -973,7 +923,6 @@ pub const Data = struct {
                 data.y = r.y;
                 data.z = r.z;
                 data.scriptId = r.script_id;
-                data.voxels = self.blobToChunk(r.voxels);
                 return;
             }
         }

@@ -176,7 +176,7 @@ pub const Gl = struct {
         var ubo_data = uboStruct{};
         zm.storeMat(&ubo_data.transform, updated);
         ubo_data.shader_data[0] = time;
-        ubo_data.shader_data[1] = 0.3333333 / @as(f32, @floatFromInt(num_blocks)); // texture.s surface height
+        ubo_data.shader_data[1] = 0.33333333333 / @as(f32, @floatFromInt(num_blocks)); // texture.s surface height
         ubo_data.gfx_data[0] = animations_running;
 
         const size: isize = @intCast(@sizeOf(uboStruct));
