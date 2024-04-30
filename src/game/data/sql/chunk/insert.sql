@@ -5,7 +5,6 @@ INSERT INTO
         y,
         z,
         script_id,
-        voxels,
         created_at,
         updated_at
     )
@@ -16,7 +15,6 @@ VALUES
         :y,
         :z,
         :script_id,
-        0,
         CURRENT_TIMESTAMP,
         CURRENT_TIMESTAMP
     );
