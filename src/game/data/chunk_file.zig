@@ -1,8 +1,6 @@
 pub var saves_path: []const u8 = "saves";
 pub var chunk_dir_path: []const u8 = "c";
 
-mutex: std.Thread.Mutex = .{},
-
 const chunkFile = @This();
 var self: chunkFile = .{};
 
@@ -129,8 +127,8 @@ pub fn saveChunkData(
     top_chunk: []u64,
     bottom_chunk: []u64,
 ) void {
-    self.mutex.lock();
-    defer self.mutex.unlock();
+    const ck = chunk.column.lock(x, z) catch return;
+    defer chunk.column.unlock(ck);
     const file_path = filePath(world_id, x, z) catch |e| {
         std.log.err("unable to create file name to save chunk. {}\n", .{e});
         return;
@@ -161,8 +159,12 @@ pub fn loadChunkData(
     top_chunk: []u64,
     bottom_chunk: []u64,
 ) void {
-    self.mutex.lock();
-    defer self.mutex.unlock();
+    const ck = chunk.column.lock(x, z) catch {
+        @memset(top_chunk, 0);
+        @memset(bottom_chunk, 0);
+        return;
+    };
+    defer chunk.column.unlock(ck);
     const file_path = filePath(world_id, x, z) catch |e| {
         std.log.err("unable to create file name to get chunk.({d}, {d}) {}\n", .{ x, z, e });
         @memset(top_chunk, 0);
@@ -193,4 +195,5 @@ pub fn loadChunkData(
 
 const std = @import("std");
 const block = @import("../block/block.zig");
+const chunk = block.chunk;
 const Compress = block.compress;

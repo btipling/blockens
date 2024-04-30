@@ -98,6 +98,7 @@ pub const Jobs = struct {
             const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
             for (0..game_config.worldChunkDims) |ii| {
                 const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
+                chunk.column.prime(x, z);
                 _ = self.jobs.schedule(
                     zjobs.JobId.none,
                     lighting_job.LightingJob{
