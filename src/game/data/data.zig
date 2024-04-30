@@ -736,40 +736,6 @@ pub const Data = struct {
         };
     }
 
-    // chunk crud:
-    fn chunkToBlob(chunk: []u32) [ChunkBlobArrayStoreSize]u8 {
-        var blob: [ChunkBlobArrayStoreSize]u8 = undefined;
-        for (chunk, 0..) |t, i| {
-            const u = @as(u32, @bitCast(t));
-            const offset = i * 4;
-            const a = @as(u8, @truncate(u >> 24));
-            const b = @as(u8, @truncate(u >> 16));
-            const c = @as(u8, @truncate(u >> 8));
-            const d = @as(u8, @truncate(u));
-            blob[offset] = a;
-            blob[offset + 1] = b;
-            blob[offset + 2] = c;
-            blob[offset + 3] = d;
-        }
-        return blob;
-    }
-
-    fn blobToChunk(self: *Data, blob: sqlite.Blob) []u32 {
-        var chunk: [game_chunk.chunkSize]u32 = undefined;
-        for (chunk, 0..) |_, i| {
-            const offset = i * 4;
-            const a = @as(u32, @intCast(blob.data[offset]));
-            const b = @as(u32, @intCast(blob.data[offset + 1]));
-            const c = @as(u32, @intCast(blob.data[offset + 2]));
-            const d = @as(u32, @intCast(blob.data[offset + 3]));
-            const cd: u32 = a << 24 | b << 16 | c << 8 | d;
-            chunk[i] = @bitCast(cd);
-        }
-        const rv: []u32 = self.allocator.alloc(u32, chunk.len) catch unreachable;
-        @memcpy(rv, &chunk);
-        return rv;
-    }
-
     pub fn saveChunkToFile(
         self: *Data,
         world_id: i32,
