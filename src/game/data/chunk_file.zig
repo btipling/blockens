@@ -148,7 +148,7 @@ pub fn saveChunkData(
         std.log.err("unable to compress chunk. {}\n", .{e});
         return;
     };
-    std.debug.print("saved chunk ({d}, {d})\n", .{ x, z });
+    if (x == 3 and z == 3) std.debug.print("saved chunk ({d}, {d})\n", .{ x, z });
 }
 
 pub fn loadChunkData(

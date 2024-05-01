@@ -23,6 +23,7 @@ pub const LoadChunkJob = struct {
     fn loadChunkJob(self: @This()) void {
         const x: i32 = self.x;
         const z: i32 = self.z;
+        if (x == 3 and z == 3) std.debug.print("load chunk job for 3 3\n", .{});
         const w_id = self.world_id;
         var chunkDataTop: data.chunkData = .{};
         chunkDataTop.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
