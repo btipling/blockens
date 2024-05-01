@@ -65,9 +65,9 @@ fn saveWorld() !void {
     try listWorlds();
 }
 
-fn loadWorld(worldId: i32) !void {
+fn loadWorld(world_id: i32) !void {
     var worldData: data.world = undefined;
-    try game.state.db.loadWorld(worldId, &worldData);
+    try game.state.db.loadWorld(world_id, &worldData);
     var nameBuf = [_]u8{0} ** ui.max_world_name;
     for (worldData.name, 0..) |c, i| {
         if (i >= ui.max_world_name) {
@@ -76,8 +76,8 @@ fn loadWorld(worldId: i32) !void {
         nameBuf[i] = c;
     }
     game.state.ui.world_name_buf = nameBuf;
-    game.state.ui.world_loaded_id = worldId;
-    try helpers.loadChunkDatas();
+    game.state.ui.world_loaded_id = world_id;
+    _ = game.state.jobs.load_chunks(world_id, false);
 }
 
 fn updateWorld() !void {
@@ -215,10 +215,10 @@ fn drawTopDownChunkConfgOptions() !void {
     if (zgui.comboFromEnum("select y", &enum_val)) {
         if (game.state.ui.world_chunk_y == 1 and enum_val == .below) {
             game.state.ui.world_chunk_y = 0;
-            try helpers.loadChunkDatas();
+            _ = game.state.jobs.load_chunks(game.state.ui.world_loaded_id, false);
         } else if (game.state.ui.world_chunk_y == 0 and enum_val == .above) {
             game.state.ui.world_chunk_y = 1;
-            try helpers.loadChunkDatas();
+            _ = game.state.jobs.load_chunks(game.state.ui.world_loaded_id, false);
         }
     }
 }

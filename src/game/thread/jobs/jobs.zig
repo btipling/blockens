@@ -19,7 +19,7 @@ pub const Jobs = struct {
     pub fn meshChunk(self: *Jobs, world: *blecs.ecs.world_t, entity: blecs.ecs.entity_t, c: *chunk.Chunk) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
-            chunk_meshing.ChunkMeshJob{
+            job_chunk_meshing.ChunkMeshJob{
                 .chunk = c,
                 .entity = entity,
                 .world = world,
@@ -76,10 +76,10 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn save(self: *Jobs, data: save_job.SaveData) zjobs.JobId {
+    pub fn save(self: *Jobs, data: job_save.SaveData) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
-            save_job.SaveJob{
+            job_save.SaveJob{
                 .data = data,
             },
         ) catch |e| {
@@ -101,7 +101,7 @@ pub const Jobs = struct {
                 chunk.column.prime(x, z);
                 _ = self.jobs.schedule(
                     zjobs.JobId.none,
-                    lighting_job.LightingJob{
+                    job_lighting.LightingJob{
                         .world_id = world_id,
                         .x = x,
                         .z = z,
@@ -128,10 +128,37 @@ pub const Jobs = struct {
                 const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
                 _ = self.jobs.schedule(
                     zjobs.JobId.none,
-                    lighting_job_cross_chunk.LightingCrossChunkJob{
+                    job_lighting_cross_chunk.LightingCrossChunkJob{
                         .world_id = world_id,
                         .x = x,
                         .z = z,
+                        .pt = pt,
+                    },
+                ) catch |e| {
+                    std.debug.print("error scheduling cross chunk lighting job: {}\n", .{e});
+                    return;
+                };
+            }
+        }
+    }
+
+    pub fn load_chunks(self: *Jobs, world_id: i32, start_game: bool) void {
+        const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
+        pt.* = .{
+            .num_started = game_config.worldChunkDims * game_config.worldChunkDims,
+            .num_completed = 0,
+        };
+        for (0..game_config.worldChunkDims) |i| {
+            const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
+            for (0..game_config.worldChunkDims) |ii| {
+                const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
+                _ = self.jobs.schedule(
+                    zjobs.JobId.none,
+                    job_load_chunk.LoadChunkJob{
+                        .world_id = world_id,
+                        .x = x,
+                        .z = z,
+                        .start_game = start_game,
                         .pt = pt,
                     },
                 ) catch |e| {
@@ -148,13 +175,14 @@ const zjobs = @import("zjobs");
 const game = @import("../../game.zig");
 const state = @import("../../state.zig");
 const blecs = @import("../../blecs/blecs.zig");
-const chunk_meshing = @import("jobs_chunk_meshing.zig");
+const job_chunk_meshing = @import("jobs_chunk_meshing.zig");
 const chunk_copy = @import("jobs_copy_chunk.zig");
 const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
 const generate_world_chunk = @import("jobs_generate_world_chunk.zig");
-const save_job = @import("jobs_save.zig");
-const lighting_job = @import("jobs_lighting.zig");
-const lighting_job_cross_chunk = @import("jobs_lighting_cross_chunk.zig");
+const job_save = @import("jobs_save.zig");
+const job_lighting = @import("jobs_lighting.zig");
+const job_lighting_cross_chunk = @import("jobs_lighting_cross_chunk.zig");
+const job_load_chunk = @import("jobs_load_chunks.zig");
 const buffer = @import("../buffer.zig");
 const game_config = @import("../../config.zig");
 const block = @import("../../block/block.zig");

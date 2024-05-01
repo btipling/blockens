@@ -98,6 +98,7 @@ demo_character_pp_translation: @Vector(4, f32) = @Vector(4, f32){
 
 load_percentage_lighting_initial: f16 = 0,
 load_percentage_lighting_cross_chunk: f16 = 0,
+load_percentage_load_chunks: f16 = 0,
 
 screen_size: [2]f32 = .{ 0, 0 },
 

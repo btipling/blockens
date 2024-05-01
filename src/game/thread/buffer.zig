@@ -7,12 +7,13 @@ pub const BufferErr = error{
     Invalid,
 };
 
-pub const buffer_message_type = enum {
+pub const buffer_message_type = enum(u3) {
     chunk_gen,
     chunk_mesh,
     chunk_copy,
     lighting,
     lighting_cross_chunk,
+    load_chunk,
 };
 
 pub const buffer_data = union(buffer_message_type) {
@@ -21,6 +22,7 @@ pub const buffer_data = union(buffer_message_type) {
     chunk_copy: chunk_copy_data,
     lighting: lightings_data,
     lighting_cross_chunk: lightings_data,
+    load_chunk: load_chunk_data,
 };
 
 pub const buffer_message = packed struct {
@@ -51,6 +53,17 @@ pub const lightings_data = struct {
     world_id: i32,
     x: i32,
     z: i32,
+};
+
+pub const load_chunk_data = struct {
+    world_id: i32,
+    x: i32,
+    z: i32,
+    wp_t: chunk.worldPosition,
+    wp_b: chunk.worldPosition,
+    cfg_t: ui.chunkConfig,
+    cfg_b: ui.chunkConfig,
+    start_game: bool,
 };
 
 const Buffer = struct {
@@ -189,6 +202,7 @@ pub fn is_demo_chunk(msg: buffer_message) !bool {
 
 const std = @import("std");
 const state = @import("../state.zig");
+const ui = @import("../ui.zig");
 const blecs = @import("../blecs/blecs.zig");
 const block = @import("../block/block.zig");
 const chunk = block.chunk;

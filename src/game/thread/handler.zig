@@ -23,6 +23,7 @@ pub fn handle_incoming() !void {
             .chunk_copy => handle_copy_chunk(msg),
             .lighting => handle_lighting(msg),
             .lighting_cross_chunk => handle_lighting_cross_chunk(msg),
+            .load_chunk => handle_load_chunk(msg),
         }
         i += 0;
         if (i >= maxHandlersPerFrame) return;
@@ -142,14 +143,27 @@ fn handle_lighting(msg: buffer.buffer_message) void {
 fn handle_lighting_cross_chunk(msg: buffer.buffer_message) void {
     const pr = buffer.progress_report(msg);
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    _ = switch (bd) {
+    const ld: buffer.lightings_data = switch (bd) {
         buffer.buffer_data.lighting => |d| d,
         else => return,
     };
     game.state.ui.load_percentage_lighting_cross_chunk = pr.percent;
     if (!pr.done) return;
-    std.debug.print("loading world\n", .{});
-    ui_helpers.loadChunkDatas() catch @panic("unable to load chunk datas");
+    _ = game.state.jobs.load_chunks(ld.world_id, true);
+}
+
+fn handle_load_chunk(msg: buffer.buffer_message) void {
+    const pr = buffer.progress_report(msg);
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const lcd: buffer.load_chunk_data = switch (bd) {
+        buffer.buffer_data.load_chunk => |d| d,
+        else => return,
+    };
+    game.state.ui.load_percentage_load_chunks = pr.percent;
+    game.state.ui.world_chunk_table_data.put(lcd.wp_t, lcd.cfg_t) catch @panic("OOM");
+    game.state.ui.world_chunk_table_data.put(lcd.wp_b, lcd.cfg_b) catch @panic("OOM");
+    if (!pr.done) return;
+    if (!lcd.start_game) return;
     ui_helpers.loadChunksInWorld();
     ui_helpers.loadCharacterInWorld();
     screen_helpers.showGameScreen();

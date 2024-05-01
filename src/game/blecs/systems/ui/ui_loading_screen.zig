@@ -33,6 +33,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 zgui.newLine();
                 zgui.text("Lighting initial: {d:.2}%", .{game.state.ui.load_percentage_lighting_initial * 100});
                 zgui.text("Lighting cross chunk: {d:.2}%", .{game.state.ui.load_percentage_lighting_cross_chunk * 100});
+                zgui.text("Loading chunks: {d:.2}%", .{game.state.ui.load_percentage_load_chunks * 100});
             }
             zgui.end();
         }

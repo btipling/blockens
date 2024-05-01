@@ -63,68 +63,6 @@ pub fn loadCharacterInWorld() void {
     entities.screen.initBlockHighlight();
 }
 
-pub fn loadChunkDatas() !void {
-    var td = game.state.ui.world_chunk_table_data.valueIterator();
-    while (td.next()) |cc| {
-        game.state.allocator.free(cc.*.chunkData);
-    }
-    game.state.ui.world_chunk_table_data.clearAndFree();
-    const w_id: i32 = game.state.ui.world_loaded_id;
-    for (0..config.worldChunkDims) |i| {
-        const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
-        for (0..config.worldChunkDims) |ii| {
-            const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
-            var chunkDataTop: data.chunkData = .{};
-            chunkDataTop.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-            var chunkDataBot: data.chunkData = .{};
-            chunkDataBot.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-            game.state.db.loadChunkMetadata(w_id, x, 1, z, &chunkDataTop) catch |err| {
-                if (err != data.DataErr.NotFound) {
-                    std.log.err("unable to load chunk datas ({d}, 1, {d}): {}\n", .{ x, z, err });
-                    return err;
-                }
-            };
-            game.state.db.loadChunkMetadata(w_id, x, 0, z, &chunkDataBot) catch |err| {
-                if (err != data.DataErr.NotFound) {
-                    std.log.err("unable to load chunk datas ({d}, 0, {d}): {}\n", .{ x, z, err });
-                    return err;
-                }
-            };
-            const _x: f32 = @floatFromInt(x);
-            const _z: f32 = @floatFromInt(z);
-            const p_t = @Vector(4, f32){ _x, 1, _z, 0 };
-            const p_b = @Vector(4, f32){ _x, 0, _z, 0 };
-            const wp_t = chunk.worldPosition.initFromPositionV(p_t);
-            const wp_b = chunk.worldPosition.initFromPositionV(p_b);
-            {
-                const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
-                defer game.state.allocator.free(top_chunk);
-                const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
-                defer game.state.allocator.free(bottom_chunk);
-                data.chunk_file.loadChunkData(game.state.allocator, w_id, x, z, top_chunk, bottom_chunk);
-                var ci: usize = 0;
-                while (ci < chunk.chunkSize) : (ci += 1) {
-                    chunkDataTop.voxels[ci] = @truncate(top_chunk[ci]);
-                    chunkDataBot.voxels[ci] = @truncate(bottom_chunk[ci]);
-                }
-            }
-
-            const cfg_t = ui.chunkConfig{
-                .id = chunkDataTop.id,
-                .scriptId = chunkDataTop.scriptId,
-                .chunkData = chunkDataTop.voxels,
-            };
-            const cfg_b = ui.chunkConfig{
-                .id = chunkDataBot.id,
-                .scriptId = chunkDataBot.scriptId,
-                .chunkData = chunkDataBot.voxels,
-            };
-            try game.state.ui.world_chunk_table_data.put(wp_t, cfg_t);
-            try game.state.ui.world_chunk_table_data.put(wp_b, cfg_b);
-        }
-    }
-}
-
 const std = @import("std");
 const zgui = @import("zgui");
 const ecs = @import("zflecs");

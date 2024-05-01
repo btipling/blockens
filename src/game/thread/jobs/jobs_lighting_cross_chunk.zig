@@ -362,11 +362,8 @@ pub const LightingCrossChunkJob = struct {
 
 const std = @import("std");
 const game = @import("../../game.zig");
-const blecs = @import("../../blecs/blecs.zig");
 const data = @import("../../data/data.zig");
 const buffer = @import("../buffer.zig");
 const config = @import("config");
-const save_job = @import("jobs_save.zig");
 const block = @import("../../block/block.zig");
 const chunk = block.chunk;
-const fully_lit_chunk = chunk.fully_lit_chunk;
