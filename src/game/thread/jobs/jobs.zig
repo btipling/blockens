@@ -3,6 +3,13 @@ const AllJobs = zjobs.JobQueue(.{});
 pub const Jobs = struct {
     jobs: zjobs.JobQueue(.{}) = undefined,
     pub fn init() Jobs {
+        for (0..game_config.worldChunkDims) |i| {
+            const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
+            for (0..game_config.worldChunkDims) |ii| {
+                const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
+                chunk.column.prime(x, z);
+            }
+        }
         return .{
             .jobs = AllJobs.init(),
         };
@@ -98,7 +105,6 @@ pub const Jobs = struct {
             const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
             for (0..game_config.worldChunkDims) |ii| {
                 const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
-                chunk.column.prime(x, z);
                 _ = self.jobs.schedule(
                     zjobs.JobId.none,
                     job_lighting.LightingJob{

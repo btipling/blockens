@@ -127,7 +127,10 @@ pub fn saveChunkData(
     top_chunk: []u64,
     bottom_chunk: []u64,
 ) void {
-    const ck = chunk.column.lock(x, z) catch return;
+    const ck = chunk.column.lock(x, z) catch {
+        std.log.err("couldn't get lock to save chunk data {d} {d}\n", .{ x, z });
+        return;
+    };
     defer chunk.column.unlock(ck);
     const file_path = filePath(world_id, x, z) catch |e| {
         std.log.err("unable to create file name to save chunk. {}\n", .{e});
@@ -148,7 +151,7 @@ pub fn saveChunkData(
         std.log.err("unable to compress chunk. {}\n", .{e});
         return;
     };
-    if (x == 3 and z == 3) std.debug.print("saved chunk ({d}, {d})\n", .{ x, z });
+    std.debug.print("saved chunk ({d}, {d})\n", .{ x, z });
 }
 
 pub fn loadChunkData(

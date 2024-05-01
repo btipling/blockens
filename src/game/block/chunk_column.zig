@@ -8,7 +8,7 @@ pub const ColumnErr = error{
     NotFound,
 };
 
-const max_columns: usize = 124;
+const max_columns: usize = 128;
 var columns: [max_columns]Column = undefined;
 var num_columns: usize = 0;
 
@@ -23,7 +23,7 @@ fn indexOf(x: i32, z: i32, grow: bool) !usize {
     i += 1;
     std.debug.assert(i < max_columns);
     columns[i] = .{ .x = x, .z = z };
-    num_columns = i;
+    num_columns = i + 1;
     return i;
 }
 

@@ -162,8 +162,6 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
     game.state.ui.load_percentage_load_chunks = pr.percent;
     game.state.ui.world_chunk_table_data.put(lcd.wp_t, lcd.cfg_t) catch @panic("OOM");
     game.state.ui.world_chunk_table_data.put(lcd.wp_b, lcd.cfg_b) catch @panic("OOM");
-
-    if (lcd.x == 3 and lcd.z == 3) std.debug.print("handled load chunk job for 3 3\n", .{});
     if (!pr.done) return;
     if (!lcd.start_game) return;
     ui_helpers.loadChunksInWorld();
