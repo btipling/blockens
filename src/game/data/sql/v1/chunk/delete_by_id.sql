@@ -1,0 +1,1 @@
+DELETE FROM chunk WHERE id = :id AND world_id = :world_id;

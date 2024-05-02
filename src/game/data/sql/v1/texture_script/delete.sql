@@ -1,0 +1,1 @@
+DELETE FROM texture_script WHERE id = :id;
