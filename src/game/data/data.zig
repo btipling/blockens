@@ -1,3 +1,5 @@
+pub const current_schema_version: i32 = 2;
+
 pub const DataErr = error{
     NotFound,
 };
@@ -159,6 +161,7 @@ pub const Data = struct {
             createChunkDataTable,
             create_player_pos_table,
             create_display_settings_table,
+            create_schema_table,
         };
         for (createTableQueries) |query| {
             self.db.exec(query, .{}) catch |err| {
@@ -172,25 +175,45 @@ pub const Data = struct {
         chunk_file.initWorldSave(false, 1);
         if (try self.countWorlds() < 1) {
             try saveWorld(self, "default");
+            try saveSchema(self);
             return false;
         }
+
         return true;
     }
 
     pub fn saveWorld(self: *Data, name: []const u8) !void {
-        var insertStmt = try self.db.prepare(
+        var insert_stmt = try self.db.prepare(
             struct {
                 name: sqlite.Text,
             },
             void,
-            insertWorldStmt,
+            insert_world_stmt,
         );
-        defer insertStmt.deinit();
+        defer insert_stmt.deinit();
 
-        insertStmt.exec(
+        insert_stmt.exec(
             .{ .name = sqlite.text(name) },
         ) catch |err| {
             std.log.err("Failed to insert world: {}", .{err});
+            return err;
+        };
+    }
+
+    pub fn saveSchema(self: *Data) !void {
+        var insert_stmt = try self.db.prepare(
+            struct {
+                version: i32,
+            },
+            void,
+            insert_schema_stmt,
+        );
+        defer insert_stmt.deinit();
+
+        insert_stmt.exec(
+            .{ .version = current_schema_version },
+        ) catch |err| {
+            std.log.err("Failed to insert schema: {}", .{err});
             return err;
         };
     }
@@ -318,21 +341,39 @@ pub const Data = struct {
         };
     }
 
+    pub fn currentSchemaVersion(self: *Data) !i32 {
+        var count_stmt = try self.db.prepare(
+            struct {},
+            struct {
+                version: i32,
+            },
+            count_worlds_stmt,
+        );
+        defer count_stmt.deinit();
+
+        defer count_stmt.reset();
+        while (try count_stmt.step()) |r| {
+            return r.version;
+        }
+
+        return 0;
+    }
+
     pub fn countWorlds(self: *Data) !i32 {
-        var countStmt = try self.db.prepare(
+        var count_stmt = try self.db.prepare(
             struct {
                 id: i32,
             },
             struct {
                 count: i32,
             },
-            countWorldsStmt,
+            count_worlds_stmt,
         );
-        defer countStmt.deinit();
+        defer count_stmt.deinit();
 
-        try countStmt.bind(.{ .id = 0 });
-        defer countStmt.reset();
-        while (try countStmt.step()) |r| {
+        try count_stmt.bind(.{ .id = 0 });
+        defer count_stmt.reset();
+        while (try count_stmt.step()) |r| {
             return r.count;
         }
 
@@ -1226,6 +1267,10 @@ pub const Data = struct {
     }
 };
 
+const create_schema_table = @embedFile("./sql/v2/schema/create.sql");
+const insert_schema_stmt = @embedFile("./sql/v2/schema/insert.sql");
+const select_schema_stmt = @embedFile("./sql/v2/schema/select.sql");
+
 const create_player_pos_table = @embedFile("./sql/v2/player_position/create.sql");
 const insert_player_pos_stmt = @embedFile("./sql/v2/player_position/insert.sql");
 const update_player_pos_stmt = @embedFile("./sql/v2/player_position/update.sql");
@@ -1240,13 +1285,13 @@ const list_display_settings_stmt = @embedFile("./sql/v2/display_settings/list.sq
 const delete_display_settings_stmt = @embedFile("./sql/v2/display_settings/delete.sql");
 
 const createWorldTable = @embedFile("./sql/v2/world/create.sql");
-const insertWorldStmt = @embedFile("./sql/v2/world/insert.sql");
+const insert_world_stmt = @embedFile("./sql/v2/world/insert.sql");
 const selectWorldByNameStmt = @embedFile("./sql/v2/world/select_by_name.sql");
 const selectWorldByIdStmt = @embedFile("./sql/v2/world/select_by_id.sql");
 const listWorldStmt = @embedFile("./sql/v2/world/list.sql");
 const updateWorldStmt = @embedFile("./sql/v2/world/update.sql");
 const deleteWorldStmt = @embedFile("./sql/v2/world/delete.sql");
-const countWorldsStmt = @embedFile("./sql/v2/world/count_worlds.sql");
+const count_worlds_stmt = @embedFile("./sql/v2/world/count_worlds.sql");
 
 const createTextureScriptTable = @embedFile("./sql/v2/texture_script/create.sql");
 const insertTextureScriptStmt = @embedFile("./sql/v2/texture_script/insert.sql");
@@ -1280,6 +1325,7 @@ const deleteChunkDataStmt = @embedFile("./sql/v2/chunk/delete.sql");
 const delete_chunk_data_by_id_stmt = @embedFile("./sql/v2/chunk/delete_by_id.sql");
 
 const std = @import("std");
+const migrations = @import("migrations/migrations.zig");
 const sqlite = @import("sqlite");
 const game_block = @import("../block/block.zig");
 const game_chunk = game_block.chunk;
