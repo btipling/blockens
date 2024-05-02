@@ -16,26 +16,40 @@ pub const LightingJob = struct {
         }
     }
 
-    fn cData(self: @This(), x: i32, z: i32) struct { []u32, []u32 } {
+    fn cData(self: @This(), x: i32, z: i32, required: bool) !struct { []u32, []u32 } {
+        const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+        defer game.state.allocator.free(top_chunk);
+        const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+        defer game.state.allocator.free(bottom_chunk);
+        data.chunk_file.loadChunkData(
+            game.state.allocator,
+            self.world_id,
+            x,
+            z,
+            top_chunk,
+            bottom_chunk,
+        ) catch |err| {
+            if (required) {
+                return err;
+            }
+            @memset(top_chunk, 0);
+            @memset(bottom_chunk, 0);
+        };
         const t_block_data: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
         const bt_block_data: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-        {
-            const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
-            defer game.state.allocator.free(top_chunk);
-            const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
-            defer game.state.allocator.free(bottom_chunk);
-            data.chunk_file.loadChunkData(game.state.allocator, self.world_id, x, z, top_chunk, bottom_chunk);
-            var ci: usize = 0;
-            while (ci < chunk.chunkSize) : (ci += 1) {
-                t_block_data[ci] = @truncate(top_chunk[ci]);
-                bt_block_data[ci] = @truncate(bottom_chunk[ci]);
-            }
+        var ci: usize = 0;
+        while (ci < chunk.chunkSize) : (ci += 1) {
+            t_block_data[ci] = @truncate(top_chunk[ci]);
+            bt_block_data[ci] = @truncate(bottom_chunk[ci]);
         }
         return .{ t_block_data, bt_block_data };
     }
 
     pub fn lightingJob(self: *@This()) void {
-        const t_data: []u32, const b_data: []u32 = self.cData(self.x, self.z);
+        const t_data: []u32, const b_data: []u32 = self.cData(self.x, self.z, true) catch {
+            self.finishJob();
+            return;
+        };
         defer game.state.allocator.free(t_data);
         defer game.state.allocator.free(b_data);
 

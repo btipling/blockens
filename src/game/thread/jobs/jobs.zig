@@ -101,6 +101,7 @@ pub const Jobs = struct {
             .num_started = game_config.worldChunkDims * game_config.worldChunkDims,
             .num_completed = 0,
         };
+        std.debug.print("lighting started {d}/{d}\n", .{ pt.num_started, pt.num_completed });
         for (0..game_config.worldChunkDims) |i| {
             const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
             for (0..game_config.worldChunkDims) |ii| {
@@ -128,6 +129,7 @@ pub const Jobs = struct {
             .num_started = game_config.worldChunkDims * game_config.worldChunkDims,
             .num_completed = 0,
         };
+        std.debug.print("cross chunk lighting started {d}/{d}\n", .{ pt.num_started, pt.num_completed });
         for (0..game_config.worldChunkDims) |i| {
             const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
             for (0..game_config.worldChunkDims) |ii| {
@@ -154,6 +156,7 @@ pub const Jobs = struct {
             .num_started = game_config.worldChunkDims * game_config.worldChunkDims,
             .num_completed = 0,
         };
+        std.debug.print("load chunks started {d}/{d}\n", .{ pt.num_started, pt.num_completed });
         for (0..game_config.worldChunkDims) |i| {
             const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
             for (0..game_config.worldChunkDims) |ii| {

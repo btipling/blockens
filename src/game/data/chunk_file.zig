@@ -4,6 +4,10 @@ pub var chunk_dir_path: []const u8 = "c";
 const chunkFile = @This();
 var self: chunkFile = .{};
 
+pub const ChunkFileErr = error{
+    NoFile,
+};
+
 pub fn initSaves(is_absolute: bool) void {
     // TODO use std.fs.getAppDataDir
     var dir: std.fs.Dir = undefined;
@@ -161,12 +165,8 @@ pub fn loadChunkData(
     z: i32,
     top_chunk: []u64,
     bottom_chunk: []u64,
-) void {
-    const ck = chunk.column.lock(x, z) catch {
-        @memset(top_chunk, 0);
-        @memset(bottom_chunk, 0);
-        return;
-    };
+) !void {
+    const ck = chunk.column.lock(x, z) catch @panic("column lock error");
     defer chunk.column.unlock(ck);
     const file_path = filePath(world_id, x, z) catch |e| {
         std.log.err("unable to create file name to get chunk.({d}, {d}) {}\n", .{ x, z, e });
@@ -179,17 +179,10 @@ pub fn loadChunkData(
         .mode = .read_only,
         .lock = .exclusive,
     };
-    var fh = std.fs.cwd().openFile(fpath, flags) catch {
-        @memset(top_chunk, 0);
-        @memset(bottom_chunk, 0);
-        return;
-    };
+    var fh = try std.fs.cwd().openFile(fpath, flags);
     defer fh.close();
     var c: *Compress = Compress.initFromCompressed(allocator, fh.reader()) catch |e| {
-        std.log.err("unable to decompress chunk. ({d}, {d}) {}\n", .{ x, z, e });
-        @memset(top_chunk, 0);
-        @memset(bottom_chunk, 0);
-        return;
+        std.debug.panic("unable to decompress chunk. ({d}, {d}) {}\n", .{ x, z, e });
     };
     defer c.deinit();
     @memcpy(top_chunk, c.top_chunk);

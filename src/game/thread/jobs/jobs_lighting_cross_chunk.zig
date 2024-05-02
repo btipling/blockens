@@ -19,26 +19,40 @@ pub const LightingCrossChunkJob = struct {
         }
     }
 
-    fn cData(self: @This(), x: i32, z: i32) struct { []u32, []u32 } {
+    fn cData(self: @This(), x: i32, z: i32, required: bool) !struct { []u32, []u32 } {
+        const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+        defer game.state.allocator.free(top_chunk);
+        const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+        defer game.state.allocator.free(bottom_chunk);
+        data.chunk_file.loadChunkData(
+            game.state.allocator,
+            self.world_id,
+            x,
+            z,
+            top_chunk,
+            bottom_chunk,
+        ) catch |err| {
+            if (required) {
+                return err;
+            }
+            @memset(top_chunk, 0);
+            @memset(bottom_chunk, 0);
+        };
         const t_block_data: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
         const bt_block_data: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-        {
-            const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
-            defer game.state.allocator.free(top_chunk);
-            const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
-            defer game.state.allocator.free(bottom_chunk);
-            data.chunk_file.loadChunkData(game.state.allocator, self.world_id, x, z, top_chunk, bottom_chunk);
-            var ci: usize = 0;
-            while (ci < chunk.chunkSize) : (ci += 1) {
-                t_block_data[ci] = @truncate(top_chunk[ci]);
-                bt_block_data[ci] = @truncate(bottom_chunk[ci]);
-            }
+        var ci: usize = 0;
+        while (ci < chunk.chunkSize) : (ci += 1) {
+            t_block_data[ci] = @truncate(top_chunk[ci]);
+            bt_block_data[ci] = @truncate(bottom_chunk[ci]);
         }
         return .{ t_block_data, bt_block_data };
     }
 
     pub fn lightingCrossChunkJob(self: *@This()) void {
-        const t_block_data: []u32, const bt_block_data: []u32 = self.cData(self.x, self.z);
+        const t_block_data: []u32, const bt_block_data: []u32 = self.cData(self.x, self.z, true) catch {
+            self.finishJob();
+            return;
+        };
         defer game.state.allocator.free(t_block_data);
         defer game.state.allocator.free(bt_block_data);
         {
@@ -202,7 +216,8 @@ pub const LightingCrossChunkJob = struct {
             const zp_top_chunk: []u32, const zp_bottom_chunk: []u32 = self.cData(
                 @intFromFloat(zp_p[0]),
                 @intFromFloat(zp_p[2]),
-            );
+                false,
+            ) catch unreachable;
             defer game.state.allocator.free(zp_top_chunk);
             defer game.state.allocator.free(zp_bottom_chunk);
             // compare planes 63 z of c and 0 z of zp_c
@@ -242,7 +257,8 @@ pub const LightingCrossChunkJob = struct {
             const zn_top_chunk: []u32, const zn_bottom_chunk: []u32 = self.cData(
                 @intFromFloat(zn_p[0]),
                 @intFromFloat(zn_p[2]),
-            );
+                false,
+            ) catch unreachable;
             defer game.state.allocator.free(zn_top_chunk);
             defer game.state.allocator.free(zn_bottom_chunk);
             // compare planes 0 z of c and 63 z of b_c
@@ -282,7 +298,8 @@ pub const LightingCrossChunkJob = struct {
             const xp_top_chunk: []u32, const xp_bottom_chunk: []u32 = self.cData(
                 @intFromFloat(xp_p[0]),
                 @intFromFloat(xp_p[2]),
-            );
+                false,
+            ) catch unreachable;
             defer game.state.allocator.free(xp_top_chunk);
             defer game.state.allocator.free(xp_bottom_chunk);
             // compare planes 63 x of c and 0 x of xp_c
@@ -322,7 +339,8 @@ pub const LightingCrossChunkJob = struct {
             const xn_top_chunk: []u32, const xn_bottom_chunk: []u32 = self.cData(
                 @intFromFloat(xn_p[0]),
                 @intFromFloat(xn_p[2]),
-            );
+                false,
+            ) catch unreachable;
             defer game.state.allocator.free(xn_top_chunk);
             defer game.state.allocator.free(xn_bottom_chunk);
             // compare planes 0 x of c and 63 x of r_c

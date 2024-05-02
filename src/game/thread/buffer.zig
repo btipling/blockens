@@ -63,6 +63,7 @@ pub const load_chunk_data = struct {
     wp_b: chunk.worldPosition,
     cfg_t: ui.chunkConfig,
     cfg_b: ui.chunkConfig,
+    exists: bool,
     start_game: bool,
 };
 

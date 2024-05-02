@@ -5,7 +5,7 @@ const proggyCleanFont = @embedFile("assets/fonts/ProggyClean/ProggyClean.ttf");
 
 pub const chunkConfig = struct {
     id: i32 = 0, // from sqlite
-    scriptId: i32,
+    scriptId: i32 = 0,
     chunkData: []u32 = undefined,
 };
 

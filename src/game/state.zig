@@ -104,25 +104,17 @@ pub const Game = struct {
         const default_chunk_script: []const u8 = @embedFile("script/lua/chunk_gen_default.lua");
         try self.db.saveChunkScript("default", default_chunk_script, .{ 0, 1, 0 });
         {
-            var c: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
-            const top_chunk: []u32 = try self.allocator.alloc(u32, c.len);
+            const top_chunk: []u64 = try self.allocator.alloc(u64, chunk.chunkSize);
             defer self.allocator.free(top_chunk);
-            const big_top_chunk: []u64 = try self.allocator.alloc(u64, c.len);
-            defer self.allocator.free(big_top_chunk);
-            @memcpy(top_chunk, &c);
-            const bottom_chunk = try self.script.evalChunkFunc(default_chunk_script);
+            const bottom_chunk: []u64 = try self.allocator.alloc(u64, chunk.chunkSize);
             defer self.allocator.free(bottom_chunk);
-            const big_bottom_chunk: []u64 = try self.allocator.alloc(u64, c.len);
-            defer self.allocator.free(big_bottom_chunk);
-            defer self.allocator.free(bottom_chunk);
+
+            @memset(top_chunk, 0);
+            @memset(bottom_chunk, 0);
+
             try self.db.saveChunkMetadata(1, 0, 1, 0, 1);
             try self.db.saveChunkMetadata(1, 0, 0, 0, 1);
-            var i: usize = 0;
-            while (i < chunk.chunkSize) : (i += 1) {
-                big_top_chunk[i] = @intCast(top_chunk[i]);
-                big_bottom_chunk[i] = @intCast(bottom_chunk[i]);
-            }
-            data.chunk_file.saveChunkData(self.allocator, 1, 0, 0, big_top_chunk, big_bottom_chunk);
+            data.chunk_file.saveChunkData(self.allocator, 1, 0, 0, top_chunk, bottom_chunk);
         }
     }
 
@@ -156,13 +148,13 @@ pub const Game = struct {
         self.ui.world_loaded_id = 1;
 
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
-        const defaultLuaScript = @embedFile("script/lua/gen_wood_texture.lua");
+        const defaultLuaScript = @embedFile("script/lua/gen_grass_texture.lua");
         for (defaultLuaScript, 0..) |c, i| {
             buf[i] = c;
         }
         self.ui.texture_buf = buf;
         buf = [_]u8{0} ** script.maxLuaScriptSize;
-        const defaultChunkScript = @embedFile("script/lua/chunk_gen_complex.lua");
+        const defaultChunkScript = @embedFile("script/lua/chunk_gen_default.lua");
         for (defaultChunkScript, 0..) |c, i| {
             buf[i] = c;
         }

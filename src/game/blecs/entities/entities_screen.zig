@@ -528,7 +528,10 @@ pub fn initPlayerCharacter() void {
     game.state.entities.player = player;
 
     var player_pos: data.Data.playerPosition = .{};
-    game.state.db.loadPlayerPosition(world_id, &player_pos) catch unreachable;
+    game.state.db.loadPlayerPosition(world_id, &player_pos) catch |err| {
+        std.debug.assert(err != data.DataErr.NotFound);
+        @panic("SQL ERROR");
+    };
 
     const rotation: components.mob.Rotation = .{
         .rotation = player_pos.rot,

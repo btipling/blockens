@@ -25,33 +25,47 @@ pub const LoadChunkJob = struct {
         const z: i32 = self.z;
         const w_id = self.world_id;
         var chunkDataTop: data.chunkData = .{};
-        chunkDataTop.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
         var chunkDataBot: data.chunkData = .{};
-        chunkDataBot.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-        game.state.db.loadChunkMetadata(w_id, x, 1, z, &chunkDataTop) catch |err| {
-            if (err != data.DataErr.NotFound) {
-                std.log.err("unable to load chunk datas ({d}, 1, {d}): {}\n", .{ x, z, err });
-                return;
-            }
-        };
-        game.state.db.loadChunkMetadata(w_id, x, 0, z, &chunkDataBot) catch |err| {
-            if (err != data.DataErr.NotFound) {
-                std.log.err("unable to load chunk datas ({d}, 0, {d}): {}\n", .{ x, z, err });
-                return;
-            }
-        };
         const _x: f32 = @floatFromInt(x);
         const _z: f32 = @floatFromInt(z);
         const p_t = @Vector(4, f32){ _x, 1, _z, 0 };
         const p_b = @Vector(4, f32){ _x, 0, _z, 0 };
         const wp_t = chunk.worldPosition.initFromPositionV(p_t);
         const wp_b = chunk.worldPosition.initFromPositionV(p_b);
+        game.state.db.loadChunkMetadata(w_id, x, 1, z, &chunkDataTop) catch |err| {
+            if (err != data.DataErr.NotFound) {
+                std.debug.panic("unable to load chunk datas ({d}, 1, {d}): {}\n", .{ x, z, err });
+            }
+            self.finishJob(false, wp_t, wp_b, .{}, .{});
+            return;
+        };
+        game.state.db.loadChunkMetadata(w_id, x, 0, z, &chunkDataBot) catch |err| {
+            if (err != data.DataErr.NotFound) {
+                std.log.err("unable to load chunk datas ({d}, 0, {d}): {}\n", .{ x, z, err });
+                return;
+            }
+            self.finishJob(false, wp_t, wp_b, .{}, .{});
+            return;
+        };
+        chunkDataTop.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+        errdefer game.state.allocator.free(chunkDataTop.voxels);
+        chunkDataBot.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+        errdefer game.state.allocator.free(chunkDataBot.voxels);
         {
             const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
             defer game.state.allocator.free(top_chunk);
             const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
             defer game.state.allocator.free(bottom_chunk);
-            data.chunk_file.loadChunkData(game.state.allocator, w_id, x, z, top_chunk, bottom_chunk);
+            data.chunk_file.loadChunkData(
+                game.state.allocator,
+                w_id,
+                x,
+                z,
+                top_chunk,
+                bottom_chunk,
+            ) catch |err| {
+                std.debug.panic("loaded invalid chunk x: {d} z: {d} {}\n", .{ x, z, err });
+            };
             var ci: usize = 0;
             while (ci < chunk.chunkSize) : (ci += 1) {
                 chunkDataTop.voxels[ci] = @truncate(top_chunk[ci]);
@@ -69,11 +83,12 @@ pub const LoadChunkJob = struct {
             .scriptId = chunkDataBot.scriptId,
             .chunkData = chunkDataBot.voxels,
         };
-        self.finishJob(wp_t, wp_b, cfg_t, cfg_b);
+        self.finishJob(true, wp_t, wp_b, cfg_t, cfg_b);
     }
 
     fn finishJob(
         self: @This(),
+        exists: bool,
         wp_t: chunk.worldPosition,
         wp_b: chunk.worldPosition,
         cfg_t: ui.chunkConfig,
@@ -99,6 +114,7 @@ pub const LoadChunkJob = struct {
                 .wp_b = wp_b,
                 .cfg_t = cfg_t,
                 .cfg_b = cfg_b,
+                .exists = exists,
                 .start_game = self.start_game,
             },
         };
