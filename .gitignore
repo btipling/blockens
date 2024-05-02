@@ -5,3 +5,4 @@ imgui.ini
 .vscode
 error.log
 saves
+backup*
