@@ -31,12 +31,6 @@ pub const CopyChunkJob = struct {
             const ch_cfg = game.state.ui.world_chunk_table_data.get(self.wp) orelse return;
             c.data = game.state.allocator.alloc(u32, ch_cfg.chunkData.len) catch @panic("OOM");
             @memcpy(c.data, ch_cfg.chunkData);
-            var found_non_air: usize = 0;
-            for (c.data) |d| {
-                const bd: block.BlockData = block.BlockData.fromId(d);
-                if (bd.block_id != 0) found_non_air += 1;
-            }
-            std.debug.print("copy non air found: {d}\n", .{found_non_air});
         }
 
         var msg: buffer.buffer_message = buffer.new_message(.chunk_copy);

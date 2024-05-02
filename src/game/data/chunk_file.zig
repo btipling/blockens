@@ -166,7 +166,11 @@ pub fn loadChunkData(
     top_chunk: []u64,
     bottom_chunk: []u64,
 ) !void {
-    const ck = chunk.column.lock(x, z) catch @panic("column lock error");
+    const ck = chunk.column.lock(x, z) catch {
+        @memset(top_chunk, 0);
+        @memset(bottom_chunk, 0);
+        return;
+    };
     defer chunk.column.unlock(ck);
     const file_path = filePath(world_id, x, z) catch |e| {
         std.log.err("unable to create file name to get chunk.({d}, {d}) {}\n", .{ x, z, e });
@@ -181,8 +185,10 @@ pub fn loadChunkData(
     };
     var fh = try std.fs.cwd().openFile(fpath, flags);
     defer fh.close();
-    var c: *Compress = Compress.initFromCompressed(allocator, fh.reader()) catch |e| {
-        std.debug.panic("unable to decompress chunk. ({d}, {d}) {}\n", .{ x, z, e });
+    var c: *Compress = Compress.initFromCompressed(allocator, fh.reader()) catch {
+        @memset(top_chunk, 0);
+        @memset(bottom_chunk, 0);
+        return;
     };
     defer c.deinit();
     @memcpy(top_chunk, c.top_chunk);

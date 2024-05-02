@@ -47,7 +47,6 @@ pub const LoadChunkJob = struct {
             self.finishJob(false, wp_t, wp_b, .{}, .{});
             return;
         };
-        std.debug.print("able to load chunk datas ({d}, 1, {d})\n", .{ x, z });
         chunkDataTop.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
         errdefer game.state.allocator.free(chunkDataTop.voxels);
         chunkDataBot.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
@@ -68,16 +67,10 @@ pub const LoadChunkJob = struct {
                 std.debug.panic("loaded invalid chunk x: {d} z: {d} {}\n", .{ x, z, err });
             };
             var ci: usize = 0;
-            var found_non_air: usize = 0;
             while (ci < chunk.chunkSize) : (ci += 1) {
                 chunkDataTop.voxels[ci] = @truncate(top_chunk[ci]);
                 chunkDataBot.voxels[ci] = @truncate(bottom_chunk[ci]);
-                const bdt: block.BlockData = block.BlockData.fromId(chunkDataTop.voxels[ci]);
-                if (bdt.block_id != 0) found_non_air += 1;
-                const bdb: block.BlockData = block.BlockData.fromId(chunkDataBot.voxels[ci]);
-                if (bdb.block_id != 0) found_non_air += 1;
             }
-            std.debug.print("loading non air found: {d}\n", .{found_non_air});
         }
 
         const cfg_t = ui.chunkConfig{
@@ -90,7 +83,6 @@ pub const LoadChunkJob = struct {
             .scriptId = chunkDataBot.scriptId,
             .chunkData = chunkDataBot.voxels,
         };
-        std.debug.print("finished loading chunk datas found({d}, 1, {d})\n", .{ x, z });
         self.finishJob(true, wp_t, wp_b, cfg_t, cfg_b);
     }
 

@@ -126,26 +126,6 @@ pub const Game = struct {
             try self.db.saveChunkMetadata(1, 0, 0, 0, 1);
             data.chunk_file.saveChunkData(self.allocator, 1, 0, 0, top_chunk, bottom_chunk);
         }
-
-        // var c: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
-        // const top_chunk: []u32 = try self.allocator.alloc(u32, c.len);
-        // defer self.allocator.free(top_chunk);
-        // const big_top_chunk: []u64 = try self.allocator.alloc(u64, c.len);
-        // defer self.allocator.free(big_top_chunk);
-        // @memcpy(top_chunk, &c);
-        // const bottom_chunk = try self.script.evalChunkFunc(default_chunk_script);
-        // defer self.allocator.free(bottom_chunk);
-        // const big_bottom_chunk: []u64 = try self.allocator.alloc(u64, c.len);
-        // defer self.allocator.free(big_bottom_chunk);
-        // defer self.allocator.free(bottom_chunk);
-        // try self.db.saveChunkMetadata(1, 0, 1, 0, 1);
-        // try self.db.saveChunkMetadata(1, 0, 0, 0, 1);
-        // var i: usize = 0;
-        // while (i < chunk.chunkSize) : (i += 1) {
-        //     big_top_chunk[i] = @intCast(top_chunk[i]);
-        //     big_bottom_chunk[i] = @intCast(bottom_chunk[i]);
-        // }
-        // data.chunk_file.saveChunkData(self.allocator, 1, 0, 0, big_top_chunk, big_bottom_chunk);
     }
 
     pub fn initInitialPlayer(self: *Game, world_id: i32) !void {
