@@ -174,11 +174,18 @@ pub const Data = struct {
     pub fn ensureDefaultWorld(self: *Data) !bool {
         chunk_file.initWorldSave(false, 1);
         if (try self.countWorlds() < 1) {
+            // First time ever launchign the game.
             try saveWorld(self, "default");
             try saveSchema(self);
             return false;
         }
-
+        const schema_version = try self.currentSchemaVersion();
+        if (schema_version == 0) {
+            // Not the first time launching the game, migrate save.
+            try migrations.v2.migrate();
+            // There was no previous schema versioning so just insert it for the first time.
+            try saveSchema(self);
+        }
         return true;
     }
 
