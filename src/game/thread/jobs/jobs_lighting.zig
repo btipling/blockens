@@ -52,6 +52,16 @@ pub const LightingJob = struct {
         };
         defer game.state.allocator.free(t_data);
         defer game.state.allocator.free(b_data);
+        var found_non_air: usize = 0;
+        for (t_data) |d| {
+            const bd: block.BlockData = block.BlockData.fromId(d);
+            if (bd.block_id != 0) found_non_air += 1;
+        }
+        for (b_data) |d| {
+            const bd: block.BlockData = block.BlockData.fromId(d);
+            if (bd.block_id != 0) found_non_air += 1;
+        }
+        std.debug.print("lighting non air found: {d}\n", .{found_non_air});
 
         lighting.light_fall(t_data, b_data);
         {
