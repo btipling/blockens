@@ -147,9 +147,7 @@ fn drawWorldOptions() !void {
             try saveWorld();
             const num_worlds = game.state.ui.world_options.items.len;
             const newest_world: data.worldOption = game.state.ui.world_options.items[num_worlds - 1];
-            try game.state.initInitialPlayer(
-                newest_world.id,
-            );
+            try initInitialPlayer(newest_world.id);
         }
         zgui.pushFont(game.state.ui.codeFont);
         zgui.pushItemWidth(game.state.ui.imguiWidth(250));
@@ -189,6 +187,13 @@ fn drawWorldOptions() !void {
         zgui.popStyleVar(.{ .count = 1 });
     }
     zgui.endChild();
+}
+
+pub fn initInitialPlayer(world_id: i32) !void {
+    const initial_pos: @Vector(4, f32) = .{ 32, 64, 32, 0 };
+    const initial_rot: @Vector(4, f32) = .{ 0, 0, 0, 1 };
+    const initial_angle: f32 = 0;
+    try game.state.db.savePlayerPosition(world_id, initial_pos, initial_rot, initial_angle);
 }
 
 fn drawWorldConfig() !void {

@@ -52,14 +52,14 @@ pub const Game = struct {
         try self.initScript();
         errdefer self.deinit();
 
-        try self.setupDB();
-        try self.populateUIOptions();
         self.jobs.start();
 
         try thread.handler.init();
         errdefer thread.handler.deinit();
         try thread.buffer.init(self.allocator);
         errdefer thread.buffer.deinit();
+
+        _ = self.jobs.start_up();
     }
 
     pub fn deinit(self: *Game) void {
@@ -73,73 +73,12 @@ pub const Game = struct {
         thread.handler.deinit();
     }
 
-    pub fn setupDB(self: *Game) !void {
-        const had_world = self.db.ensureDefaultWorld() catch |err| {
-            std.log.err("Failed to ensure default world: {}\n", .{err});
-            return err;
-        };
-        if (had_world) return;
-        try self.initInitialWorld();
-        try self.initInitialPlayer(1);
-    }
-
-    pub fn initInitialWorld(self: *Game) !void {
-        var dirt_texture_script = [_]u8{0} ** script.maxLuaScriptSize;
-        const dtsb = @embedFile("script/lua/gen_dirt_texture.lua");
-        for (dtsb, 0..) |c, i| {
-            dirt_texture_script[i] = c;
-        }
-        const dirt_texture = try self.script.evalTextureFunc(dirt_texture_script);
-        defer self.allocator.free(dirt_texture.?);
-        var grass_texture_script = [_]u8{0} ** script.maxLuaScriptSize;
-        const gtsb = @embedFile("script/lua/gen_grass_texture.lua");
-        for (gtsb, 0..) |c, i| {
-            grass_texture_script[i] = c;
-        }
-        const grass_texture = try self.script.evalTextureFunc(grass_texture_script);
-        defer self.allocator.free(grass_texture.?);
-        if (dirt_texture == null or grass_texture == null) std.debug.panic("couldn't generate lua textures!\n", .{});
-        try self.db.saveBlock("dirt", @ptrCast(dirt_texture.?), false, 0);
-        try self.db.saveBlock("grass", @ptrCast(grass_texture.?), false, 0);
-        const default_chunk_script: []const u8 = @embedFile("script/lua/chunk_gen_default.lua");
-        try self.db.saveChunkScript("default", default_chunk_script, .{ 0, 1, 0 });
-        {
-            const top_chunk: []u64 = try self.allocator.alloc(u64, chunk.chunkSize);
-            defer self.allocator.free(top_chunk);
-            const bottom_chunk: []u64 = try self.allocator.alloc(u64, chunk.chunkSize);
-            defer self.allocator.free(bottom_chunk);
-
-            // Top chunk is just air
-            @memset(top_chunk, 0);
-
-            {
-                // bot chunk is a full grass chunk from script
-                const bbc = try self.script.evalChunkFunc(default_chunk_script);
-                defer self.allocator.free(bbc);
-                var i: usize = 0;
-                while (i < chunk.chunkSize) : (i += 1) {
-                    bottom_chunk[i] = @intCast(bbc[i]);
-                }
-            }
-
-            try self.db.saveChunkMetadata(1, 0, 1, 0, 0);
-            try self.db.saveChunkMetadata(1, 0, 0, 0, 1);
-            data.chunk_file.saveChunkData(self.allocator, 1, 0, 0, top_chunk, bottom_chunk);
-        }
-    }
-
-    pub fn initInitialPlayer(self: *Game, world_id: i32) !void {
-        const initial_pos: @Vector(4, f32) = .{ 32, 64, 32, 0 };
-        const initial_rot: @Vector(4, f32) = .{ 0, 0, 0, 1 };
-        const initial_angle: f32 = 0;
-        try self.db.savePlayerPosition(world_id, initial_pos, initial_rot, initial_angle);
-    }
-
     pub fn initScript(self: *Game) !void {
         self.script = try script.Script.init(self.allocator);
     }
 
     pub fn populateUIOptions(self: *Game) !void {
+        std.debug.print("populate ui options\n", .{});
         try self.db.listBlocks(&self.ui.block_options);
         try self.db.listTextureScripts(&self.ui.texture_script_options);
         try self.db.listChunkScripts(&self.ui.chunk_script_options);

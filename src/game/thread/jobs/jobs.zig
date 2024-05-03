@@ -3,13 +3,6 @@ const AllJobs = zjobs.JobQueue(.{});
 pub const Jobs = struct {
     jobs: zjobs.JobQueue(.{}) = undefined,
     pub fn init() Jobs {
-        for (0..game_config.worldChunkDims) |i| {
-            const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
-            for (0..game_config.worldChunkDims) |ii| {
-                const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
-                chunk.column.prime(x, z);
-            }
-        }
         return .{
             .jobs = AllJobs.init(),
         };
@@ -21,6 +14,16 @@ pub const Jobs = struct {
 
     pub fn start(self: *Jobs) void {
         self.jobs.start(.{});
+    }
+
+    pub fn start_up(self: *Jobs) zjobs.JobId {
+        return self.jobs.schedule(
+            zjobs.JobId.none,
+            job_startup.StartupJob{},
+        ) catch |e| {
+            std.debug.print("error scheduling startup job: {}\n", .{e});
+            return zjobs.JobId.none;
+        };
     }
 
     pub fn meshChunk(self: *Jobs, world: *blecs.ecs.world_t, entity: blecs.ecs.entity_t, c: *chunk.Chunk) zjobs.JobId {
@@ -188,6 +191,7 @@ const job_save = @import("jobs_save.zig");
 const job_lighting = @import("jobs_lighting.zig");
 const job_lighting_cross_chunk = @import("jobs_lighting_cross_chunk.zig");
 const job_load_chunk = @import("jobs_load_chunks.zig");
+const job_startup = @import("jobs_startup.zig");
 const buffer = @import("../buffer.zig");
 const game_config = @import("../../config.zig");
 const block = @import("../../block/block.zig");
