@@ -354,7 +354,7 @@ pub const Data = struct {
             struct {
                 version: i32,
             },
-            count_worlds_stmt,
+            select_schema_stmt,
         );
         defer count_stmt.deinit();
 

@@ -62,7 +62,9 @@ fn migrateWorld(allocator: std.mem.Allocator, db_v1: *v1.Data, world_id: i32) vo
             if (num_chunks_found == 0) continue;
 
             const top_chunk_v2 = allocator.alloc(u64, v1_chunk_size) catch @panic("OOM");
+            defer allocator.free(top_chunk_v2);
             const bottom_chunk_v2 = allocator.alloc(u64, v1_chunk_size) catch @panic("OOM");
+            defer allocator.free(bottom_chunk_v2);
             var ci: usize = 0;
             while (ci <= v1_chunk_size) : (ci += 1) {
                 top_chunk_v2[i] = @intCast(top_chunk_v1[i]);
