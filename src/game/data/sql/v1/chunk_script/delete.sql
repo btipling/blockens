@@ -1,1 +1,0 @@
-DELETE FROM chunk_script WHERE id = :id;

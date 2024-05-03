@@ -1,1 +1,0 @@
-DELETE FROM world WHERE id = :id;

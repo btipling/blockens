@@ -1,1 +1,0 @@
-DELETE FROM player_position WHERE world_id = :world_id;
