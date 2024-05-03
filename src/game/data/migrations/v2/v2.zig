@@ -28,47 +28,53 @@ pub fn migrate(allocator: std.mem.Allocator) !void {
 }
 
 fn migrateWorld(allocator: std.mem.Allocator, db_v1: *v1.Data, world_id: i32) void {
+    std.debug.print("migrating world {d}\n", .{world_id});
+    v2.chunk_file.initWorldSave(false, world_id);
     for (0..v1_world_chunk_dims) |i| {
         const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(v1_world_chunk_dims / 2));
         for (0..v1_world_chunk_dims) |ii| {
             const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(v1_world_chunk_dims / 2));
             chunk.column.prime(x, z);
 
-            var num_chunks_found: usize = 0;
+            var num_chunks_found: usize = 2;
 
             const top_chunk_v1: []u32 = tc1: {
                 const cdata = loadV1Chunks(db_v1, world_id, x, 1, z) catch {
                     // do something
                     const fbdata = allocator.alloc(u32, v1_chunk_size) catch @panic("OOM");
                     @memset(fbdata, 0);
+                    num_chunks_found -= 1;
+                    db_v1.saveChunkData(1, x, 1, z, 0, fbdata) catch @panic("nope");
                     break :tc1 fbdata;
                 };
-                num_chunks_found += 1;
                 break :tc1 cdata;
             };
             defer allocator.free(top_chunk_v1);
-            const bottom_chunk_v1: []u32 = tc1: {
+            const bottom_chunk_v1: []u32 = tc2: {
                 const cdata = loadV1Chunks(db_v1, world_id, x, 0, z) catch {
                     // do something
                     const fbdata = allocator.alloc(u32, v1_chunk_size) catch @panic("OOM");
                     @memset(fbdata, 0);
-                    break :tc1 fbdata;
+                    num_chunks_found -= 1;
+                    db_v1.saveChunkData(1, x, 0, z, 0, fbdata) catch @panic("nope");
+                    break :tc2 fbdata;
                 };
-                num_chunks_found += 1;
-                break :tc1 cdata;
+                break :tc2 cdata;
             };
             defer allocator.free(bottom_chunk_v1);
 
-            if (num_chunks_found == 0) continue;
+            if (num_chunks_found == 0) {
+                continue;
+            }
 
             const top_chunk_v2 = allocator.alloc(u64, v1_chunk_size) catch @panic("OOM");
             defer allocator.free(top_chunk_v2);
             const bottom_chunk_v2 = allocator.alloc(u64, v1_chunk_size) catch @panic("OOM");
             defer allocator.free(bottom_chunk_v2);
             var ci: usize = 0;
-            while (ci <= v1_chunk_size) : (ci += 1) {
-                top_chunk_v2[i] = @intCast(top_chunk_v1[i]);
-                bottom_chunk_v2[i] = @intCast(bottom_chunk_v1[i]);
+            while (ci < v1_chunk_size) : (ci += 1) {
+                top_chunk_v2[ci] = @intCast(top_chunk_v1[ci]);
+                bottom_chunk_v2[ci] = @intCast(bottom_chunk_v1[ci]);
             }
 
             v2.chunk_file.saveChunkData(

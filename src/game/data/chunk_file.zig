@@ -60,44 +60,39 @@ pub fn initWorldSave(is_absolute: bool, world_id: i32) void {
     // TODO use std.fs.getAppDataDir
     var buffer: [50:0]u8 = std.mem.zeroes([50:0]u8);
     _ = std.fmt.bufPrint(&buffer, "w_{d}", .{world_id}) catch |e| {
-        std.log.err("unable to create world save path. {}\n", .{e});
-        return;
+        std.debug.panic("unable to create world save path. {}\n", .{e});
     };
     const dpath = std.mem.sliceTo(buffer[0..], 0);
     if (is_absolute) {
         var dir = std.fs.openDirAbsolute(saves_path, .{}) catch |e| {
-            std.log.err("unable to open absolute save path {s}. {}\n", .{ saves_path, e });
-            return;
+            std.debug.panic("unable to open absolute save path {s}. {}\n", .{ saves_path, e });
         };
         defer dir.close();
         dir = dir.openDir(chunk_dir_path, .{}) catch |e| {
-            std.log.err("unable to open chunk save path {s}. {}\n", .{ chunk_dir_path, e });
-            return;
+            std.debug.panic("unable to open chunk save path {s}. {}\n", .{ chunk_dir_path, e });
         };
         dir.makeDir(dpath) catch |e| {
             switch (e) {
                 error.PathAlreadyExists => return,
                 else => {
-                    std.log.err("unable to create chunk world save path {s}. {}\n", .{ dpath, e });
+                    std.debug.panic("unable to create chunk world save path {s}. {}\n", .{ dpath, e });
                 },
             }
         };
         return;
     } else {
         var dir = std.fs.cwd().openDir(saves_path, .{}) catch |e| {
-            std.log.err("unable to open save path {s}. {}\n", .{ saves_path, e });
-            return;
+            std.debug.panic("unable to open save path {s}. {}\n", .{ saves_path, e });
         };
         defer dir.close();
         dir = dir.openDir(chunk_dir_path, .{}) catch |e| {
-            std.log.err("unable to open chunk save path {s}. {}\n", .{ chunk_dir_path, e });
-            return;
+            std.debug.panic("unable to open chunk save path {s}. {}\n", .{ chunk_dir_path, e });
         };
         dir.makeDir(dpath) catch |e| {
             switch (e) {
                 error.PathAlreadyExists => return,
                 else => {
-                    std.log.err("unable to create chunk world save path {s}. {}\n", .{ dpath, e });
+                    std.debug.panic("unable to create chunk world save path {s}. {}\n", .{ dpath, e });
                 },
             }
             return;
@@ -132,28 +127,24 @@ pub fn saveChunkData(
     bottom_chunk: []u64,
 ) void {
     const ck = chunk.column.lock(x, z) catch {
-        std.log.err("couldn't get lock to save chunk data {d} {d}\n", .{ x, z });
-        return;
+        std.debug.panic("couldn't get lock to save chunk data {d} {d}\n", .{ x, z });
     };
     defer chunk.column.unlock(ck);
     const file_path = filePath(world_id, x, z) catch |e| {
-        std.log.err("unable to create file name to save chunk. {}\n", .{e});
-        return;
+        std.debug.panic("unable to create file name to save chunk. {}\n", .{e});
     };
     const fpath = std.mem.sliceTo(file_path[0..], 0);
     const flags: std.fs.File.CreateFlags = .{
         .lock = .exclusive,
     };
     var fh = std.fs.cwd().createFile(fpath, flags) catch |e| {
-        std.log.err("unable to save chunk. {}\n", .{e});
-        return;
+        std.debug.panic("unable to save chunk. {}\n", .{e});
     };
     defer fh.close();
     var c: *Compress = Compress.init(allocator, top_chunk, bottom_chunk);
     defer c.deinit();
     c.compress(fh.writer()) catch |e| {
-        std.log.err("unable to compress chunk. {}\n", .{e});
-        return;
+        std.debug.panic("unable to compress chunk. {}\n", .{e});
     };
     std.debug.print("saved chunk ({d}, {d})\n", .{ x, z });
 }

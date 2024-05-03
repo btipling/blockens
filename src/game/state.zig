@@ -122,7 +122,7 @@ pub const Game = struct {
                 }
             }
 
-            try self.db.saveChunkMetadata(1, 0, 1, 0, 1);
+            try self.db.saveChunkMetadata(1, 0, 1, 0, 0);
             try self.db.saveChunkMetadata(1, 0, 0, 0, 1);
             data.chunk_file.saveChunkData(self.allocator, 1, 0, 0, top_chunk, bottom_chunk);
         }

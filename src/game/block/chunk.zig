@@ -1,6 +1,5 @@
 pub const chunkDim = 64;
 pub const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
-const drawSize = chunkDim * chunkDim;
 
 const air: u8 = 0;
 
