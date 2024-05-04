@@ -42,6 +42,7 @@ fn handle_startup(msg: buffer.buffer_message) !void {
 
     try game.state.populateUIOptions();
     screen_helpers.showTitleScreen();
+    blecs.entities.block.init();
     std.debug.print("startup handled\n", .{});
 }
 

@@ -10,5 +10,4 @@ pub fn init() void {
     screen.init();
     gfx.init();
     ui.init();
-    block.init();
 }
