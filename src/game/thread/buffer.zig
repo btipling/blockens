@@ -8,6 +8,7 @@ pub const BufferErr = error{
 };
 
 pub const buffer_message_type = enum(u3) {
+    startup,
     chunk_gen,
     chunk_mesh,
     chunk_copy,
@@ -17,6 +18,7 @@ pub const buffer_message_type = enum(u3) {
 };
 
 pub const buffer_data = union(buffer_message_type) {
+    startup: startup_data,
     chunk_gen: chunk_gen_data,
     chunk_mesh: chunk_mesh_data,
     chunk_copy: chunk_copy_data,
@@ -31,6 +33,10 @@ pub const buffer_message = packed struct {
     type: u3,
     flags: u16 = 0,
     data: u16 = 0,
+};
+
+pub const startup_data = struct {
+    done: bool = true,
 };
 
 pub const chunk_gen_data = struct {

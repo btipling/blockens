@@ -73,6 +73,7 @@ pub const CharacterEditor = struct {};
 pub const WorldEditor = struct {};
 pub const TitleScreen = struct {};
 pub const LightingEditor = struct {};
+pub const SettingUpScreen = struct {};
 pub const LoadingScreen = struct {};
 pub const DisplaySettings = struct {};
 
@@ -113,6 +114,7 @@ pub fn init() void {
     ecs.TAG(world, CharacterEditor);
     ecs.TAG(world, WorldEditor);
     ecs.TAG(world, TitleScreen);
+    ecs.TAG(world, SettingUpScreen);
     ecs.TAG(world, LoadingScreen);
     ecs.TAG(world, DisplaySettings);
 }

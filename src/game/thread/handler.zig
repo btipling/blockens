@@ -18,6 +18,7 @@ pub fn handle_incoming() !void {
     while (buffer.next_message()) |msg| {
         const mt: buffer.buffer_message_type = @enumFromInt(msg.type);
         switch (mt) {
+            .startup => try handle_startup(msg),
             .chunk_gen => try handle_chunk_gen(msg),
             .chunk_mesh => handle_chunk_mesh(msg),
             .chunk_copy => handle_copy_chunk(msg),
@@ -28,6 +29,21 @@ pub fn handle_incoming() !void {
         i += 0;
         if (i >= maxHandlersPerFrame) return;
     }
+}
+
+fn handle_startup(msg: buffer.buffer_message) !void {
+    if (!buffer.progress_report(msg).done) return;
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    std.debug.print("startup handle\n", .{});
+    _ = switch (bd) {
+        buffer.buffer_data.startup => |d| d,
+        else => return,
+    };
+
+    try game.state.populateUIOptions();
+    screen_helpers.showTitleScreen();
+    blecs.entities.block.init();
+    std.debug.print("startup handled\n", .{});
 }
 
 fn handle_chunk_gen(msg: buffer.buffer_message) !void {
