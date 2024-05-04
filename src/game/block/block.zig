@@ -256,7 +256,9 @@ test "fully lighting lights works" {
     try std.testing.expectEqual(.full, bd.getFullLighting());
 }
 
-pub const chunk = @import("chunk.zig");
-
 const std = @import("std");
 const data = @import("../data/data.zig");
+
+pub const chunk = @import("chunk.zig");
+pub const big = @import("block_big.zig");
+pub const compress = @import("chunk_compress.zig");

@@ -65,9 +65,9 @@ fn saveWorld() !void {
     try listWorlds();
 }
 
-fn loadWorld(worldId: i32) !void {
+fn loadWorld(world_id: i32) !void {
     var worldData: data.world = undefined;
-    try game.state.db.loadWorld(worldId, &worldData);
+    try game.state.db.loadWorld(world_id, &worldData);
     var nameBuf = [_]u8{0} ** ui.max_world_name;
     for (worldData.name, 0..) |c, i| {
         if (i >= ui.max_world_name) {
@@ -76,8 +76,8 @@ fn loadWorld(worldId: i32) !void {
         nameBuf[i] = c;
     }
     game.state.ui.world_name_buf = nameBuf;
-    game.state.ui.world_loaded_id = worldId;
-    try helpers.loadChunkDatas();
+    game.state.ui.world_loaded_id = world_id;
+    _ = game.state.jobs.load_chunks(world_id, false);
 }
 
 fn updateWorld() !void {
@@ -147,9 +147,7 @@ fn drawWorldOptions() !void {
             try saveWorld();
             const num_worlds = game.state.ui.world_options.items.len;
             const newest_world: data.worldOption = game.state.ui.world_options.items[num_worlds - 1];
-            try game.state.initInitialPlayer(
-                newest_world.id,
-            );
+            try initInitialPlayer(newest_world.id);
         }
         zgui.pushFont(game.state.ui.codeFont);
         zgui.pushItemWidth(game.state.ui.imguiWidth(250));
@@ -191,6 +189,13 @@ fn drawWorldOptions() !void {
     zgui.endChild();
 }
 
+pub fn initInitialPlayer(world_id: i32) !void {
+    const initial_pos: @Vector(4, f32) = .{ 32, 64, 32, 0 };
+    const initial_rot: @Vector(4, f32) = .{ 0, 0, 0, 1 };
+    const initial_angle: f32 = 0;
+    try game.state.db.savePlayerPosition(world_id, initial_pos, initial_rot, initial_angle);
+}
+
 fn drawWorldConfig() !void {
     if (zgui.beginChild(
         "Configure World",
@@ -215,10 +220,10 @@ fn drawTopDownChunkConfgOptions() !void {
     if (zgui.comboFromEnum("select y", &enum_val)) {
         if (game.state.ui.world_chunk_y == 1 and enum_val == .below) {
             game.state.ui.world_chunk_y = 0;
-            try helpers.loadChunkDatas();
+            _ = game.state.jobs.load_chunks(game.state.ui.world_loaded_id, false);
         } else if (game.state.ui.world_chunk_y == 0 and enum_val == .above) {
             game.state.ui.world_chunk_y = 1;
-            try helpers.loadChunkDatas();
+            _ = game.state.jobs.load_chunks(game.state.ui.world_loaded_id, false);
         }
     }
 }
@@ -417,48 +422,55 @@ fn evalChunksFunc() !void {
             ch_script = sc;
         } else {
             var scriptData: data.chunkScript = undefined;
-            game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData) catch unreachable;
+            game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData) catch {
+                @memset(ch_cfg.chunkData, 0);
+                game.state.ui.world_chunk_table_data.put(wp, ch_cfg) catch @panic("OOM");
+                continue;
+            };
             ch_script = script.Script.dataScriptToScript(scriptData.script);
-            scriptCache.put(ch_cfg.scriptId, ch_script) catch unreachable;
+            scriptCache.put(ch_cfg.scriptId, ch_script) catch @panic("OOM");
         }
         _ = game.state.jobs.generateWorldChunk(wp, &ch_script);
     }
 }
 
 fn saveChunkDatas() !void {
+    const w_id: i32 = game.state.ui.world_loaded_id;
     for (0..config.worldChunkDims) |i| {
         const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
-        inner: for (0..config.worldChunkDims) |ii| {
+        for (0..config.worldChunkDims) |ii| {
             const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
-            const y = game.state.ui.world_chunk_y;
-            const p = @Vector(4, f32){
-                @as(f32, @floatFromInt(x)),
-                @as(f32, @floatFromInt(y)),
-                @as(f32, @floatFromInt(z)),
-                0,
-            };
-            const wp = chunk.worldPosition.initFromPositionV(p);
-            if (game.state.ui.world_chunk_table_data.get(wp)) |ch_cfg| {
+            const _x: f32 = @floatFromInt(x);
+            const _z: f32 = @floatFromInt(z);
+            const p_t = @Vector(4, f32){ _x, 1, _z, 0 };
+            const p_b = @Vector(4, f32){ _x, 0, _z, 0 };
+            const wp_t = chunk.worldPosition.initFromPositionV(p_t);
+            const wp_b = chunk.worldPosition.initFromPositionV(p_b);
+            const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.allocator.free(top_chunk);
+            const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.allocator.free(bottom_chunk);
+            if (game.state.ui.world_chunk_table_data.get(wp_t)) |ch_cfg| {
                 if (ch_cfg.id != 0) {
-                    // update
-                    try game.state.db.updateChunkData(
-                        ch_cfg.id,
-                        ch_cfg.scriptId,
-                        ch_cfg.chunkData,
-                    );
-                    continue :inner;
+                    var ci: usize = 0;
+                    while (ci < chunk.chunkSize) : (ci += 1) top_chunk[ci] = @intCast(ch_cfg.chunkData[ci]);
+                    try game.state.db.updateChunkMetadata(ch_cfg.id, ch_cfg.scriptId);
+                } else {
+                    @memset(top_chunk, 0);
+                    try game.state.db.saveChunkMetadata(w_id, x, 1, z, ch_cfg.scriptId);
                 }
-                // insert
-                try game.state.db.saveChunkData(
-                    game.state.ui.world_loaded_id,
-                    x,
-                    y,
-                    z,
-                    ch_cfg.scriptId,
-                    ch_cfg.chunkData,
-                );
-                continue :inner;
             }
+            if (game.state.ui.world_chunk_table_data.get(wp_b)) |ch_cfg| {
+                if (ch_cfg.id != 0) {
+                    var ci: usize = 0;
+                    while (ci < chunk.chunkSize) : (ci += 1) bottom_chunk[ci] = @intCast(ch_cfg.chunkData[ci]);
+                    try game.state.db.updateChunkMetadata(ch_cfg.id, ch_cfg.scriptId);
+                } else {
+                    @memset(bottom_chunk, 0);
+                    try game.state.db.saveChunkMetadata(w_id, x, 0, z, ch_cfg.scriptId);
+                }
+            }
+            data.chunk_file.saveChunkData(game.state.allocator, w_id, x, z, top_chunk, bottom_chunk);
         }
     }
 }

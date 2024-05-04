@@ -1,6 +1,5 @@
 pub const chunkDim = 64;
 pub const chunkSize: comptime_int = chunkDim * chunkDim * chunkDim;
-const drawSize = chunkDim * chunkDim;
 
 const air: u8 = 0;
 
@@ -187,6 +186,14 @@ pub const Chunk = struct {
         return c;
     }
 
+    pub fn deinit(self: *Chunk) void {
+        self.deinitRenderData();
+        self.deinitRenderPreviousData();
+        self.allocator.free(self.data);
+        if (self.attr_builder) |b| b.deinit();
+        if (self.indices) |i| self.allocator.free(i);
+    }
+
     pub fn dataAt(self: *Chunk, i: usize) dataAtRes {
         if (!self.mutex.tryLock()) {
             return .{ .read = false, .data = 0 };
@@ -203,14 +210,6 @@ pub const Chunk = struct {
             0,
         );
         _ = game.state.jobs.meshChunk(world, render_entity, self);
-    }
-
-    pub fn deinit(self: *Chunk) void {
-        self.deinitRenderData();
-        self.deinitRenderPreviousData();
-        self.allocator.free(self.data);
-        if (self.attr_builder) |b| b.deinit();
-        if (self.indices) |i| self.allocator.free(i);
     }
 
     pub fn backupDrawsData(self: *Chunk) void {
@@ -271,3 +270,5 @@ const data_fetcher = @import("data_fetcher.zig");
 const chunk_traverser = @import("chunk_traverser.zig");
 
 pub const worldPosition = @import("world_position.zig");
+pub const big = @import("chunk_big.zig");
+pub const column = @import("chunk_column.zig");

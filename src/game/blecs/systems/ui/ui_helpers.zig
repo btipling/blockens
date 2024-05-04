@@ -63,43 +63,6 @@ pub fn loadCharacterInWorld() void {
     entities.screen.initBlockHighlight();
 }
 
-pub fn loadChunkDatas() !void {
-    var td = game.state.ui.world_chunk_table_data.valueIterator();
-    while (td.next()) |cc| {
-        game.state.allocator.free(cc.*.chunkData);
-    }
-    game.state.ui.world_chunk_table_data.clearAndFree();
-    for (0..2) |_i| {
-        const y: i32 = @as(i32, @intCast(_i));
-        for (0..config.worldChunkDims) |i| {
-            const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(config.worldChunkDims / 2));
-            for (0..config.worldChunkDims) |ii| {
-                const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(config.worldChunkDims / 2));
-                var chunkData = data.chunkData{};
-                game.state.db.loadChunkData(game.state.ui.world_loaded_id, x, y, z, &chunkData) catch |err| {
-                    if (err == data.DataErr.NotFound) {
-                        continue;
-                    }
-                    return err;
-                };
-                const p = @Vector(4, f32){
-                    @as(f32, @floatFromInt(x)),
-                    @as(f32, @floatFromInt(y)),
-                    @as(f32, @floatFromInt(z)),
-                    0,
-                };
-                const wp = chunk.worldPosition.initFromPositionV(p);
-                const cfg = ui.chunkConfig{
-                    .id = chunkData.id,
-                    .scriptId = chunkData.scriptId,
-                    .chunkData = chunkData.voxels,
-                };
-                try game.state.ui.world_chunk_table_data.put(wp, cfg);
-            }
-        }
-    }
-}
-
 const std = @import("std");
 const zgui = @import("zgui");
 const ecs = @import("zflecs");

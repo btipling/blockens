@@ -16,43 +16,62 @@ pub const LightingJob = struct {
         }
     }
 
+    fn cData(self: @This(), x: i32, z: i32, required: bool) !struct { []u32, []u32 } {
+        const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+        defer game.state.allocator.free(top_chunk);
+        const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+        defer game.state.allocator.free(bottom_chunk);
+        data.chunk_file.loadChunkData(
+            game.state.allocator,
+            self.world_id,
+            x,
+            z,
+            top_chunk,
+            bottom_chunk,
+        ) catch |err| {
+            if (required) {
+                return err;
+            }
+            @memset(top_chunk, 0);
+            @memset(bottom_chunk, 0);
+        };
+        const t_block_data: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+        const bt_block_data: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+        var ci: usize = 0;
+        while (ci < chunk.chunkSize) : (ci += 1) {
+            t_block_data[ci] = @truncate(top_chunk[ci]);
+            bt_block_data[ci] = @truncate(bottom_chunk[ci]);
+        }
+        return .{ t_block_data, bt_block_data };
+    }
+
     pub fn lightingJob(self: *@This()) void {
-        var t_c: data.chunkData = .{};
-        var t_can_save = true;
-        game.state.db.loadChunkData(self.world_id, self.x, 1, self.z, &t_c) catch {
-            t_can_save = false;
-            t_c.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-            @memcpy(t_c.voxels, fully_lit_chunk[0..]);
+        const t_data: []u32, const b_data: []u32 = self.cData(self.x, self.z, true) catch {
+            self.finishJob();
+            return;
         };
-        defer game.state.allocator.free(t_c.voxels);
-        var b_c: data.chunkData = .{};
-        var b_can_save = true;
-        game.state.db.loadChunkData(self.world_id, self.x, 0, self.z, &b_c) catch {
-            b_can_save = false;
-            b_c.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-            @memcpy(b_c.voxels, fully_lit_chunk[0..]);
-        };
-        defer game.state.allocator.free(b_c.voxels);
-        const t_data: []u32 = t_c.voxels;
-        const b_data: []u32 = b_c.voxels;
+        defer game.state.allocator.free(t_data);
+        defer game.state.allocator.free(b_data);
+
         lighting.light_fall(t_data, b_data);
         {
-            top: {
-                if (!t_can_save) break :top;
-                game.state.db.updateChunkData(
-                    t_c.id,
-                    t_c.scriptId,
-                    t_data,
-                ) catch @panic("failed to save top chunk data after lighting");
+            const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.allocator.free(top_chunk);
+            const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.allocator.free(bottom_chunk);
+            var i: usize = 0;
+            while (i < chunk.chunkSize) : (i += 1) {
+                top_chunk[i] = @intCast(t_data[i]);
+                bottom_chunk[i] = @intCast(b_data[i]);
             }
-            bot: {
-                if (!b_can_save) break :bot;
-                game.state.db.updateChunkData(
-                    b_c.id,
-                    b_c.scriptId,
-                    b_data,
-                ) catch @panic("failed to save bottom chunk data after lighting");
-            }
+            data.chunk_file.saveChunkData(
+                game.state.allocator,
+                self.world_id,
+                self.x,
+                self.z,
+                top_chunk,
+                bottom_chunk,
+            );
         }
         self.finishJob();
     }
@@ -86,8 +105,6 @@ const game = @import("../../game.zig");
 const data = @import("../../data/data.zig");
 const buffer = @import("../buffer.zig");
 const config = @import("config");
-const save_job = @import("jobs_save.zig");
 const lighting = @import("../../block/lighting_ambient_fall.zig");
 const block = @import("../../block/block.zig");
 const chunk = block.chunk;
-var fully_lit_chunk: [chunk.chunkSize]u32 = chunk.fully_lit_chunk;

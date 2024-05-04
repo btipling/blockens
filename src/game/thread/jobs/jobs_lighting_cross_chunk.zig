@@ -19,21 +19,42 @@ pub const LightingCrossChunkJob = struct {
         }
     }
 
+    fn cData(self: @This(), x: i32, z: i32, required: bool) !struct { []u32, []u32 } {
+        const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+        defer game.state.allocator.free(top_chunk);
+        const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+        defer game.state.allocator.free(bottom_chunk);
+        data.chunk_file.loadChunkData(
+            game.state.allocator,
+            self.world_id,
+            x,
+            z,
+            top_chunk,
+            bottom_chunk,
+        ) catch |err| {
+            if (required) {
+                return err;
+            }
+            @memset(top_chunk, 0);
+            @memset(bottom_chunk, 0);
+        };
+        const t_block_data: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+        const bt_block_data: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+        var ci: usize = 0;
+        while (ci < chunk.chunkSize) : (ci += 1) {
+            t_block_data[ci] = @truncate(top_chunk[ci]);
+            bt_block_data[ci] = @truncate(bottom_chunk[ci]);
+        }
+        return .{ t_block_data, bt_block_data };
+    }
+
     pub fn lightingCrossChunkJob(self: *@This()) void {
-        var t_c: data.chunkData = .{};
-        game.state.db.loadChunkData(self.world_id, self.x, 1, self.z, &t_c) catch {
-            t_c.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-            @memcpy(t_c.voxels, &fully_lit_chunk);
+        const t_block_data: []u32, const bt_block_data: []u32 = self.cData(self.x, self.z, true) catch {
+            self.finishJob();
+            return;
         };
-        defer game.state.allocator.free(t_c.voxels);
-        var b_c: data.chunkData = .{};
-        game.state.db.loadChunkData(self.world_id, self.x, 0, self.z, &b_c) catch {
-            b_c.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-            @memcpy(b_c.voxels, &fully_lit_chunk);
-        };
-        defer game.state.allocator.free(b_c.voxels);
-        const t_block_data: []u32 = t_c.voxels;
-        const bt_block_data: []u32 = b_c.voxels;
+        defer game.state.allocator.free(t_block_data);
+        defer game.state.allocator.free(bt_block_data);
         {
             const wp = chunk.worldPosition.initFromPositionV(.{
                 @floatFromInt(self.x),
@@ -41,32 +62,26 @@ pub const LightingCrossChunkJob = struct {
                 @floatFromInt(self.z),
                 0,
             });
-            self.fixCrossChunkLighting(wp, t_block_data);
+            self.fixCrossChunkLighting(wp, t_block_data, bt_block_data);
         }
         {
-            const wp = chunk.worldPosition.initFromPositionV(.{
-                @floatFromInt(self.x),
-                0,
-                @floatFromInt(self.z),
-                0,
-            });
-            self.fixCrossChunkLighting(wp, bt_block_data);
-        }
-        {
-            {
-                game.state.db.updateChunkData(
-                    t_c.id,
-                    t_c.scriptId,
-                    t_block_data,
-                ) catch @panic("failed to save top chunk data after lighting");
+            const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.allocator.free(top_chunk);
+            const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.allocator.free(bottom_chunk);
+            var i: usize = 0;
+            while (i < chunk.chunkSize) : (i += 1) {
+                top_chunk[i] = @intCast(t_block_data[i]);
+                bottom_chunk[i] = @intCast(bt_block_data[i]);
             }
-            {
-                game.state.db.updateChunkData(
-                    b_c.id,
-                    b_c.scriptId,
-                    bt_block_data,
-                ) catch @panic("failed to save bottom chunk data after lighting");
-            }
+            data.chunk_file.saveChunkData(
+                game.state.allocator,
+                self.world_id,
+                self.x,
+                self.z,
+                top_chunk,
+                bottom_chunk,
+            );
         }
         self.finishJob();
     }
@@ -195,124 +210,168 @@ pub const LightingCrossChunkJob = struct {
         }
     }
 
-    fn fixCrossChunkLighting(self: *LightingCrossChunkJob, wp: chunk.worldPosition, c_data: []u32) void {
+    fn fixCrossChunkLighting(self: *LightingCrossChunkJob, wp: chunk.worldPosition, top_chunk: []u32, bot_chunk: []u32) void {
         {
             const zp_p = wp.getZPosWP().vecFromWorldPosition();
-            var zp_c: data.chunkData = .{};
-            game.state.db.loadChunkData(
-                self.world_id,
+            const zp_top_chunk: []u32, const zp_bottom_chunk: []u32 = self.cData(
                 @intFromFloat(zp_p[0]),
-                @intFromFloat(zp_p[1]),
                 @intFromFloat(zp_p[2]),
-                &zp_c,
-            ) catch {
-                zp_c.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-                @memcpy(zp_c.voxels, &fully_lit_chunk);
-            };
-            defer game.state.allocator.free(zp_c.voxels);
-            const f_data: []u32 = zp_c.voxels;
+                false,
+            ) catch unreachable;
+            defer game.state.allocator.free(zp_top_chunk);
+            defer game.state.allocator.free(zp_bottom_chunk);
             // compare planes 63 z of c and 0 z of zp_c
-            const c_z: f32 = 63;
-            const zp_z: f32 = 0;
-            var y: f32 = 63;
-            while (y >= 0) : (y -= 1) {
-                var x: f32 = 0;
-                while (x < chunk.chunkDim) : (x += 1) {
-                    const c_i = chunk.getIndexFromPositionV(.{ x, y, c_z, 0 });
-                    var c_bd: block.BlockData = block.BlockData.fromId(c_data[c_i]);
-                    const zp_i = chunk.getIndexFromPositionV(.{ x, y, zp_z, 0 });
-                    const zp_bd: block.BlockData = block.BlockData.fromId(f_data[zp_i]);
-                    self.lightCrossing(c_data, c_i, &c_bd, zp_bd, .z_pos);
+            {
+                const c_z: f32 = 63;
+                const zp_z: f32 = 0;
+                var y: f32 = 63;
+                while (y >= 0) : (y -= 1) {
+                    var x: f32 = 0;
+                    while (x < chunk.chunkDim) : (x += 1) {
+                        const c_i = chunk.getIndexFromPositionV(.{ x, y, c_z, 0 });
+                        var c_bd: block.BlockData = block.BlockData.fromId(top_chunk[c_i]);
+                        const zp_i = chunk.getIndexFromPositionV(.{ x, y, zp_z, 0 });
+                        const zp_bd: block.BlockData = block.BlockData.fromId(zp_top_chunk[zp_i]);
+                        self.lightCrossing(top_chunk, c_i, &c_bd, zp_bd, .z_pos);
+                    }
+                }
+            }
+            {
+                const c_z: f32 = 63;
+                const zp_z: f32 = 0;
+                var y: f32 = 63;
+                while (y >= 0) : (y -= 1) {
+                    var x: f32 = 0;
+                    while (x < chunk.chunkDim) : (x += 1) {
+                        const c_i = chunk.getIndexFromPositionV(.{ x, y, c_z, 0 });
+                        var c_bd: block.BlockData = block.BlockData.fromId(bot_chunk[c_i]);
+                        const zp_i = chunk.getIndexFromPositionV(.{ x, y, zp_z, 0 });
+                        const zp_bd: block.BlockData = block.BlockData.fromId(zp_bottom_chunk[zp_i]);
+                        self.lightCrossing(bot_chunk, c_i, &c_bd, zp_bd, .z_pos);
+                    }
                 }
             }
         }
         {
             const zn_p = wp.getZNegWP().vecFromWorldPosition();
-            var zn_c: data.chunkData = .{};
-            game.state.db.loadChunkData(
-                self.world_id,
+            const zn_top_chunk: []u32, const zn_bottom_chunk: []u32 = self.cData(
                 @intFromFloat(zn_p[0]),
-                @intFromFloat(zn_p[1]),
                 @intFromFloat(zn_p[2]),
-                &zn_c,
-            ) catch {
-                zn_c.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-                @memcpy(zn_c.voxels, &fully_lit_chunk);
-            };
-            defer game.state.allocator.free(zn_c.voxels);
-            const zn_data: []u32 = zn_c.voxels;
+                false,
+            ) catch unreachable;
+            defer game.state.allocator.free(zn_top_chunk);
+            defer game.state.allocator.free(zn_bottom_chunk);
             // compare planes 0 z of c and 63 z of b_c
-            const c_z: f32 = 0;
-            const c_zn: f32 = 63;
-            var y: f32 = 63;
-            while (y >= 0) : (y -= 1) {
-                var x: f32 = 0;
-                while (x < chunk.chunkDim) : (x += 1) {
-                    const c_i = chunk.getIndexFromPositionV(.{ x, y, c_z, 0 });
-                    var c_bd: block.BlockData = block.BlockData.fromId(c_data[c_i]);
-                    const zn_i = chunk.getIndexFromPositionV(.{ x, y, c_zn, 0 });
-                    const zn_bd: block.BlockData = block.BlockData.fromId(zn_data[zn_i]);
-                    self.lightCrossing(c_data, c_i, &c_bd, zn_bd, .z_neg);
+            {
+                const c_z: f32 = 0;
+                const c_zn: f32 = 63;
+                var y: f32 = 63;
+                while (y >= 0) : (y -= 1) {
+                    var x: f32 = 0;
+                    while (x < chunk.chunkDim) : (x += 1) {
+                        const c_i = chunk.getIndexFromPositionV(.{ x, y, c_z, 0 });
+                        var c_bd: block.BlockData = block.BlockData.fromId(top_chunk[c_i]);
+                        const zn_i = chunk.getIndexFromPositionV(.{ x, y, c_zn, 0 });
+                        const zn_bd: block.BlockData = block.BlockData.fromId(zn_top_chunk[zn_i]);
+                        self.lightCrossing(top_chunk, c_i, &c_bd, zn_bd, .z_neg);
+                    }
+                }
+            }
+            {
+                const c_z: f32 = 0;
+                const c_zn: f32 = 63;
+                var y: f32 = 63;
+                while (y >= 0) : (y -= 1) {
+                    var x: f32 = 0;
+                    while (x < chunk.chunkDim) : (x += 1) {
+                        const c_i = chunk.getIndexFromPositionV(.{ x, y, c_z, 0 });
+                        var c_bd: block.BlockData = block.BlockData.fromId(bot_chunk[c_i]);
+                        const zn_i = chunk.getIndexFromPositionV(.{ x, y, c_zn, 0 });
+                        const zn_bd: block.BlockData = block.BlockData.fromId(zn_bottom_chunk[zn_i]);
+                        self.lightCrossing(bot_chunk, c_i, &c_bd, zn_bd, .z_neg);
+                    }
                 }
             }
         }
         {
             const xp_p = wp.getXPosWP().vecFromWorldPosition();
-            var xp_c: data.chunkData = .{};
-            game.state.db.loadChunkData(
-                self.world_id,
+            const xp_top_chunk: []u32, const xp_bottom_chunk: []u32 = self.cData(
                 @intFromFloat(xp_p[0]),
-                @intFromFloat(xp_p[1]),
                 @intFromFloat(xp_p[2]),
-                &xp_c,
-            ) catch {
-                xp_c.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-                @memcpy(xp_c.voxels, &fully_lit_chunk);
-            };
-            defer game.state.allocator.free(xp_c.voxels);
-            const xp_data: []u32 = xp_c.voxels;
+                false,
+            ) catch unreachable;
+            defer game.state.allocator.free(xp_top_chunk);
+            defer game.state.allocator.free(xp_bottom_chunk);
             // compare planes 63 x of c and 0 x of xp_c
-            const c_x: f32 = 63;
-            const xp_x: f32 = 0;
-            var y: f32 = 63;
-            while (y >= 0) : (y -= 1) {
-                var z: f32 = 0;
-                while (z < chunk.chunkDim) : (z += 1) {
-                    const c_i = chunk.getIndexFromPositionV(.{ c_x, y, z, 0 });
-                    var c_bd: block.BlockData = block.BlockData.fromId(c_data[c_i]);
-                    const xp_i = chunk.getIndexFromPositionV(.{ xp_x, y, z, 0 });
-                    const xp_bd: block.BlockData = block.BlockData.fromId(xp_data[xp_i]);
-                    self.lightCrossing(c_data, c_i, &c_bd, xp_bd, .x_pos);
+            {
+                const c_x: f32 = 63;
+                const xp_x: f32 = 0;
+                var y: f32 = 63;
+                while (y >= 0) : (y -= 1) {
+                    var z: f32 = 0;
+                    while (z < chunk.chunkDim) : (z += 1) {
+                        const c_i = chunk.getIndexFromPositionV(.{ c_x, y, z, 0 });
+                        var c_bd: block.BlockData = block.BlockData.fromId(top_chunk[c_i]);
+                        const xp_i = chunk.getIndexFromPositionV(.{ xp_x, y, z, 0 });
+                        const xp_bd: block.BlockData = block.BlockData.fromId(xp_top_chunk[xp_i]);
+                        self.lightCrossing(top_chunk, c_i, &c_bd, xp_bd, .x_pos);
+                    }
+                }
+            }
+            {
+                const c_x: f32 = 63;
+                const xp_x: f32 = 0;
+                var y: f32 = 63;
+                while (y >= 0) : (y -= 1) {
+                    var z: f32 = 0;
+                    while (z < chunk.chunkDim) : (z += 1) {
+                        const c_i = chunk.getIndexFromPositionV(.{ c_x, y, z, 0 });
+                        var c_bd: block.BlockData = block.BlockData.fromId(bot_chunk[c_i]);
+                        const xp_i = chunk.getIndexFromPositionV(.{ xp_x, y, z, 0 });
+                        const xp_bd: block.BlockData = block.BlockData.fromId(xp_bottom_chunk[xp_i]);
+                        self.lightCrossing(bot_chunk, c_i, &c_bd, xp_bd, .x_pos);
+                    }
                 }
             }
         }
         {
             const xn_p = wp.getXNegWP().vecFromWorldPosition();
-            var xn_c: data.chunkData = .{};
-            game.state.db.loadChunkData(
-                self.world_id,
+            const xn_top_chunk: []u32, const xn_bottom_chunk: []u32 = self.cData(
                 @intFromFloat(xn_p[0]),
-                @intFromFloat(xn_p[1]),
                 @intFromFloat(xn_p[2]),
-                &xn_c,
-            ) catch {
-                xn_c.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-                @memcpy(xn_c.voxels, &fully_lit_chunk);
-            };
-            defer game.state.allocator.free(xn_c.voxels);
-            const xn_data: []u32 = xn_c.voxels;
+                false,
+            ) catch unreachable;
+            defer game.state.allocator.free(xn_top_chunk);
+            defer game.state.allocator.free(xn_bottom_chunk);
             // compare planes 0 x of c and 63 x of r_c
-            const c_x: f32 = 0;
-            const xn_x: f32 = 63;
-            var y: f32 = 63;
-            while (y >= 0) : (y -= 1) {
-                var z: f32 = 0;
-                while (z < chunk.chunkDim) : (z += 1) {
-                    const c_i = chunk.getIndexFromPositionV(.{ c_x, y, z, 0 });
-                    var c_bd: block.BlockData = block.BlockData.fromId(c_data[c_i]);
-                    const xn_i = chunk.getIndexFromPositionV(.{ xn_x, y, z, 0 });
-                    const xn_bd: block.BlockData = block.BlockData.fromId(xn_data[xn_i]);
-                    self.lightCrossing(c_data, c_i, &c_bd, xn_bd, .x_neg);
+            {
+                const c_x: f32 = 0;
+                const xn_x: f32 = 63;
+                var y: f32 = 63;
+                while (y >= 0) : (y -= 1) {
+                    var z: f32 = 0;
+                    while (z < chunk.chunkDim) : (z += 1) {
+                        const c_i = chunk.getIndexFromPositionV(.{ c_x, y, z, 0 });
+                        var c_bd: block.BlockData = block.BlockData.fromId(top_chunk[c_i]);
+                        const xn_i = chunk.getIndexFromPositionV(.{ xn_x, y, z, 0 });
+                        const xn_bd: block.BlockData = block.BlockData.fromId(xn_top_chunk[xn_i]);
+                        self.lightCrossing(top_chunk, c_i, &c_bd, xn_bd, .x_neg);
+                    }
+                }
+            }
+            {
+                const c_x: f32 = 0;
+                const xn_x: f32 = 63;
+                var y: f32 = 63;
+                while (y >= 0) : (y -= 1) {
+                    var z: f32 = 0;
+                    while (z < chunk.chunkDim) : (z += 1) {
+                        const c_i = chunk.getIndexFromPositionV(.{ c_x, y, z, 0 });
+                        var c_bd: block.BlockData = block.BlockData.fromId(bot_chunk[c_i]);
+                        const xn_i = chunk.getIndexFromPositionV(.{ xn_x, y, z, 0 });
+                        const xn_bd: block.BlockData = block.BlockData.fromId(xn_bottom_chunk[xn_i]);
+                        self.lightCrossing(bot_chunk, c_i, &c_bd, xn_bd, .x_neg);
+                    }
                 }
             }
         }
@@ -321,11 +380,8 @@ pub const LightingCrossChunkJob = struct {
 
 const std = @import("std");
 const game = @import("../../game.zig");
-const blecs = @import("../../blecs/blecs.zig");
 const data = @import("../../data/data.zig");
 const buffer = @import("../buffer.zig");
 const config = @import("config");
-const save_job = @import("jobs_save.zig");
 const block = @import("../../block/block.zig");
 const chunk = block.chunk;
-const fully_lit_chunk = chunk.fully_lit_chunk;

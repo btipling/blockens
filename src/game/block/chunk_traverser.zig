@@ -223,7 +223,6 @@ pub fn saveBD(self: *traverser) void {
 }
 
 pub fn get_datas(self: *traverser, wp: chunk.worldPosition) ?[]u32 {
-    // std.debug.print("{} fetching datas\n", .{wp});
     var i: usize = 0;
     while (i < self.num_extra_datas + 1) : (i += 1) {
         const d = self.datas[i];
@@ -234,13 +233,14 @@ pub fn get_datas(self: *traverser, wp: chunk.worldPosition) ?[]u32 {
             return null;
         }
     }
+    if (self.num_extra_datas + 1 == self.datas.len) @panic("too many datas fetched >:|");
 
     const d = self.fetcher.fetch(wp) orelse {
         const ed: datas = .{
             .wp = wp,
             .fetchable = false,
         };
-        self.datas[self.num_extra_datas] = ed;
+        self.datas[self.num_extra_datas + 1] = ed;
         self.num_extra_datas += 1;
         return null;
     };
@@ -261,7 +261,9 @@ pub fn debugPrint(self: traverser) void {
     std.debug.print("\t - bd.block_id: {d}\n", .{self.current_bd.block_id});
     std.debug.print("\t - og.block_id: {d}\n", .{self.og_bd.block_id});
     std.debug.print("\t - bd.ambient: {d}\n", .{self.current_bd.ambient});
+    std.debug.print("\t - bd.lighting: {d}\n", .{self.current_bd.lighting});
     std.debug.print("\t - num_traversals: {d}\n", .{self.num_traversals});
+    std.debug.print("\t - num_extra_datas: {d}\n", .{self.num_extra_datas});
     std.debug.print("\t - lowest_y: {d}\n", .{self.lowest_y});
     std.debug.print("\t - highest_y: {d}\n", .{self.highest_y});
 

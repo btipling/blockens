@@ -1,11 +1,11 @@
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "UILoadingScreenSystem", ecs.OnStore, @constCast(&s));
+    ecs.SYSTEM(game.state.world, "UISettingUpScreenSystem", ecs.OnStore, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
-    desc.query.filter.terms[0] = .{ .id = ecs.id(components.screen.LoadingScreen) };
+    desc.query.filter.terms[0] = .{ .id = ecs.id(components.screen.SettingUpScreen) };
     desc.run = run;
     return desc;
 }
@@ -20,20 +20,16 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .w = game.state.ui.imguiWidth(600),
                 .h = game.state.ui.imguiHeight(200),
             });
-            if (zgui.begin("#LoadingScreen", .{
+            if (zgui.begin("#SettingUpScreen", .{
                 .flags = zgui.WindowFlags.no_decoration,
             })) {
-                zgui.text("Loading...", .{});
+                zgui.text("Starting...", .{});
                 const ww = zgui.getWindowWidth();
                 zgui.newLine();
                 zgui.newLine();
 
                 centerNext(ww);
-                zgui.text("Starting world.", .{});
-                zgui.newLine();
-                zgui.text("Lighting initial: {d:.2}%", .{game.state.ui.load_percentage_lighting_initial * 100});
-                zgui.text("Lighting cross chunk: {d:.2}%", .{game.state.ui.load_percentage_lighting_cross_chunk * 100});
-                zgui.text("Loading chunks: {d:.2}%", .{game.state.ui.load_percentage_load_chunks * 100});
+                zgui.text("Setting up...", .{});
             }
             zgui.end();
         }

@@ -4,3 +4,5 @@ imgui.ini
 *.db
 .vscode
 error.log
+saves
+backup*

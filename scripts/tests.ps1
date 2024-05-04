@@ -13,7 +13,9 @@ function Test-Blockens {
 $tests = @(
     ".\src\game\block\lighting_ambient_edit.zig", 
     ".\src\game\block\lighting_ambient_fall.zig",
-    ".\src\game\block\block.zig"
+    ".\src\game\block\block.zig",
+    ".\src\game\block\chunk_compress.zig"
+
 )
 
 $tests_to_run = $tests

@@ -22,6 +22,10 @@ pub fn showTitleScreen() void {
     showSettingsScreen(blecs.components.screen.TitleScreen);
 }
 
+pub fn showSettingUpScreen() void {
+    showSettingsScreen(blecs.components.screen.SettingUpScreen);
+}
+
 pub fn showLoadingScreen() void {
     showSettingsScreen(blecs.components.screen.LoadingScreen);
 }

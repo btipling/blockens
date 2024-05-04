@@ -52,14 +52,14 @@ pub const Game = struct {
         try self.initScript();
         errdefer self.deinit();
 
-        try self.setupDB();
-        try self.populateUIOptions();
         self.jobs.start();
 
         try thread.handler.init();
         errdefer thread.handler.deinit();
         try thread.buffer.init(self.allocator);
         errdefer thread.buffer.deinit();
+
+        _ = self.jobs.start_up();
     }
 
     pub fn deinit(self: *Game) void {
@@ -73,59 +73,12 @@ pub const Game = struct {
         thread.handler.deinit();
     }
 
-    pub fn setupDB(self: *Game) !void {
-        const had_world = self.db.ensureDefaultWorld() catch |err| {
-            std.log.err("Failed to ensure default world: {}\n", .{err});
-            return err;
-        };
-        if (had_world) return;
-        try self.initInitialWorld();
-        try self.initInitialPlayer(1);
-    }
-
-    pub fn initInitialWorld(self: *Game) !void {
-        var dirt_texture_script = [_]u8{0} ** script.maxLuaScriptSize;
-        const dtsb = @embedFile("script/lua/gen_dirt_texture.lua");
-        for (dtsb, 0..) |c, i| {
-            dirt_texture_script[i] = c;
-        }
-        const dirt_texture = try self.script.evalTextureFunc(dirt_texture_script);
-        var grass_texture_script = [_]u8{0} ** script.maxLuaScriptSize;
-        const gtsb = @embedFile("script/lua/gen_grass_texture.lua");
-        for (gtsb, 0..) |c, i| {
-            grass_texture_script[i] = c;
-        }
-        const grass_texture = try self.script.evalTextureFunc(grass_texture_script);
-        if (dirt_texture == null or grass_texture == null) std.debug.panic("couldn't generate lua textures!\n", .{});
-        try self.db.saveBlock("dirt", @ptrCast(dirt_texture.?), false, 0);
-        try self.db.saveBlock("grass", @ptrCast(grass_texture.?), false, 0);
-        const default_chunk_script: []const u8 = @embedFile("script/lua/chunk_gen_default.lua");
-        try self.db.saveChunkScript("default", default_chunk_script, .{ 0, 1, 0 });
-        const chunk_data = try self.script.evalChunkFunc(default_chunk_script);
-        try self.db.saveChunkData(1, 0, 0, 0, 1, chunk_data);
-
-        var c: [chunk.chunkSize]u32 = std.mem.zeroes([chunk.chunkSize]u32);
-        const chunk_top_data: []u32 = try self.allocator.alloc(u32, c.len);
-        @memcpy(chunk_top_data, &c);
-        try self.db.saveChunkData(1, 0, 1, 0, 1, chunk_top_data);
-        self.allocator.free(chunk_data);
-        self.allocator.free(chunk_top_data);
-        self.allocator.free(dirt_texture.?);
-        self.allocator.free(grass_texture.?);
-    }
-
-    pub fn initInitialPlayer(self: *Game, world_id: i32) !void {
-        const initial_pos: @Vector(4, f32) = .{ 32, 64, 32, 0 };
-        const initial_rot: @Vector(4, f32) = .{ 0, 0, 0, 1 };
-        const initial_angle: f32 = 0;
-        try self.db.savePlayerPosition(world_id, initial_pos, initial_rot, initial_angle);
-    }
-
     pub fn initScript(self: *Game) !void {
         self.script = try script.Script.init(self.allocator);
     }
 
     pub fn populateUIOptions(self: *Game) !void {
+        std.debug.print("populate ui options\n", .{});
         try self.db.listBlocks(&self.ui.block_options);
         try self.db.listTextureScripts(&self.ui.texture_script_options);
         try self.db.listChunkScripts(&self.ui.chunk_script_options);
@@ -144,13 +97,13 @@ pub const Game = struct {
         self.ui.world_loaded_id = 1;
 
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
-        const defaultLuaScript = @embedFile("script/lua/gen_wood_texture.lua");
+        const defaultLuaScript = @embedFile("script/lua/gen_grass_texture.lua");
         for (defaultLuaScript, 0..) |c, i| {
             buf[i] = c;
         }
         self.ui.texture_buf = buf;
         buf = [_]u8{0} ** script.maxLuaScriptSize;
-        const defaultChunkScript = @embedFile("script/lua/chunk_gen_complex.lua");
+        const defaultChunkScript = @embedFile("script/lua/chunk_gen_default.lua");
         for (defaultChunkScript, 0..) |c, i| {
             buf[i] = c;
         }

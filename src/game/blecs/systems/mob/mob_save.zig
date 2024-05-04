@@ -1,11 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zm = @import("zmath");
-const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
-const game = @import("../../../game.zig");
-const save_job = @import("../../../thread/jobs/jobs_save.zig");
-
 const save_after_seconds: f64 = 15;
 
 pub fn init() void {
@@ -51,8 +43,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 var cs = game.state.blocks.game_chunks.valueIterator();
                 var to_save: usize = 0;
                 while (cs.next()) |cc| {
-                    if (cc.*.updated) {
-                        data.chunks_updated[to_save] = cc.*;
+                    const c: *chunk.Chunk = cc.*;
+                    const pos = c.wp.vecFromWorldPosition();
+                    const x: i8 = @intFromFloat(pos[0]);
+                    const z: i8 = @intFromFloat(pos[2]);
+                    if (c.updated) {
+                        data.chunks_updated[to_save] = .{ .x = x, .z = z };
                         to_save += 1;
                         if (to_save >= data.chunks_updated.len) break;
                     }
@@ -63,3 +59,13 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         }
     }
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zm = @import("zmath");
+const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
+const game = @import("../../../game.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;
+const save_job = @import("../../../thread/jobs/jobs_save.zig");
