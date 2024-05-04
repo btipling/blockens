@@ -34,7 +34,6 @@ pub fn handle_incoming() !void {
 fn handle_startup(msg: buffer.buffer_message) !void {
     if (!buffer.progress_report(msg).done) return;
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    std.debug.print("startup handle\n", .{});
     _ = switch (bd) {
         buffer.buffer_data.startup => |d| d,
         else => return,
@@ -43,7 +42,6 @@ fn handle_startup(msg: buffer.buffer_message) !void {
     try game.state.populateUIOptions();
     screen_helpers.showTitleScreen();
     blecs.entities.block.init();
-    std.debug.print("startup handled\n", .{});
 }
 
 fn handle_chunk_gen(msg: buffer.buffer_message) !void {

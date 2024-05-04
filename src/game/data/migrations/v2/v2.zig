@@ -36,15 +36,15 @@ fn migrateWorld(allocator: std.mem.Allocator, db_v1: *v1.Data, world_id: i32) vo
             const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(v1_world_chunk_dims / 2));
             chunk.column.prime(x, z);
 
-            var num_chunks_found: usize = 2;
+            var top_needs_initialization = false;
+            var bottom_needs_initialization = false;
 
             const top_chunk_v1: []u32 = tc1: {
                 const cdata = loadV1Chunks(db_v1, world_id, x, 1, z) catch {
                     // do something
                     const fbdata = allocator.alloc(u32, v1_chunk_size) catch @panic("OOM");
                     @memset(fbdata, 0);
-                    num_chunks_found -= 1;
-                    db_v1.saveChunkData(1, x, 1, z, 0, fbdata) catch @panic("nope");
+                    top_needs_initialization = true;
                     break :tc1 fbdata;
                 };
                 break :tc1 cdata;
@@ -55,16 +55,22 @@ fn migrateWorld(allocator: std.mem.Allocator, db_v1: *v1.Data, world_id: i32) vo
                     // do something
                     const fbdata = allocator.alloc(u32, v1_chunk_size) catch @panic("OOM");
                     @memset(fbdata, 0);
-                    num_chunks_found -= 1;
-                    db_v1.saveChunkData(1, x, 0, z, 0, fbdata) catch @panic("nope");
+                    bottom_needs_initialization = true;
                     break :tc2 fbdata;
                 };
                 break :tc2 cdata;
             };
             defer allocator.free(bottom_chunk_v1);
 
-            if (num_chunks_found == 0) {
+            if (top_needs_initialization and bottom_needs_initialization) {
+                // Nothing to migrate
                 continue;
+            }
+            if (top_needs_initialization) {
+                db_v1.saveChunkData(1, x, 1, z, 0, top_chunk_v1) catch @panic("nope");
+            }
+            if (bottom_needs_initialization) {
+                db_v1.saveChunkData(1, x, 0, z, 0, bottom_chunk_v1) catch @panic("nope");
             }
 
             const top_chunk_v2 = allocator.alloc(u64, v1_chunk_size) catch @panic("OOM");
