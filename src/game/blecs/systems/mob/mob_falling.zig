@@ -47,31 +47,38 @@ fn endFall(world: *ecs.world_t, entity: ecs.entity_t) void {
 
 const acceleration: f32 = 30;
 fn dropMobAndEnd(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.Mob) bool {
+    // Start the drop by getting the mob's position and flag it as needing update
     const mp: *components.mob.Position = ecs.get_mut(
         world,
         entity,
         components.mob.Position,
     ) orelse std.debug.panic("No position for mob\n", .{});
     ecs.add(world, entity, components.mob.NeedsUpdate);
-    if (!ecs.has_id(world, entity, ecs.id(components.mob.Falling))) {
-        const starting_y = mp.position[1];
-        _ = ecs.set(
-            world,
-            entity,
-            components.mob.Falling,
-            .{
-                .starting_y = starting_y,
-                .started = game.state.input.lastframe,
-            },
-        );
-        return false;
+
+    {
+        // Start falling if not already falling.
+        if (!ecs.has_id(world, entity, ecs.id(components.mob.Falling))) {
+            const starting_y = mp.position[1];
+            _ = ecs.set(
+                world,
+                entity,
+                components.mob.Falling,
+                .{
+                    .starting_y = starting_y,
+                    .started = game.state.input.lastframe,
+                },
+            );
+            return false;
+        }
     }
+
     const mf: *components.mob.Falling = ecs.get_mut(
         world,
         entity,
         components.mob.Falling,
     ) orelse std.debug.panic("expected falling to be present\n", .{});
 
+    // Setup the distance the mob should fall given starting and time passed for this frame
     const now: f32 = game.state.input.lastframe;
     const delta: f32 = now - mf.started;
     const total_fall_distance_so_far = 0.5 * acceleration * delta;
@@ -79,14 +86,19 @@ fn dropMobAndEnd(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.
     const distance_this_frame = mp.position[1] - new_y;
     std.debug.assert(distance_this_frame > 0);
 
+    // Iterate through space a little bit at a time to check if we
+    // hit something.
     var changed_y = mp.position[1];
     const max_change_per_check: f32 = 0.05;
+
+    // If the distance to iterate is less than check just set that and exit
     var drop_change: f32 = max_change_per_check;
     if (distance_this_frame < max_change_per_check) {
         mp.position[1] = new_y;
         return false;
     }
 
+    // Iterate through to see if we hit anything and exit early
     while (new_y < changed_y) {
         changed_y -= max_change_per_check;
         drop_change += max_change_per_check;
@@ -100,6 +112,7 @@ fn dropMobAndEnd(world: *ecs.world_t, entity: ecs.entity_t, mob: components.mob.
         mp.position[1] = changed_y;
     }
 
+    // Set the distance to what it should be for the frame.
     mp.position[1] = new_y;
     return false;
 }
