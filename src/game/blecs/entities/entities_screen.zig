@@ -416,9 +416,9 @@ pub fn initDemoChunkCamera() void {
     }
 
     const chunk_rot = zm.quatFromRollPitchYaw(
+        game.state.ui.demo_screen_rotation_x,
         game.state.ui.demo_screen_rotation_y,
         game.state.ui.demo_screen_rotation_z,
-        game.state.ui.demo_screen_rotation_x,
     );
     _ = ecs.set(
         game.state.world,
@@ -471,9 +471,9 @@ pub fn initDemoCharacterCamera() void {
         game.state.ui.demo_screen_rotation_z = game.state.ui.demo_character_rotation_z;
     }
     const character_rot = zm.quatFromRollPitchYaw(
+        game.state.ui.demo_screen_rotation_x,
         game.state.ui.demo_screen_rotation_y,
         game.state.ui.demo_screen_rotation_z,
-        game.state.ui.demo_screen_rotation_x,
     );
     _ = ecs.set(
         game.state.world,

@@ -52,9 +52,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
             // Update the rotation stored in state:
             const xyz: [3]f32 = zm.quatToRollPitchYaw(current_rot);
-            game.state.ui.demo_screen_rotation_y = xyz[0];
-            game.state.ui.demo_screen_rotation_z = xyz[1];
-            game.state.ui.demo_screen_rotation_x = xyz[2];
+            game.state.ui.demo_screen_rotation_x = xyz[0];
+            game.state.ui.demo_screen_rotation_y = xyz[1];
+            game.state.ui.demo_screen_rotation_z = xyz[2];
         }
     }
 }
