@@ -25,8 +25,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                     zgui.endMenuBar();
                 }
-                zgui.text("Some chunks info here!", .{});
-                showChunkList() catch unreachable;
+                showChunkList() catch continue;
             }
             zgui.end();
         }
@@ -49,9 +48,7 @@ fn showChunkList() !void {
     )) {
         const world = game.state.world;
         zgui.tableSetupColumn("Chunk Position", .{
-            .flags = .{
-                .no_resize = false,
-            },
+            .flags = .{},
         });
         zgui.tableSetupColumn("Entity", .{});
         zgui.tableSetupColumn("Visibility", .{});

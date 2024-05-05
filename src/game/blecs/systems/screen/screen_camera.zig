@@ -27,9 +27,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (config.use_tracy) {
                 const tracy_zone = ztracy.ZoneNC(@src(), "ScreenCameraSystem", 0x00_33_ff_f0);
                 defer tracy_zone.End();
-                screenCameraSystem(world, entity, it, parent, screen, c[i]);
+                _ = screenCameraSystem(world, entity, it, parent, screen, c[i]);
             } else {
-                screenCameraSystem(world, entity, it, parent, screen, c[i]);
+                _ = screenCameraSystem(world, entity, it, parent, screen, c[i]);
             }
         }
     }
@@ -42,21 +42,21 @@ fn screenCameraSystem(
     parent: ecs.entity_t,
     screen: *const components.screen.Screen,
     c: components.screen.Camera,
-) void {
+) bool {
     if (parent == screen.gameDataEntity) {
         if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Game))) {
             ecs.remove(world, entity, components.screen.Updated);
-            return;
+            return false;
         }
     }
     if (parent == screen.settingDataEntity) {
         if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Settings))) {
             ecs.remove(world, entity, components.screen.Updated);
-            return;
+            return false;
         }
     }
     const ubo = game.state.gfx.ubos.get(c.ubo) orelse {
-        return;
+        return false;
     };
     var camera_position: @Vector(4, f32) = undefined;
     var camera_front: @Vector(4, f32) = undefined;
@@ -74,50 +74,50 @@ fn screenCameraSystem(
     if (ecs.get_id(world, entity, ecs.id(components.screen.CameraPosition))) |opaque_ptr| {
         const cp: *const components.screen.CameraPosition = @ptrCast(@alignCast(opaque_ptr));
         camera_position = cp.pos;
-    } else unreachable;
+    } else return false;
     if (ecs.get_id(world, entity, ecs.id(components.screen.CameraFront))) |opaque_ptr| {
         const cf: *const components.screen.CameraFront = @ptrCast(@alignCast(opaque_ptr));
         camera_front = cf.front;
-    } else unreachable;
+    } else return false;
     if (ecs.get_id(world, entity, ecs.id(components.screen.CameraRotation))) |opaque_ptr| {
         const cr: *const components.screen.CameraRotation = @ptrCast(@alignCast(opaque_ptr));
         pitch = cr.pitch;
         yaw = cr.yaw;
-    } else unreachable;
+    } else return false;
     if (ecs.get_id(world, entity, ecs.id(components.screen.UpDirection))) |opaque_ptr| {
         const u: *const components.screen.UpDirection = @ptrCast(@alignCast(opaque_ptr));
         up_direction = u.up;
-    } else unreachable;
+    } else return false;
     if (ecs.get_id(world, entity, ecs.id(components.screen.Perspective))) |opaque_ptr| {
         const p: *const components.screen.Perspective = @ptrCast(@alignCast(opaque_ptr));
         fovy = p.fovy;
         aspect = p.aspect;
         near = p.near;
         far = p.far;
-    } else unreachable;
+    } else return false;
     if (ecs.has_id(world, entity, ecs.id(components.screen.WorldScale))) {
         if (ecs.get_id(world, entity, ecs.id(components.screen.WorldScale))) |opaque_ptr| {
             const ws: *const components.screen.WorldScale = @ptrCast(@alignCast(opaque_ptr));
             world_scale = ws.scale;
-        } else unreachable;
+        } else return false;
     }
     if (ecs.has_id(world, entity, ecs.id(components.screen.WorldRotation))) {
         if (ecs.get_id(world, entity, ecs.id(components.screen.WorldRotation))) |opaque_ptr| {
             const wr: *const components.screen.WorldRotation = @ptrCast(@alignCast(opaque_ptr));
             world_rotation = wr.rotation;
-        } else unreachable;
+        } else return false;
     }
     if (ecs.has_id(world, entity, ecs.id(components.screen.WorldTranslation))) {
         if (ecs.get_id(world, entity, ecs.id(components.screen.WorldTranslation))) |opaque_ptr| {
             const wt: *const components.screen.WorldTranslation = @ptrCast(@alignCast(opaque_ptr));
             world_translation = wt.translation;
-        } else unreachable;
+        } else return false;
     }
     if (ecs.has_id(world, entity, ecs.id(components.screen.PostPerspective))) {
         if (ecs.get_id(world, entity, ecs.id(components.screen.PostPerspective))) |opaque_ptr| {
             const pp: *const components.screen.PostPerspective = @ptrCast(@alignCast(opaque_ptr));
             post_perspective = pp.translation;
-        } else unreachable;
+        } else return false;
     }
     var m = zm.identity();
     if (world_scale) |s| {
@@ -145,7 +145,7 @@ fn screenCameraSystem(
         game.state.world,
         entity,
         components.screen.Camera,
-    ) orelse return;
+    ) orelse return false;
     mut_camera.elapsedTime += it.delta_time;
     gfx.gl.Gl.updateUniformBufferObject(
         m,
@@ -155,6 +155,7 @@ fn screenCameraSystem(
         ubo,
     );
     ecs.remove(world, entity, components.screen.Updated);
+    return true;
 }
 
 fn euclideanDistance(v1: @Vector(4, f32), v2: @Vector(4, f32)) f32 {

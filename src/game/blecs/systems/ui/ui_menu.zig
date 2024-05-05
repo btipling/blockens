@@ -46,6 +46,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     if (zgui.menuItem("Chunk", .{})) {
                         screen_helpers.showChunkEditor();
                     }
+                    if (zgui.menuItem("Terrain", .{})) {
+                        screen_helpers.showTerrainEditor();
+                    }
                     if (zgui.menuItem("Character", .{})) {
                         screen_helpers.showCharacterEditor();
                     }

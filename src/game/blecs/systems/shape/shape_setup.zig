@@ -72,7 +72,7 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         erc.fragmentShader = shaders.genFragmentShader(&e, &mesh_data);
     }
     const erc_id = ecs.new_id(world);
-    game.state.gfx.renderConfigs.put(erc_id, erc) catch unreachable;
+    game.state.gfx.renderConfigs.put(erc_id, erc) catch @panic("OOM");
     if (e.has_uniform_mat) erc.transform = e.uniform_mat;
     if (e.has_ubo) erc.ubo_binding_point = e.ubo_binding_point;
     _ = ecs.set(world, entity, components.gfx.ElementsRendererConfig, .{ .id = erc_id });
@@ -106,7 +106,7 @@ const shaders = struct {
                 break :blk null;
             },
         };
-        return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch unreachable;
+        return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch @panic("vertex shader gen fail");
     }
     fn genFragmentShader(e: *const extractions, mesh_data: *const gfx.mesh.meshData) [:0]const u8 {
         var has_texture = false;
@@ -131,7 +131,7 @@ const shaders = struct {
             .outline_color = e.outline_color,
             .lighting_block_index = e.lighting_block_index,
         };
-        return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch unreachable;
+        return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch @panic("frag shader gen fail");
     }
 };
 

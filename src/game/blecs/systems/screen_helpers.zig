@@ -14,6 +14,10 @@ pub fn showCharacterEditor() void {
     showSettingsScreen(blecs.components.screen.CharacterEditor);
 }
 
+pub fn showTerrainEditor() void {
+    showSettingsScreen(blecs.components.screen.TerrainEditor);
+}
+
 pub fn showWorldEditor() void {
     showSettingsScreen(blecs.components.screen.WorldEditor);
 }

@@ -27,21 +27,21 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |_| {
             const xPos: f32 = game.state.ui.imguiX(1100);
             const yPos: f32 = game.state.ui.imguiY(25);
-            zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
+            zgui.setNextWindowPos(.{
+                .x = xPos,
+                .y = yPos,
+                .cond = .first_use_ever,
+            });
             zgui.setNextWindowSize(.{
                 .w = game.state.ui.imguiWidth(800),
                 .h = game.state.ui.imguiHeight(1000),
+                .cond = .first_use_ever,
             });
             zgui.setNextItemWidth(-1);
             if (zgui.begin("Character Designer", .{
-                .flags = .{
-                    .no_title_bar = false,
-                    .no_resize = false,
-                    .no_scrollbar = false,
-                    .no_collapse = false,
-                },
+                .flags = .{},
             })) {
-                drawControls() catch unreachable;
+                drawControls() catch continue;
             }
             zgui.end();
         }

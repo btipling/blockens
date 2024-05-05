@@ -20,24 +20,24 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         for (0..it.count()) |_| {
             const xPos: f32 = game.state.ui.imguiX(25);
             const yPos: f32 = game.state.ui.imguiY(25);
-            zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
+            zgui.setNextWindowPos(.{
+                .x = xPos,
+                .y = yPos,
+                .cond = .first_use_ever,
+            });
             zgui.setNextWindowSize(.{
                 .w = game.state.ui.imguiWidth(1800),
                 .h = game.state.ui.imguiHeight(1000),
+                .cond = .first_use_ever,
             });
             zgui.setNextItemWidth(-1);
             if (zgui.begin("World Editor", .{
-                .flags = .{
-                    .no_title_bar = false,
-                    .no_resize = true,
-                    .no_scrollbar = false,
-                    .no_collapse = true,
-                },
+                .flags = .{},
             })) {
-                drawWorldOptions() catch unreachable;
+                drawWorldOptions() catch continue;
                 if (game.state.ui.world_loaded_id != 0) {
                     zgui.sameLine(.{});
-                    drawWorldConfig() catch unreachable;
+                    drawWorldConfig() catch continue;
                 }
             }
             zgui.end();
@@ -289,7 +289,7 @@ fn updateChunkConfigFromPopup(updated_script_cfg: ?updateScriptConfigAt) !void {
     };
     try game.state.ui.world_chunk_table_data.put(wp, ch_cfg);
     var scriptData: data.chunkScript = undefined;
-    game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData) catch unreachable;
+    try game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData);
     var ch_script = script.Script.dataScriptToScript(scriptData.script);
     _ = game.state.jobs.generateWorldChunk(wp, &ch_script);
 }

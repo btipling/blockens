@@ -9,6 +9,7 @@ pub fn init() void {
     loading_screen.init();
     display_settings.init();
     character_editor.init();
+    terrain_editor.init();
     world_editor.init();
     demo_cube.init();
     demo_chunk.init();
@@ -29,6 +30,7 @@ const setting_up_screen = @import("ui_setting_up_screen.zig");
 const loading_screen = @import("ui_loading_screen.zig");
 const display_settings = @import("ui_display_settings.zig");
 const character_editor = @import("ui_character_editor.zig");
+const terrain_editor = @import("ui_terrain_editor.zig");
 const world_editor = @import("ui_world_editor.zig");
 const demo_cube = @import("ui_demo_cube.zig");
 const demo_chunk = @import("ui_demo_chunk.zig");
