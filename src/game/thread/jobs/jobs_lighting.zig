@@ -32,8 +32,8 @@ pub const LightingJob = struct {
             if (required) {
                 return err;
             }
-            @memset(top_chunk, 0);
-            @memset(bottom_chunk, 0);
+            @memset(top_chunk, chunk.big.fully_lit_air_voxel);
+            @memset(bottom_chunk, chunk.big.fully_lit_air_voxel);
         };
         const t_block_data: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
         const bt_block_data: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");

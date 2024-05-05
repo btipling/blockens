@@ -423,7 +423,7 @@ fn evalChunksFunc() !void {
         } else {
             var scriptData: data.chunkScript = undefined;
             game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData) catch {
-                @memset(ch_cfg.chunkData, 0);
+                @memset(ch_cfg.chunkData, chunk.big.fully_lit_air_voxel);
                 game.state.ui.world_chunk_table_data.put(wp, ch_cfg) catch @panic("OOM");
                 continue;
             };
@@ -456,7 +456,7 @@ fn saveChunkDatas() !void {
                     while (ci < chunk.chunkSize) : (ci += 1) top_chunk[ci] = @intCast(ch_cfg.chunkData[ci]);
                     try game.state.db.updateChunkMetadata(ch_cfg.id, ch_cfg.scriptId);
                 } else {
-                    @memset(top_chunk, 0);
+                    @memset(top_chunk, chunk.big.fully_lit_air_voxel);
                     try game.state.db.saveChunkMetadata(w_id, x, 1, z, ch_cfg.scriptId);
                 }
             }
@@ -466,7 +466,7 @@ fn saveChunkDatas() !void {
                     while (ci < chunk.chunkSize) : (ci += 1) bottom_chunk[ci] = @intCast(ch_cfg.chunkData[ci]);
                     try game.state.db.updateChunkMetadata(ch_cfg.id, ch_cfg.scriptId);
                 } else {
-                    @memset(bottom_chunk, 0);
+                    @memset(bottom_chunk, chunk.big.fully_lit_air_voxel);
                     try game.state.db.saveChunkMetadata(w_id, x, 0, z, ch_cfg.scriptId);
                 }
             }

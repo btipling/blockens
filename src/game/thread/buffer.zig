@@ -11,7 +11,6 @@ pub const buffer_message_type = enum(u3) {
     startup,
     chunk_gen,
     chunk_mesh,
-    chunk_copy,
     lighting,
     lighting_cross_chunk,
     load_chunk,
@@ -22,7 +21,6 @@ pub const buffer_data = union(buffer_message_type) {
     startup: startup_data,
     chunk_gen: chunk_gen_data,
     chunk_mesh: chunk_mesh_data,
-    chunk_copy: chunk_copy_data,
     lighting: lightings_data,
     lighting_cross_chunk: lightings_data,
     load_chunk: load_chunk_data,
@@ -53,10 +51,6 @@ pub const chunk_mesh_data = struct {
     chunk: *chunk.Chunk,
 };
 
-pub const chunk_copy_data = struct {
-    chunk: *chunk.Chunk,
-};
-
 pub const lightings_data = struct {
     world_id: i32,
     x: i32,
@@ -79,12 +73,18 @@ pub const terrain_gen_data = struct {
     position: @Vector(4, f32),
 };
 
+pub const ChunkColumn = struct {
+    x: i8,
+    z: i8,
+};
+
 const Buffer = struct {
     ta: std.heap.ThreadSafeAllocator,
     allocator: std.mem.Allocator,
     mutex: std.Thread.Mutex,
     messages: std.ArrayList(buffer_message),
     data: std.AutoHashMap(buffer_message, buffer_data),
+    updated_chunks: std.ArrayList(ChunkColumn),
 };
 
 pub fn init(allocator: std.mem.Allocator) !void {
@@ -99,6 +99,7 @@ pub fn init(allocator: std.mem.Allocator) !void {
         .mutex = .{},
         .messages = std.ArrayList(buffer_message).init(a),
         .data = std.AutoHashMap(buffer_message, buffer_data).init(a),
+        .updated_chunks = std.ArrayList(ChunkColumn).init(a),
     };
 }
 
@@ -110,11 +111,11 @@ pub fn deinit() void {
         switch (bd) {
             buffer_data.chunk_gen => |d| buffer.allocator.free(d.chunk_data),
             buffer_data.chunk_mesh => |d| buffer.allocator.destroy(d.chunk),
-            buffer_data.chunk_copy => |d| buffer.allocator.destroy(d.chunk),
             else => {},
         }
     }
     buffer.data.deinit();
+    buffer.updated_chunks.deinit();
     buffer.allocator.destroy(buffer);
 }
 
@@ -159,6 +160,21 @@ pub fn get_data(msg: buffer_message) ?buffer_data {
         return kv.value;
     }
     return null;
+}
+
+pub fn set_updated_chunks(uc: []ChunkColumn) void {
+    buffer.mutex.lock();
+    defer buffer.mutex.unlock();
+    buffer.updated_chunks.appendSlice(uc) catch @panic("OOM");
+}
+
+// caller owns memory
+pub fn get_updated_chunks() []ChunkColumn {
+    buffer.mutex.lock();
+    defer buffer.mutex.unlock();
+    const cc = buffer.updated_chunks.toOwnedSlice() catch @panic("OOM");
+    buffer.updated_chunks.clearRetainingCapacity();
+    return cc;
 }
 
 pub const ProgressReport = struct {

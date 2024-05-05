@@ -29,12 +29,7 @@ pub fn createEditedChunk(wp: worldPosition, pos: @Vector(4, f32), block_id: u8) 
         .chunkData = cd,
     };
     game.state.ui.world_chunk_table_data.put(wp, new_ch_cfg) catch @panic("OOM");
-    _ = game.state.jobs.copyChunk(
-        wp,
-        blecs.ecs.new_id(game.state.world),
-        false,
-        true,
-    );
+    render.renderGameChunk(wp, blecs.ecs.new_id(game.state.world), false);
     return;
 }
 
@@ -120,6 +115,7 @@ pub fn setBlockId(pos: @Vector(4, f32), block_id: u8) ?worldPosition {
         }
         c_c.refreshRender(game.state.world);
     }
+    game.state.jobs.save_updated_chunks();
     return wp;
 }
 
@@ -170,15 +166,18 @@ pub const Chunk = struct {
     mutex: std.Thread.Mutex = .{},
     // Lock mesh jobs from spawning while one is on going.
     mesh_mutex: std.Thread.Mutex = .{},
+
     pub fn init(
         allocator: std.mem.Allocator,
         wp: worldPosition,
         entity: blecs.ecs.entity_t,
         is_settings: bool,
+        data: []u32,
     ) !*Chunk {
         const c: *Chunk = try allocator.create(Chunk);
         c.* = Chunk{
             .wp = wp,
+            .data = data,
             .entity = entity,
             .allocator = allocator,
             .is_settings = is_settings,
@@ -272,3 +271,4 @@ const chunk_traverser = @import("chunk_traverser.zig");
 pub const worldPosition = @import("world_position.zig");
 pub const big = @import("chunk_big.zig");
 pub const column = @import("chunk_column.zig");
+pub const render = @import("chunk_render.zig");

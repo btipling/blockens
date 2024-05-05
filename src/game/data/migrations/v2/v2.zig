@@ -43,7 +43,7 @@ fn migrateWorld(allocator: std.mem.Allocator, db_v1: *v1.Data, world_id: i32) vo
                 const cdata = loadV1Chunks(db_v1, world_id, x, 1, z) catch {
                     // do something
                     const fbdata = allocator.alloc(u32, v1_chunk_size) catch @panic("OOM");
-                    @memset(fbdata, 0);
+                    @memset(fbdata, chunk.big.fully_lit_air_voxel);
                     top_needs_initialization = true;
                     break :tc1 fbdata;
                 };
@@ -54,7 +54,7 @@ fn migrateWorld(allocator: std.mem.Allocator, db_v1: *v1.Data, world_id: i32) vo
                 const cdata = loadV1Chunks(db_v1, world_id, x, 0, z) catch {
                     // do something
                     const fbdata = allocator.alloc(u32, v1_chunk_size) catch @panic("OOM");
-                    @memset(fbdata, 0);
+                    @memset(fbdata, chunk.big.fully_lit_air_voxel);
                     bottom_needs_initialization = true;
                     break :tc2 fbdata;
                 };

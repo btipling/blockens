@@ -1,49 +1,25 @@
 const default_pos: @Vector(4, f32) = .{ 0, 0, 0, 0 };
-pub const PlayerPosition = struct {
-    loc: @Vector(4, f32) = default_pos,
-    rotation: @Vector(4, f32) = .{ 0, 0, 0, 0 },
-    angle: f32 = 0,
-};
-pub const ChunkColumn = struct {
-    x: i8,
-    z: i8,
-};
-pub const SaveData = struct {
-    player_position: PlayerPosition,
-    chunks_updated: [2]?ChunkColumn = [_]?ChunkColumn{ null, null }, // limit chunk saves per save
-};
 
-pub const SaveJob = struct {
-    data: SaveData,
+pub const SaveChunkJob = struct {
     pub fn exec(self: *@This()) void {
         if (config.use_tracy) {
             const ztracy = @import("ztracy");
-            ztracy.SetThreadName("SaveJob");
-            const tracy_zone = ztracy.ZoneNC(@src(), "SaveJob", 0x00_00_ff_f0);
+            ztracy.SetThreadName("SaveChunkJob");
+            const tracy_zone = ztracy.ZoneNC(@src(), "SaveCHunkJob", 0x00_00_ff_f0);
             defer tracy_zone.End();
-            self.saveJob();
+            self.saveChunkJob();
         } else {
-            self.saveJob();
+            self.saveChunkJob();
         }
     }
 
-    pub fn saveJob(self: *@This()) void {
-        self.savePlayerPosition() catch std.debug.print("unable to save player position\n", .{});
-        for (self.data.chunks_updated) |cc| {
-            if (cc) |c| self.saveChunk(c) catch @panic("nope");
-        }
+    fn saveChunkJob(self: *@This()) void {
+        const ccl: []buffer.ChunkColumn = buffer.get_updated_chunks();
+        defer game.state.allocator.free(ccl);
+        for (ccl) |cc| self.saveChunkColumn(cc);
     }
 
-    fn savePlayerPosition(self: *@This()) !void {
-        const loaded_world = game.state.ui.world_loaded_id;
-        const pp = self.data.player_position;
-        const pl: [4]f32 = pp.loc;
-        const dp: [4]f32 = default_pos;
-        if (std.mem.eql(f32, pl[0..], dp[0..])) return; // don't save unset player position
-        try game.state.db.updatePlayerPosition(loaded_world, pp.loc, pp.rotation, pp.angle);
-    }
-
-    fn saveChunk(_: *@This(), cc: ChunkColumn) !void {
+    fn saveChunkColumn(_: @This(), cc: buffer.ChunkColumn) void {
         const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
         defer game.state.allocator.free(top_chunk);
         const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
@@ -62,8 +38,7 @@ pub const SaveJob = struct {
             while (ci < chunk.chunkSize) : (ci += 1) top_chunk[ci] = @intCast(c.data[ci]);
             c.updated = false;
         } else {
-            var ci: usize = 0;
-            while (ci < chunk.chunkSize) : (ci += 1) top_chunk[ci] = big_chunk.fully_lit_chunk[ci];
+            @memset(top_chunk, chunk.big.fully_lit_air_voxel);
         }
         if (game.state.blocks.game_chunks.get(wp_b)) |c| {
             c.mutex.lock();
@@ -72,8 +47,7 @@ pub const SaveJob = struct {
             while (ci < chunk.chunkSize) : (ci += 1) bottom_chunk[ci] = @intCast(c.data[ci]);
             c.updated = false;
         } else {
-            var ci: usize = 0;
-            while (ci < chunk.chunkSize) : (ci += 1) bottom_chunk[ci] = big_chunk.fully_lit_chunk[ci];
+            @memset(bottom_chunk, chunk.big.fully_lit_air_voxel);
         }
         data.chunk_file.saveChunkData(
             game.state.allocator,
@@ -90,7 +64,7 @@ const std = @import("std");
 const game = @import("../../game.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const data = @import("../../data/data.zig");
+const buffer = @import("../buffer.zig");
 const config = @import("config");
 const block = @import("../../block/block.zig");
 const chunk = block.chunk;
-const big_chunk = chunk.big;

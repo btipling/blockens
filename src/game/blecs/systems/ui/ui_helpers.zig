@@ -53,8 +53,8 @@ pub fn scriptOptionsListBox(scriptOptions: std.ArrayList(data.chunkScriptOption)
 pub fn loadChunksInWorld() void {
     entities.screen.clearWorld();
     var instancedKeys = game.state.ui.world_chunk_table_data.keyIterator();
-    while (instancedKeys.next()) |_k| {
-        _ = game.state.jobs.copyChunk(_k.*, ecs.new_id(game.state.world), false, false);
+    while (instancedKeys.next()) |k| {
+        chunk.render.renderGameChunk(k.*, ecs.new_id(game.state.world), false);
     }
 }
 

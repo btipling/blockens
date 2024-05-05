@@ -441,11 +441,9 @@ pub fn initDemoChunk() void {
     clearDemoObjects();
     const world = game.state.world;
     initDemoChunkCamera();
-    _ = game.state.jobs.copyChunk(
+    chunk.render.renderSettingsChunk(
         chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 }),
         ecs.new_id(world),
-        true,
-        false,
     );
     return;
 }

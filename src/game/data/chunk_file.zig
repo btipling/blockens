@@ -146,7 +146,6 @@ pub fn saveChunkData(
     c.compress(fh.writer()) catch |e| {
         std.debug.panic("unable to compress chunk. {}\n", .{e});
     };
-    std.debug.print("saved chunk ({d}, {d})\n", .{ x, z });
 }
 
 pub fn loadChunkData(
@@ -158,15 +157,15 @@ pub fn loadChunkData(
     bottom_chunk: []u64,
 ) !void {
     const ck = chunk.column.lock(x, z) catch {
-        @memset(top_chunk, 0);
-        @memset(bottom_chunk, 0);
+        @memset(top_chunk, chunk.big.fully_lit_air_voxel);
+        @memset(bottom_chunk, chunk.big.fully_lit_air_voxel);
         return;
     };
     defer chunk.column.unlock(ck);
     const file_path = filePath(world_id, x, z) catch |e| {
         std.log.err("unable to create file name to get chunk.({d}, {d}) {}\n", .{ x, z, e });
-        @memset(top_chunk, 0);
-        @memset(bottom_chunk, 0);
+        @memset(top_chunk, chunk.big.fully_lit_air_voxel);
+        @memset(bottom_chunk, chunk.big.fully_lit_air_voxel);
         return;
     };
     const fpath = std.mem.sliceTo(file_path[0..], 0);
@@ -177,8 +176,8 @@ pub fn loadChunkData(
     var fh = try std.fs.cwd().openFile(fpath, flags);
     defer fh.close();
     var c: *Compress = Compress.initFromCompressed(allocator, fh.reader()) catch {
-        @memset(top_chunk, 0);
-        @memset(bottom_chunk, 0);
+        @memset(top_chunk, chunk.big.fully_lit_air_voxel);
+        @memset(bottom_chunk, chunk.big.fully_lit_air_voxel);
         return;
     };
     defer c.deinit();

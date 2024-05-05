@@ -77,7 +77,7 @@ pub const StartupJob = struct {
             defer game.state.allocator.free(bottom_chunk);
 
             // Top chunk is just air
-            @memset(top_chunk, 0);
+            @memset(top_chunk, chunk.big.fully_lit_air_voxel);
 
             {
                 // bot chunk is a full grass chunk from script

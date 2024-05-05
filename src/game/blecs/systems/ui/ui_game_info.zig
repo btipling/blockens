@@ -90,30 +90,36 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 const fps: u32 = @intFromFloat((1 / (it.delta_time)));
                 zgui.text("[fps:{d}]", .{fps});
 
-                const mp: *const components.mob.Position = ecs.get(
-                    game.state.world,
-                    game.state.entities.player,
-                    components.mob.Position,
-                ) orelse return;
-                const m_p = @floor(mp.position);
-                zgui.text("[player:{d},{d},{d}] ", .{ m_p[0], m_p[1], m_p[2] });
-                zgui.sameLine(.{});
-                zgui.text("[block id:{d}] ", .{game.state.blocks.selected_block});
+                const pe = game.state.entities.player;
                 const blh_e = game.state.entities.block_highlight;
-                const wl: *const components.screen.WorldLocation = ecs.get(
-                    world,
-                    blh_e,
-                    components.screen.WorldLocation,
-                ) orelse return;
-                zgui.sameLine(.{});
-                const p = wl.loc;
-                zgui.text("[block:{d},{d},{d}] ", .{ p[0], p[1], p[2] });
-                zgui.sameLine(.{});
-                const c_bp = chunk.chunkBlockPosFromWorldLocation(p);
-                zgui.text("[chunk block:{d},{d},{d}]", .{ c_bp[0], c_bp[1], c_bp[2] });
-                zgui.sameLine(.{});
-                const c_p = chunk.worldPosition.positionFromWorldLocation(p);
-                zgui.text("[chunk pos:{d},{d},{d}]", .{ c_p[0], c_p[1], c_p[2] });
+                if (pe != 0 and ecs.is_alive(world, pe) and
+                    blh_e != 0 and ecs.is_alive(world, blh_e))
+                {
+                    const mp: *const components.mob.Position = ecs.get(
+                        world,
+                        game.state.entities.player,
+                        components.mob.Position,
+                    ) orelse return;
+                    const m_p = @floor(mp.position);
+                    zgui.text("[player:{d},{d},{d}] ", .{ m_p[0], m_p[1], m_p[2] });
+
+                    zgui.sameLine(.{});
+                    zgui.text("[block id:{d}] ", .{game.state.blocks.selected_block});
+                    zgui.sameLine(.{});
+                    const wl: *const components.screen.WorldLocation = ecs.get(
+                        world,
+                        blh_e,
+                        components.screen.WorldLocation,
+                    ) orelse return;
+                    const p = wl.loc;
+                    zgui.text("[block:{d},{d},{d}] ", .{ p[0], p[1], p[2] });
+                    zgui.sameLine(.{});
+                    const c_bp = chunk.chunkBlockPosFromWorldLocation(p);
+                    zgui.text("[chunk block:{d},{d},{d}]", .{ c_bp[0], c_bp[1], c_bp[2] });
+                    zgui.sameLine(.{});
+                    const c_p = chunk.worldPosition.positionFromWorldLocation(p);
+                    zgui.text("[chunk pos:{d},{d},{d}]", .{ c_p[0], c_p[1], c_p[2] });
+                }
             }
             zgui.end();
             zgui.popStyleColor(.{ .count = 2 });

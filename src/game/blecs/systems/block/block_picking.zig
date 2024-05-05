@@ -71,6 +71,7 @@ fn selectBlock(world: *ecs.world_t) !void {
 
 fn highlightBlock(world: *ecs.world_t, pos: @Vector(4, f32)) void {
     const blh_e = game.state.entities.block_highlight;
+    if (blh_e == 0 or !ecs.is_alive(world, blh_e)) return;
     var block_pos: @Vector(4, f32) = @floor(pos);
     block_pos[3] = 0;
     const wl = ecs.get_mut(

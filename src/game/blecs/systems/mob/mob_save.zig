@@ -32,28 +32,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 angle = r.angle;
             }
             if (m.last_saved + save_after_seconds < game.state.input.lastframe) {
-                var data = save_job.SaveData{
-                    .player_position = .{
-                        .loc = loc,
-                        .rotation = rotation,
-                        .angle = angle,
-                    },
-                };
-
-                var cs = game.state.blocks.game_chunks.valueIterator();
-                var to_save: usize = 0;
-                while (cs.next()) |cc| {
-                    const c: *chunk.Chunk = cc.*;
-                    const pos = c.wp.vecFromWorldPosition();
-                    const x: i8 = @intFromFloat(pos[0]);
-                    const z: i8 = @intFromFloat(pos[2]);
-                    if (c.updated) {
-                        data.chunks_updated[to_save] = .{ .x = x, .z = z };
-                        to_save += 1;
-                        if (to_save >= data.chunks_updated.len) break;
-                    }
-                }
-                _ = game.state.jobs.save(data);
+                _ = game.state.jobs.save_player(.{
+                    .loc = loc,
+                    .rotation = rotation,
+                    .angle = angle,
+                });
                 m.last_saved = game.state.input.lastframe;
             }
         }
@@ -68,4 +51,3 @@ const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const block = @import("../../../block/block.zig");
 const chunk = block.chunk;
-const save_job = @import("../../../thread/jobs/jobs_save.zig");

@@ -21,7 +21,6 @@ pub fn handle_incoming() !void {
             .startup => try handle_startup(msg),
             .chunk_gen => try handle_chunk_gen(msg),
             .chunk_mesh => handle_chunk_mesh(msg),
-            .chunk_copy => handle_copy_chunk(msg),
             .lighting => handle_lighting(msg),
             .lighting_cross_chunk => handle_lighting_cross_chunk(msg),
             .load_chunk => handle_load_chunk(msg),
@@ -106,43 +105,6 @@ fn handle_chunk_mesh(msg: buffer.buffer_message) void {
     blecs.ecs.add(world, entity, blecs.components.block.NeedsMeshRendering);
 }
 
-fn handle_copy_chunk(msg: buffer.buffer_message) void {
-    if (!buffer.progress_report(msg).done) return;
-    const world = game.state.world;
-    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    const copy_data: buffer.chunk_copy_data = switch (bd) {
-        buffer.buffer_data.chunk_copy => |d| d,
-        else => return,
-    };
-    const chunk_entity = init_chunk_entity(world, copy_data.chunk);
-
-    blecs.ecs.add(world, chunk_entity, blecs.components.block.NeedsMeshing);
-
-    const wp = copy_data.chunk.wp;
-    if (copy_data.chunk.is_settings) {
-        if (game.state.blocks.settings_chunks.get(wp)) |c| {
-            c.deinit();
-            game.state.allocator.destroy(c);
-        }
-        game.state.blocks.settings_chunks.put(wp, copy_data.chunk) catch @panic("OOM");
-    } else {
-        if (game.state.blocks.game_chunks.get(wp)) |c| {
-            c.deinit();
-            game.state.allocator.destroy(c);
-        }
-        game.state.blocks.game_chunks.put(wp, copy_data.chunk) catch @panic("OOM");
-        if (copy_data.chunk.updated) {
-            if (blecs.ecs.get_mut(
-                game.state.world,
-                game.state.entities.player,
-                blecs.components.mob.Mob,
-            )) |m| {
-                m.last_saved = 0;
-            }
-        }
-    }
-}
-
 fn handle_lighting(msg: buffer.buffer_message) void {
     const pr = buffer.progress_report(msg);
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
@@ -182,8 +144,8 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
     if (!pr.done) return;
     if (!lcd.start_game) return;
     ui_helpers.loadChunksInWorld();
-    ui_helpers.loadCharacterInWorld();
     screen_helpers.showGameScreen();
+    ui_helpers.loadCharacterInWorld();
 }
 
 fn handle_terrain_gen(msg: buffer.buffer_message) void {

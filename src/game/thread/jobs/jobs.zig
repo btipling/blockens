@@ -40,27 +40,6 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn copyChunk(
-        self: *Jobs,
-        wp: chunk.worldPosition,
-        entity: blecs.ecs.entity_t,
-        is_settings: bool,
-        schedule_save: bool,
-    ) zjobs.JobId {
-        return self.jobs.schedule(
-            zjobs.JobId.none,
-            chunk_copy.CopyChunkJob{
-                .wp = wp,
-                .entity = entity,
-                .is_settings = is_settings,
-                .schedule_save = schedule_save,
-            },
-        ) catch |e| {
-            std.debug.print("error scheduling copy chunk job: {}\n", .{e});
-            return zjobs.JobId.none;
-        };
-    }
-
     pub fn generateDemoChunk(self: *Jobs) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
@@ -86,15 +65,38 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn save(self: *Jobs, data: job_save.SaveData) zjobs.JobId {
+    pub fn save_player(self: *Jobs, pp: job_save_player.PlayerPosition) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
-            job_save.SaveJob{
-                .data = data,
+            job_save_player.SavePlayerJob{
+                .player_position = pp,
             },
         ) catch |e| {
-            std.debug.print("error scheduling save job: {}\n", .{e});
+            std.debug.print("error scheduling save player job: {}\n", .{e});
             return zjobs.JobId.none;
+        };
+    }
+
+    pub fn save_updated_chunks(self: *Jobs) void {
+        var ccl = std.ArrayList(buffer.ChunkColumn).init(game.state.allocator);
+        defer ccl.deinit();
+        var cs = game.state.blocks.game_chunks.valueIterator();
+        while (cs.next()) |cc| {
+            const c: *chunk.Chunk = cc.*;
+            const pos = c.wp.vecFromWorldPosition();
+            const x: i8 = @intFromFloat(pos[0]);
+            const z: i8 = @intFromFloat(pos[2]);
+            if (!c.updated) continue;
+            c.updated = false;
+            ccl.append(.{ .x = x, .z = z }) catch @panic("OOM");
+        }
+        buffer.set_updated_chunks(ccl.items);
+        _ = self.jobs.schedule(
+            zjobs.JobId.none,
+            job_save_chunk.SaveChunkJob{},
+        ) catch |e| {
+            std.debug.print("error scheduling save chunk job: {}\n", .{e});
+            return;
         };
     }
 
@@ -196,10 +198,10 @@ const game = @import("../../game.zig");
 const state = @import("../../state.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const job_chunk_meshing = @import("jobs_chunk_meshing.zig");
-const chunk_copy = @import("jobs_copy_chunk.zig");
 const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
 const generate_world_chunk = @import("jobs_generate_world_chunk.zig");
-const job_save = @import("jobs_save.zig");
+const job_save_player = @import("jobs_save_player.zig");
+const job_save_chunk = @import("jobs_save_chunk.zig");
 const job_lighting = @import("jobs_lighting.zig");
 const job_lighting_cross_chunk = @import("jobs_lighting_cross_chunk.zig");
 const job_load_chunk = @import("jobs_load_chunks.zig");
