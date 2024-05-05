@@ -49,13 +49,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 components.screen.WorldRotation,
             ) orelse @panic("settings screen has no world rotation");
             world_rotation.rotation = current_rot;
-            // rot_y, rot_z, rot_x);
+
             // Update the rotation stored in state:
             const xyz: [3]f32 = zm.quatToRollPitchYaw(current_rot);
-            game.state.ui.demo_screen_rotation_z = xyz[0]; // x is roll and is 0 in roll, pitch, yaw
-            game.state.ui.demo_screen_rotation_z = xyz[1]; // y is pitch and is 1 in roll, pitch, yaw
-            game.state.ui.demo_screen_rotation_x = xyz[2]; // z is yaw and is 2 in roll, pitch, yaw
-            //  x * std.math.pi * 2.0
+            game.state.ui.demo_screen_rotation_y = xyz[0];
+            game.state.ui.demo_screen_rotation_z = xyz[1];
+            game.state.ui.demo_screen_rotation_x = xyz[2];
         }
     }
 }
