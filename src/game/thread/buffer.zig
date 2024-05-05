@@ -15,6 +15,7 @@ pub const buffer_message_type = enum(u3) {
     lighting,
     lighting_cross_chunk,
     load_chunk,
+    terrain_gen,
 };
 
 pub const buffer_data = union(buffer_message_type) {
@@ -25,6 +26,7 @@ pub const buffer_data = union(buffer_message_type) {
     lighting: lightings_data,
     lighting_cross_chunk: lightings_data,
     load_chunk: load_chunk_data,
+    terrain_gen: terrain_gen_data,
 };
 
 pub const buffer_message = packed struct {
@@ -71,6 +73,10 @@ pub const load_chunk_data = struct {
     cfg_b: ui.chunkConfig,
     exists: bool,
     start_game: bool,
+};
+
+pub const terrain_gen_data = struct {
+    position: @Vector(4, f32),
 };
 
 const Buffer = struct {

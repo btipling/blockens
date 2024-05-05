@@ -25,6 +25,7 @@ pub fn handle_incoming() !void {
             .lighting => handle_lighting(msg),
             .lighting_cross_chunk => handle_lighting_cross_chunk(msg),
             .load_chunk => handle_load_chunk(msg),
+            .terrain_gen => handle_terrain_gen(msg),
         }
         i += 0;
         if (i >= maxHandlersPerFrame) return;
@@ -183,6 +184,17 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
     ui_helpers.loadChunksInWorld();
     ui_helpers.loadCharacterInWorld();
     screen_helpers.showGameScreen();
+}
+
+fn handle_terrain_gen(msg: buffer.buffer_message) void {
+    const pr = buffer.progress_report(msg);
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    _ = switch (bd) {
+        buffer.buffer_data.terrain_gen => |d| d,
+        else => return,
+    };
+    if (!pr.done) return;
+    std.debug.print("terrain generated.\n", .{});
 }
 
 fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entity_t {

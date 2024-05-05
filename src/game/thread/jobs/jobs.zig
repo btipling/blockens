@@ -176,6 +176,18 @@ pub const Jobs = struct {
             }
         }
     }
+
+    pub fn generateTerrain(
+        self: *Jobs,
+    ) zjobs.JobId {
+        return self.jobs.schedule(
+            zjobs.JobId.none,
+            job_terrain_gen.TerrainGenJob{},
+        ) catch |e| {
+            std.debug.print("error scheduling terrain generator job: {}\n", .{e});
+            return zjobs.JobId.none;
+        };
+    }
 };
 
 const std = @import("std");
@@ -191,6 +203,7 @@ const job_save = @import("jobs_save.zig");
 const job_lighting = @import("jobs_lighting.zig");
 const job_lighting_cross_chunk = @import("jobs_lighting_cross_chunk.zig");
 const job_load_chunk = @import("jobs_load_chunks.zig");
+const job_terrain_gen = @import("jobs_terrain_gen.zig");
 const job_startup = @import("jobs_startup.zig");
 const buffer = @import("../buffer.zig");
 const game_config = @import("../../config.zig");

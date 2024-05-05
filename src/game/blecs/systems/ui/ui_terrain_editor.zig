@@ -49,11 +49,18 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 }
 
 fn drawControls() !void {
+    const btn_dims: [2]f32 = game.state.ui.imguiButtonDims();
     if (zgui.beginChild(
         "Controls",
         .{},
     )) {
         zgui.text("terrain generator controls", .{});
+        if (zgui.button("generate terrain", .{
+            .w = btn_dims[0],
+            .h = btn_dims[1],
+        })) {
+            _ = game.state.jobs.generateTerrain();
+        }
     }
     zgui.endChild();
 }
