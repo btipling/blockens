@@ -17,7 +17,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         world,
         game.state.entities.screen,
         components.screen.Screen,
-    ) orelse unreachable;
+    ) orelse return;
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];

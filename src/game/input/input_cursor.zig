@@ -31,7 +31,7 @@ fn handleCursor(xpos: f64, ypos: f64) void {
         world,
         game.state.entities.screen,
         blecs.components.screen.Screen,
-    ) orelse unreachable;
+    ) orelse return;
 
     var is_game_camera = false;
     var camera = game.state.entities.settings_camera;

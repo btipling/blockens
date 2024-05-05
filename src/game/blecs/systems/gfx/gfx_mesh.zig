@@ -15,7 +15,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         game.state.world,
         game.state.entities.screen,
         components.screen.Screen,
-    ) orelse unreachable;
+    ) orelse return;
     while (ecs.iter_next(it)) {
         const world = it.world;
         for (0..it.count()) |i| {

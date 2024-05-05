@@ -155,7 +155,7 @@ fn toggleWireframe() void {
         game.state.world,
         game.state.entities.screen,
         components.screen.Screen,
-    ) orelse unreachable;
+    ) orelse return;
     screen_helpers.toggleWireframe(screen.current);
 }
 

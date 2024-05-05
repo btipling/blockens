@@ -17,7 +17,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         world,
         game.state.entities.screen,
         components.screen.Screen,
-    ) orelse unreachable;
+    ) orelse return;
     if (!ecs.is_alive(world, screen.current)) {
         std.debug.print("current {d} is not alive!\n", .{screen.current});
         return;

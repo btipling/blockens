@@ -17,7 +17,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         game.state.world,
         game.state.entities.screen,
         components.screen.Screen,
-    ) orelse unreachable;
+    ) orelse return;
     if (!ecs.is_alive(world, screen.current)) return;
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
