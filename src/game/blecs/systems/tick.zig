@@ -1,8 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const components = @import("../components/components.zig");
-const game = @import("../../game.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "TickSystem", ecs.OnUpdate, @constCast(&s));
@@ -27,3 +22,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         }
     }
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const components = @import("../components/components.zig");
+const game = @import("../../game.zig");

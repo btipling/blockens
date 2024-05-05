@@ -45,6 +45,12 @@ pub const WorldRotation = struct {
     rotation: @Vector(4, f32) = undefined,
 };
 
+pub const WorldRotating = struct {
+    start_rotation: @Vector(4, f32) = undefined,
+    end_rotation: @Vector(4, f32) = undefined,
+    started_at: f32 = 0,
+};
+
 pub const WorldScale = struct {
     scale: @Vector(4, f32) = undefined,
 };
@@ -95,6 +101,7 @@ pub fn init() void {
     // Complete world changes:
     ecs.COMPONENT(world, WorldTranslation);
     ecs.COMPONENT(world, WorldRotation);
+    ecs.COMPONENT(world, WorldRotating);
     ecs.COMPONENT(world, WorldScale);
     // Where a specific entity is in the world:
     ecs.COMPONENT(world, WorldLocation);

@@ -1,13 +1,3 @@
-const gfx = @import("gfx/gfx.zig");
-const sky = @import("sky.zig");
-const tick = @import("tick.zig");
-const shape = @import("shape/shape.zig");
-const ui = @import("ui/ui.zig");
-const screen = @import("screen/screen.zig");
-const block = @import("block/block.zig");
-const mob = @import("mob/mob.zig");
-pub const helpers = @import("screen_helpers.zig");
-
 pub fn init() void {
     gfx.init();
     sky.init();
@@ -18,3 +8,13 @@ pub fn init() void {
     block.init();
     mob.init();
 }
+
+const gfx = @import("gfx/gfx.zig");
+const sky = @import("sky.zig");
+const tick = @import("tick.zig");
+const shape = @import("shape/shape.zig");
+const ui = @import("ui/ui.zig");
+const screen = @import("screen/screen.zig");
+const block = @import("block/block.zig");
+const mob = @import("mob/mob.zig");
+pub const helpers = @import("screen_helpers.zig");

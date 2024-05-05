@@ -21,6 +21,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             const m = ecs.field(it, components.mob.Mob, 1) orelse continue;
             const j = ecs.field(it, components.mob.Jumping, 2) orelse continue;
+
+            // Jumps only last for so long, the jump time is currently hard coded and ends when
+            // the duration since jump start is greater than the jump time.
             const now = game.state.input.lastframe;
             const jump_duration = now - j[i].jumped_at;
             const p: *components.mob.Position = ecs.get_mut(world, entity, components.mob.Position) orelse continue;
@@ -28,6 +31,13 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 ecs.remove(world, entity, components.mob.Jumping);
                 continue;
             }
+
+            // Given the current duration of the jump and the velocity of the jump determine where
+            // the mob should be at relative to the jump starting point.
+            // This is done in small increments to test for collisions.
+            // If a collision is detected block the jump from going further.
+
+            // FIXME: collision should end the jump early this doesn't seem to right now.
             var pos = p.position;
             const done = j[i].starting_position[1] + jump_duration * jump_velocity;
             while (pos[1] < done) {

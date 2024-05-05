@@ -1,11 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const components = @import("../../components/components.zig");
-const helpers = @import("../../helpers.zig");
-const game = @import("../../../game.zig");
-const input = @import("../../../input/input.zig");
-const screen_helpers = @import("../screen_helpers.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "ScreenHotkeysSystem", ecs.OnLoad, @constCast(&s));
@@ -37,3 +29,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         }
     }
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const components = @import("../../components/components.zig");
+const game = @import("../../../game.zig");
+const input = @import("../../../input/input.zig");
+const screen_helpers = @import("../screen_helpers.zig");

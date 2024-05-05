@@ -40,7 +40,7 @@ pub fn toggleScreens() void {
         world,
         game.state.entities.screen,
         blecs.components.screen.Screen,
-    ) orelse unreachable;
+    ) orelse @panic("no screen");
     if (blecs.ecs.has_id(world, screen.current, blecs.ecs.id(blecs.components.screen.Game))) {
         return showTitleScreen();
     }
@@ -55,7 +55,7 @@ pub fn showSettingsScreen(comptime T: type) void {
         game.state.world,
         game.state.entities.screen,
         blecs.components.screen.Screen,
-    ) orelse unreachable;
+    ) orelse @panic("no screen");
     // reset any previous demo objects added to the settings screen
     blecs.entities.screen.clearDemoObjects();
     // clear out the screens previous child, world or setting, this doesn't clear world objects, they are not cleared
@@ -78,7 +78,7 @@ pub fn showGameScreen() void {
         game.state.world,
         game.state.entities.screen,
         blecs.components.screen.Screen,
-    ) orelse unreachable;
+    ) orelse @panic("no screen");
     // Same as for settings but we don't clear anything, just change back to the game
     blecs.helpers.delete_children(game.state.world, game.state.entities.screen);
     screen.current = blecs.helpers.new_child(game.state.world, game.state.entities.screen);

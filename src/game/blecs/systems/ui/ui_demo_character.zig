@@ -20,6 +20,13 @@ fn system() ecs.system_desc_t {
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
+    {
+        // These need to be in sync, so update demo_character_rotation_D with whatever is on demo_screen
+        // as it may have been updated by keyboard shortcuts
+        game.state.ui.demo_character_rotation_y = game.state.ui.demo_screen_rotation_y;
+        game.state.ui.demo_character_rotation_x = game.state.ui.demo_screen_rotation_x;
+        game.state.ui.demo_character_rotation_z = game.state.ui.demo_screen_rotation_z;
+    }
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
             zgui.setNextItemWidth(-1);
@@ -57,8 +64,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 }
                 if (zgui.sliderFloat("rotation slider x", .{
                     .v = &game.state.ui.demo_character_rotation_x,
-                    .min = 0,
-                    .max = 2,
+                    .min = -std.math.pi,
+                    .max = std.math.pi,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }
@@ -69,8 +76,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 }
                 if (zgui.sliderFloat("rotation slider y", .{
                     .v = &game.state.ui.demo_character_rotation_y,
-                    .min = 0,
-                    .max = 2,
+                    .min = -std.math.pi,
+                    .max = std.math.pi,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }
@@ -81,8 +88,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 }
                 if (zgui.sliderFloat("rotation slider z", .{
                     .v = &game.state.ui.demo_character_rotation_z,
-                    .min = 0,
-                    .max = 2,
+                    .min = -std.math.pi,
+                    .max = std.math.pi,
                 })) {
                     entities.screen.initDemoCharacterCamera();
                 }

@@ -1,10 +1,3 @@
-const std = @import("std");
-const zm = @import("zmath");
-const math = @import("../math/math.zig");
-const game = @import("../game.zig");
-const constants = @import("gfx_constants.zig");
-const shader_helpers = @import("shader_helpers.zig");
-
 pub const FragmentShaderGen = struct {
     pub const fragmentShaderConfig = struct {
         debug: bool = false,
@@ -136,3 +129,10 @@ pub const FragmentShaderGen = struct {
         }
     };
 };
+
+const std = @import("std");
+const zm = @import("zmath");
+const math = @import("../math/math.zig");
+const game = @import("../game.zig");
+const constants = @import("gfx_constants.zig");
+const shader_helpers = @import("shader_helpers.zig");

@@ -408,14 +408,23 @@ pub fn initDemoChunkCamera() void {
         components.screen.WorldScale,
         .{ .scale = @Vector(4, f32){ chunk_scale, chunk_scale, chunk_scale, 0 } },
     );
-    var chunk_rot = zm.rotationY(game.state.ui.demo_chunk_rotation_y * std.math.pi);
-    chunk_rot = zm.mul(chunk_rot, zm.rotationZ(game.state.ui.demo_chunk_rotation_z * std.math.pi * 2.0));
-    chunk_rot = zm.mul(chunk_rot, zm.rotationX(game.state.ui.demo_chunk_rotation_x * std.math.pi * 2.0));
+    {
+        // screen rotations reset to chunk rotation settings upon chunk camera init
+        game.state.ui.demo_screen_rotation_y = game.state.ui.demo_chunk_rotation_y;
+        game.state.ui.demo_screen_rotation_x = game.state.ui.demo_chunk_rotation_x;
+        game.state.ui.demo_screen_rotation_z = game.state.ui.demo_chunk_rotation_z;
+    }
+
+    const chunk_rot = zm.quatFromRollPitchYaw(
+        game.state.ui.demo_screen_rotation_y,
+        game.state.ui.demo_screen_rotation_z,
+        game.state.ui.demo_screen_rotation_x,
+    );
     _ = ecs.set(
         game.state.world,
         camera,
         components.screen.WorldRotation,
-        .{ .rotation = zm.matToQuat(chunk_rot) },
+        .{ .rotation = chunk_rot },
     );
     _ = ecs.set(
         world,
@@ -455,14 +464,22 @@ pub fn initDemoCharacterCamera() void {
         components.screen.WorldScale,
         .{ .scale = @Vector(4, f32){ character_scale, character_scale, character_scale, 0 } },
     );
-    var character_rot = zm.rotationY(game.state.ui.demo_character_rotation_y * std.math.pi);
-    character_rot = zm.mul(character_rot, zm.rotationZ(game.state.ui.demo_character_rotation_z * std.math.pi * 2.0));
-    character_rot = zm.mul(character_rot, zm.rotationX(game.state.ui.demo_character_rotation_x * std.math.pi * 2.0));
+    {
+        // screen rotations reset to character rotation settings upon character camera init
+        game.state.ui.demo_screen_rotation_y = game.state.ui.demo_character_rotation_y;
+        game.state.ui.demo_screen_rotation_x = game.state.ui.demo_character_rotation_x;
+        game.state.ui.demo_screen_rotation_z = game.state.ui.demo_character_rotation_z;
+    }
+    const character_rot = zm.quatFromRollPitchYaw(
+        game.state.ui.demo_screen_rotation_y,
+        game.state.ui.demo_screen_rotation_z,
+        game.state.ui.demo_screen_rotation_x,
+    );
     _ = ecs.set(
         game.state.world,
         camera,
         components.screen.WorldRotation,
-        .{ .rotation = zm.matToQuat(character_rot) },
+        .{ .rotation = character_rot },
     );
     _ = ecs.set(
         world,

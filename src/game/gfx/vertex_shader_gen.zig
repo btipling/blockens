@@ -1,11 +1,3 @@
-const std = @import("std");
-const zm = @import("zmath");
-const math = @import("../math/math.zig");
-const constants = @import("gfx_constants.zig");
-const shader_helpers = @import("shader_helpers.zig");
-const game = @import("../game.zig");
-const gfx = @import("gfx.zig");
-
 pub const MeshTransforms = struct {
     scale: ?@Vector(4, f32),
     rotation: ?@Vector(4, f32),
@@ -429,3 +421,11 @@ pub const VertexShaderGen = struct {
         }
     };
 };
+
+const std = @import("std");
+const zm = @import("zmath");
+const math = @import("../math/math.zig");
+const constants = @import("gfx_constants.zig");
+const shader_helpers = @import("shader_helpers.zig");
+const game = @import("../game.zig");
+const gfx = @import("gfx.zig");
