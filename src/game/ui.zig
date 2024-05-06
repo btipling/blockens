@@ -65,9 +65,6 @@ demo_cube_plane_1_t3: @Vector(4, f32) = @Vector(4, f32){ -0.926, -0.54, 0, 0 },
 demo_atlas_scale: @Vector(4, f32) = @Vector(4, f32){ 0.100, 1.940, 1, 0 },
 demo_atlas_translation: @Vector(4, f32) = @Vector(4, f32){ -0.976, -0.959, 0, 0 },
 demo_atlas_rotation: f32 = 0.5,
-demo_chunk_rotation_x: f32 = -0.4,
-demo_chunk_rotation_y: f32 = 0.64,
-demo_chunk_rotation_z: f32 = 0.5,
 demo_chunk_scale: f32 = 0.042,
 demo_chunk_translation: @Vector(4, f32) = @Vector(4, f32){
     2.55,
@@ -82,9 +79,6 @@ demo_chunk_pp_translation: @Vector(4, f32) = @Vector(4, f32){
     0,
 },
 
-demo_character_rotation_x: f32 = 0,
-demo_character_rotation_y: f32 = -1.5,
-demo_character_rotation_z: f32 = 0,
 demo_character_scale: f32 = 0.235,
 demo_character_translation: @Vector(4, f32) = @Vector(4, f32){
     -7.393,

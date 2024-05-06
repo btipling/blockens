@@ -31,13 +31,6 @@ const preMaxChunk = struct {
 var pre_max: preMaxChunk = .{};
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
-    {
-        // These need to be in sync, so update demo_character_rotation_D with whatever is on demo_screen
-        // as it may have been updated by keyboard shortcuts
-        game.state.ui.demo_chunk_rotation_y = game.state.ui.demo_screen_rotation_y;
-        game.state.ui.demo_chunk_rotation_x = game.state.ui.demo_screen_rotation_x;
-        game.state.ui.demo_chunk_rotation_z = game.state.ui.demo_screen_rotation_z;
-    }
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
             zgui.setNextItemWidth(-1);
@@ -69,36 +62,36 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.inputFloat("rotation input x", .{
-                    .v = &game.state.ui.demo_chunk_rotation_x,
+                    .v = &game.state.ui.demo_screen_rotation_x,
                 })) {
                     entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.sliderFloat("rotation slider x", .{
-                    .v = &game.state.ui.demo_chunk_rotation_x,
+                    .v = &game.state.ui.demo_screen_rotation_x,
                     .min = -std.math.pi,
                     .max = std.math.pi,
                 })) {
                     entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.inputFloat("rotation input y", .{
-                    .v = &game.state.ui.demo_chunk_rotation_y,
+                    .v = &game.state.ui.demo_screen_rotation_y,
                 })) {
                     entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.sliderFloat("rotation slider y", .{
-                    .v = &game.state.ui.demo_chunk_rotation_y,
+                    .v = &game.state.ui.demo_screen_rotation_y,
                     .min = -std.math.pi,
                     .max = std.math.pi,
                 })) {
                     entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.inputFloat("rotation input z", .{
-                    .v = &game.state.ui.demo_chunk_rotation_z,
+                    .v = &game.state.ui.demo_screen_rotation_z,
                 })) {
                     entities.screen.initDemoChunkCamera();
                 }
                 if (zgui.sliderFloat("rotation slider z", .{
-                    .v = &game.state.ui.demo_chunk_rotation_z,
+                    .v = &game.state.ui.demo_screen_rotation_z,
                     .min = -std.math.pi,
                     .max = std.math.pi,
                 })) {
@@ -121,16 +114,16 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     .w = 250,
                 })) {
                     pre_max = .{
-                        .rotation_x = game.state.ui.demo_chunk_rotation_x,
-                        .rotation_y = game.state.ui.demo_chunk_rotation_y,
-                        .rotation_z = game.state.ui.demo_chunk_rotation_z,
+                        .rotation_x = game.state.ui.demo_screen_rotation_x,
+                        .rotation_y = game.state.ui.demo_screen_rotation_y,
+                        .rotation_z = game.state.ui.demo_screen_rotation_z,
                         .scale = game.state.ui.demo_chunk_scale,
                         .translation = game.state.ui.demo_chunk_translation,
                         .pp_translation = game.state.ui.demo_chunk_pp_translation,
                     };
-                    game.state.ui.demo_chunk_rotation_x = 0;
-                    game.state.ui.demo_chunk_rotation_y = pre_max.rotation_y;
-                    game.state.ui.demo_chunk_rotation_z = 1.085;
+                    game.state.ui.demo_screen_rotation_x = 0;
+                    game.state.ui.demo_screen_rotation_y = pre_max.rotation_y;
+                    game.state.ui.demo_screen_rotation_z = 1.085;
                     game.state.ui.demo_chunk_scale = 0.107;
                     game.state.ui.demo_chunk_translation = .{ 4.449, -1.631, -0.264, 0 };
                     game.state.ui.demo_chunk_pp_translation = .{ 0, 0, 0, 0 };
@@ -141,9 +134,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     .h = 50,
                     .w = 250,
                 })) {
-                    game.state.ui.demo_chunk_rotation_x = pre_max.rotation_x;
-                    game.state.ui.demo_chunk_rotation_y = pre_max.rotation_y;
-                    game.state.ui.demo_chunk_rotation_z = pre_max.rotation_z;
+                    game.state.ui.demo_screen_rotation_x = pre_max.rotation_x;
+                    game.state.ui.demo_screen_rotation_y = pre_max.rotation_y;
+                    game.state.ui.demo_screen_rotation_z = pre_max.rotation_z;
                     game.state.ui.demo_chunk_scale = pre_max.scale;
                     game.state.ui.demo_chunk_translation = pre_max.translation;
                     game.state.ui.demo_chunk_pp_translation = pre_max.pp_translation;
@@ -154,9 +147,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     .h = 50,
                     .w = 250,
                 })) {
-                    game.state.ui.demo_chunk_rotation_x = 0;
-                    game.state.ui.demo_chunk_rotation_y = 0.341;
-                    game.state.ui.demo_chunk_rotation_z = 0.938;
+                    game.state.ui.demo_screen_rotation_x = 0;
+                    game.state.ui.demo_screen_rotation_y = 0.341;
+                    game.state.ui.demo_screen_rotation_z = 0.938;
                     game.state.ui.demo_chunk_scale = 0.107;
                     game.state.ui.demo_chunk_translation = .{ -1.718, -1.631, -0.264, 0 };
                     game.state.ui.demo_chunk_pp_translation = .{ -0.650, 0.100, 0.000, 0 };

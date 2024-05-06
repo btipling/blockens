@@ -410,9 +410,9 @@ pub fn initDemoChunkCamera() void {
     );
     {
         // screen rotations reset to chunk rotation settings upon chunk camera init
-        game.state.ui.demo_screen_rotation_y = game.state.ui.demo_chunk_rotation_y;
-        game.state.ui.demo_screen_rotation_x = game.state.ui.demo_chunk_rotation_x;
-        game.state.ui.demo_screen_rotation_z = game.state.ui.demo_chunk_rotation_z;
+        game.state.ui.demo_screen_rotation_x = -0.4;
+        game.state.ui.demo_screen_rotation_y = 0.64;
+        game.state.ui.demo_screen_rotation_z = 0.5;
     }
 
     const chunk_rot = zm.quatFromRollPitchYaw(
@@ -472,9 +472,9 @@ pub fn initDemoCharacterCamera() void {
     );
     {
         // screen rotations reset to character rotation settings upon character camera init
-        game.state.ui.demo_screen_rotation_y = game.state.ui.demo_character_rotation_y;
-        game.state.ui.demo_screen_rotation_x = game.state.ui.demo_character_rotation_x;
-        game.state.ui.demo_screen_rotation_z = game.state.ui.demo_character_rotation_z;
+        game.state.ui.demo_screen_rotation_x = 0;
+        game.state.ui.demo_screen_rotation_y = -1.5;
+        game.state.ui.demo_screen_rotation_z = 0;
     }
     const character_rot = zm.quatFromRollPitchYaw(
         game.state.ui.demo_screen_rotation_x,
