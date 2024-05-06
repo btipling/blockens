@@ -4,9 +4,6 @@ pub const DataErr = sql_utils.DataErr;
 pub const RGBAColorTextureSize = sql_block.RGBAColorTextureSize;
 pub const TextureBlobArrayStoreSize = sql_block.TextureBlobArrayStoreSize;
 
-// each i32 fits into 4 u8s
-pub const ChunkBlobArrayStoreSize = game_chunk.chunkSize * 4;
-
 pub const maxBlockSizeName = 20;
 
 pub const scriptOptionSQL = sql_utils.scriptOptionSQL;
@@ -32,13 +29,9 @@ pub const block = sql_block.block;
 pub const chunkDataSQL = sql_chunk.chunkDataSQL;
 pub const chunkData = sql_chunk.chunkData;
 
-pub const display_settings = struct {
-    fullscreen: bool = false,
-    maximized: bool = true,
-    decorated: bool = false,
-    width: i32 = 0,
-    height: i32 = 0,
-};
+pub const playerPosition = sql_player_position.playerPosition;
+
+pub const display_settings = sql_display_settings.display_settings;
 
 pub const Data = struct {
     db: sqlite.Database,
@@ -179,8 +172,6 @@ pub const Data = struct {
     }
 
     // Player Position
-    pub const playerPosition = sql_player_position.playerPosition;
-
     pub fn savePlayerPosition(
         self: *Data,
         world_id: i32,
@@ -206,6 +197,7 @@ pub const Data = struct {
         return sql_player_position.deletePlayerPosition(self.db, world_id);
     }
 
+    // Display settings
     pub fn saveDisplaySettings(
         self: *Data,
         fullscreen: bool,
@@ -214,36 +206,15 @@ pub const Data = struct {
         width: i32,
         height: i32,
     ) !void {
-        var insert_stmt = try self.db.prepare(
-            struct {
-                fullscreen: i32,
-                maximized: i32,
-                decorated: i32,
-                width: i32,
-                height: i32,
-            },
-            void,
-            insert_display_settings_stmt,
+        return sql_display_settings.saveDisplaySettings(
+            self.db,
+            fullscreen,
+            maximized,
+            decorated,
+            width,
+            height,
         );
-        defer insert_stmt.deinit();
-
-        const fs: i32 = if (fullscreen) (1) else 0;
-        const mx: i32 = if (maximized) (1) else 0;
-        const dr: i32 = if (decorated) (1) else 0;
-        insert_stmt.exec(
-            .{
-                .fullscreen = fs,
-                .maximized = mx,
-                .decorated = dr,
-                .width = width,
-                .height = height,
-            },
-        ) catch |err| {
-            std.log.err("Failed to insert display settings: {}", .{err});
-            return err;
-        };
     }
-
     pub fn updateDisplaySettings(
         self: *Data,
         fullscreen: bool,
@@ -252,77 +223,19 @@ pub const Data = struct {
         width: i32,
         height: i32,
     ) !void {
-        var update_stmt = try self.db.prepare(
-            struct {
-                id: i32,
-                fullscreen: i32,
-                maximized: i32,
-                decorated: i32,
-                width: i32,
-                height: i32,
-            },
-            void,
-            update_display_settings_stmt,
+        return sql_display_settings.updateDisplaySettings(
+            self.db,
+            fullscreen,
+            maximized,
+            decorated,
+            width,
+            height,
         );
-        defer update_stmt.deinit();
-
-        const fs: i32 = if (fullscreen) (1) else 0;
-        const mx: i32 = if (maximized) (1) else 0;
-        const dr: i32 = if (decorated) (1) else 0;
-        update_stmt.exec(
-            .{
-                .id = 1,
-                .fullscreen = fs,
-                .maximized = mx,
-                .decorated = dr,
-                .width = width,
-                .height = height,
-            },
-        ) catch |err| {
-            std.log.err("Failed to update block: {}", .{err});
-            return err;
-        };
     }
-
     pub fn loadDisplaySettings(self: *Data, ds: *display_settings) !void {
-        var select_stmt = try self.db.prepare(
-            struct {
-                id: i32,
-            },
-            struct {
-                fullscreen: i32,
-                maximized: i32,
-                decorated: i32,
-                width: i32,
-                height: i32,
-            },
-            select_display_settings_stmt,
-        );
-        defer select_stmt.deinit();
-
-        {
-            try select_stmt.bind(.{ .id = 1 });
-            defer select_stmt.reset();
-
-            while (try select_stmt.step()) |r| {
-                ds.fullscreen = r.fullscreen == 1;
-                ds.maximized = r.maximized == 1;
-                ds.decorated = r.decorated == 1;
-                ds.width = r.width;
-                ds.height = r.height;
-                return;
-            }
-        }
-
-        return sql_utils.DataErr.NotFound;
+        return sql_display_settings.loadDisplaySettings(self.db, ds);
     }
 };
-
-const insert_display_settings_stmt = @embedFile("./sql/v2/display_settings/insert.sql");
-const update_display_settings_stmt = @embedFile("./sql/v2/display_settings/update.sql");
-const select_display_settings_stmt = @embedFile("./sql/v2/display_settings/select.sql");
-const list_display_settings_stmt = @embedFile("./sql/v2/display_settings/list.sql");
-const delete_display_settings_stmt = @embedFile("./sql/v2/display_settings/delete.sql");
 
 const std = @import("std");
 const sqlite = @import("sqlite");
@@ -334,9 +247,7 @@ const sql_chunk_script = @import("data_chunk_script.zig");
 const sql_block = @import("data_block.zig");
 const sql_chunk = @import("data_chunk.zig");
 const sql_player_position = @import("data_player_position.zig");
+const sql_display_settings = @import("data_display_settings.zig");
 pub const sql_utils = @import("data_sql_utils.zig");
-const game_block = @import("../block/block.zig");
-const game_chunk = game_block.chunk;
-const chunk_big = game_chunk.big;
 
 pub const chunk_file = @import("chunk_file.zig");

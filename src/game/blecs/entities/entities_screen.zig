@@ -638,7 +638,7 @@ pub fn initPlayerCharacter() void {
     const player = ecs.new_entity(game.state.world, "Player");
     game.state.entities.player = player;
 
-    var player_pos: data.Data.playerPosition = .{};
+    var player_pos: data.playerPosition = .{};
     game.state.db.loadPlayerPosition(world_id, &player_pos) catch |err| {
         std.debug.assert(err != data.DataErr.NotFound);
         @panic("SQL ERROR");
