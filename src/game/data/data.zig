@@ -29,25 +29,8 @@ pub const blockSQL = sql_block.blockSQL;
 pub const blockOption = sql_block.blockOption;
 pub const block = sql_block.block;
 
-pub const chunkDataSQL = struct {
-    id: i32,
-    world_id: i32,
-    x: i32,
-    y: i32,
-    z: i32,
-    scriptId: i32,
-    voxels: sqlite.Blob,
-};
-
-pub const chunkData = struct {
-    id: i32 = 0,
-    world_id: i32 = 0,
-    x: i32 = 0,
-    y: i32 = 0,
-    z: i32 = 0,
-    scriptId: i32 = 0,
-    voxels: []u32 = undefined,
-};
+pub const chunkDataSQL = sql_chunk.chunkDataSQL;
+pub const chunkData = sql_chunk.chunkData;
 
 pub const display_settings = struct {
     fullscreen: bool = false,
@@ -157,6 +140,7 @@ pub const Data = struct {
         return sql_chunk_script.deleteChunkScript(self.db, id);
     }
 
+    // Block
     pub fn saveBlock(self: *Data, name: []const u8, texture: []u32, transparent: bool, light_level: u8) !void {
         return sql_block.saveBlock(self.db, name, texture, transparent, light_level);
     }
@@ -174,233 +158,24 @@ pub const Data = struct {
         return sql_block.deleteBlock(self.db, id);
     }
 
-    pub fn saveChunkToFile(
-        self: *Data,
-        world_id: i32,
-        x: i32,
-        y: i32,
-        z: i32,
-        voxels: []u32,
-    ) !void {
-        var top_chunk: []u64 = self.allocator.alloc(u64, game_chunk.chunkSize) catch @panic("OOM");
-        defer self.allocator.free(top_chunk);
-        var bottom_chunk: []u64 = self.allocator.alloc(u64, game_chunk.chunkSize) catch @panic("OOM");
-        defer self.allocator.free(bottom_chunk);
-        if (y == 0) {
-            var td: chunkData = .{};
-            var should_free = true;
-            self.loadChunkData(world_id, x, 1, z, &td) catch |e| {
-                switch (e) {
-                    sql_utils.DataErr.NotFound => {
-                        td.voxels = @ptrCast(@constCast(game_chunk.fully_lit_chunk[0..]));
-                        should_free = false;
-                    },
-                    else => return e,
-                }
-            };
-            defer if (should_free) self.allocator.free(td.voxels);
-            var i: usize = 0;
-            while (i < td.voxels.len) : (i += 1) {
-                top_chunk[i] = @intCast(td.voxels[i]);
-                bottom_chunk[i] = @intCast(voxels[i]);
-            }
-        } else {
-            var bd: chunkData = .{};
-            var should_free = true;
-            self.loadChunkData(world_id, x, 0, z, &bd) catch |e| {
-                switch (e) {
-                    sql_utils.DataErr.NotFound => {
-                        bd.voxels = @ptrCast(@constCast(game_chunk.fully_lit_chunk[0..]));
-                        should_free = false;
-                    },
-                    else => return e,
-                }
-            };
-            defer if (should_free) self.allocator.free(bd.voxels);
-            var i: usize = 0;
-            while (i < bd.voxels.len) : (i += 1) {
-                top_chunk[i] = @intCast(voxels[i]);
-                bottom_chunk[i] = @intCast(bd.voxels[i]);
-            }
-        }
-        chunk_file.saveChunkData(self.allocator, world_id, x, z, top_chunk, bottom_chunk);
-        return;
+    // Chunk metadata
+    pub fn saveChunkMetadata(self: *Data, world_id: i32, x: i32, y: i32, z: i32, script_id: i32) !void {
+        return sql_chunk.saveChunkMetadata(self.db, world_id, x, y, z, script_id);
     }
-
-    pub fn saveChunkMetadata(
-        self: *Data,
-        world_id: i32,
-        x: i32,
-        y: i32,
-        z: i32,
-        scriptId: i32,
-    ) !void {
-        var insertStmt = try self.db.prepare(
-            struct {
-                world_id: i32,
-                x: i32,
-                y: i32,
-                z: i32,
-                script_id: i32,
-            },
-            void,
-            insertChunkDataStmt,
-        );
-        defer insertStmt.deinit();
-
-        insertStmt.exec(
-            .{
-                .world_id = world_id,
-                .x = x,
-                .y = y,
-                .z = z,
-                .script_id = scriptId,
-            },
-        ) catch |err| {
-            std.log.err("Failed to insert chunkdata: {}", .{err});
-            return err;
-        };
-    }
-
     pub fn updateChunkMetadata(self: *Data, id: i32, script_id: i32) !void {
-        var updateStmt = try self.db.prepare(
-            struct {
-                id: i32,
-                script_id: i32,
-            },
-            void,
-            updateChunkDataStmt,
-        );
-        defer updateStmt.deinit();
-
-        updateStmt.exec(
-            .{
-                .id = id,
-                .script_id = script_id,
-            },
-        ) catch |err| {
-            std.log.err("Failed to update chunkdata: {}", .{err});
-            return err;
-        };
+        return sql_chunk.updateChunkMetadata(self.db, id, script_id);
     }
-
-    const worldData = struct {
-        world_id: i32,
-        x: i32,
-        z: i32,
-        y: i32,
-    };
-
-    pub fn getWorldDataForChunkId(self: *Data, id: i32) !worldData {
-        var selectStmt = try self.db.prepare(
-            struct {
-                id: i32,
-            },
-            struct {
-                world_id: i32,
-                x: i32,
-                y: i32,
-                z: i32,
-            },
-            selectWorldDataForIdStmt,
-        );
-        defer selectStmt.deinit();
-
-        {
-            try selectStmt.bind(.{
-                .id = id,
-            });
-            defer selectStmt.reset();
-
-            while (try selectStmt.step()) |row| {
-                return .{
-                    .world_id = row.world_id,
-                    .x = row.x,
-                    .y = row.y,
-                    .z = row.z,
-                };
-            }
-        }
-
-        return sql_utils.DataErr.NotFound;
+    pub fn getWorldDataForChunkId(self: *Data, id: i32) !sql_chunk.worldData {
+        return sql_chunk.getWorldDataForChunkId(self.db, id);
     }
-
     pub fn loadChunkMetadata(self: *Data, world_id: i32, x: i32, y: i32, z: i32, data: *chunkData) !void {
-        var selectStmt = try self.db.prepare(
-            struct {
-                x: i32,
-                y: i32,
-                z: i32,
-                world_id: i32,
-            },
-            struct {
-                id: i32,
-                world_id: i32,
-                x: i32,
-                y: i32,
-                z: i32,
-                script_id: i32,
-            },
-            selectChunkDataByCoordsStmt,
-        );
-        defer selectStmt.deinit();
-
-        {
-            try selectStmt.bind(.{
-                .x = x,
-                .y = y,
-                .z = z,
-                .world_id = world_id,
-            });
-            defer selectStmt.reset();
-
-            while (try selectStmt.step()) |r| {
-                data.id = r.id;
-                data.world_id = r.world_id;
-                data.x = r.x;
-                data.y = r.y;
-                data.z = r.z;
-                data.scriptId = r.script_id;
-                return;
-            }
-        }
-
-        return sql_utils.DataErr.NotFound;
+        return sql_chunk.loadChunkMetadata(self.db, world_id, x, y, z, data);
     }
-
     pub fn deleteChunkData(self: *Data, world_id: i32) !void {
-        var deleteStmt = try self.db.prepare(
-            struct {
-                world_id: i32,
-            },
-            void,
-            deleteChunkDataStmt,
-        );
-
-        deleteStmt.exec(
-            .{ .world_id = world_id },
-        ) catch |err| {
-            std.log.err("Failed to delete chunkdata: {}", .{err});
-            return err;
-        };
+        return sql_chunk.deleteChunkData(self.db, world_id);
     }
-
     pub fn deleteChunkDataById(self: *Data, id: i32, world_id: i32) !void {
-        var deleteStmt = try self.db.prepare(
-            struct {
-                id: i32,
-                world_id: i32,
-            },
-            void,
-            delete_chunk_data_by_id_stmt,
-        );
-
-        deleteStmt.exec(
-            .{ .id = id, .world_id = world_id },
-        ) catch |err| {
-            std.log.err("Failed to delete data by id: {}", .{err});
-            return err;
-        };
+        return sql_chunk.deleteChunkDataById(self.db, id, world_id);
     }
 
     // Player Position
@@ -675,15 +450,6 @@ const select_display_settings_stmt = @embedFile("./sql/v2/display_settings/selec
 const list_display_settings_stmt = @embedFile("./sql/v2/display_settings/list.sql");
 const delete_display_settings_stmt = @embedFile("./sql/v2/display_settings/delete.sql");
 
-const insertChunkDataStmt = @embedFile("./sql/v2/chunk/insert.sql");
-const updateChunkDataStmt = @embedFile("./sql/v2/chunk/update.sql");
-const selectChunkDataByIDStmt = @embedFile("./sql/v2/chunk/select_by_id.sql");
-const selectWorldDataForIdStmt = @embedFile("./sql/v2/chunk/select_world_data_for_id.sql");
-const selectChunkDataByCoordsStmt = @embedFile("./sql/v2/chunk/select_by_coords.sql");
-const listChunkDataStmt = @embedFile("./sql/v2/chunk/list.sql");
-const deleteChunkDataStmt = @embedFile("./sql/v2/chunk/delete.sql");
-const delete_chunk_data_by_id_stmt = @embedFile("./sql/v2/chunk/delete_by_id.sql");
-
 const std = @import("std");
 const sqlite = @import("sqlite");
 const migrations = @import("migrations/migrations.zig");
@@ -692,6 +458,7 @@ const sql_schema = @import("data_schema.zig");
 const sql_texture_script = @import("data_texture_script.zig");
 const sql_chunk_script = @import("data_chunk_script.zig");
 const sql_block = @import("data_block.zig");
+const sql_chunk = @import("data_chunk.zig");
 pub const sql_utils = @import("data_sql_utils.zig");
 const game_block = @import("../block/block.zig");
 const game_chunk = game_block.chunk;

@@ -47,9 +47,9 @@ pub const LoadChunkJob = struct {
             self.finishJob(false, wp_t, wp_b, .{}, .{});
             return;
         };
-        chunkDataTop.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+        const top_chunk_small: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
         errdefer game.state.allocator.free(chunkDataTop.voxels);
-        chunkDataBot.voxels = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+        const bot_chunk_small: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
         errdefer game.state.allocator.free(chunkDataBot.voxels);
         {
             const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
@@ -68,20 +68,20 @@ pub const LoadChunkJob = struct {
             };
             var ci: usize = 0;
             while (ci < chunk.chunkSize) : (ci += 1) {
-                chunkDataTop.voxels[ci] = @truncate(top_chunk[ci]);
-                chunkDataBot.voxels[ci] = @truncate(bottom_chunk[ci]);
+                top_chunk_small[ci] = @truncate(top_chunk[ci]);
+                bot_chunk_small[ci] = @truncate(bottom_chunk[ci]);
             }
         }
 
         const cfg_t = ui.chunkConfig{
             .id = chunkDataTop.id,
             .scriptId = chunkDataTop.scriptId,
-            .chunkData = chunkDataTop.voxels,
+            .chunkData = top_chunk_small,
         };
         const cfg_b = ui.chunkConfig{
             .id = chunkDataBot.id,
             .scriptId = chunkDataBot.scriptId,
-            .chunkData = chunkDataBot.voxels,
+            .chunkData = bot_chunk_small,
         };
         self.finishJob(true, wp_t, wp_b, cfg_t, cfg_b);
     }
