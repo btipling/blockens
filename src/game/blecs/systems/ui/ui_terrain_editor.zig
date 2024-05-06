@@ -1,15 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zgui = @import("zgui");
-const glfw = @import("zglfw");
-const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
-const helpers = @import("../../helpers.zig");
-const game = @import("../../../game.zig");
-const data = @import("../../../data/data.zig");
-const script = @import("../../../script/script.zig");
-const screen_helpers = @import("../screen_helpers.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "UITerrainEditorSystem", ecs.OnStore, @constCast(&s));
@@ -105,6 +93,17 @@ fn drawControls() !void {
         })) {
             try listTerrainGenScripts();
         }
+        if (zgui.button("Refresh list", .{
+            .w = btn_dms[0],
+            .h = btn_dms[1],
+        })) {
+            try listTerrainGenScripts();
+        }
+        zgui.popStyleVar(.{ .count = 1 });
+        var params: helpers.ScriptOptionsParams = .{};
+        if (helpers.scriptOptionsListBox(game.state.ui.terrain_gen_script_options, &params)) |scriptOptionId| {
+            try loadTerrainGenScriptFunc(scriptOptionId);
+        }
     }
     zgui.endChild();
 }
@@ -184,3 +183,14 @@ fn deleteTerrainGenScriptFunc() !void {
     try listTerrainGenScripts();
     game.state.ui.chunk_loaded_script_id = 0;
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zgui = @import("zgui");
+const glfw = @import("zglfw");
+const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
+const helpers = @import("ui_helpers.zig");
+const game = @import("../../../game.zig");
+const data = @import("../../../data/data.zig");
+const script = @import("../../../script/script.zig");

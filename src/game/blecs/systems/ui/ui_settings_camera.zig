@@ -1,11 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zgui = @import("zgui");
-const glfw = @import("zglfw");
-const components = @import("../../components/components.zig");
-const game = @import("../../../game.zig");
-const screen_helpers = @import("../screen_helpers.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "UISettingsCameraSystem", ecs.OnStore, @constCast(&s));
@@ -102,3 +94,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         }
     }
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zgui = @import("zgui");
+const glfw = @import("zglfw");
+const components = @import("../../components/components.zig");
+const game = @import("../../../game.zig");
+const screen_helpers = @import("../screen_helpers.zig");

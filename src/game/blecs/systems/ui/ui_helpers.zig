@@ -7,7 +7,7 @@ pub fn scriptOptionsListBox(scriptOptions: std.ArrayList(data.colorScriptOption)
     if (params.w == 0) params.w = game.state.ui.imguiWidth(250);
     if (params.h == 0) params.h = game.state.ui.imguiWidth(450);
     var rv: ?i32 = null;
-    if (zgui.beginListBox("##chunk_script_options", .{
+    if (zgui.beginListBox("##color_script_options", .{
         .w = params.w,
         .h = params.h,
     })) {

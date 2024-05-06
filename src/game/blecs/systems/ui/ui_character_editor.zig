@@ -1,15 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zgui = @import("zgui");
-const glfw = @import("zglfw");
-const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
-const helpers = @import("../../helpers.zig");
-const game = @import("../../../game.zig");
-const data = @import("../../../data/data.zig");
-const script = @import("../../../script/script.zig");
-const screen_helpers = @import("../screen_helpers.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "UICharacterEditorSystem", ecs.OnStore, @constCast(&s));
@@ -123,3 +111,15 @@ fn toggleWireframe() void {
     ) orelse return;
     screen_helpers.toggleWireframe(screen.current);
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zgui = @import("zgui");
+const glfw = @import("zglfw");
+const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
+const helpers = @import("../../helpers.zig");
+const game = @import("../../../game.zig");
+const data = @import("../../../data/data.zig");
+const script = @import("../../../script/script.zig");
+const screen_helpers = @import("../screen_helpers.zig");

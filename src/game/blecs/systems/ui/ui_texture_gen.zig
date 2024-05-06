@@ -1,13 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zgui = @import("zgui");
-const glfw = @import("zglfw");
-const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
-const game = @import("../../../game.zig");
-const data = @import("../../../data/data.zig");
-const script = @import("../../../script/script.zig");
-
 pub fn init() void {
     const s = system();
     ecs.SYSTEM(game.state.world, "UITextureGenSystem", ecs.OnStore, @constCast(&s));
@@ -221,3 +211,13 @@ fn deleteTextureScriptFunc() !void {
     try listTextureScripts();
     game.state.ui.texture_loaded_script_id = 0;
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zgui = @import("zgui");
+const glfw = @import("zglfw");
+const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
+const game = @import("../../../game.zig");
+const data = @import("../../../data/data.zig");
+const script = @import("../../../script/script.zig");
