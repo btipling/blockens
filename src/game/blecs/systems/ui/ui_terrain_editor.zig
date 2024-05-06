@@ -56,7 +56,7 @@ fn drawControls() !void {
         }
 
         if (zgui.colorEdit3("##Script color", .{
-            .col = &game.state.ui.chunk_script_color,
+            .col = &game.state.ui.terrain_gen_script_color,
             .flags = .{
                 .picker_hue_bar = true,
             },
@@ -64,8 +64,8 @@ fn drawControls() !void {
         zgui.pushFont(game.state.ui.codeFont);
         zgui.pushItemWidth(game.state.ui.imguiWidth(250));
         _ = zgui.inputTextWithHint("##script name", .{
-            .buf = game.state.ui.chunk_name_buf[0..],
-            .hint = "chunk_script",
+            .buf = game.state.ui.terrain_gen_name_buf[0..],
+            .hint = "terrain_gen_script",
         });
         zgui.popItemWidth();
         zgui.popFont();
@@ -99,7 +99,6 @@ fn drawControls() !void {
         })) {
             try listTerrainGenScripts();
         }
-        zgui.popStyleVar(.{ .count = 1 });
         var params: helpers.ScriptOptionsParams = .{};
         if (helpers.scriptOptionsListBox(game.state.ui.terrain_gen_script_options, &params)) |scriptOptionId| {
             try loadTerrainGenScriptFunc(scriptOptionId);
@@ -154,34 +153,43 @@ fn loadTerrainGenScriptFunc(scriptId: i32) !void {
 }
 
 fn saveTerrainGenScriptFunc() !void {
-    const n = std.mem.indexOf(u8, &game.state.ui.chunk_name_buf, &([_]u8{0}));
+    const n = std.mem.indexOf(u8, &game.state.ui.terrain_gen_name_buf, &([_]u8{0}));
     if (n) |i| {
         if (i < 3) {
             std.log.err("Script name is too short", .{});
             return;
         }
     }
-    try game.state.db.saveTerrainGenScript(&game.state.ui.chunk_name_buf, &game.state.ui.chunk_buf, game.state.ui.chunk_script_color);
+    try game.state.db.saveTerrainGenScript(
+        &game.state.ui.terrain_gen_name_buf,
+        &game.state.ui.terrain_gen_buf,
+        game.state.ui.terrain_gen_script_color,
+    );
     try listTerrainGenScripts();
 }
 
 fn updateTerrainGenScriptFunc() !void {
-    const n = std.mem.indexOf(u8, &game.state.ui.chunk_name_buf, &([_]u8{0}));
+    const n = std.mem.indexOf(u8, &game.state.ui.terrain_gen_name_buf, &([_]u8{0}));
     if (n) |i| {
         if (i < 3) {
             std.log.err("Script name is too short", .{});
             return;
         }
     }
-    try game.state.db.updateTerrainGenScript(game.state.ui.chunk_loaded_script_id, &game.state.ui.chunk_name_buf, &game.state.ui.chunk_buf, game.state.ui.chunk_script_color);
+    try game.state.db.updateTerrainGenScript(
+        game.state.ui.terrain_gen_loaded_script_id,
+        &game.state.ui.terrain_gen_name_buf,
+        &game.state.ui.terrain_gen_buf,
+        game.state.ui.terrain_gen_script_color,
+    );
     try listTerrainGenScripts();
-    try loadTerrainGenScriptFunc(game.state.ui.chunk_loaded_script_id);
+    try loadTerrainGenScriptFunc(game.state.ui.terrain_gen_loaded_script_id);
 }
 
 fn deleteTerrainGenScriptFunc() !void {
-    try game.state.db.deleteTerrainGenScript(game.state.ui.chunk_loaded_script_id);
+    try game.state.db.deleteTerrainGenScript(game.state.ui.terrain_gen_loaded_script_id);
     try listTerrainGenScripts();
-    game.state.ui.chunk_loaded_script_id = 0;
+    game.state.ui.terrain_gen_loaded_script_id = 0;
 }
 
 const std = @import("std");
