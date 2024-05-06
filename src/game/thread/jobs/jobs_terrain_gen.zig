@@ -26,6 +26,9 @@ pub const TerrainGenJob = struct {
     pub fn terrainGenJob(self: *TerrainGenJob) void {
         const data = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
         errdefer game.state.allocator.free(data);
+
+        std.debug.print("current script:\n `{s}`\n\n", .{&game.state.ui.terrain_gen_buf});
+
         const i = self.position[3];
         const pos: @Vector(4, i32) = indexToPosition(i);
         @memset(data, 0xFF_FFF_00 + @as(u32, @intCast(i + 1)));
