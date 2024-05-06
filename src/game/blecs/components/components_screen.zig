@@ -69,7 +69,6 @@ pub const Cursor = struct {};
 pub const Settings = struct {};
 pub const Updated = struct {};
 pub const NeedsAnimation = struct {};
-pub const NeedsDemoChunk = struct {};
 
 // setting screens
 pub const TextureGen = struct {};
@@ -114,7 +113,6 @@ pub fn init() void {
     ecs.TAG(world, Settings);
     ecs.TAG(world, Updated);
     ecs.TAG(world, NeedsAnimation);
-    ecs.TAG(world, NeedsDemoChunk);
 
     ecs.TAG(world, TextureGen);
     ecs.TAG(world, BlockEditor);

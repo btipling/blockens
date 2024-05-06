@@ -26,9 +26,11 @@ pub const GenerateDemoChunkJob = struct {
         var msg: buffer.buffer_message = buffer.new_message(.chunk_gen);
         buffer.set_demo_chunk(&msg);
         buffer.set_progress(&msg, true, 1);
+        const pos: @Vector(4, f32) = .{ 0, 0, 0, 0 };
         const bd: buffer.buffer_data = .{
             .chunk_gen = .{
                 .chunk_data = chunk_data,
+                .wp = chunk.worldPosition.initFromPositionV(pos),
             },
         };
         buffer.put_data(msg, bd) catch @panic("OOM");

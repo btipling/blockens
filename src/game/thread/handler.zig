@@ -48,37 +48,40 @@ fn handle_chunk_gen(msg: buffer.buffer_message) !void {
     if (!buffer.progress_report(msg).done) return;
     if (try buffer.is_demo_chunk(msg)) return handle_demo_chunk_gen(msg);
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    var cleared_data = false;
     const chunk_data: buffer.chunk_gen_data = switch (bd) {
         buffer.buffer_data.chunk_gen => |d| d,
         else => return,
     };
-    const wp = chunk_data.wp orelse return;
-    var ch_cfg = game.state.ui.world_chunk_table_data.get(wp) orelse {
+    errdefer if (!cleared_data) game.state.allocator.free(chunk_data.chunk_data);
+    var ch_cfg = game.state.ui.world_chunk_table_data.get(chunk_data.wp) orelse {
         std.debug.panic("handled chunk gen for non existent chunk in chunk table\n", .{});
     };
     ch_cfg.chunkData = chunk_data.chunk_data;
-    if (game.state.ui.world_chunk_table_data.get(wp)) |cd| {
+    if (game.state.ui.world_chunk_table_data.get(chunk_data.wp)) |cd| {
         game.state.allocator.free(cd.chunkData);
+        cleared_data = true;
     }
-    game.state.ui.world_chunk_table_data.put(wp, ch_cfg) catch @panic("OOM");
+    game.state.ui.world_chunk_table_data.put(chunk_data.wp, ch_cfg) catch @panic("OOM");
 }
 
 fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
     const is_demo: bool = buffer.is_demo_chunk(msg) catch return;
     if (!is_demo) return;
+    var cleared_data = false;
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
     const chunk_data: buffer.chunk_gen_data = switch (bd) {
         buffer.buffer_data.chunk_gen => |d| d,
         else => return,
     };
-    if (game.state.ui.chunk_demo_data) |d| game.state.allocator.free(d);
-    game.state.ui.chunk_demo_data = chunk_data.chunk_data;
-    blecs.ecs.add(
-        game.state.world,
-        game.state.entities.screen,
-        blecs.components.screen.NeedsDemoChunk,
-    );
+    errdefer if (!cleared_data) game.state.allocator.free(chunk_data.chunk_data);
+    if (game.state.blocks.generated_settings_chunks.get(chunk_data.wp)) |data| {
+        game.state.allocator.free(data);
+        cleared_data = true;
+    }
+    game.state.blocks.generated_settings_chunks.put(chunk_data.wp, chunk_data.chunk_data) catch @panic("OOM");
+    blecs.entities.screen.initDemoChunk();
 }
 
 fn handle_chunk_mesh(msg: buffer.buffer_message) void {
