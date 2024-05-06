@@ -10,27 +10,10 @@ pub const ChunkBlobArrayStoreSize = game_chunk.chunkSize * 4;
 
 pub const maxBlockSizeName = 20;
 
-pub const scriptOptionSQL = struct {
-    id: i32,
-    name: sqlite.Text,
-};
-
-pub const scriptSQL = struct {
-    id: i32,
-    name: sqlite.Text,
-    script: sqlite.Text,
-};
-
-pub const scriptOption = struct {
-    id: i32,
-    name: [21]u8,
-};
-
-pub const script = struct {
-    id: i32,
-    name: [21]u8,
-    script: [360_001]u8,
-};
+pub const scriptOptionSQL = sql_utils.scriptOptionSQL;
+pub const scriptSQL = sql_utils.scriptSQL;
+pub const scriptOption = sql_utils.scriptOption;
+pub const script = sql_utils.script;
 
 pub const worldOptionSQL = sql_world.worldOptionSQL;
 pub const worldOption = sql_world.worldOption;
@@ -183,17 +166,14 @@ pub const Data = struct {
     pub fn ensureSchema(self: *Data) !void {
         return sql_schema.ensureSchema(self.db);
     }
-
     pub fn saveSchema(self: *Data) !void {
         return sql_schema.saveSchema(self.db);
     }
-
     pub fn currentSchemaVersion(self: *Data) !i32 {
         return sql_schema.currentSchemaVersion(self.db);
     }
 
     // World
-
     pub fn saveWorld(self: *Data, name: []const u8) !void {
         return sql_world.saveWorld(self.db, name);
     }
@@ -213,120 +193,21 @@ pub const Data = struct {
         return sql_world.countWorlds(self.db);
     }
 
-    fn sqlTextToScript(text: sqlite.Text) [360_001]u8 {
-        var n: [360_001]u8 = [_]u8{0} ** 360_001;
-        for (text.data, 0..) |c, i| {
-            n[i] = c;
-        }
-        return n;
-    }
-
+    // Texture script
     pub fn saveTextureScript(self: *Data, name: []const u8, textureScript: []const u8) !void {
-        var insertStmt = try self.db.prepare(
-            struct {
-                name: sqlite.Text,
-                script: sqlite.Text,
-            },
-            void,
-            insertTextureScriptStmt,
-        );
-        defer insertStmt.deinit();
-
-        insertStmt.exec(
-            .{
-                .name = sqlite.text(name),
-                .script = sqlite.text(textureScript),
-            },
-        ) catch |err| {
-            std.log.err("Failed to insert script: {}", .{err});
-            return err;
-        };
+        return sql_texture_script.saveTextureScript(self.db, name, textureScript);
     }
-
     pub fn updateTextureScript(self: *Data, id: i32, name: []const u8, textureScript: []const u8) !void {
-        var updateStmt = try self.db.prepare(
-            scriptSQL,
-            void,
-            updateTextureScriptStmt,
-        );
-        defer updateStmt.deinit();
-
-        updateStmt.exec(
-            .{
-                .id = id,
-                .name = sqlite.text(name),
-                .script = sqlite.text(textureScript),
-            },
-        ) catch |err| {
-            std.log.err("Failed to update script: {}", .{err});
-            return err;
-        };
+        return sql_texture_script.updateTextureScript(self.db, id, name, textureScript);
     }
-
     pub fn listTextureScripts(self: *Data, data: *std.ArrayList(scriptOption)) !void {
-        var listStmt = try self.db.prepare(
-            struct {},
-            scriptOptionSQL,
-            listTextureStmt,
-        );
-        defer listStmt.deinit();
-
-        data.clearRetainingCapacity();
-        {
-            try listStmt.bind(.{});
-            defer listStmt.reset();
-
-            while (try listStmt.step()) |r| {
-                try data.append(
-                    scriptOption{
-                        .id = r.id,
-                        .name = sql_utils.sqlNameToArray(r.name),
-                    },
-                );
-            }
-        }
+        return sql_texture_script.listTextureScripts(self.db, data);
     }
-
     pub fn loadTextureScript(self: *Data, id: i32, data: *script) !void {
-        var selectStmt = try self.db.prepare(
-            struct {
-                id: i32,
-            },
-            scriptSQL,
-            selectTextureStmt,
-        );
-        defer selectStmt.deinit();
-
-        {
-            try selectStmt.bind(.{ .id = id });
-            defer selectStmt.reset();
-
-            while (try selectStmt.step()) |r| {
-                data.id = r.id;
-                data.name = sql_utils.sqlNameToArray(r.name);
-                data.script = sqlTextToScript(r.script);
-                return;
-            }
-        }
-
-        return error.Unreachable;
+        return sql_texture_script.loadTextureScript(self.db, id, data);
     }
-
     pub fn deleteTextureScript(self: *Data, id: i32) !void {
-        var deleteStmt = try self.db.prepare(
-            struct {
-                id: i32,
-            },
-            void,
-            deleteTextureStmt,
-        );
-
-        deleteStmt.exec(
-            .{ .id = id },
-        ) catch |err| {
-            std.log.err("Failed to delete texture script: {}", .{err});
-            return err;
-        };
+        return sql_texture_script.deleteTextureScript(self.db, id);
     }
 
     pub fn saveChunkScript(self: *Data, name: []const u8, cScript: []const u8, color: [3]f32) !void {
@@ -416,7 +297,7 @@ pub const Data = struct {
             while (try selectStmt.step()) |r| {
                 data.id = r.id;
                 data.name = sql_utils.sqlNameToArray(r.name);
-                data.script = sqlTextToScript(r.script);
+                data.script = sql_utils.sqlTextToScript(r.script);
                 data.color = integerToColor3(r.color);
                 return;
             }
@@ -1111,12 +992,6 @@ const select_display_settings_stmt = @embedFile("./sql/v2/display_settings/selec
 const list_display_settings_stmt = @embedFile("./sql/v2/display_settings/list.sql");
 const delete_display_settings_stmt = @embedFile("./sql/v2/display_settings/delete.sql");
 
-const insertTextureScriptStmt = @embedFile("./sql/v2/texture_script/insert.sql");
-const updateTextureScriptStmt = @embedFile("./sql/v2/texture_script/update.sql");
-const selectTextureStmt = @embedFile("./sql/v2/texture_script/select.sql");
-const listTextureStmt = @embedFile("./sql/v2/texture_script/list.sql");
-const deleteTextureStmt = @embedFile("./sql/v2/texture_script/delete.sql");
-
 const insertChunkScriptStmt = @embedFile("./sql/v2/chunk_script/insert.sql");
 const updateChunkScriptStmt = @embedFile("./sql/v2/chunk_script/update.sql");
 const selectChunkStmt = @embedFile("./sql/v2/chunk_script/select.sql");
@@ -1143,6 +1018,7 @@ const sqlite = @import("sqlite");
 const migrations = @import("migrations/migrations.zig");
 const sql_world = @import("data_world.zig");
 const sql_schema = @import("data_schema.zig");
+const sql_texture_script = @import("data_texture_script.zig");
 pub const sql_utils = @import("data_sql_utils.zig");
 const game_block = @import("../block/block.zig");
 const game_chunk = game_block.chunk;
