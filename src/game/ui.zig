@@ -43,6 +43,15 @@ chunk_script_options: std.ArrayList(data.chunkScriptOption) = undefined,
 chunk_loaded_script_id: i32 = 0,
 chunk_script_color: [3]f32 = std.mem.zeroes([3]f32),
 
+terrain_gen_name_buff: [script.maxLuaScriptNameSize]u8 = std.mem.zeroes([script.maxLuaScriptNameSize]u8),
+terrain_gen_buf: [script.maxLuaScriptSize]u8 = std.mem.zeroes([script.maxLuaScriptSize]u8),
+terrain_gen_x_buf: [5]u8 = std.mem.zeroes([5]u8),
+terrain_gen_y_buf: [5]u8 = std.mem.zeroes([5]u8),
+terrain_gen_z_buf: [5]u8 = std.mem.zeroes([5]u8),
+terrain_gen_script_options: std.ArrayList(data.chunkScriptOption) = undefined,
+terrain_gen_loaded_script_id: i32 = 0,
+terrain_gen_script_color: [3]f32 = std.mem.zeroes([3]f32),
+
 world_name_buf: [max_world_name]u8 = std.mem.zeroes([max_world_name]u8),
 world_options: std.ArrayList(data.worldOption) = undefined,
 world_chunk_table_data: std.AutoHashMap(chunk.worldPosition, chunkConfig) = undefined,
@@ -88,6 +97,7 @@ pub fn init(allocator: std.mem.Allocator) void {
         .chunk_script_options = std.ArrayList(data.chunkScriptOption).init(allocator),
         .world_options = std.ArrayList(data.worldOption).init(allocator),
         .world_chunk_table_data = std.AutoHashMap(chunk.worldPosition, chunkConfig).init(allocator),
+        .terrain_gen_script_options = std.ArrayList(data.chunkScriptOption).init(allocator),
     };
 }
 
@@ -95,6 +105,7 @@ pub fn deinit(allocator: std.mem.Allocator) void {
     ui.texture_script_options.deinit();
     ui.block_options.deinit();
     ui.chunk_script_options.deinit();
+    ui.terrain_gen_script_options.deinit();
     ui.world_options.deinit();
     var td = ui.world_chunk_table_data.valueIterator();
     while (td.next()) |cc| {
