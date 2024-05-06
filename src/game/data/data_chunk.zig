@@ -17,7 +17,7 @@ pub const chunkData = struct {
 };
 
 pub fn saveChunkMetadata(db: sqlite.Database, world_id: i32, x: i32, y: i32, z: i32, script_id: i32) !void {
-    var insertStmt = try db.prepare(
+    var insert_stmt = try db.prepare(
         struct {
             world_id: i32,
             x: i32,
@@ -28,9 +28,9 @@ pub fn saveChunkMetadata(db: sqlite.Database, world_id: i32, x: i32, y: i32, z: 
         void,
         insert_chunk_data_stmt,
     );
-    defer insertStmt.deinit();
+    defer insert_stmt.deinit();
 
-    insertStmt.exec(
+    insert_stmt.exec(
         .{
             .world_id = world_id,
             .x = x,
@@ -45,7 +45,7 @@ pub fn saveChunkMetadata(db: sqlite.Database, world_id: i32, x: i32, y: i32, z: 
 }
 
 pub fn updateChunkMetadata(db: sqlite.Database, id: i32, script_id: i32) !void {
-    var updateStmt = try db.prepare(
+    var update_stmt = try db.prepare(
         struct {
             id: i32,
             script_id: i32,
@@ -53,9 +53,9 @@ pub fn updateChunkMetadata(db: sqlite.Database, id: i32, script_id: i32) !void {
         void,
         update_chunk_data_stmt,
     );
-    defer updateStmt.deinit();
+    defer update_stmt.deinit();
 
-    updateStmt.exec(
+    update_stmt.exec(
         .{
             .id = id,
             .script_id = script_id,
@@ -74,7 +74,7 @@ pub const worldData = struct {
 };
 
 pub fn getWorldDataForChunkId(db: sqlite.Database, id: i32) !worldData {
-    var selectStmt = try db.prepare(
+    var select_stmt = try db.prepare(
         struct {
             id: i32,
         },
@@ -86,15 +86,15 @@ pub fn getWorldDataForChunkId(db: sqlite.Database, id: i32) !worldData {
         },
         select_world_data_for_id_stmt,
     );
-    defer selectStmt.deinit();
+    defer select_stmt.deinit();
 
     {
-        try selectStmt.bind(.{
+        try select_stmt.bind(.{
             .id = id,
         });
-        defer selectStmt.reset();
+        defer select_stmt.reset();
 
-        while (try selectStmt.step()) |row| {
+        while (try select_stmt.step()) |row| {
             return .{
                 .world_id = row.world_id,
                 .x = row.x,
@@ -108,7 +108,7 @@ pub fn getWorldDataForChunkId(db: sqlite.Database, id: i32) !worldData {
 }
 
 pub fn loadChunkMetadata(db: sqlite.Database, world_id: i32, x: i32, y: i32, z: i32, data: *chunkData) !void {
-    var selectStmt = try db.prepare(
+    var select_stmt = try db.prepare(
         struct {
             x: i32,
             y: i32,
@@ -125,18 +125,18 @@ pub fn loadChunkMetadata(db: sqlite.Database, world_id: i32, x: i32, y: i32, z: 
         },
         select_chunk_data_by_coords_stmt,
     );
-    defer selectStmt.deinit();
+    defer select_stmt.deinit();
 
     {
-        try selectStmt.bind(.{
+        try select_stmt.bind(.{
             .x = x,
             .y = y,
             .z = z,
             .world_id = world_id,
         });
-        defer selectStmt.reset();
+        defer select_stmt.reset();
 
-        while (try selectStmt.step()) |r| {
+        while (try select_stmt.step()) |r| {
             data.id = r.id;
             data.world_id = r.world_id;
             data.x = r.x;
@@ -151,7 +151,7 @@ pub fn loadChunkMetadata(db: sqlite.Database, world_id: i32, x: i32, y: i32, z: 
 }
 
 pub fn deleteChunkData(db: sqlite.Database, world_id: i32) !void {
-    var deleteStmt = try db.prepare(
+    var delete_stmt = try db.prepare(
         struct {
             world_id: i32,
         },
@@ -159,7 +159,7 @@ pub fn deleteChunkData(db: sqlite.Database, world_id: i32) !void {
         delete_chunk_data_stmt,
     );
 
-    deleteStmt.exec(
+    delete_stmt.exec(
         .{ .world_id = world_id },
     ) catch |err| {
         std.log.err("Failed to delete chunkdata: {}", .{err});
@@ -168,7 +168,7 @@ pub fn deleteChunkData(db: sqlite.Database, world_id: i32) !void {
 }
 
 pub fn deleteChunkDataById(db: sqlite.Database, id: i32, world_id: i32) !void {
-    var deleteStmt = try db.prepare(
+    var delete_stmt = try db.prepare(
         struct {
             id: i32,
             world_id: i32,
@@ -177,7 +177,7 @@ pub fn deleteChunkDataById(db: sqlite.Database, id: i32, world_id: i32) !void {
         delete_chunk_data_by_id_stmt,
     );
 
-    deleteStmt.exec(
+    delete_stmt.exec(
         .{ .id = id, .world_id = world_id },
     ) catch |err| {
         std.log.err("Failed to delete data by id: {}", .{err});

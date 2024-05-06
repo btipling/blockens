@@ -138,7 +138,7 @@ pub const Data = struct {
         scriptId: i32,
         voxels: []u32,
     ) !void {
-        var insertStmt = try self.db.prepare(
+        var insert_stmt = try self.db.prepare(
             struct {
                 world_id: i32,
                 x: i32,
@@ -150,10 +150,10 @@ pub const Data = struct {
             void,
             insertChunkDataStmt,
         );
-        defer insertStmt.deinit();
+        defer insert_stmt.deinit();
 
         var t = chunkToBlob(voxels);
-        insertStmt.exec(
+        insert_stmt.exec(
             .{
                 .world_id = world_id,
                 .x = x,
@@ -169,7 +169,7 @@ pub const Data = struct {
     }
 
     pub fn loadChunkData(self: *Data, world_id: i32, x: i32, y: i32, z: i32, data: *chunkData) !void {
-        var selectStmt = try self.db.prepare(
+        var select_stmt = try self.db.prepare(
             struct {
                 x: i32,
                 y: i32,
@@ -187,18 +187,18 @@ pub const Data = struct {
             },
             selectChunkDataByCoordsStmt,
         );
-        defer selectStmt.deinit();
+        defer select_stmt.deinit();
 
         {
-            try selectStmt.bind(.{
+            try select_stmt.bind(.{
                 .x = x,
                 .y = y,
                 .z = z,
                 .world_id = world_id,
             });
-            defer selectStmt.reset();
+            defer select_stmt.reset();
 
-            while (try selectStmt.step()) |r| {
+            while (try select_stmt.step()) |r| {
                 data.id = r.id;
                 data.world_id = r.world_id;
                 data.x = r.x;

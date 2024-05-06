@@ -29,7 +29,7 @@ pub const block = struct {
 };
 
 pub fn saveBlock(db: sqlite.Database, name: []const u8, texture: []u32, transparent: bool, light_level: u8) !void {
-    var insertStmt = try db.prepare(
+    var insert_stmt = try db.prepare(
         struct {
             name: sqlite.Text,
             texture: sqlite.Blob,
@@ -39,12 +39,12 @@ pub fn saveBlock(db: sqlite.Database, name: []const u8, texture: []u32, transpar
         void,
         insert_block_stmt,
     );
-    defer insertStmt.deinit();
+    defer insert_stmt.deinit();
 
     var t = textureToBlob(texture);
     var t_int: i32 = 0;
     if (transparent) t_int = 1;
-    insertStmt.exec(
+    insert_stmt.exec(
         .{
             .name = sqlite.text(name),
             .texture = sqlite.blob(&t),
@@ -58,7 +58,7 @@ pub fn saveBlock(db: sqlite.Database, name: []const u8, texture: []u32, transpar
 }
 
 pub fn updateBlock(db: sqlite.Database, id: i32, name: []const u8, texture: []u32, transparent: bool, light_level: u8) !void {
-    var updateStmt = try db.prepare(
+    var update_stmt = try db.prepare(
         struct {
             id: i32,
             name: sqlite.Text,
@@ -69,12 +69,12 @@ pub fn updateBlock(db: sqlite.Database, id: i32, name: []const u8, texture: []u3
         void,
         update_block_stmt,
     );
-    defer updateStmt.deinit();
+    defer update_stmt.deinit();
 
     var t = textureToBlob(texture);
     var t_int: i32 = 0;
     if (transparent) t_int = 1;
-    updateStmt.exec(
+    update_stmt.exec(
         .{
             .id = id,
             .name = sqlite.text(name),
@@ -114,7 +114,7 @@ pub fn listBlocks(db: sqlite.Database, data: *std.ArrayList(blockOption)) !void 
 
 // caller owns texture data slice
 pub fn loadBlock(db: sqlite.Database, id: i32, data: *block) !void {
-    var selectStmt = try db.prepare(
+    var select_stmt = try db.prepare(
         struct {
             id: i32,
         },
@@ -127,13 +127,13 @@ pub fn loadBlock(db: sqlite.Database, id: i32, data: *block) !void {
         },
         select_block_stmt,
     );
-    defer selectStmt.deinit();
+    defer select_stmt.deinit();
 
     {
-        try selectStmt.bind(.{ .id = id });
-        defer selectStmt.reset();
+        try select_stmt.bind(.{ .id = id });
+        defer select_stmt.reset();
 
-        while (try selectStmt.step()) |r| {
+        while (try select_stmt.step()) |r| {
             data.id = @intCast(r.id);
             data.name = sql_utils.sqlNameToArray(r.name);
             data.texture = try blobToTexture(r.texture);
@@ -147,7 +147,7 @@ pub fn loadBlock(db: sqlite.Database, id: i32, data: *block) !void {
 }
 
 pub fn deleteBlock(db: sqlite.Database, id: i32) !void {
-    var deleteStmt = try db.prepare(
+    var delete_stmt = try db.prepare(
         struct {
             id: i32,
         },
@@ -155,7 +155,7 @@ pub fn deleteBlock(db: sqlite.Database, id: i32) !void {
         delete_block_stmt,
     );
 
-    deleteStmt.exec(
+    delete_stmt.exec(
         .{ .id = id },
     ) catch |err| {
         std.log.err("Failed to delete block: {}", .{err});

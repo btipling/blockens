@@ -1,5 +1,5 @@
 pub fn saveChunkScript(db: sqlite.Database, name: []const u8, cScript: []const u8, color: [3]f32) !void {
-    var insertStmt = try db.prepare(
+    var insert_stmt = try db.prepare(
         struct {
             name: sqlite.Text,
             script: sqlite.Text,
@@ -8,9 +8,9 @@ pub fn saveChunkScript(db: sqlite.Database, name: []const u8, cScript: []const u
         void,
         insert_chunk_script_stmt,
     );
-    defer insertStmt.deinit();
+    defer insert_stmt.deinit();
 
-    insertStmt.exec(
+    insert_stmt.exec(
         .{
             .name = sqlite.text(name),
             .script = sqlite.text(cScript),
@@ -23,14 +23,14 @@ pub fn saveChunkScript(db: sqlite.Database, name: []const u8, cScript: []const u
 }
 
 pub fn updateChunkScript(db: sqlite.Database, id: i32, name: []const u8, cScript: []const u8, color: [3]f32) !void {
-    var updateStmt = try db.prepare(
+    var update_stmt = try db.prepare(
         sql_utils.colorScriptSQL,
         void,
         update_chunk_script_stmt,
     );
-    defer updateStmt.deinit();
+    defer update_stmt.deinit();
 
-    updateStmt.exec(
+    update_stmt.exec(
         .{
             .id = id,
             .name = sqlite.text(name),
@@ -69,20 +69,20 @@ pub fn listChunkScripts(db: sqlite.Database, data: *std.ArrayList(sql_utils.colo
 }
 
 pub fn loadChunkScript(db: sqlite.Database, id: i32, data: *sql_utils.colorScript) !void {
-    var selectStmt = try db.prepare(
+    var select_stmt = try db.prepare(
         struct {
             id: i32,
         },
         sql_utils.colorScriptSQL,
         select_chunk_stmt,
     );
-    defer selectStmt.deinit();
+    defer select_stmt.deinit();
 
     {
-        try selectStmt.bind(.{ .id = id });
-        defer selectStmt.reset();
+        try select_stmt.bind(.{ .id = id });
+        defer select_stmt.reset();
 
-        while (try selectStmt.step()) |r| {
+        while (try select_stmt.step()) |r| {
             data.id = r.id;
             data.name = sql_utils.sqlNameToArray(r.name);
             data.script = sql_utils.sqlTextToScript(r.script);
@@ -95,7 +95,7 @@ pub fn loadChunkScript(db: sqlite.Database, id: i32, data: *sql_utils.colorScrip
 }
 
 pub fn deleteChunkScript(db: sqlite.Database, id: i32) !void {
-    var deleteStmt = try db.prepare(
+    var delete_stmt = try db.prepare(
         struct {
             id: i32,
         },
@@ -103,7 +103,7 @@ pub fn deleteChunkScript(db: sqlite.Database, id: i32) !void {
         delete_chunk_stmt,
     );
 
-    deleteStmt.exec(
+    delete_stmt.exec(
         .{ .id = id },
     ) catch |err| {
         std.log.err("Failed to delete chunk script: {}", .{err});

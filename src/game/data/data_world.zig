@@ -63,20 +63,20 @@ pub fn listWorlds(db: sqlite.Database, data: *std.ArrayList(worldOption)) !void 
 
 pub fn loadWorld(db: sqlite.Database, id: i32, data: *world) !void {
     std.debug.print("Loading world: {d}\n", .{id});
-    var selectStmt = try db.prepare(
+    var select_stmt = try db.prepare(
         struct {
             id: i32,
         },
         worldSQL,
         selectWorldByIdStmt,
     );
-    defer selectStmt.deinit();
+    defer select_stmt.deinit();
 
     {
-        try selectStmt.bind(.{ .id = id });
-        defer selectStmt.reset();
+        try select_stmt.bind(.{ .id = id });
+        defer select_stmt.reset();
 
-        while (try selectStmt.step()) |r| {
+        while (try select_stmt.step()) |r| {
             std.debug.print("Found world: {s}\n", .{r.name.data});
             data.id = r.id;
             data.name = sql_utils.sqlNameToArray(r.name);
@@ -88,14 +88,14 @@ pub fn loadWorld(db: sqlite.Database, id: i32, data: *world) !void {
 }
 
 pub fn updateWorld(db: sqlite.Database, id: i32, name: []const u8) !void {
-    var updateStmt = try db.prepare(
+    var update_stmt = try db.prepare(
         worldSQL,
         void,
         updateWorldStmt,
     );
-    defer updateStmt.deinit();
+    defer update_stmt.deinit();
 
-    updateStmt.exec(
+    update_stmt.exec(
         .{
             .id = id,
             .name = sqlite.text(name),
@@ -107,7 +107,7 @@ pub fn updateWorld(db: sqlite.Database, id: i32, name: []const u8) !void {
 }
 
 pub fn deleteWorld(db: sqlite.Database, id: i32) !void {
-    var deleteStmt = try db.prepare(
+    var delete_stmt = try db.prepare(
         struct {
             id: i32,
         },
@@ -115,7 +115,7 @@ pub fn deleteWorld(db: sqlite.Database, id: i32) !void {
         deleteWorldStmt,
     );
 
-    deleteStmt.exec(.{ .id = id }) catch |err| {
+    delete_stmt.exec(.{ .id = id }) catch |err| {
         std.log.err("Failed to delete world: {}", .{err});
         return err;
     };

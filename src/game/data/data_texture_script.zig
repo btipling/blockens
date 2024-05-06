@@ -1,5 +1,5 @@
 pub fn saveTextureScript(db: sqlite.Database, name: []const u8, textureScript: []const u8) !void {
-    var insertStmt = try db.prepare(
+    var insert_stmt = try db.prepare(
         struct {
             name: sqlite.Text,
             script: sqlite.Text,
@@ -7,9 +7,9 @@ pub fn saveTextureScript(db: sqlite.Database, name: []const u8, textureScript: [
         void,
         insert_texture_script_stmt,
     );
-    defer insertStmt.deinit();
+    defer insert_stmt.deinit();
 
-    insertStmt.exec(
+    insert_stmt.exec(
         .{
             .name = sqlite.text(name),
             .script = sqlite.text(textureScript),
@@ -21,14 +21,14 @@ pub fn saveTextureScript(db: sqlite.Database, name: []const u8, textureScript: [
 }
 
 pub fn updateTextureScript(db: sqlite.Database, id: i32, name: []const u8, textureScript: []const u8) !void {
-    var updateStmt = try db.prepare(
+    var update_stmt = try db.prepare(
         sql_utils.scriptSQL,
         void,
         update_texture_script_stmt,
     );
-    defer updateStmt.deinit();
+    defer update_stmt.deinit();
 
-    updateStmt.exec(
+    update_stmt.exec(
         .{
             .id = id,
             .name = sqlite.text(name),
@@ -65,20 +65,20 @@ pub fn listTextureScripts(db: sqlite.Database, data: *std.ArrayList(sql_utils.sc
 }
 
 pub fn loadTextureScript(db: sqlite.Database, id: i32, data: *sql_utils.script) !void {
-    var selectStmt = try db.prepare(
+    var select_stmt = try db.prepare(
         struct {
             id: i32,
         },
         sql_utils.scriptSQL,
         select_texture_stmt,
     );
-    defer selectStmt.deinit();
+    defer select_stmt.deinit();
 
     {
-        try selectStmt.bind(.{ .id = id });
-        defer selectStmt.reset();
+        try select_stmt.bind(.{ .id = id });
+        defer select_stmt.reset();
 
-        while (try selectStmt.step()) |r| {
+        while (try select_stmt.step()) |r| {
             data.id = r.id;
             data.name = sql_utils.sqlNameToArray(r.name);
             data.script = sql_utils.sqlTextToScript(r.script);
@@ -90,7 +90,7 @@ pub fn loadTextureScript(db: sqlite.Database, id: i32, data: *sql_utils.script) 
 }
 
 pub fn deleteTextureScript(db: sqlite.Database, id: i32) !void {
-    var deleteStmt = try db.prepare(
+    var delete_stmt = try db.prepare(
         struct {
             id: i32,
         },
@@ -98,7 +98,7 @@ pub fn deleteTextureScript(db: sqlite.Database, id: i32) !void {
         delete_texture_stmt,
     );
 
-    deleteStmt.exec(
+    delete_stmt.exec(
         .{ .id = id },
     ) catch |err| {
         std.log.err("Failed to delete texture script: {}", .{err});
