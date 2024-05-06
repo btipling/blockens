@@ -43,7 +43,7 @@ chunk_script_options: std.ArrayList(data.colorScriptOption) = undefined,
 chunk_loaded_script_id: i32 = 0,
 chunk_script_color: [3]f32 = std.mem.zeroes([3]f32),
 
-terrain_gen_name_buff: [script.maxLuaScriptNameSize]u8 = std.mem.zeroes([script.maxLuaScriptNameSize]u8),
+terrain_gen_name_buf: [script.maxLuaScriptNameSize]u8 = std.mem.zeroes([script.maxLuaScriptNameSize]u8),
 terrain_gen_buf: [script.maxLuaScriptSize]u8 = std.mem.zeroes([script.maxLuaScriptSize]u8),
 terrain_gen_x_buf: i32 = 0,
 terrain_gen_z_buf: i32 = 0,

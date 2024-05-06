@@ -63,7 +63,7 @@ const create_texture_scripts_table = @embedFile("./sql/v2/texture_script/create.
 const create_chunks_script_table = @embedFile("./sql/v2/chunk_script/create.sql");
 const create_block_table = @embedFile("./sql/v2/block/create.sql");
 const create_chunk_data_table = @embedFile("./sql/v2/chunk/create.sql");
-const create_terrain_gen_table = @embedFile("./sql/v2/terrain_gen/create.sql");
+const create_terrain_gen_table = @embedFile("./sql/v2/terrain_gen_script/create.sql");
 
 const create_schema_table = @embedFile("./sql/v2/schema/create.sql");
 const insert_schema_stmt = @embedFile("./sql/v2/schema/insert.sql");

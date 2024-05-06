@@ -51,20 +51,59 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 }
 
 fn drawControls() !void {
-    const btn_dims: [2]f32 = game.state.ui.imguiButtonDims();
+    const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();
     if (zgui.beginChild(
         "Controls",
         .{},
     )) {
         zgui.text("terrain generator controls", .{});
         if (zgui.button("generate terrain", .{
-            .w = btn_dims[0],
-            .h = btn_dims[1],
+            .w = btn_dms[0],
+            .h = btn_dms[1],
         })) {
             _ = game.state.jobs.generateTerrain(
                 game.state.ui.terrain_gen_x_buf,
                 game.state.ui.terrain_gen_z_buf,
             );
+        }
+
+        if (zgui.colorEdit3("##Script color", .{
+            .col = &game.state.ui.chunk_script_color,
+            .flags = .{
+                .picker_hue_bar = true,
+            },
+        })) {}
+        zgui.pushFont(game.state.ui.codeFont);
+        zgui.pushItemWidth(game.state.ui.imguiWidth(250));
+        _ = zgui.inputTextWithHint("##script name", .{
+            .buf = game.state.ui.chunk_name_buf[0..],
+            .hint = "chunk_script",
+        });
+        zgui.popItemWidth();
+        zgui.popFont();
+        if (zgui.button("Create script", .{
+            .w = btn_dms[0],
+            .h = btn_dms[1],
+        })) {
+            try saveTerrainGenScriptFunc();
+        }
+        if (zgui.button("Update script", .{
+            .w = btn_dms[0],
+            .h = btn_dms[1],
+        })) {
+            try updateTerrainGenScriptFunc();
+        }
+        if (zgui.button("Delete script", .{
+            .w = btn_dms[0],
+            .h = btn_dms[1],
+        })) {
+            try deleteTerrainGenScriptFunc();
+        }
+        if (zgui.button("Refresh list", .{
+            .w = btn_dms[0],
+            .h = btn_dms[1],
+        })) {
+            try listTerrainGenScripts();
         }
     }
     zgui.endChild();
@@ -88,4 +127,60 @@ fn drawInput() !void {
         zgui.popFont();
     }
     zgui.endChild();
+}
+
+fn listTerrainGenScripts() !void {
+    try game.state.db.listTerrainGenScripts(&game.state.ui.terrain_gen_script_options);
+}
+
+fn loadTerrainGenScriptFunc(scriptId: i32) !void {
+    var scriptData: data.colorScript = undefined;
+    game.state.db.loadTerrainGenScript(scriptId, &scriptData) catch |err| {
+        if (err != data.DataErr.NotFound) {
+            return err;
+        }
+        return;
+    };
+    var nameBuf = [_]u8{0} ** script.maxLuaScriptNameSize;
+    for (scriptData.name, 0..) |c, i| {
+        if (i >= script.maxLuaScriptNameSize) {
+            break;
+        }
+        nameBuf[i] = c;
+    }
+    game.state.ui.terrain_gen_buf = script.Script.dataScriptToScript(scriptData.script);
+    game.state.ui.terrain_gen_name_buf = nameBuf;
+    game.state.ui.terrain_gen_script_color = scriptData.color;
+    game.state.ui.terrain_gen_loaded_script_id = scriptId;
+}
+
+fn saveTerrainGenScriptFunc() !void {
+    const n = std.mem.indexOf(u8, &game.state.ui.chunk_name_buf, &([_]u8{0}));
+    if (n) |i| {
+        if (i < 3) {
+            std.log.err("Script name is too short", .{});
+            return;
+        }
+    }
+    try game.state.db.saveTerrainGenScript(&game.state.ui.chunk_name_buf, &game.state.ui.chunk_buf, game.state.ui.chunk_script_color);
+    try listTerrainGenScripts();
+}
+
+fn updateTerrainGenScriptFunc() !void {
+    const n = std.mem.indexOf(u8, &game.state.ui.chunk_name_buf, &([_]u8{0}));
+    if (n) |i| {
+        if (i < 3) {
+            std.log.err("Script name is too short", .{});
+            return;
+        }
+    }
+    try game.state.db.updateTerrainGenScript(game.state.ui.chunk_loaded_script_id, &game.state.ui.chunk_name_buf, &game.state.ui.chunk_buf, game.state.ui.chunk_script_color);
+    try listTerrainGenScripts();
+    try loadTerrainGenScriptFunc(game.state.ui.chunk_loaded_script_id);
+}
+
+fn deleteTerrainGenScriptFunc() !void {
+    try game.state.db.deleteTerrainGenScript(game.state.ui.chunk_loaded_script_id);
+    try listTerrainGenScripts();
+    game.state.ui.chunk_loaded_script_id = 0;
 }

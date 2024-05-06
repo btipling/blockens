@@ -112,13 +112,13 @@ fn drawControls() !void {
             .w = btn_dms[0],
             .h = btn_dms[1],
         })) {
-            try updatecolorScriptFunc();
+            try updateChunkScriptFunc();
         }
         if (zgui.button("Delete script", .{
             .w = btn_dms[0],
             .h = btn_dms[1],
         })) {
-            try deletecolorScriptFunc();
+            try deleteChunkScriptFunc();
         }
         if (zgui.button("Refresh list", .{
             .w = btn_dms[0],
@@ -225,7 +225,7 @@ fn saveChunkScriptFunc() !void {
     try listChunkScripts();
 }
 
-fn updatecolorScriptFunc() !void {
+fn updateChunkScriptFunc() !void {
     const n = std.mem.indexOf(u8, &game.state.ui.chunk_name_buf, &([_]u8{0}));
     if (n) |i| {
         if (i < 3) {
@@ -238,7 +238,7 @@ fn updatecolorScriptFunc() !void {
     try loadChunkScriptFunc(game.state.ui.chunk_loaded_script_id);
 }
 
-fn deletecolorScriptFunc() !void {
+fn deleteChunkScriptFunc() !void {
     try game.state.db.deleteChunkScript(game.state.ui.chunk_loaded_script_id);
     try listChunkScripts();
     game.state.ui.chunk_loaded_script_id = 0;
