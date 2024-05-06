@@ -518,10 +518,15 @@ pub fn initDemoTerrainGen(reset: bool) void {
     clearDemoObjects();
     const world = game.state.world;
     initDemoTerrainGenCamera(reset);
-    var it = game.state.blocks.generated_settings_chunks.keyIterator();
-    while (it.next()) |k| {
-        chunk.render.renderSettingsChunk(k.*, ecs.new_id(world));
+    const keys = game.state.blocks.generated_settings_chunks.keys();
+    for (keys) |wp| {
+        chunk.render.renderSettingsChunk(wp, ecs.new_id(world));
     }
+    const values = game.state.blocks.generated_settings_chunks.values();
+    for (values) |cd| {
+        game.state.allocator.free(cd);
+    }
+    game.state.blocks.generated_settings_chunks.clearRetainingCapacity();
     return;
 }
 

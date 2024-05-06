@@ -13,9 +13,7 @@ pub fn renderSettingsChunk(
     ) catch @panic("OOM");
     errdefer c.deinit();
 
-    const entry = game.state.blocks.generated_settings_chunks.fetchRemove(wp) orelse return;
-    const data: []u32 = entry.value;
-    defer game.state.allocator.free(data);
+    const data: []u32 = game.state.blocks.generated_settings_chunks.get(wp) orelse return;
     @memcpy(c.data, data);
 
     const chunk_entity = init_chunk_entity(world, c);
