@@ -15,6 +15,11 @@ pub const scriptSQL = sql_utils.scriptSQL;
 pub const scriptOption = sql_utils.scriptOption;
 pub const script = sql_utils.script;
 
+pub const colorScriptOptionSQL = sql_utils.colorScriptOptionSQL;
+pub const colorScriptSQL = sql_utils.colorScriptSQL;
+pub const colorScriptOption = sql_utils.colorScriptOption;
+pub const colorScript = sql_utils.colorScript;
+
 pub const worldOptionSQL = sql_world.worldOptionSQL;
 pub const worldOption = sql_world.worldOption;
 pub const worldSQL = sql_world.worldSQL;
@@ -44,32 +49,6 @@ pub const block = struct {
     texture: []u32 = undefined,
     light_level: u8 = 0,
     transparent: bool = false,
-};
-
-pub const chunkScriptOptionSQL = struct {
-    id: i32,
-    name: sqlite.Text,
-    color: i32,
-};
-
-pub const chunkScriptSQL = struct {
-    id: i32,
-    name: sqlite.Text,
-    script: sqlite.Text,
-    color: i32,
-};
-
-pub const chunkScriptOption = struct {
-    id: i32,
-    name: [21:0]u8,
-    color: [3]f32,
-};
-
-pub const chunkScript = struct {
-    id: i32,
-    name: [21]u8,
-    script: [360_001]u8,
-    color: [3]f32,
 };
 
 pub const chunkDataSQL = struct {
@@ -135,33 +114,6 @@ pub const Data = struct {
         return true;
     }
 
-    fn colorToInteger3(color: [3]f32) i32 {
-        const c: [4]f32 = .{ color[0], color[1], color[2], 1.0 };
-        return colorToInteger4(c);
-    }
-
-    fn integerToColor3(color: i32) [3]f32 {
-        const c: [4]f32 = integerToColor4(color);
-        return .{ c[0], c[1], c[2] };
-    }
-
-    fn colorToInteger4(color: [4]f32) i32 {
-        const a = @as(i32, @intFromFloat(color[3] * 255.0));
-        const b = @as(i32, @intFromFloat(color[2] * 255.0));
-        const g = @as(i32, @intFromFloat(color[1] * 255.0));
-        const r = @as(i32, @intFromFloat(color[0] * 255.0));
-        const rv: i32 = a << 24 | b << 16 | g << 8 | r;
-        return rv;
-    }
-
-    fn integerToColor4(color: i32) [4]f32 {
-        const a = @as(f32, @floatFromInt(color >> 24 & 0xFF)) / 255.0;
-        const b = @as(f32, @floatFromInt(color >> 16 & 0xFF)) / 255.0;
-        const g = @as(f32, @floatFromInt(color >> 8 & 0xFF)) / 255.0;
-        const r = @as(f32, @floatFromInt(color & 0xFF)) / 255.0;
-        return .{ r, g, b, a };
-    }
-
     // Schema
     pub fn ensureSchema(self: *Data) !void {
         return sql_schema.ensureSchema(self.db);
@@ -210,117 +162,21 @@ pub const Data = struct {
         return sql_texture_script.deleteTextureScript(self.db, id);
     }
 
-    pub fn saveChunkScript(self: *Data, name: []const u8, cScript: []const u8, color: [3]f32) !void {
-        var insertStmt = try self.db.prepare(
-            struct {
-                name: sqlite.Text,
-                script: sqlite.Text,
-                color: i32,
-            },
-            void,
-            insertChunkScriptStmt,
-        );
-        defer insertStmt.deinit();
-
-        insertStmt.exec(
-            .{
-                .name = sqlite.text(name),
-                .script = sqlite.text(cScript),
-                .color = colorToInteger3(color),
-            },
-        ) catch |err| {
-            std.log.err("Failed to insert script: {}", .{err});
-            return err;
-        };
+    // Chunk script
+    pub fn savecolorScript(self: *Data, name: []const u8, cScript: []const u8, color: [3]f32) !void {
+        return sql_chunk_script.savecolorScript(self.db, name, cScript, color);
     }
-
-    pub fn updateChunkScript(self: *Data, id: i32, name: []const u8, cScript: []const u8, color: [3]f32) !void {
-        var updateStmt = try self.db.prepare(
-            chunkScriptSQL,
-            void,
-            updateChunkScriptStmt,
-        );
-        defer updateStmt.deinit();
-
-        updateStmt.exec(
-            .{
-                .id = id,
-                .name = sqlite.text(name),
-                .script = sqlite.text(cScript),
-                .color = colorToInteger3(color),
-            },
-        ) catch |err| {
-            std.log.err("Failed to update script: {}", .{err});
-            return err;
-        };
+    pub fn updatecolorScript(self: *Data, id: i32, name: []const u8, cScript: []const u8, color: [3]f32) !void {
+        return sql_chunk_script.updatecolorScript(self.db, id, name, cScript, color);
     }
-
-    pub fn listChunkScripts(self: *Data, data: *std.ArrayList(chunkScriptOption)) !void {
-        var listStmt = try self.db.prepare(
-            struct {},
-            chunkScriptOptionSQL,
-            listChunkStmt,
-        );
-        defer listStmt.deinit();
-
-        data.clearRetainingCapacity();
-        {
-            try listStmt.bind(.{});
-            defer listStmt.reset();
-
-            while (try listStmt.step()) |r| {
-                try data.append(
-                    chunkScriptOption{
-                        .id = r.id,
-                        .name = sql_utils.sqlNameToArray(r.name),
-                        .color = integerToColor3(r.color),
-                    },
-                );
-            }
-        }
+    pub fn listcolorScripts(self: *Data, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
+        return sql_chunk_script.listcolorScripts(self.db, data);
     }
-
-    pub fn loadChunkScript(self: *Data, id: i32, data: *chunkScript) !void {
-        var selectStmt = try self.db.prepare(
-            struct {
-                id: i32,
-            },
-            chunkScriptSQL,
-            selectChunkStmt,
-        );
-        defer selectStmt.deinit();
-
-        {
-            try selectStmt.bind(.{ .id = id });
-            defer selectStmt.reset();
-
-            while (try selectStmt.step()) |r| {
-                data.id = r.id;
-                data.name = sql_utils.sqlNameToArray(r.name);
-                data.script = sql_utils.sqlTextToScript(r.script);
-                data.color = integerToColor3(r.color);
-                return;
-            }
-        }
-
-        return sql_utils.DataErr.NotFound;
+    pub fn loadcolorScript(self: *Data, id: i32, data: *sql_utils.colorScript) !void {
+        return sql_chunk_script.loadcolorScript(self.db, id, data);
     }
-
-    pub fn deleteChunkScript(self: *Data, id: i32) !void {
-        var deleteStmt = try self.db.prepare(
-            struct {
-                id: i32,
-            },
-            void,
-            deleteChunkStmt,
-        );
-
-        deleteStmt.exec(
-            .{ .id = id },
-        ) catch |err| {
-            std.log.err("Failed to delete chunk script: {}", .{err});
-            return err;
-        };
+    pub fn deletecolorScript(self: *Data, id: i32) !void {
+        return sql_chunk_script.deletecolorScript(self.db, id);
     }
 
     // block crud:
@@ -992,12 +848,6 @@ const select_display_settings_stmt = @embedFile("./sql/v2/display_settings/selec
 const list_display_settings_stmt = @embedFile("./sql/v2/display_settings/list.sql");
 const delete_display_settings_stmt = @embedFile("./sql/v2/display_settings/delete.sql");
 
-const insertChunkScriptStmt = @embedFile("./sql/v2/chunk_script/insert.sql");
-const updateChunkScriptStmt = @embedFile("./sql/v2/chunk_script/update.sql");
-const selectChunkStmt = @embedFile("./sql/v2/chunk_script/select.sql");
-const listChunkStmt = @embedFile("./sql/v2/chunk_script/list.sql");
-const deleteChunkStmt = @embedFile("./sql/v2/chunk_script/delete.sql");
-
 const insertBlockStmt = @embedFile("./sql/v2/block/insert.sql");
 const updateBlockStmt = @embedFile("./sql/v2/block/update.sql");
 const selectBlockStmt = @embedFile("./sql/v2/block/select.sql");
@@ -1019,6 +869,7 @@ const migrations = @import("migrations/migrations.zig");
 const sql_world = @import("data_world.zig");
 const sql_schema = @import("data_schema.zig");
 const sql_texture_script = @import("data_texture_script.zig");
+const sql_chunk_script = @import("data_chunk_script.zig");
 pub const sql_utils = @import("data_sql_utils.zig");
 const game_block = @import("../block/block.zig");
 const game_chunk = game_block.chunk;

@@ -3,7 +3,7 @@ pub const ScriptOptionsParams = struct {
     h: f32 = 0,
 };
 
-pub fn scriptOptionsListBox(scriptOptions: std.ArrayList(data.chunkScriptOption), params: *ScriptOptionsParams) ?i32 {
+pub fn scriptOptionsListBox(scriptOptions: std.ArrayList(data.colorScriptOption), params: *ScriptOptionsParams) ?i32 {
     if (params.w == 0) params.w = game.state.ui.imguiWidth(250);
     if (params.h == 0) params.h = game.state.ui.imguiWidth(450);
     var rv: ?i32 = null;

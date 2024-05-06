@@ -81,7 +81,7 @@ pub const Game = struct {
         std.debug.print("populate ui options\n", .{});
         try self.db.listBlocks(&self.ui.block_options);
         try self.db.listTextureScripts(&self.ui.texture_script_options);
-        try self.db.listChunkScripts(&self.ui.chunk_script_options);
+        try self.db.listcolorScripts(&self.ui.chunk_script_options);
         try self.db.listWorlds(&self.ui.world_options);
 
         var world_data: data.world = undefined;
@@ -103,8 +103,8 @@ pub const Game = struct {
         }
         self.ui.texture_buf = buf;
         buf = [_]u8{0} ** script.maxLuaScriptSize;
-        const defaultChunkScript = @embedFile("script/lua/chunk_gen_default.lua");
-        for (defaultChunkScript, 0..) |c, i| {
+        const defaultcolorScript = @embedFile("script/lua/chunk_gen_default.lua");
+        for (defaultcolorScript, 0..) |c, i| {
             buf[i] = c;
         }
         self.ui.chunk_buf = buf;

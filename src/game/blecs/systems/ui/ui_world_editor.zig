@@ -45,8 +45,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     }
 }
 
-fn listChunkScripts() !void {
-    try game.state.db.listChunkScripts(&game.state.ui.chunk_script_options);
+fn listcolorScripts() !void {
+    try game.state.db.listcolorScripts(&game.state.ui.chunk_script_options);
 }
 
 fn listWorlds() !void {
@@ -249,7 +249,7 @@ fn drawChunkConfigPopup() !?updateScriptConfigAt {
         if (zgui.smallButton("x")) {
             zgui.closeCurrentPopup();
         }
-        try listChunkScripts();
+        try listcolorScripts();
         var params: helpers.ScriptOptionsParams = .{
             .w = game.state.ui.imguiWidth(350),
         };
@@ -288,8 +288,8 @@ fn updateChunkConfigFromPopup(updated_script_cfg: ?updateScriptConfigAt) !void {
         .chunkData = cd,
     };
     try game.state.ui.world_chunk_table_data.put(wp, ch_cfg);
-    var scriptData: data.chunkScript = undefined;
-    try game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData);
+    var scriptData: data.colorScript = undefined;
+    try game.state.db.loadcolorScript(ch_cfg.scriptId, &scriptData);
     var ch_script = script.Script.dataScriptToScript(scriptData.script);
     _ = game.state.jobs.generateWorldChunk(wp, &ch_script);
 }
@@ -421,8 +421,8 @@ fn evalChunksFunc() !void {
         if (scriptCache.get(ch_cfg.scriptId)) |sc| {
             ch_script = sc;
         } else {
-            var scriptData: data.chunkScript = undefined;
-            game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData) catch {
+            var scriptData: data.colorScript = undefined;
+            game.state.db.loadcolorScript(ch_cfg.scriptId, &scriptData) catch {
                 @memset(ch_cfg.chunkData, chunk.big.fully_lit_air_voxel);
                 game.state.ui.world_chunk_table_data.put(wp, ch_cfg) catch @panic("OOM");
                 continue;

@@ -39,7 +39,7 @@ chunk_buf: [script.maxLuaScriptSize]u8 = std.mem.zeroes([script.maxLuaScriptSize
 chunk_x_buf: [5]u8 = std.mem.zeroes([5]u8),
 chunk_y_buf: [5]u8 = std.mem.zeroes([5]u8),
 chunk_z_buf: [5]u8 = std.mem.zeroes([5]u8),
-chunk_script_options: std.ArrayList(data.chunkScriptOption) = undefined,
+chunk_script_options: std.ArrayList(data.colorScriptOption) = undefined,
 chunk_loaded_script_id: i32 = 0,
 chunk_script_color: [3]f32 = std.mem.zeroes([3]f32),
 
@@ -47,7 +47,7 @@ terrain_gen_name_buff: [script.maxLuaScriptNameSize]u8 = std.mem.zeroes([script.
 terrain_gen_buf: [script.maxLuaScriptSize]u8 = std.mem.zeroes([script.maxLuaScriptSize]u8),
 terrain_gen_x_buf: i32 = 0,
 terrain_gen_z_buf: i32 = 0,
-terrain_gen_script_options: std.ArrayList(data.chunkScriptOption) = undefined,
+terrain_gen_script_options: std.ArrayList(data.colorScriptOption) = undefined,
 terrain_gen_loaded_script_id: i32 = 0,
 terrain_gen_script_color: [3]f32 = std.mem.zeroes([3]f32),
 
@@ -93,10 +93,10 @@ pub fn init(allocator: std.mem.Allocator) void {
     ui.* = .{
         .texture_script_options = std.ArrayList(data.scriptOption).init(allocator),
         .block_options = std.ArrayList(data.blockOption).init(allocator),
-        .chunk_script_options = std.ArrayList(data.chunkScriptOption).init(allocator),
+        .chunk_script_options = std.ArrayList(data.colorScriptOption).init(allocator),
         .world_options = std.ArrayList(data.worldOption).init(allocator),
         .world_chunk_table_data = std.AutoHashMap(chunk.worldPosition, chunkConfig).init(allocator),
-        .terrain_gen_script_options = std.ArrayList(data.chunkScriptOption).init(allocator),
+        .terrain_gen_script_options = std.ArrayList(data.colorScriptOption).init(allocator),
     };
 }
 
