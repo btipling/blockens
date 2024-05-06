@@ -158,10 +158,12 @@ fn handle_terrain_gen(msg: buffer.buffer_message) void {
         buffer.buffer_data.terrain_gen => |d| d,
         else => return,
     };
-    if (!pr.done) return;
-    std.debug.print("terrain generated.\n", .{});
     const wp = chunk.worldPosition.initFromPositionV(tg_d.position);
     game.state.blocks.generated_settings_chunks.put(wp, tg_d.data) catch @panic("OOM");
+    if (!pr.done) return;
+    std.debug.print("terrain generated {d}.\n", .{
+        game.state.blocks.generated_settings_chunks.count(),
+    });
     blecs.entities.screen.initDemoTerrainGen(true);
 }
 

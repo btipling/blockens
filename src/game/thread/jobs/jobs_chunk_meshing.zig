@@ -43,16 +43,12 @@ pub const ChunkMeshJob = struct {
             var draw_offsets: [chunk.chunkSize]c_int = std.mem.zeroes([chunk.chunkSize]c_int);
             const cp = c.wp.vecFromWorldPosition();
             var loc: @Vector(4, f32) = undefined;
-            if (is_settings) {
-                loc = .{ -32, 0, -32, 0 };
-            } else {
-                loc = .{
-                    cp[0] * chunk.chunkDim,
-                    cp[1] * chunk.chunkDim,
-                    cp[2] * chunk.chunkDim,
-                    0,
-                };
-            }
+            loc = .{
+                cp[0] * chunk.chunkDim,
+                cp[1] * chunk.chunkDim,
+                cp[2] * chunk.chunkDim,
+                0,
+            };
             const aloc: @Vector(4, f32) = loc - @as(@Vector(4, f32), @splat(0.5));
             if (config.use_tracy) ztracy.Message("setting up attribute variable buffer");
 

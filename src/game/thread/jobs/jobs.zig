@@ -179,16 +179,37 @@ pub const Jobs = struct {
         }
     }
 
+    // generateTerrain generates a 2^3 cube of chunks
     pub fn generateTerrain(
         self: *Jobs,
-    ) zjobs.JobId {
-        return self.jobs.schedule(
-            zjobs.JobId.none,
-            job_terrain_gen.TerrainGenJob{},
-        ) catch |e| {
-            std.debug.print("error scheduling terrain generator job: {}\n", .{e});
-            return zjobs.JobId.none;
+        offset_x: i32,
+        offset_z: i32,
+    ) void {
+        const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
+        pt.* = .{
+            .num_started = 8,
+            .num_completed = 0,
         };
+        var i: i32 = 0;
+        while (i < 8) : (i += 1) {
+            const pos: @Vector(4, i32) = job_terrain_gen.indexToPosition(i);
+            _ = self.jobs.schedule(
+                zjobs.JobId.none,
+                job_terrain_gen.TerrainGenJob{
+                    // job will generate terrain for x y z, but use i for actual rendered position
+                    .position = .{
+                        pos[0] + offset_x,
+                        pos[1],
+                        pos[2] + offset_z,
+                        i,
+                    },
+                    .pt = pt,
+                },
+            ) catch |e| {
+                std.debug.print("error scheduling terrain generator job: {}\n", .{e});
+                return;
+            };
+        }
     }
 };
 

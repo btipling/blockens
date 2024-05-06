@@ -398,9 +398,9 @@ pub fn initDemoChunkCamera(reset: bool) void {
 
     if (reset) {
         game.state.ui.demo_screen_translation = .{
-            2.55,
-            0.660,
-            -0.264,
+            4.902,
+            -0.516,
+            -0.676,
             0,
         };
         game.state.ui.demo_screen_pp_translation = .{
@@ -410,9 +410,9 @@ pub fn initDemoChunkCamera(reset: bool) void {
             0,
         };
         game.state.ui.demo_screen_scale = 0.042;
-        game.state.ui.demo_screen_rotation_x = -0.4;
-        game.state.ui.demo_screen_rotation_y = 0.64;
-        game.state.ui.demo_screen_rotation_z = 0.5;
+        game.state.ui.demo_screen_rotation_x = -0.307;
+        game.state.ui.demo_screen_rotation_y = 0.740;
+        game.state.ui.demo_screen_rotation_z = 0.333;
     }
 
     // Demo chunks also needs a camera adjustment to keep perspective centered on it
@@ -464,21 +464,21 @@ pub fn initDemoTerrainGenCamera(reset: bool) void {
 
     if (reset) {
         game.state.ui.demo_screen_translation = .{
-            3.844,
-            -3.399,
-            -0.882,
+            10.000,
+            -10.000,
+            -5.940,
             0,
         };
         game.state.ui.demo_screen_pp_translation = .{
-            -0.650,
-            0.100,
+            -0.259,
+            0.217,
             0,
             0,
         };
-        game.state.ui.demo_screen_scale = 0.042;
+        game.state.ui.demo_screen_scale = 0.064;
         game.state.ui.demo_screen_rotation_x = -0.144;
-        game.state.ui.demo_screen_rotation_y = 0.766;
-        game.state.ui.demo_screen_rotation_z = 0.096;
+        game.state.ui.demo_screen_rotation_y = 0.885;
+        game.state.ui.demo_screen_rotation_z = 0.086;
     }
 
     // Demo chunks also needs a camera adjustment to keep perspective centered on it

@@ -59,7 +59,10 @@ fn drawControls() !void {
             .w = btn_dims[0],
             .h = btn_dims[1],
         })) {
-            _ = game.state.jobs.generateTerrain();
+            _ = game.state.jobs.generateTerrain(
+                game.state.ui.terrain_gen_x_buf,
+                game.state.ui.terrain_gen_z_buf,
+            );
         }
     }
     zgui.endChild();
