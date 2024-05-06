@@ -435,9 +435,6 @@ pub fn initDemoChunkCamera() void {
 }
 
 pub fn initDemoChunk() void {
-    if (game.state.ui.chunk_demo_data == null) {
-        return;
-    }
     clearDemoObjects();
     const world = game.state.world;
     initDemoChunkCamera();

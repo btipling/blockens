@@ -185,6 +185,8 @@ pub fn init(allocator: std.mem.Allocator) *Blocks {
         .blocks = std.AutoHashMap(u8, *Block).init(allocator),
         .settings_chunks = std.AutoHashMap(chunk.worldPosition, *chunk.Chunk).init(allocator),
         .game_chunks = std.AutoHashMap(chunk.worldPosition, *chunk.Chunk).init(allocator),
+
+        .generated_settings_chunks = std.AutoHashMap(chunk.worldPosition, []u32).init(allocator),
     };
     return blocks;
 }
@@ -208,6 +210,11 @@ pub fn deinit(allocator: std.mem.Allocator) void {
         allocator.destroy(ce.*);
     }
     blocks.game_chunks.deinit();
+    var gsc_i = blocks.generated_settings_chunks.valueIterator();
+    while (gsc_i.next()) |gsc| {
+        allocator.free(gsc.*);
+    }
+    blocks.generated_settings_chunks.deinit();
     allocator.destroy(blocks);
 }
 
@@ -215,6 +222,7 @@ pub const Blocks = struct {
     blocks: std.AutoHashMap(u8, *Block) = undefined,
     game_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
     settings_chunks: std.AutoHashMap(chunk.worldPosition, *chunk.Chunk) = undefined,
+    generated_settings_chunks: std.AutoHashMap(chunk.worldPosition, []u32) = undefined,
     selected_block: u8 = 12,
 };
 

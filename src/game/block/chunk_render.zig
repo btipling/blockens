@@ -12,7 +12,11 @@ pub fn renderSettingsChunk(
         game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM"),
     ) catch @panic("OOM");
     errdefer c.deinit();
-    @memcpy(c.data, game.state.ui.chunk_demo_data.?);
+
+    const entry = game.state.blocks.generated_settings_chunks.fetchRemove(wp) orelse return;
+    const data: []u32 = entry.value;
+    defer game.state.allocator.free(data);
+    @memcpy(c.data, data);
 
     const chunk_entity = init_chunk_entity(world, c);
     blecs.ecs.add(world, chunk_entity, blecs.components.block.NeedsMeshing);

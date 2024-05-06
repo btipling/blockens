@@ -42,7 +42,6 @@ chunk_z_buf: [5]u8 = std.mem.zeroes([5]u8),
 chunk_script_options: std.ArrayList(data.chunkScriptOption) = undefined,
 chunk_loaded_script_id: i32 = 0,
 chunk_script_color: [3]f32 = std.mem.zeroes([3]f32),
-chunk_demo_data: ?[]u32 = null,
 
 world_name_buf: [max_world_name]u8 = std.mem.zeroes([max_world_name]u8),
 world_options: std.ArrayList(data.worldOption) = undefined,
@@ -133,7 +132,6 @@ pub fn deinit(allocator: std.mem.Allocator) void {
     ui.world_chunk_table_data.deinit();
     if (ui.texture_rgba_data) |d| allocator.free(d);
     if (ui.texture_atlas_rgba_data) |d| allocator.free(d);
-    if (ui.chunk_demo_data) |d| allocator.free(d);
     allocator.destroy(ui);
 }
 
