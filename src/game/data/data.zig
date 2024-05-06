@@ -35,25 +35,10 @@ pub const script = struct {
     script: [360_001]u8,
 };
 
-pub const worldOptionSQL = struct {
-    id: i32,
-    name: sqlite.Text,
-};
-
-pub const worldSQL = struct {
-    id: i32,
-    name: sqlite.Text,
-};
-
-pub const worldOption = struct {
-    id: i32,
-    name: [21]u8,
-};
-
-pub const world = struct {
-    id: i32,
-    name: [21]u8,
-};
+pub const worldOptionSQL = sql_world.worldOptionSQL;
+pub const worldOption = sql_world.worldOption;
+pub const worldSQL = sql_world.worldSQL;
+pub const world = sql_world.world;
 
 pub const blockOptionSQL = struct {
     id: i32,
@@ -154,7 +139,7 @@ pub const Data = struct {
 
     pub fn ensureSchema(self: *Data) !void {
         const createTableQueries = [_][]const u8{
-            createWorldTable,
+            create_world_table,
             createTextureScriptTable,
             createBlockTable,
             createChunkScriptTable,
@@ -175,7 +160,7 @@ pub const Data = struct {
         chunk_file.initWorldSave(false, 1);
         if (try self.countWorlds() < 1) {
             // First time ever launchign the game.
-            try saveWorld(self, "default");
+            try sql_world.saveWorld(self.db, "default");
             try saveSchema(self);
             return false;
         }
@@ -187,24 +172,6 @@ pub const Data = struct {
             try saveSchema(self);
         }
         return true;
-    }
-
-    pub fn saveWorld(self: *Data, name: []const u8) !void {
-        var insert_stmt = try self.db.prepare(
-            struct {
-                name: sqlite.Text,
-            },
-            void,
-            insert_world_stmt,
-        );
-        defer insert_stmt.deinit();
-
-        insert_stmt.exec(
-            .{ .name = sqlite.text(name) },
-        ) catch |err| {
-            std.log.err("Failed to insert world: {}", .{err});
-            return err;
-        };
     }
 
     pub fn saveSchema(self: *Data) !void {
@@ -223,17 +190,6 @@ pub const Data = struct {
             std.log.err("Failed to insert schema: {}", .{err});
             return err;
         };
-    }
-
-    fn sqlNameToArray(name: sqlite.Text) [21:0]u8 {
-        var n: [21:0]u8 = [_:0]u8{0} ** 21;
-        for (name.data, 0..) |c, i| {
-            n[i] = c;
-            if (c == 0) {
-                break;
-            }
-        }
-        return n;
     }
 
     fn colorToInteger3(color: [3]f32) i32 {
@@ -263,89 +219,25 @@ pub const Data = struct {
         return .{ r, g, b, a };
     }
 
+    // World
+
+    pub fn saveWorld(self: *Data, name: []const u8) !void {
+        return sql_world.saveWorld(self.db, name);
+    }
     pub fn listWorlds(self: *Data, data: *std.ArrayList(worldOption)) !void {
-        var listStmt = try self.db.prepare(
-            struct {},
-            worldOptionSQL,
-            listWorldStmt,
-        );
-        defer listStmt.deinit();
-
-        data.clearRetainingCapacity();
-        {
-            try listStmt.bind(.{});
-            defer listStmt.reset();
-
-            while (try listStmt.step()) |row| {
-                chunk_file.initWorldSave(false, row.id);
-                try data.append(
-                    worldOption{
-                        .id = row.id,
-                        .name = sqlNameToArray(row.name),
-                    },
-                );
-            }
-        }
+        return sql_world.listWorlds(self.db, data);
     }
-
     pub fn loadWorld(self: *Data, id: i32, data: *world) !void {
-        std.debug.print("Loading world: {d}\n", .{id});
-        var selectStmt = try self.db.prepare(
-            struct {
-                id: i32,
-            },
-            worldSQL,
-            selectWorldByIdStmt,
-        );
-        defer selectStmt.deinit();
-
-        {
-            try selectStmt.bind(.{ .id = id });
-            defer selectStmt.reset();
-
-            while (try selectStmt.step()) |r| {
-                std.debug.print("Found world: {s}\n", .{r.name.data});
-                data.id = r.id;
-                data.name = sqlNameToArray(r.name);
-                return;
-            }
-        }
-
-        return error.Unreachable;
+        return sql_world.loadWorld(self.db, id, data);
     }
-
     pub fn updateWorld(self: *Data, id: i32, name: []const u8) !void {
-        var updateStmt = try self.db.prepare(
-            worldSQL,
-            void,
-            updateWorldStmt,
-        );
-        defer updateStmt.deinit();
-
-        updateStmt.exec(
-            .{
-                .id = id,
-                .name = sqlite.text(name),
-            },
-        ) catch |err| {
-            std.log.err("Failed to update world: {}", .{err});
-            return err;
-        };
+        return sql_world.updateWorld(self.db, id, name);
     }
-
     pub fn deleteWorld(self: *Data, id: i32) !void {
-        var deleteStmt = try self.db.prepare(
-            struct {
-                id: i32,
-            },
-            void,
-            deleteWorldStmt,
-        );
-
-        deleteStmt.exec(.{ .id = id }) catch |err| {
-            std.log.err("Failed to delete world: {}", .{err});
-            return err;
-        };
+        return sql_world.deleteWorld(self.db, id);
+    }
+    pub fn countWorlds(self: *Data) !i32 {
+        return sql_world.countWorlds(self.db);
     }
 
     pub fn currentSchemaVersion(self: *Data) !i32 {
@@ -361,27 +253,6 @@ pub const Data = struct {
         defer count_stmt.reset();
         while (try count_stmt.step()) |r| {
             return r.version;
-        }
-
-        return 0;
-    }
-
-    pub fn countWorlds(self: *Data) !i32 {
-        var count_stmt = try self.db.prepare(
-            struct {
-                id: i32,
-            },
-            struct {
-                count: i32,
-            },
-            count_worlds_stmt,
-        );
-        defer count_stmt.deinit();
-
-        try count_stmt.bind(.{ .id = 0 });
-        defer count_stmt.reset();
-        while (try count_stmt.step()) |r| {
-            return r.count;
         }
 
         return 0;
@@ -454,7 +325,7 @@ pub const Data = struct {
                 try data.append(
                     scriptOption{
                         .id = r.id,
-                        .name = sqlNameToArray(r.name),
+                        .name = sql_utils.sqlNameToArray(r.name),
                     },
                 );
             }
@@ -477,7 +348,7 @@ pub const Data = struct {
 
             while (try selectStmt.step()) |r| {
                 data.id = r.id;
-                data.name = sqlNameToArray(r.name);
+                data.name = sql_utils.sqlNameToArray(r.name);
                 data.script = sqlTextToScript(r.script);
                 return;
             }
@@ -565,7 +436,7 @@ pub const Data = struct {
                 try data.append(
                     chunkScriptOption{
                         .id = r.id,
-                        .name = sqlNameToArray(r.name),
+                        .name = sql_utils.sqlNameToArray(r.name),
                         .color = integerToColor3(r.color),
                     },
                 );
@@ -589,7 +460,7 @@ pub const Data = struct {
 
             while (try selectStmt.step()) |r| {
                 data.id = r.id;
-                data.name = sqlNameToArray(r.name);
+                data.name = sql_utils.sqlNameToArray(r.name);
                 data.script = sqlTextToScript(r.script);
                 data.color = integerToColor3(r.color);
                 return;
@@ -726,7 +597,7 @@ pub const Data = struct {
                 try data.append(
                     blockOption{
                         .id = @intCast(row.id),
-                        .name = sqlNameToArray(row.name),
+                        .name = sql_utils.sqlNameToArray(row.name),
                     },
                 );
             }
@@ -756,7 +627,7 @@ pub const Data = struct {
 
             while (try selectStmt.step()) |r| {
                 data.id = @intCast(r.id);
-                data.name = sqlNameToArray(r.name);
+                data.name = sql_utils.sqlNameToArray(r.name);
                 data.texture = try self.blobToTexture(r.texture);
                 data.light_level = @intCast(r.light_level);
                 data.transparent = r.transparent == 1;
@@ -1274,6 +1145,8 @@ pub const Data = struct {
     }
 };
 
+const create_world_table = @embedFile("./sql/v2/world/create.sql");
+
 const create_schema_table = @embedFile("./sql/v2/schema/create.sql");
 const insert_schema_stmt = @embedFile("./sql/v2/schema/insert.sql");
 const select_schema_stmt = @embedFile("./sql/v2/schema/select.sql");
@@ -1290,15 +1163,6 @@ const update_display_settings_stmt = @embedFile("./sql/v2/display_settings/updat
 const select_display_settings_stmt = @embedFile("./sql/v2/display_settings/select.sql");
 const list_display_settings_stmt = @embedFile("./sql/v2/display_settings/list.sql");
 const delete_display_settings_stmt = @embedFile("./sql/v2/display_settings/delete.sql");
-
-const createWorldTable = @embedFile("./sql/v2/world/create.sql");
-const insert_world_stmt = @embedFile("./sql/v2/world/insert.sql");
-const selectWorldByNameStmt = @embedFile("./sql/v2/world/select_by_name.sql");
-const selectWorldByIdStmt = @embedFile("./sql/v2/world/select_by_id.sql");
-const listWorldStmt = @embedFile("./sql/v2/world/list.sql");
-const updateWorldStmt = @embedFile("./sql/v2/world/update.sql");
-const deleteWorldStmt = @embedFile("./sql/v2/world/delete.sql");
-const count_worlds_stmt = @embedFile("./sql/v2/world/count_worlds.sql");
 
 const createTextureScriptTable = @embedFile("./sql/v2/texture_script/create.sql");
 const insertTextureScriptStmt = @embedFile("./sql/v2/texture_script/insert.sql");
@@ -1332,8 +1196,10 @@ const deleteChunkDataStmt = @embedFile("./sql/v2/chunk/delete.sql");
 const delete_chunk_data_by_id_stmt = @embedFile("./sql/v2/chunk/delete_by_id.sql");
 
 const std = @import("std");
-const migrations = @import("migrations/migrations.zig");
 const sqlite = @import("sqlite");
+const migrations = @import("migrations/migrations.zig");
+const sql_world = @import("data_world.zig");
+pub const sql_utils = @import("data_sql_utils.zig");
 const game_block = @import("../block/block.zig");
 const game_chunk = game_block.chunk;
 const chunk_big = game_chunk.big;
