@@ -145,7 +145,7 @@ fn drawInput() !void {
         },
     )) {
         zgui.pushFont(game.state.ui.codeFont);
-        _ = zgui.inputTextMultiline(" ", .{
+        _ = zgui.inputTextMultiline("##chunk_gen_input", .{
             .buf = game.state.ui.chunk_buf[0..],
             .w = game.state.ui.imguiWidth(884),
             .h = game.state.ui.imguiHeight(950),

@@ -41,6 +41,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (zgui.begin("Terrain Generator", .{
                 .flags = .{},
             })) {
+                drawInput() catch continue;
+                zgui.sameLine(.{});
                 drawControls() catch continue;
             }
             zgui.end();
@@ -64,6 +66,26 @@ fn drawControls() !void {
                 game.state.ui.terrain_gen_z_buf,
             );
         }
+    }
+    zgui.endChild();
+}
+
+fn drawInput() !void {
+    if (zgui.beginChild(
+        "script_input",
+        .{
+            .w = game.state.ui.imguiWidth(900),
+            .h = game.state.ui.imguiHeight(975),
+            .border = true,
+        },
+    )) {
+        zgui.pushFont(game.state.ui.codeFont);
+        _ = zgui.inputTextMultiline("##terrain_gen_input", .{
+            .buf = game.state.ui.terrain_gen_buf[0..],
+            .w = game.state.ui.imguiWidth(884),
+            .h = game.state.ui.imguiHeight(950),
+        });
+        zgui.popFont();
     }
     zgui.endChild();
 }
