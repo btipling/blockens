@@ -154,12 +154,15 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
 fn handle_terrain_gen(msg: buffer.buffer_message) void {
     const pr = buffer.progress_report(msg);
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    _ = switch (bd) {
+    const tg_d: buffer.terrain_gen_data = switch (bd) {
         buffer.buffer_data.terrain_gen => |d| d,
         else => return,
     };
     if (!pr.done) return;
     std.debug.print("terrain generated.\n", .{});
+    const wp = chunk.worldPosition.initFromPositionV(tg_d.position);
+    game.state.blocks.generated_settings_chunks.put(wp, tg_d.data) catch @panic("OOM");
+    blecs.entities.screen.initDemoTerrainGen();
 }
 
 fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entity_t {

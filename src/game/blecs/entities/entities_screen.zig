@@ -445,6 +445,17 @@ pub fn initDemoChunk() void {
     return;
 }
 
+pub fn initDemoTerrainGen() void {
+    clearDemoObjects();
+    const world = game.state.world;
+    initDemoChunkCamera();
+    var it = game.state.blocks.generated_settings_chunks.keyIterator();
+    while (it.next()) |k| {
+        chunk.render.renderSettingsChunk(k.*, ecs.new_id(world));
+    }
+    return;
+}
+
 pub fn initDemoCharacterCamera() void {
     const world = game.state.world;
     // Demo characters also needs a camera adjustment to keep perspective centered on it

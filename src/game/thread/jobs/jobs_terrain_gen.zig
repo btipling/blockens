@@ -11,12 +11,16 @@ pub const TerrainGenJob = struct {
         }
     }
 
-    pub fn terrainGenJob(self: *@This()) void {
-        _ = self; // autofix
+    pub fn terrainGenJob(_: *@This()) void {
+        const data = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+        errdefer game.state.allocator.free(data);
+        @memset(data, 0xFF_FFF_02);
+
         var msg: buffer.buffer_message = buffer.new_message(.terrain_gen);
         buffer.set_progress(&msg, true, 1);
         const bd: buffer.buffer_data = .{
             .terrain_gen = .{
+                .data = data,
                 .position = .{ 0, 0, 0, 0 },
             },
         };
