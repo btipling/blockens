@@ -179,6 +179,7 @@ pub const Data = struct {
     }
 
     // Player Position
+    pub const playerPosition = sql_player_position.playerPosition;
 
     pub fn savePlayerPosition(
         self: *Data,
@@ -187,41 +188,8 @@ pub const Data = struct {
         rot: @Vector(4, f32),
         angle: f32,
     ) !void {
-        var insert_stmt = try self.db.prepare(
-            struct {
-                world_id: i32,
-                world_pos_x: f32,
-                world_pos_y: f32,
-                world_pos_z: f32,
-                rot_w: f32,
-                rot_x: f32,
-                rot_y: f32,
-                rot_z: f32,
-                rot_angle: f32,
-            },
-            void,
-            insert_player_pos_stmt,
-        );
-        defer insert_stmt.deinit();
-
-        insert_stmt.exec(
-            .{
-                .world_id = world_id,
-                .world_pos_x = pos[0],
-                .world_pos_y = pos[1],
-                .world_pos_z = pos[2],
-                .rot_w = rot[0],
-                .rot_x = rot[1],
-                .rot_y = rot[2],
-                .rot_z = rot[3],
-                .rot_angle = angle,
-            },
-        ) catch |err| {
-            std.log.err("Failed to insert player position: {}", .{err});
-            return err;
-        };
+        return sql_player_position.savePlayerPosition(self.db, world_id, pos, rot, angle);
     }
-
     pub fn updatePlayerPosition(
         self: *Data,
         world_id: i32,
@@ -229,102 +197,13 @@ pub const Data = struct {
         rot: @Vector(4, f32),
         angle: f32,
     ) !void {
-        var update_stmt = try self.db.prepare(
-            struct {
-                world_id: i32,
-                world_pos_x: f32,
-                world_pos_y: f32,
-                world_pos_z: f32,
-                rot_w: f32,
-                rot_x: f32,
-                rot_y: f32,
-                rot_z: f32,
-                rot_angle: f32,
-            },
-            void,
-            update_player_pos_stmt,
-        );
-        defer update_stmt.deinit();
-
-        update_stmt.exec(
-            .{
-                .world_id = world_id,
-                .world_pos_x = pos[0],
-                .world_pos_y = pos[1],
-                .world_pos_z = pos[2],
-                .rot_w = rot[0],
-                .rot_x = rot[1],
-                .rot_y = rot[2],
-                .rot_z = rot[3],
-                .rot_angle = angle,
-            },
-        ) catch |err| {
-            std.log.err("Failed to update player position: {}", .{err});
-            return err;
-        };
+        return sql_player_position.updatePlayerPosition(self.db, world_id, pos, rot, angle);
     }
-
-    pub const playerPosition = struct {
-        id: i32 = 0,
-        world_id: i32 = 0,
-        pos: @Vector(4, f32) = undefined,
-        rot: @Vector(4, f32) = undefined,
-        angle: f32 = 0,
-    };
-
     pub fn loadPlayerPosition(self: *Data, world_id: i32, data: *playerPosition) !void {
-        var select_stmt = try self.db.prepare(
-            struct {
-                world_id: i32,
-            },
-            struct {
-                id: i32,
-                world_id: i32,
-                world_pos_x: f32,
-                world_pos_y: f32,
-                world_pos_z: f32,
-                rot_w: f32,
-                rot_x: f32,
-                rot_y: f32,
-                rot_z: f32,
-                rot_angle: f32,
-            },
-            select_player_pos_stmt,
-        );
-        defer select_stmt.deinit();
-
-        {
-            try select_stmt.bind(.{ .world_id = world_id });
-            defer select_stmt.reset();
-
-            while (try select_stmt.step()) |r| {
-                data.id = r.id;
-                data.world_id = r.world_id;
-                data.pos = .{ r.world_pos_x, r.world_pos_y, r.world_pos_z, 1 };
-                data.rot = .{ r.rot_w, r.rot_x, r.rot_y, r.rot_z };
-                data.angle = r.rot_angle;
-                return;
-            }
-        }
-
-        return sql_utils.DataErr.NotFound;
+        return sql_player_position.loadPlayerPosition(self.db, world_id, data);
     }
-
     pub fn deletePlayerPosition(self: *Data, world_id: i32) !void {
-        var delete_stmt = try self.db.prepare(
-            struct {
-                world_id: i32,
-            },
-            void,
-            delete_player_pos_stmt,
-        );
-
-        delete_stmt.exec(
-            .{ .world_id = world_id },
-        ) catch |err| {
-            std.log.err("Failed to delete player position: {}", .{err});
-            return err;
-        };
+        return sql_player_position.deletePlayerPosition(self.db, world_id);
     }
 
     pub fn saveDisplaySettings(
@@ -439,11 +318,6 @@ pub const Data = struct {
     }
 };
 
-const insert_player_pos_stmt = @embedFile("./sql/v2/player_position/insert.sql");
-const update_player_pos_stmt = @embedFile("./sql/v2/player_position/update.sql");
-const select_player_pos_stmt = @embedFile("./sql/v2/player_position/select.sql");
-const delete_player_pos_stmt = @embedFile("./sql/v2/player_position/delete.sql");
-
 const insert_display_settings_stmt = @embedFile("./sql/v2/display_settings/insert.sql");
 const update_display_settings_stmt = @embedFile("./sql/v2/display_settings/update.sql");
 const select_display_settings_stmt = @embedFile("./sql/v2/display_settings/select.sql");
@@ -459,6 +333,7 @@ const sql_texture_script = @import("data_texture_script.zig");
 const sql_chunk_script = @import("data_chunk_script.zig");
 const sql_block = @import("data_block.zig");
 const sql_chunk = @import("data_chunk.zig");
+const sql_player_position = @import("data_player_position.zig");
 pub const sql_utils = @import("data_sql_utils.zig");
 const game_block = @import("../block/block.zig");
 const game_chunk = game_block.chunk;
