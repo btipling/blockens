@@ -129,7 +129,7 @@ fn drawControls() !void {
         zgui.popStyleVar(.{ .count = 1 });
         var params: helpers.ScriptOptionsParams = .{};
         if (helpers.scriptOptionsListBox(game.state.ui.chunk_script_options, &params)) |scriptOptionId| {
-            try loadcolorScriptFunc(scriptOptionId);
+            try loadChunkScriptFunc(scriptOptionId);
         }
     }
     zgui.endChild();
@@ -191,7 +191,7 @@ fn listChunkScripts() !void {
     try game.state.db.listChunkScripts(&game.state.ui.chunk_script_options);
 }
 
-fn loadcolorScriptFunc(scriptId: i32) !void {
+fn loadChunkScriptFunc(scriptId: i32) !void {
     var scriptData: data.colorScript = undefined;
     game.state.db.loadChunkScript(scriptId, &scriptData) catch |err| {
         if (err != data.DataErr.NotFound) {
@@ -235,7 +235,7 @@ fn updatecolorScriptFunc() !void {
     }
     try game.state.db.updateChunkScript(game.state.ui.chunk_loaded_script_id, &game.state.ui.chunk_name_buf, &game.state.ui.chunk_buf, game.state.ui.chunk_script_color);
     try listChunkScripts();
-    try loadcolorScriptFunc(game.state.ui.chunk_loaded_script_id);
+    try loadChunkScriptFunc(game.state.ui.chunk_loaded_script_id);
 }
 
 fn deletecolorScriptFunc() !void {
