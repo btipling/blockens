@@ -133,6 +133,23 @@ pub const Data = struct {
         return sql_chunk_script.deleteChunkScript(self.db, id);
     }
 
+    // TerrainGen script
+    pub fn saveTerrainGenScript(self: *Data, name: []const u8, cScript: []const u8, color: [3]f32) !void {
+        return sql_terrain_gen_script.saveTerrainGenScript(self.db, name, cScript, color);
+    }
+    pub fn updateTerrainGenScript(self: *Data, id: i32, name: []const u8, cScript: []const u8, color: [3]f32) !void {
+        return sql_terrain_gen_script.updateTerrainGenScript(self.db, id, name, cScript, color);
+    }
+    pub fn listTerrainGenScripts(self: *Data, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
+        return sql_terrain_gen_script.listTerrainGenScripts(self.db, data);
+    }
+    pub fn loadTerrainGenScript(self: *Data, id: i32, data: *sql_utils.colorScript) !void {
+        return sql_terrain_gen_script.loadTerrainGenScript(self.db, id, data);
+    }
+    pub fn deleteTerrainGenScript(self: *Data, id: i32) !void {
+        return sql_terrain_gen_script.deleteTerrainGenScript(self.db, id);
+    }
+
     // Block
     pub fn saveBlock(self: *Data, name: []const u8, texture: []u32, transparent: bool, light_level: u8) !void {
         return sql_block.saveBlock(self.db, name, texture, transparent, light_level);
@@ -244,6 +261,7 @@ const sql_world = @import("data_world.zig");
 const sql_schema = @import("data_schema.zig");
 const sql_texture_script = @import("data_texture_script.zig");
 const sql_chunk_script = @import("data_chunk_script.zig");
+const sql_terrain_gen_script = @import("data_terrain_gen_script.zig");
 const sql_block = @import("data_block.zig");
 const sql_chunk = @import("data_chunk.zig");
 const sql_player_position = @import("data_player_position.zig");
