@@ -1,9 +1,8 @@
 pub const current_schema_version: i32 = sql_schema.current_schema_version;
 pub const DataErr = sql_utils.DataErr;
 
-pub const RGBAColorTextureSize = 3 * 16 * 16; // 768
-// 768 i32s fit into 3072 u8s
-pub const TextureBlobArrayStoreSize = 3072;
+pub const RGBAColorTextureSize = sql_block.RGBAColorTextureSize;
+pub const TextureBlobArrayStoreSize = sql_block.TextureBlobArrayStoreSize;
 
 // each i32 fits into 4 u8s
 pub const ChunkBlobArrayStoreSize = game_chunk.chunkSize * 4;
@@ -25,31 +24,10 @@ pub const worldOption = sql_world.worldOption;
 pub const worldSQL = sql_world.worldSQL;
 pub const world = sql_world.world;
 
-pub const blockOptionSQL = struct {
-    id: i32,
-    name: sqlite.Text,
-};
-
-pub const blockSQL = struct {
-    id: i32,
-    name: sqlite.Text,
-    texture: sqlite.Blob,
-    light_level: i32,
-    transparent: i32,
-};
-
-pub const blockOption = struct {
-    id: u8,
-    name: [21]u8,
-};
-
-pub const block = struct {
-    id: u8 = 0,
-    name: [21]u8 = [_]u8{0} ** 21,
-    texture: []u32 = undefined,
-    light_level: u8 = 0,
-    transparent: bool = false,
-};
+pub const blockOptionSQL = sql_block.blockOptionSQL;
+pub const blockSQL = sql_block.blockSQL;
+pub const blockOption = sql_block.blockOption;
+pub const block = sql_block.block;
 
 pub const chunkDataSQL = struct {
     id: i32,
@@ -163,188 +141,37 @@ pub const Data = struct {
     }
 
     // Chunk script
-    pub fn savecolorScript(self: *Data, name: []const u8, cScript: []const u8, color: [3]f32) !void {
-        return sql_chunk_script.savecolorScript(self.db, name, cScript, color);
+    pub fn saveChunkScript(self: *Data, name: []const u8, cScript: []const u8, color: [3]f32) !void {
+        return sql_chunk_script.saveChunkScript(self.db, name, cScript, color);
     }
-    pub fn updatecolorScript(self: *Data, id: i32, name: []const u8, cScript: []const u8, color: [3]f32) !void {
-        return sql_chunk_script.updatecolorScript(self.db, id, name, cScript, color);
+    pub fn updateChunkScript(self: *Data, id: i32, name: []const u8, cScript: []const u8, color: [3]f32) !void {
+        return sql_chunk_script.updateChunkScript(self.db, id, name, cScript, color);
     }
-    pub fn listcolorScripts(self: *Data, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
-        return sql_chunk_script.listcolorScripts(self.db, data);
+    pub fn listChunkScripts(self: *Data, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
+        return sql_chunk_script.listChunkScripts(self.db, data);
     }
-    pub fn loadcolorScript(self: *Data, id: i32, data: *sql_utils.colorScript) !void {
-        return sql_chunk_script.loadcolorScript(self.db, id, data);
+    pub fn loadChunkScript(self: *Data, id: i32, data: *sql_utils.colorScript) !void {
+        return sql_chunk_script.loadChunkScript(self.db, id, data);
     }
-    pub fn deletecolorScript(self: *Data, id: i32) !void {
-        return sql_chunk_script.deletecolorScript(self.db, id);
-    }
-
-    // block crud:
-    fn textureToBlob(texture: []u32) [TextureBlobArrayStoreSize]u8 {
-        var blob: [TextureBlobArrayStoreSize]u8 = undefined;
-        for (texture, 0..RGBAColorTextureSize) |t, i| {
-            const offset = i * 4;
-            const a = @as(u8, @truncate(t >> 24));
-            const b = @as(u8, @truncate(t >> 16));
-            const g = @as(u8, @truncate(t >> 8));
-            const r = @as(u8, @truncate(t));
-            blob[offset] = a;
-            blob[offset + 1] = b;
-            blob[offset + 2] = g;
-            blob[offset + 3] = r;
-        }
-        return blob;
-    }
-
-    fn blobToTexture(self: *Data, blob: sqlite.Blob) ![]u32 {
-        var texture: [RGBAColorTextureSize]u32 = undefined;
-        for (texture, 0..) |_, i| {
-            const offset = i * 4;
-            const a = @as(u32, @intCast(blob.data[offset]));
-            const b = @as(u32, @intCast(blob.data[offset + 1]));
-            const g = @as(u32, @intCast(blob.data[offset + 2]));
-            const r = @as(u32, @intCast(blob.data[offset + 3]));
-            texture[i] = a << 24 | b << 16 | g << 8 | r;
-        }
-
-        const rv: []u32 = try self.allocator.alloc(u32, texture.len);
-        @memcpy(rv, &texture);
-        return rv;
+    pub fn deleteChunkScript(self: *Data, id: i32) !void {
+        return sql_chunk_script.deleteChunkScript(self.db, id);
     }
 
     pub fn saveBlock(self: *Data, name: []const u8, texture: []u32, transparent: bool, light_level: u8) !void {
-        var insertStmt = try self.db.prepare(
-            struct {
-                name: sqlite.Text,
-                texture: sqlite.Blob,
-                light_level: i32,
-                transparent: i32,
-            },
-            void,
-            insertBlockStmt,
-        );
-        defer insertStmt.deinit();
-
-        var t = textureToBlob(texture);
-        var t_int: i32 = 0;
-        if (transparent) t_int = 1;
-        insertStmt.exec(
-            .{
-                .name = sqlite.text(name),
-                .texture = sqlite.blob(&t),
-                .light_level = @intCast(light_level),
-                .transparent = t_int,
-            },
-        ) catch |err| {
-            std.log.err("Failed to insert block: {}", .{err});
-            return err;
-        };
+        return sql_block.saveBlock(self.db, name, texture, transparent, light_level);
     }
-
     pub fn updateBlock(self: *Data, id: i32, name: []const u8, texture: []u32, transparent: bool, light_level: u8) !void {
-        var updateStmt = try self.db.prepare(
-            struct {
-                id: i32,
-                name: sqlite.Text,
-                texture: sqlite.Blob,
-                light_level: i32,
-                transparent: i32,
-            },
-            void,
-            updateBlockStmt,
-        );
-        defer updateStmt.deinit();
-
-        var t = textureToBlob(texture);
-        var t_int: i32 = 0;
-        if (transparent) t_int = 1;
-        updateStmt.exec(
-            .{
-                .id = id,
-                .name = sqlite.text(name),
-                .texture = sqlite.blob(&t),
-                .light_level = @intCast(light_level),
-                .transparent = t_int,
-            },
-        ) catch |err| {
-            std.log.err("Failed to update block: {}", .{err});
-            return err;
-        };
+        return sql_block.updateBlock(self.db, id, name, texture, transparent, light_level);
     }
-
     pub fn listBlocks(self: *Data, data: *std.ArrayList(blockOption)) !void {
-        var listStmt = try self.db.prepare(
-            struct {},
-            blockOptionSQL,
-            listBlockStmt,
-        );
-        defer listStmt.deinit();
-
-        data.clearRetainingCapacity();
-        {
-            try listStmt.bind(.{});
-            defer listStmt.reset();
-
-            while (try listStmt.step()) |row| {
-                try data.append(
-                    blockOption{
-                        .id = @intCast(row.id),
-                        .name = sql_utils.sqlNameToArray(row.name),
-                    },
-                );
-            }
-        }
+        return sql_block.listBlocks(self.db, data);
     }
-
     // caller owns texture data slice
     pub fn loadBlock(self: *Data, id: i32, data: *block) !void {
-        var selectStmt = try self.db.prepare(
-            struct {
-                id: i32,
-            },
-            struct {
-                id: i32,
-                name: sqlite.Text,
-                texture: sqlite.Blob,
-                light_level: i32,
-                transparent: i32,
-            },
-            selectBlockStmt,
-        );
-        defer selectStmt.deinit();
-
-        {
-            try selectStmt.bind(.{ .id = id });
-            defer selectStmt.reset();
-
-            while (try selectStmt.step()) |r| {
-                data.id = @intCast(r.id);
-                data.name = sql_utils.sqlNameToArray(r.name);
-                data.texture = try self.blobToTexture(r.texture);
-                data.light_level = @intCast(r.light_level);
-                data.transparent = r.transparent == 1;
-                return;
-            }
-        }
-
-        return error.Unreachable;
+        return sql_block.loadBlock(self.db, id, data);
     }
-
     pub fn deleteBlock(self: *Data, id: i32) !void {
-        var deleteStmt = try self.db.prepare(
-            struct {
-                id: i32,
-            },
-            void,
-            deleteBlockStmt,
-        );
-
-        deleteStmt.exec(
-            .{ .id = id },
-        ) catch |err| {
-            std.log.err("Failed to delete block: {}", .{err});
-            return err;
-        };
+        return sql_block.deleteBlock(self.db, id);
     }
 
     pub fn saveChunkToFile(
@@ -848,12 +675,6 @@ const select_display_settings_stmt = @embedFile("./sql/v2/display_settings/selec
 const list_display_settings_stmt = @embedFile("./sql/v2/display_settings/list.sql");
 const delete_display_settings_stmt = @embedFile("./sql/v2/display_settings/delete.sql");
 
-const insertBlockStmt = @embedFile("./sql/v2/block/insert.sql");
-const updateBlockStmt = @embedFile("./sql/v2/block/update.sql");
-const selectBlockStmt = @embedFile("./sql/v2/block/select.sql");
-const listBlockStmt = @embedFile("./sql/v2/block/list.sql");
-const deleteBlockStmt = @embedFile("./sql/v2/block/delete.sql");
-
 const insertChunkDataStmt = @embedFile("./sql/v2/chunk/insert.sql");
 const updateChunkDataStmt = @embedFile("./sql/v2/chunk/update.sql");
 const selectChunkDataByIDStmt = @embedFile("./sql/v2/chunk/select_by_id.sql");
@@ -870,6 +691,7 @@ const sql_world = @import("data_world.zig");
 const sql_schema = @import("data_schema.zig");
 const sql_texture_script = @import("data_texture_script.zig");
 const sql_chunk_script = @import("data_chunk_script.zig");
+const sql_block = @import("data_block.zig");
 pub const sql_utils = @import("data_sql_utils.zig");
 const game_block = @import("../block/block.zig");
 const game_chunk = game_block.chunk;

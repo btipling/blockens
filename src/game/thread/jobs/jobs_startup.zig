@@ -69,7 +69,7 @@ pub const StartupJob = struct {
         try game.state.db.saveBlock("dirt", @ptrCast(dirt_texture.?), false, 0);
         try game.state.db.saveBlock("grass", @ptrCast(grass_texture.?), false, 0);
         const default_chunk_script: []const u8 = @embedFile("../../script/lua/chunk_gen_default.lua");
-        try game.state.db.savecolorScript("default", default_chunk_script, .{ 0, 1, 0 });
+        try game.state.db.saveChunkScript("default", default_chunk_script, .{ 0, 1, 0 });
         {
             const top_chunk: []u64 = try game.state.allocator.alloc(u64, chunk.chunkSize);
             defer game.state.allocator.free(top_chunk);

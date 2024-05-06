@@ -1,4 +1,4 @@
-pub fn savecolorScript(db: sqlite.Database, name: []const u8, cScript: []const u8, color: [3]f32) !void {
+pub fn saveChunkScript(db: sqlite.Database, name: []const u8, cScript: []const u8, color: [3]f32) !void {
     var insertStmt = try db.prepare(
         struct {
             name: sqlite.Text,
@@ -22,7 +22,7 @@ pub fn savecolorScript(db: sqlite.Database, name: []const u8, cScript: []const u
     };
 }
 
-pub fn updatecolorScript(db: sqlite.Database, id: i32, name: []const u8, cScript: []const u8, color: [3]f32) !void {
+pub fn updateChunkScript(db: sqlite.Database, id: i32, name: []const u8, cScript: []const u8, color: [3]f32) !void {
     var updateStmt = try db.prepare(
         sql_utils.colorScriptSQL,
         void,
@@ -43,7 +43,7 @@ pub fn updatecolorScript(db: sqlite.Database, id: i32, name: []const u8, cScript
     };
 }
 
-pub fn listcolorScripts(db: sqlite.Database, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
+pub fn listChunkScripts(db: sqlite.Database, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
     var listStmt = try db.prepare(
         struct {},
         sql_utils.colorScriptOptionSQL,
@@ -68,7 +68,7 @@ pub fn listcolorScripts(db: sqlite.Database, data: *std.ArrayList(sql_utils.colo
     }
 }
 
-pub fn loadcolorScript(db: sqlite.Database, id: i32, data: *sql_utils.colorScript) !void {
+pub fn loadChunkScript(db: sqlite.Database, id: i32, data: *sql_utils.colorScript) !void {
     var selectStmt = try db.prepare(
         struct {
             id: i32,
@@ -94,7 +94,7 @@ pub fn loadcolorScript(db: sqlite.Database, id: i32, data: *sql_utils.colorScrip
     return sql_utils.DataErr.NotFound;
 }
 
-pub fn deletecolorScript(db: sqlite.Database, id: i32) !void {
+pub fn deleteChunkScript(db: sqlite.Database, id: i32) !void {
     var deleteStmt = try db.prepare(
         struct {
             id: i32,

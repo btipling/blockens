@@ -106,7 +106,7 @@ fn drawControls() !void {
             .w = btn_dms[0],
             .h = btn_dms[1],
         })) {
-            try savecolorScriptFunc();
+            try saveChunkScriptFunc();
         }
         if (zgui.button("Update script", .{
             .w = btn_dms[0],
@@ -124,7 +124,7 @@ fn drawControls() !void {
             .w = btn_dms[0],
             .h = btn_dms[1],
         })) {
-            try listcolorScripts();
+            try listChunkScripts();
         }
         zgui.popStyleVar(.{ .count = 1 });
         var params: helpers.ScriptOptionsParams = .{};
@@ -187,13 +187,13 @@ fn evalWorldChunkFunc() !void {
     _ = game.state.jobs.generateWorldChunk(wp, &game.state.ui.chunk_buf);
 }
 
-fn listcolorScripts() !void {
-    try game.state.db.listcolorScripts(&game.state.ui.chunk_script_options);
+fn listChunkScripts() !void {
+    try game.state.db.listChunkScripts(&game.state.ui.chunk_script_options);
 }
 
 fn loadcolorScriptFunc(scriptId: i32) !void {
     var scriptData: data.colorScript = undefined;
-    game.state.db.loadcolorScript(scriptId, &scriptData) catch |err| {
+    game.state.db.loadChunkScript(scriptId, &scriptData) catch |err| {
         if (err != data.DataErr.NotFound) {
             return err;
         }
@@ -213,7 +213,7 @@ fn loadcolorScriptFunc(scriptId: i32) !void {
     game.state.ui.chunk_loaded_script_id = scriptId;
 }
 
-fn savecolorScriptFunc() !void {
+fn saveChunkScriptFunc() !void {
     const n = std.mem.indexOf(u8, &game.state.ui.chunk_name_buf, &([_]u8{0}));
     if (n) |i| {
         if (i < 3) {
@@ -221,8 +221,8 @@ fn savecolorScriptFunc() !void {
             return;
         }
     }
-    try game.state.db.savecolorScript(&game.state.ui.chunk_name_buf, &game.state.ui.chunk_buf, game.state.ui.chunk_script_color);
-    try listcolorScripts();
+    try game.state.db.saveChunkScript(&game.state.ui.chunk_name_buf, &game.state.ui.chunk_buf, game.state.ui.chunk_script_color);
+    try listChunkScripts();
 }
 
 fn updatecolorScriptFunc() !void {
@@ -233,14 +233,14 @@ fn updatecolorScriptFunc() !void {
             return;
         }
     }
-    try game.state.db.updatecolorScript(game.state.ui.chunk_loaded_script_id, &game.state.ui.chunk_name_buf, &game.state.ui.chunk_buf, game.state.ui.chunk_script_color);
-    try listcolorScripts();
+    try game.state.db.updateChunkScript(game.state.ui.chunk_loaded_script_id, &game.state.ui.chunk_name_buf, &game.state.ui.chunk_buf, game.state.ui.chunk_script_color);
+    try listChunkScripts();
     try loadcolorScriptFunc(game.state.ui.chunk_loaded_script_id);
 }
 
 fn deletecolorScriptFunc() !void {
-    try game.state.db.deletecolorScript(game.state.ui.chunk_loaded_script_id);
-    try listcolorScripts();
+    try game.state.db.deleteChunkScript(game.state.ui.chunk_loaded_script_id);
+    try listChunkScripts();
     game.state.ui.chunk_loaded_script_id = 0;
 }
 

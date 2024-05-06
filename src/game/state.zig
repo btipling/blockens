@@ -81,7 +81,7 @@ pub const Game = struct {
         std.debug.print("populate ui options\n", .{});
         try self.db.listBlocks(&self.ui.block_options);
         try self.db.listTextureScripts(&self.ui.texture_script_options);
-        try self.db.listcolorScripts(&self.ui.chunk_script_options);
+        try self.db.listChunkScripts(&self.ui.chunk_script_options);
         try self.db.listWorlds(&self.ui.world_options);
 
         var world_data: data.world = undefined;
