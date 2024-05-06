@@ -81,7 +81,7 @@ fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
         cleared_data = true;
     }
     game.state.blocks.generated_settings_chunks.put(chunk_data.wp, chunk_data.chunk_data) catch @panic("OOM");
-    blecs.entities.screen.initDemoChunk();
+    blecs.entities.screen.initDemoChunk(true);
 }
 
 fn handle_chunk_mesh(msg: buffer.buffer_message) void {
@@ -162,7 +162,7 @@ fn handle_terrain_gen(msg: buffer.buffer_message) void {
     std.debug.print("terrain generated.\n", .{});
     const wp = chunk.worldPosition.initFromPositionV(tg_d.position);
     game.state.blocks.generated_settings_chunks.put(wp, tg_d.data) catch @panic("OOM");
-    blecs.entities.screen.initDemoTerrainGen();
+    blecs.entities.screen.initDemoTerrainGen(true);
 }
 
 fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entity_t {

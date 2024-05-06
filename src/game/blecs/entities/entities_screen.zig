@@ -393,27 +393,41 @@ pub fn initDemoTextureAtlas() void {
     ecs.add(world, c_atlas, components.shape.NeedsSetup);
 }
 
-pub fn initDemoChunkCamera() void {
+pub fn initDemoChunkCamera(reset: bool) void {
     const world = game.state.world;
+
+    if (reset) {
+        game.state.ui.demo_screen_translation = .{
+            2.55,
+            0.660,
+            -0.264,
+            0,
+        };
+        game.state.ui.demo_screen_pp_translation = .{
+            -0.650,
+            0.100,
+            0,
+            0,
+        };
+        game.state.ui.demo_screen_scale = 0.042;
+        game.state.ui.demo_screen_rotation_x = -0.4;
+        game.state.ui.demo_screen_rotation_y = 0.64;
+        game.state.ui.demo_screen_rotation_z = 0.5;
+    }
 
     // Demo chunks also needs a camera adjustment to keep perspective centered on it
     const camera = game.state.entities.settings_camera;
     _ = ecs.set(world, camera, components.screen.PostPerspective, .{
-        .translation = game.state.ui.demo_chunk_pp_translation,
+        .translation = game.state.ui.demo_screen_pp_translation,
     });
-    const chunk_scale = game.state.ui.demo_chunk_scale;
+
+    const chunk_scale = game.state.ui.demo_screen_scale;
     _ = ecs.set(
         world,
         camera,
         components.screen.WorldScale,
         .{ .scale = @Vector(4, f32){ chunk_scale, chunk_scale, chunk_scale, 0 } },
     );
-    {
-        // screen rotations reset to chunk rotation settings upon chunk camera init
-        game.state.ui.demo_screen_rotation_x = -0.4;
-        game.state.ui.demo_screen_rotation_y = 0.64;
-        game.state.ui.demo_screen_rotation_z = 0.5;
-    }
 
     const chunk_rot = zm.quatFromRollPitchYaw(
         game.state.ui.demo_screen_rotation_x,
@@ -430,14 +444,14 @@ pub fn initDemoChunkCamera() void {
         world,
         camera,
         components.screen.WorldTranslation,
-        .{ .translation = game.state.ui.demo_chunk_translation },
+        .{ .translation = game.state.ui.demo_screen_translation },
     );
 }
 
-pub fn initDemoChunk() void {
+pub fn initDemoChunk(reset: bool) void {
     clearDemoObjects();
     const world = game.state.world;
-    initDemoChunkCamera();
+    initDemoChunkCamera(reset);
     chunk.render.renderSettingsChunk(
         chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 }),
         ecs.new_id(world),
@@ -445,10 +459,65 @@ pub fn initDemoChunk() void {
     return;
 }
 
-pub fn initDemoTerrainGen() void {
+pub fn initDemoTerrainGenCamera(reset: bool) void {
+    const world = game.state.world;
+
+    if (reset) {
+        game.state.ui.demo_screen_translation = .{
+            3.844,
+            -3.399,
+            -0.882,
+            0,
+        };
+        game.state.ui.demo_screen_pp_translation = .{
+            -0.650,
+            0.100,
+            0,
+            0,
+        };
+        game.state.ui.demo_screen_scale = 0.042;
+        game.state.ui.demo_screen_rotation_x = -0.144;
+        game.state.ui.demo_screen_rotation_y = 0.766;
+        game.state.ui.demo_screen_rotation_z = 0.096;
+    }
+
+    // Demo chunks also needs a camera adjustment to keep perspective centered on it
+    const camera = game.state.entities.settings_camera;
+    _ = ecs.set(world, camera, components.screen.PostPerspective, .{
+        .translation = game.state.ui.demo_screen_pp_translation,
+    });
+
+    const chunk_scale = game.state.ui.demo_screen_scale;
+    _ = ecs.set(
+        world,
+        camera,
+        components.screen.WorldScale,
+        .{ .scale = @Vector(4, f32){ chunk_scale, chunk_scale, chunk_scale, 0 } },
+    );
+
+    const chunk_rot = zm.quatFromRollPitchYaw(
+        game.state.ui.demo_screen_rotation_x,
+        game.state.ui.demo_screen_rotation_y,
+        game.state.ui.demo_screen_rotation_z,
+    );
+    _ = ecs.set(
+        game.state.world,
+        camera,
+        components.screen.WorldRotation,
+        .{ .rotation = chunk_rot },
+    );
+    _ = ecs.set(
+        world,
+        camera,
+        components.screen.WorldTranslation,
+        .{ .translation = game.state.ui.demo_screen_translation },
+    );
+}
+
+pub fn initDemoTerrainGen(reset: bool) void {
     clearDemoObjects();
     const world = game.state.world;
-    initDemoChunkCamera();
+    initDemoTerrainGenCamera(reset);
     var it = game.state.blocks.generated_settings_chunks.keyIterator();
     while (it.next()) |k| {
         chunk.render.renderSettingsChunk(k.*, ecs.new_id(world));
@@ -456,26 +525,40 @@ pub fn initDemoTerrainGen() void {
     return;
 }
 
-pub fn initDemoCharacterCamera() void {
+pub fn initDemoCharacterCamera(reset: bool) void {
     const world = game.state.world;
-    // Demo characters also needs a camera adjustment to keep perspective centered on it
+
+    if (reset) {
+        game.state.ui.demo_screen_translation = .{
+            -7.393,
+            -0.293,
+            -0.060,
+            0,
+        };
+        game.state.ui.demo_screen_pp_translation = .{
+            -0.259,
+            0.217,
+            0,
+            0,
+        };
+        game.state.ui.demo_screen_scale = 0.235;
+        game.state.ui.demo_screen_rotation_x = 0;
+        game.state.ui.demo_screen_rotation_y = -1.5;
+        game.state.ui.demo_screen_rotation_z = 0;
+    }
+
     const camera = game.state.entities.settings_camera;
     _ = ecs.set(world, camera, components.screen.PostPerspective, .{
-        .translation = game.state.ui.demo_character_pp_translation,
+        .translation = game.state.ui.demo_screen_pp_translation,
     });
-    const character_scale = game.state.ui.demo_character_scale;
+    const character_scale = game.state.ui.demo_screen_scale;
     _ = ecs.set(
         world,
         camera,
         components.screen.WorldScale,
         .{ .scale = @Vector(4, f32){ character_scale, character_scale, character_scale, 0 } },
     );
-    {
-        // screen rotations reset to character rotation settings upon character camera init
-        game.state.ui.demo_screen_rotation_x = 0;
-        game.state.ui.demo_screen_rotation_y = -1.5;
-        game.state.ui.demo_screen_rotation_z = 0;
-    }
+
     const character_rot = zm.quatFromRollPitchYaw(
         game.state.ui.demo_screen_rotation_x,
         game.state.ui.demo_screen_rotation_y,
@@ -491,14 +574,14 @@ pub fn initDemoCharacterCamera() void {
         world,
         camera,
         components.screen.WorldTranslation,
-        .{ .translation = game.state.ui.demo_character_translation },
+        .{ .translation = game.state.ui.demo_screen_translation },
     );
 }
 
 pub fn initDemoCharacter() void {
     std.debug.print("init demo character\n", .{});
     clearDemoObjects();
-    initDemoCharacterCamera();
+    initDemoCharacterCamera(true);
     const world = game.state.world;
     var player = game.state.entities.demo_player;
     if (player == 0) {

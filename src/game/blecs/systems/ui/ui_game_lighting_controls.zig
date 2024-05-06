@@ -36,7 +36,7 @@ fn showLightingControls() !void {
     if (zgui.inputFloat("lighting input", .{
         .v = &game.state.gfx.ambient_lighting,
     })) {
-        entities.screen.initDemoChunkCamera();
+        game.state.gfx.update_lighting();
     }
     if (zgui.sliderFloat("lighting slider", .{
         .v = &game.state.gfx.ambient_lighting,
