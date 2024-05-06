@@ -1,8 +1,5 @@
-pub const current_schema_version: i32 = 2;
-
-pub const DataErr = error{
-    NotFound,
-};
+pub const current_schema_version: i32 = sql_schema.current_schema_version;
+pub const DataErr = sql_utils.DataErr;
 
 pub const RGBAColorTextureSize = 3 * 16 * 16; // 768
 // 768 i32s fit into 3072 u8s
@@ -137,31 +134,12 @@ pub const Data = struct {
         self.db.deinit();
     }
 
-    pub fn ensureSchema(self: *Data) !void {
-        const createTableQueries = [_][]const u8{
-            create_world_table,
-            createTextureScriptTable,
-            createBlockTable,
-            createChunkScriptTable,
-            createChunkDataTable,
-            create_player_pos_table,
-            create_display_settings_table,
-            create_schema_table,
-        };
-        for (createTableQueries) |query| {
-            self.db.exec(query, .{}) catch |err| {
-                std.log.err("Failed to create schema: {}", .{err});
-                return err;
-            };
-        }
-    }
-
     pub fn ensureDefaultWorld(self: *Data) !bool {
         chunk_file.initWorldSave(false, 1);
         if (try self.countWorlds() < 1) {
             // First time ever launchign the game.
             try sql_world.saveWorld(self.db, "default");
-            try saveSchema(self);
+            try self.saveSchema();
             return false;
         }
         const schema_version = try self.currentSchemaVersion();
@@ -169,27 +147,9 @@ pub const Data = struct {
             // Not the first time launching the game, migrate save.
             try migrations.v2.migrate(self.allocator);
             // There was no previous schema versioning so just insert it for the first time.
-            try saveSchema(self);
+            try self.saveSchema();
         }
         return true;
-    }
-
-    pub fn saveSchema(self: *Data) !void {
-        var insert_stmt = try self.db.prepare(
-            struct {
-                version: i32,
-            },
-            void,
-            insert_schema_stmt,
-        );
-        defer insert_stmt.deinit();
-
-        insert_stmt.exec(
-            .{ .version = current_schema_version },
-        ) catch |err| {
-            std.log.err("Failed to insert schema: {}", .{err});
-            return err;
-        };
     }
 
     fn colorToInteger3(color: [3]f32) i32 {
@@ -219,6 +179,19 @@ pub const Data = struct {
         return .{ r, g, b, a };
     }
 
+    // Schema
+    pub fn ensureSchema(self: *Data) !void {
+        return sql_schema.ensureSchema(self.db);
+    }
+
+    pub fn saveSchema(self: *Data) !void {
+        return sql_schema.saveSchema(self.db);
+    }
+
+    pub fn currentSchemaVersion(self: *Data) !i32 {
+        return sql_schema.currentSchemaVersion(self.db);
+    }
+
     // World
 
     pub fn saveWorld(self: *Data, name: []const u8) !void {
@@ -238,24 +211,6 @@ pub const Data = struct {
     }
     pub fn countWorlds(self: *Data) !i32 {
         return sql_world.countWorlds(self.db);
-    }
-
-    pub fn currentSchemaVersion(self: *Data) !i32 {
-        var count_stmt = try self.db.prepare(
-            struct {},
-            struct {
-                version: i32,
-            },
-            select_schema_stmt,
-        );
-        defer count_stmt.deinit();
-
-        defer count_stmt.reset();
-        while (try count_stmt.step()) |r| {
-            return r.version;
-        }
-
-        return 0;
     }
 
     fn sqlTextToScript(text: sqlite.Text) [360_001]u8 {
@@ -467,7 +422,7 @@ pub const Data = struct {
             }
         }
 
-        return DataErr.NotFound;
+        return sql_utils.DataErr.NotFound;
     }
 
     pub fn deleteChunkScript(self: *Data, id: i32) !void {
@@ -672,7 +627,7 @@ pub const Data = struct {
             var should_free = true;
             self.loadChunkData(world_id, x, 1, z, &td) catch |e| {
                 switch (e) {
-                    DataErr.NotFound => {
+                    sql_utils.DataErr.NotFound => {
                         td.voxels = @ptrCast(@constCast(game_chunk.fully_lit_chunk[0..]));
                         should_free = false;
                     },
@@ -690,7 +645,7 @@ pub const Data = struct {
             var should_free = true;
             self.loadChunkData(world_id, x, 0, z, &bd) catch |e| {
                 switch (e) {
-                    DataErr.NotFound => {
+                    sql_utils.DataErr.NotFound => {
                         bd.voxels = @ptrCast(@constCast(game_chunk.fully_lit_chunk[0..]));
                         should_free = false;
                     },
@@ -803,7 +758,7 @@ pub const Data = struct {
             }
         }
 
-        return DataErr.NotFound;
+        return sql_utils.DataErr.NotFound;
     }
 
     pub fn loadChunkMetadata(self: *Data, world_id: i32, x: i32, y: i32, z: i32, data: *chunkData) !void {
@@ -846,7 +801,7 @@ pub const Data = struct {
             }
         }
 
-        return DataErr.NotFound;
+        return sql_utils.DataErr.NotFound;
     }
 
     pub fn deleteChunkData(self: *Data, world_id: i32) !void {
@@ -1013,7 +968,7 @@ pub const Data = struct {
             }
         }
 
-        return DataErr.NotFound;
+        return sql_utils.DataErr.NotFound;
     }
 
     pub fn deletePlayerPosition(self: *Data, world_id: i32) !void {
@@ -1141,51 +1096,39 @@ pub const Data = struct {
             }
         }
 
-        return DataErr.NotFound;
+        return sql_utils.DataErr.NotFound;
     }
 };
 
-const create_world_table = @embedFile("./sql/v2/world/create.sql");
-
-const create_schema_table = @embedFile("./sql/v2/schema/create.sql");
-const insert_schema_stmt = @embedFile("./sql/v2/schema/insert.sql");
-const select_schema_stmt = @embedFile("./sql/v2/schema/select.sql");
-
-const create_player_pos_table = @embedFile("./sql/v2/player_position/create.sql");
 const insert_player_pos_stmt = @embedFile("./sql/v2/player_position/insert.sql");
 const update_player_pos_stmt = @embedFile("./sql/v2/player_position/update.sql");
 const select_player_pos_stmt = @embedFile("./sql/v2/player_position/select.sql");
 const delete_player_pos_stmt = @embedFile("./sql/v2/player_position/delete.sql");
 
-const create_display_settings_table = @embedFile("./sql/v2/display_settings/create.sql");
 const insert_display_settings_stmt = @embedFile("./sql/v2/display_settings/insert.sql");
 const update_display_settings_stmt = @embedFile("./sql/v2/display_settings/update.sql");
 const select_display_settings_stmt = @embedFile("./sql/v2/display_settings/select.sql");
 const list_display_settings_stmt = @embedFile("./sql/v2/display_settings/list.sql");
 const delete_display_settings_stmt = @embedFile("./sql/v2/display_settings/delete.sql");
 
-const createTextureScriptTable = @embedFile("./sql/v2/texture_script/create.sql");
 const insertTextureScriptStmt = @embedFile("./sql/v2/texture_script/insert.sql");
 const updateTextureScriptStmt = @embedFile("./sql/v2/texture_script/update.sql");
 const selectTextureStmt = @embedFile("./sql/v2/texture_script/select.sql");
 const listTextureStmt = @embedFile("./sql/v2/texture_script/list.sql");
 const deleteTextureStmt = @embedFile("./sql/v2/texture_script/delete.sql");
 
-const createChunkScriptTable = @embedFile("./sql/v2/chunk_script/create.sql");
 const insertChunkScriptStmt = @embedFile("./sql/v2/chunk_script/insert.sql");
 const updateChunkScriptStmt = @embedFile("./sql/v2/chunk_script/update.sql");
 const selectChunkStmt = @embedFile("./sql/v2/chunk_script/select.sql");
 const listChunkStmt = @embedFile("./sql/v2/chunk_script/list.sql");
 const deleteChunkStmt = @embedFile("./sql/v2/chunk_script/delete.sql");
 
-const createBlockTable = @embedFile("./sql/v2/block/create.sql");
 const insertBlockStmt = @embedFile("./sql/v2/block/insert.sql");
 const updateBlockStmt = @embedFile("./sql/v2/block/update.sql");
 const selectBlockStmt = @embedFile("./sql/v2/block/select.sql");
 const listBlockStmt = @embedFile("./sql/v2/block/list.sql");
 const deleteBlockStmt = @embedFile("./sql/v2/block/delete.sql");
 
-const createChunkDataTable = @embedFile("./sql/v2/chunk/create.sql");
 const insertChunkDataStmt = @embedFile("./sql/v2/chunk/insert.sql");
 const updateChunkDataStmt = @embedFile("./sql/v2/chunk/update.sql");
 const selectChunkDataByIDStmt = @embedFile("./sql/v2/chunk/select_by_id.sql");
@@ -1199,6 +1142,7 @@ const std = @import("std");
 const sqlite = @import("sqlite");
 const migrations = @import("migrations/migrations.zig");
 const sql_world = @import("data_world.zig");
+const sql_schema = @import("data_schema.zig");
 pub const sql_utils = @import("data_sql_utils.zig");
 const game_block = @import("../block/block.zig");
 const game_chunk = game_block.chunk;
