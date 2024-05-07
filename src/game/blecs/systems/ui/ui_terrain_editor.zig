@@ -146,7 +146,7 @@ fn loadTerrainGenScriptFunc(scriptId: i32) !void {
         }
         nameBuf[i] = c;
     }
-    game.state.ui.terrain_gen_buf = script.Script.dataScriptToScript(scriptData.script);
+    game.state.ui.terrain_gen_buf = script.utils.dataScriptToScript(scriptData.script);
     game.state.ui.terrain_gen_name_buf = nameBuf;
     game.state.ui.terrain_gen_script_color = scriptData.color;
     game.state.ui.terrain_gen_loaded_script_id = scriptId;

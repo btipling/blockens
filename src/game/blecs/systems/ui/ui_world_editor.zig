@@ -290,7 +290,7 @@ fn updateChunkConfigFromPopup(updated_script_cfg: ?updateScriptConfigAt) !void {
     try game.state.ui.world_chunk_table_data.put(wp, ch_cfg);
     var scriptData: data.colorScript = undefined;
     try game.state.db.loadChunkScript(ch_cfg.scriptId, &scriptData);
-    var ch_script = script.Script.dataScriptToScript(scriptData.script);
+    var ch_script = script.utils.dataScriptToScript(scriptData.script);
     _ = game.state.jobs.generateWorldChunk(wp, &ch_script);
 }
 
@@ -427,7 +427,7 @@ fn evalChunksFunc() !void {
                 game.state.ui.world_chunk_table_data.put(wp, ch_cfg) catch @panic("OOM");
                 continue;
             };
-            ch_script = script.Script.dataScriptToScript(scriptData.script);
+            ch_script = script.utils.dataScriptToScript(scriptData.script);
             scriptCache.put(ch_cfg.scriptId, ch_script) catch @panic("OOM");
         }
         _ = game.state.jobs.generateWorldChunk(wp, &ch_script);
