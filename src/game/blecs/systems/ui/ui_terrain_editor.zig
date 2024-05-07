@@ -62,6 +62,12 @@ fn drawControls() !void {
         })) {
             entities.screen.initDemoChunkCamera(false);
         }
+        if (zgui.button("Toggle wireframe", .{
+            .w = btn_dms[0],
+            .h = btn_dms[1],
+        })) {
+            toggleWireframe();
+        }
 
         if (zgui.colorEdit3("##Script color", .{
             .col = &game.state.ui.terrain_gen_script_color,
@@ -194,6 +200,15 @@ fn deleteTerrainGenScriptFunc() !void {
     game.state.ui.terrain_gen_loaded_script_id = 0;
 }
 
+fn toggleWireframe() void {
+    const screen: *const components.screen.Screen = ecs.get(
+        game.state.world,
+        game.state.entities.screen,
+        components.screen.Screen,
+    ) orelse return;
+    screen_helpers.toggleWireframe(screen.current);
+}
+
 const std = @import("std");
 const ecs = @import("zflecs");
 const zgui = @import("zgui");
@@ -201,6 +216,7 @@ const glfw = @import("zglfw");
 const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
 const helpers = @import("ui_helpers.zig");
+const screen_helpers = @import("../screen_helpers.zig");
 const game = @import("../../../game.zig");
 const data = @import("../../../data/data.zig");
 const script = @import("../../../script/script.zig");
