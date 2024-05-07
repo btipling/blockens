@@ -7,11 +7,6 @@ pub const ScriptError = error{
 
 pub fn dataScriptToScript(scriptData: [360_001]u8) [maxLuaScriptSize]u8 {
     var buf = [_]u8{0} ** maxLuaScriptSize;
-    for (scriptData, 0..) |c, i| {
-        if (i >= maxLuaScriptSize) {
-            break;
-        }
-        buf[i] = c;
-    }
+    @memcpy(buf[0..maxLuaScriptSize], scriptData[0..maxLuaScriptSize]);
     return buf;
 }
