@@ -73,7 +73,7 @@ pub const Script = struct {
         {
             // push noise generator to lua
             self.luaInstance.pushFunction(ziglua.wrap(genNoise));
-            self.luaInstance.setGlobal("genNoise");
+            self.luaInstance.setGlobal("gen_noise");
         }
         {
             // push chunk coordinates to lua
