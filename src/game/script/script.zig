@@ -152,6 +152,9 @@ pub const Script = struct {
             self.luaInstance.setGlobal("RT_XZ");
             self.luaInstance.pushInteger(2);
             self.luaInstance.setGlobal("RT_NONE");
+
+            self.luaInstance.pushInteger(seed);
+            self.luaInstance.setGlobal("SEED");
         }
         return script_terrain.evalTerrainFunc(self.allocator, &self.luaInstance, buf);
     }
