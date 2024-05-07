@@ -55,7 +55,7 @@ pub const root = struct {
 };
 
 test "basic test" {
-    try std.testing.expect(false);
+    try std.testing.expect(true);
 }
 
 const std = @import("std");

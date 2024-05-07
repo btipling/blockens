@@ -10,10 +10,10 @@ function Test-Blockens {
     )
     Write-Host "Testing $TestPath"
    
-    Set-Variable  -Name "passed" -Value $true
-    zig test $TestPath || Set-Variable  -Name "passed" -Value $false
+    Set-Variable  -Name "passed" -Value $false
+    zig test $TestPath && Set-Variable  -Name "passed" -Value $true
    
-    return Get-Variable -Name "passed"
+    return Get-Variable -Name "passed" -ValueOnly
 }
 
 $tests = @(
@@ -30,7 +30,8 @@ if ($filter -ne $null) {
     $tests_to_run = @($tests_to_run) -match $filter
 }
 foreach ($test in $tests_to_run) {
-    if (Test-Blockens -TestPath $test -eq $false) {
+    $passed = Test-Blockens -TestPath $test 
+    if ($passed -eq $false) {
         $exit_code = 1
     }
 }
