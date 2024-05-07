@@ -132,11 +132,14 @@ test "compress and initFromCompressed" {
     defer c1.deinit();
     var al = std.ArrayList(u8).init(std.testing.allocator);
     defer al.deinit();
-    c1.compress(al.writer());
+    c1.compress(al.writer()) catch @panic("expected compress to succeed");
 
     // Set compressor that decompresses
     var fbs = std.io.fixedBufferStream(al.items);
-    const c2: *Compress = initFromCompressed(std.testing.allocator, fbs.reader());
+    const c2: *Compress = initFromCompressed(
+        std.testing.allocator,
+        fbs.reader(),
+    ) catch @panic("expected init from compress to succeed");
     defer c2.deinit();
 
     // Validate the compressed data is what was decompressed
