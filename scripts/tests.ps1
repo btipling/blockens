@@ -14,7 +14,8 @@ $tests = @(
     ".\src\game\block\lighting_ambient_edit.zig", 
     ".\src\game\block\lighting_ambient_fall.zig",
     ".\src\game\block\block.zig",
-    ".\src\game\block\chunk_compress.zig"
+    ".\src\game\block\chunk_compress.zig",
+    ".\src\game\block\chunk_terrain_descriptor.zig"
 
 )
 
