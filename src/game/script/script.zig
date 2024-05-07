@@ -29,6 +29,29 @@ fn setOctaves(lua: *Lua) i32 {
     return 1;
 }
 
+fn setNoiseType(lua: *Lua) i32 {
+    const nt = lua.toInteger(1) catch 0;
+    switch (nt) {
+        0 => noiseGen.noise_type = .opensimplex2,
+        1 => noiseGen.noise_type = .opensimplex2s,
+        2 => noiseGen.noise_type = .cellular,
+        3 => noiseGen.noise_type = .perlin,
+        4 => noiseGen.noise_type = .value_cubic,
+        else => noiseGen.noise_type = .value,
+    }
+    return 1;
+}
+
+fn setRotationType(lua: *Lua) i32 {
+    const nt = lua.toInteger(1) catch 0;
+    switch (nt) {
+        0 => noiseGen.rotation_type3 = .improve_xy_planes,
+        1 => noiseGen.rotation_type3 = .improve_xz_planes,
+        else => noiseGen.rotation_type3 = .none,
+    }
+    return 1;
+}
+
 pub const Script = struct {
     luaInstance: Lua,
     allocator: std.mem.Allocator,
@@ -96,6 +119,10 @@ pub const Script = struct {
             self.luaInstance.setGlobal("set_jitter");
             self.luaInstance.pushFunction(ziglua.wrap(setOctaves));
             self.luaInstance.setGlobal("set_octaves");
+            self.luaInstance.pushFunction(ziglua.wrap(setNoiseType));
+            self.luaInstance.setGlobal("set_noise_type");
+            self.luaInstance.pushFunction(ziglua.wrap(setRotationType));
+            self.luaInstance.setGlobal("set_rotation_type");
         }
         {
             // push chunk coordinates to lua
@@ -105,6 +132,26 @@ pub const Script = struct {
             self.luaInstance.setGlobal("chunk_y");
             self.luaInstance.pushNumber(@floatCast(pos[2]));
             self.luaInstance.setGlobal("chunk_z");
+
+            self.luaInstance.pushInteger(0);
+            self.luaInstance.setGlobal("NT_OPEN_SIMPLEX2");
+            self.luaInstance.pushInteger(1);
+            self.luaInstance.setGlobal("NT_OPEN_SIMPLEX2S");
+            self.luaInstance.pushInteger(2);
+            self.luaInstance.setGlobal("NT_CELLUAR");
+            self.luaInstance.pushInteger(3);
+            self.luaInstance.setGlobal("NT_PERLIN");
+            self.luaInstance.pushInteger(4);
+            self.luaInstance.setGlobal("NT_VALUE_CUBIC");
+            self.luaInstance.pushInteger(5);
+            self.luaInstance.setGlobal("NT_VALUE");
+
+            self.luaInstance.pushInteger(0);
+            self.luaInstance.setGlobal("RT_XY");
+            self.luaInstance.pushInteger(1);
+            self.luaInstance.setGlobal("RT_XZ");
+            self.luaInstance.pushInteger(2);
+            self.luaInstance.setGlobal("RT_NONE");
         }
         return script_terrain.evalTerrainFunc(self.allocator, &self.luaInstance, buf);
     }
