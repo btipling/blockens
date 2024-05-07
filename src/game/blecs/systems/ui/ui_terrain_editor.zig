@@ -93,12 +93,6 @@ fn drawControls() !void {
         })) {
             try listTerrainGenScripts();
         }
-        if (zgui.button("Refresh list", .{
-            .w = btn_dms[0],
-            .h = btn_dms[1],
-        })) {
-            try listTerrainGenScripts();
-        }
         var params: helpers.ScriptOptionsParams = .{};
         if (helpers.scriptOptionsListBox(game.state.ui.terrain_gen_script_options, &params)) |scriptOptionId| {
             try loadTerrainGenScriptFunc(scriptOptionId);

@@ -38,6 +38,12 @@ pub const TerrainGenJob = struct {
             return;
         };
         errdefer game.state.allocator.free(data);
+        var ci: usize = 0;
+        while (ci < chunk.chunkSize) : (ci += 1) {
+            var bd: block.BlockData = block.BlockData.fromId(data[ci]);
+            bd.setSettingsAmbient();
+            data[ci] = bd.toId();
+        }
 
         const i = self.position[3];
         const pos: @Vector(4, i32) = indexToPosition(i);
