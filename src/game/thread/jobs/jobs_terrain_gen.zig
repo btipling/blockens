@@ -24,16 +24,16 @@ pub const TerrainGenJob = struct {
     }
 
     pub fn terrainGenJob(self: *TerrainGenJob) void {
-        const terrain_position: @Vector(4, f32) = .{
-            @as(f32, @floatFromInt(self.position[0])),
-            @as(f32, @floatFromInt(self.position[1])),
-            @as(f32, @floatFromInt(self.position[2])),
-            0,
-        };
+        // const terrain_position: @Vector(4, f32) = .{
+        //     @as(f32, @floatFromInt(self.position[0])),
+        //     @as(f32, @floatFromInt(self.position[1])),
+        //     @as(f32, @floatFromInt(self.position[2])),
+        //     0,
+        // };
 
         const data = game.state.script.evalTerrainFunc(
-            game.state.ui.terrain_gen_seed,
-            terrain_position,
+            // game.state.ui.terrain_gen_seed,
+            // terrain_position,
             &game.state.ui.terrain_gen_buf,
         ) catch |err| {
             std.debug.print("Error evaluating terrain gen function: {}\n", .{err});
@@ -78,6 +78,26 @@ pub const TerrainGenJob = struct {
         buffer.put_data(msg, bd) catch @panic("OOM");
         buffer.write_message(msg) catch @panic("unable to write message");
     }
+
+    //  noiseGen = allocator.create(znoise.FnlGenerator) catch @panic("OOM");
+
+    //     noiseGen.* = znoise.FnlGenerator{
+    //         .seed = 0,
+    //         .frequency = -0.002,
+    //         .noise_type = .opensimplex2,
+    //         .rotation_type3 = .improve_xz_planes,
+    //         .fractal_type = .fbm,
+    //         .octaves = 10,
+    //         .lacunarity = 1.350,
+    //         .gain = 0.0,
+    //         .weighted_strength = 0.0,
+    //         .ping_pong_strength = 0.0,
+    //         .cellular_distance_func = .euclidean,
+    //         .cellular_return_type = .cellvalue,
+    //         .cellular_jitter_mod = 2.31,
+    //         .domain_warp_type = .basicgrid,
+    //         .domain_warp_amp = 1.0,
+    //     };
 };
 
 const std = @import("std");
