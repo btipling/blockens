@@ -74,6 +74,10 @@ pub fn build(b: *std.Build) !void {
     const zmath = b.dependency("zmath", .{});
     exe.root_module.addImport("zmath", zmath.module("root"));
 
+    const znoise = b.dependency("znoise", .{});
+    exe.root_module.addImport("znoise", znoise.module("root"));
+    exe.linkLibrary(znoise.artifact("FastNoiseLite"));
+
     @import("system_sdk").addLibraryPathsTo(exe);
 
     const lua_module = lua.buildLibrary(

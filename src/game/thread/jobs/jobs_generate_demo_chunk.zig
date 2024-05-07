@@ -12,7 +12,6 @@ pub const GenerateDemoChunkJob = struct {
     }
 
     pub fn generateDemoChunkJob(_: *@This()) void {
-        std.debug.print("GenerateDemoChunkJob: evaling current chunk buf\n", .{});
         var chunk_data = game.state.script.evalChunkFunc(&game.state.ui.chunk_buf) catch |err| {
             std.debug.print("Error evaluating chunk function: {}\n", .{err});
             return;

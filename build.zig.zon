@@ -42,6 +42,7 @@
         .zflecs = .{ .path = "libs/zflecs" },
         .zstbi = .{ .path = "libs/zstbi" },
         .zmath = .{ .path = "libs/zmath" },
+        .znoise = .{ .path = "libs/znoise" },
     },
     .paths = .{
         "",

@@ -24,16 +24,24 @@ pub const TerrainGenJob = struct {
     }
 
     pub fn terrainGenJob(self: *TerrainGenJob) void {
-        const data = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-        errdefer game.state.allocator.free(data);
-
         std.debug.print("current script:\n `{s}`\n\n", .{&game.state.ui.terrain_gen_buf});
+
+        const terrain_position: @Vector(4, f32) = .{
+            @as(f32, @floatFromInt(self.position[0])),
+            @as(f32, @floatFromInt(self.position[1])),
+            @as(f32, @floatFromInt(self.position[2])),
+            0,
+        };
+
+        const data = game.state.script.evalTerrainFunc(terrain_position, &game.state.ui.terrain_gen_buf) catch |err| {
+            std.debug.print("Error evaluating terrain gen function: {}\n", .{err});
+            return;
+        };
+        errdefer game.state.allocator.free(data);
 
         const i = self.position[3];
         const pos: @Vector(4, i32) = indexToPosition(i);
-        @memset(data, 0xFF_FFF_00 + @as(u32, @intCast(i + 1)));
-
-        const position: @Vector(4, f32) = .{
+        const chunk_position: @Vector(4, f32) = .{
             @as(f32, @floatFromInt(pos[0])),
             @as(f32, @floatFromInt(pos[1])),
             @as(f32, @floatFromInt(pos[2])),
@@ -44,7 +52,7 @@ pub const TerrainGenJob = struct {
         const bd: buffer.buffer_data = .{
             .terrain_gen = .{
                 .data = data,
-                .position = position,
+                .position = chunk_position,
             },
         };
 

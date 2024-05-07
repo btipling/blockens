@@ -32,6 +32,12 @@ pub const Script = struct {
         defer self.mutex.unlock();
         return script_chunk.evalChunkFunc(self.allocator, &self.luaInstance, buf);
     }
+
+    pub fn evalTerrainFunc(self: *Script, pos: @Vector(4, f32), buf: []const u8) ![]u32 {
+        self.mutex.lock();
+        defer self.mutex.unlock();
+        return script_terrain.evalTerrainFunc(self.allocator, &self.luaInstance, pos, buf);
+    }
 };
 
 const std = @import("std");
