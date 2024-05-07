@@ -118,23 +118,23 @@ pub const descriptorNode = struct {
             const ov = if (nc.divisor) |d| @as(f32, @floatFromInt(y)) / d else nc.noise.?;
             switch (nc.operator) {
                 .eq => {
-                    if (nv == ov and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
+                    if (ov == nv and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
                     if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
                 },
                 .gt => {
-                    if (nv > ov and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
+                    if (ov > nv and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
                     if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
                 },
                 .lt => {
-                    if (nv < ov and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
+                    if (ov < nv and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
                     if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
                 },
                 .gte => {
-                    if (nv >= ov and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
+                    if (ov >= nv and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
                     if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
                 },
                 .lte => {
-                    if (nv <= ov and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
+                    if (ov <= nv and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
                     if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
                 },
             }
@@ -211,7 +211,7 @@ test "basic test" {
     var some_grass_on_top = rn.createNode();
     var grass_noise_conditional: noiseConditional = .{
         .noise = 0.5,
-        .operator = .gte,
+        .operator = .lte,
     };
     var grass_block = rn.createNode();
     grass_block.block_id = b3;
@@ -240,6 +240,66 @@ test "basic test" {
     const test4 = rn.node.getBlockId(63, 0.3) catch @panic("expected block");
     try std.testing.expectEqual(b2.block_type, test4.block_type);
     try std.testing.expectEqual(b2.block_id, test4.block_id);
+}
+
+test "basic test divisor" {
+    const b1: blockId = .{ .block_id = 0, .block_type = .air };
+    const b2: blockId = .{ .block_id = 1, .block_type = .stone };
+    const b3: blockId = .{ .block_id = 2, .block_type = .grass };
+
+    var rn: *root = root.init(std.testing.allocator);
+    defer rn.deinit();
+
+    rn.addBlock(b1);
+    rn.addBlock(b2);
+    rn.addBlock(b3);
+
+    rn.node.block_id = b1;
+    rn.node.y_conditional = .{
+        .y = 64,
+        .operator = .gte,
+    };
+
+    var stone_block = rn.createNode();
+    stone_block.block_id = b2;
+    rn.node.y_conditional.?.is_false = stone_block;
+
+    var some_hill_on_top = rn.createNode();
+    var hill_conditional: noiseConditional = .{
+        .divisor = 128,
+        .operator = .lt,
+    };
+    var grass_block = rn.createNode();
+    grass_block.block_id = b3;
+    hill_conditional.is_true = grass_block;
+
+    rn.node.y_conditional.?.is_true = some_hill_on_top;
+    some_hill_on_top.noise_conditional = hill_conditional;
+
+    // bot chunk should all be stone
+    const test1 = rn.node.getBlockId(33, 1) catch @panic("expected block");
+    try std.testing.expectEqual(b2.block_type, test1.block_type);
+    try std.testing.expectEqual(b2.block_id, test1.block_id);
+
+    // test grass near the bottom of top chunk
+    const test2 = rn.node.getBlockId(65, 1) catch @panic("expected block");
+    try std.testing.expectEqual(b3.block_type, test2.block_type);
+    try std.testing.expectEqual(b3.block_id, test2.block_id);
+
+    // // test grass
+    const test3 = rn.node.getBlockId(70, 1) catch @panic("expected block");
+    try std.testing.expectEqual(b3.block_type, test3.block_type);
+    try std.testing.expectEqual(b3.block_id, test3.block_id);
+
+    // // Test noise doesn't match a bit higher
+    const test4 = rn.node.getBlockId(100, 0.5) catch @panic("expected block");
+    try std.testing.expectEqual(b1.block_type, test4.block_type);
+    try std.testing.expectEqual(b1.block_id, test4.block_id);
+
+    // // Test noise doesn't match all the way up
+    const test5 = rn.node.getBlockId(127, 0.3) catch @panic("expected block");
+    try std.testing.expectEqual(b1.block_type, test5.block_type);
+    try std.testing.expectEqual(b1.block_id, test5.block_id);
 }
 
 const std = @import("std");
