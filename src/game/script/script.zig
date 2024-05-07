@@ -14,6 +14,21 @@ fn genNoise(lua: *Lua) i32 {
     return 1;
 }
 
+fn setFreq(lua: *Lua) i32 {
+    noiseGen.frequency = @floatCast(lua.toNumber(1) catch 0);
+    return 1;
+}
+
+fn setJitter(lua: *Lua) i32 {
+    noiseGen.cellular_jitter_mod = @floatCast(lua.toNumber(1) catch 0);
+    return 1;
+}
+
+fn setOctaves(lua: *Lua) i32 {
+    noiseGen.octaves = @intCast(lua.toInteger(1) catch 0);
+    return 1;
+}
+
 pub const Script = struct {
     luaInstance: Lua,
     allocator: std.mem.Allocator,
@@ -72,9 +87,15 @@ pub const Script = struct {
         noiseGen.seed = seed;
         self.luaInstance.setTop(0);
         {
-            // push noise generator to lua
+            // push noise generator functions to lua
             self.luaInstance.pushFunction(ziglua.wrap(genNoise));
             self.luaInstance.setGlobal("gen_noise");
+            self.luaInstance.pushFunction(ziglua.wrap(setFreq));
+            self.luaInstance.setGlobal("set_frequency");
+            self.luaInstance.pushFunction(ziglua.wrap(setJitter));
+            self.luaInstance.setGlobal("set_jitter");
+            self.luaInstance.pushFunction(ziglua.wrap(setOctaves));
+            self.luaInstance.setGlobal("set_octaves");
         }
         {
             // push chunk coordinates to lua
