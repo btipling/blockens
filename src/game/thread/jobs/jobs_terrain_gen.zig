@@ -24,8 +24,6 @@ pub const TerrainGenJob = struct {
     }
 
     pub fn terrainGenJob(self: *TerrainGenJob) void {
-        std.debug.print("current script:\n `{s}`\n\n", .{&game.state.ui.terrain_gen_buf});
-
         const terrain_position: @Vector(4, f32) = .{
             @as(f32, @floatFromInt(self.position[0])),
             @as(f32, @floatFromInt(self.position[1])),
@@ -42,6 +40,7 @@ pub const TerrainGenJob = struct {
             return;
         };
         errdefer game.state.allocator.free(data);
+        std.debug.print("Generated terrain in job\n", .{});
         var ci: usize = 0;
         while (ci < chunk.chunkSize) : (ci += 1) {
             var bd: block.BlockData = block.BlockData.fromId(data[ci]);

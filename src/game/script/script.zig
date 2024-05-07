@@ -68,6 +68,7 @@ pub const Script = struct {
     pub fn evalTerrainFunc(self: *Script, seed: i32, pos: @Vector(4, f32), buf: []const u8) ![]u32 {
         self.mutex.lock();
         defer self.mutex.unlock();
+        std.debug.print("eval terrain starting\n", .{});
         noiseGen.seed = seed;
         self.luaInstance.setTop(0);
         {
