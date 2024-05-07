@@ -33,7 +33,11 @@ pub const TerrainGenJob = struct {
             0,
         };
 
-        const data = game.state.script.evalTerrainFunc(terrain_position, &game.state.ui.terrain_gen_buf) catch |err| {
+        const data = game.state.script.evalTerrainFunc(
+            game.state.ui.terrain_gen_seed,
+            terrain_position,
+            &game.state.ui.terrain_gen_buf,
+        ) catch |err| {
             std.debug.print("Error evaluating terrain gen function: {}\n", .{err});
             return;
         };
