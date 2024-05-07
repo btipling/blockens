@@ -1,14 +1,20 @@
 function generate_terrain()
-    math.randomseed(os.time())
+
+    set_frequency(0.009)
+    set_jitter(5.5)
+    set_octaves(8)
+
     local blocks = {}
     local air = 0
     local stone = 1
     local grass = 2
     local lava = 4
+
     local chunk_material = stone
     if chunk_y == 1 then
         chunk_material = grass
     end
+
     for i = 1, 64 * 64 * 64 do
         local _i = i - 1
         local x = _i % 64
@@ -20,6 +26,7 @@ function generate_terrain()
             blocks[i] = air
         end
     end
+
     return blocks
 end
 

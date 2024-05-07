@@ -55,6 +55,14 @@ fn drawControls() !void {
             );
         }
 
+        if (zgui.sliderInt("seed", .{
+            .v = &game.state.ui.terrain_gen_seed,
+            .min = 0,
+            .max = 10_000,
+        })) {
+            entities.screen.initDemoChunkCamera(false);
+        }
+
         if (zgui.colorEdit3("##Script color", .{
             .col = &game.state.ui.terrain_gen_script_color,
             .flags = .{
