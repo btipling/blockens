@@ -225,7 +225,7 @@ test "basic test" {
     try std.testing.expectEqual(b3.block_type, test2.block_type);
     try std.testing.expectEqual(b3.block_id, test2.block_id);
 
-    // Test y doesn't equa
+    // Test y doesn't equal
     const test3 = rn.node.getBlockId(22, 1) catch @panic("expected block");
     try std.testing.expectEqual(b2.block_type, test3.block_type);
     try std.testing.expectEqual(b2.block_id, test3.block_id);
