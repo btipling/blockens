@@ -5,11 +5,19 @@ pub const maxLuaScriptNameSize = script_utils.maxLuaScriptNameSize;
 
 var noiseGen: *znoise.FnlGenerator = undefined;
 
-fn genNoise(lua: *Lua) i32 {
+fn genNoise3(lua: *Lua) i32 {
     const x: f32 = @floatCast(lua.toNumber(1) catch 0);
     const y: f32 = @floatCast(lua.toNumber(2) catch 0);
     const z: f32 = @floatCast(lua.toNumber(3) catch 0);
     const n = noiseGen.noise3(x, y, z);
+    lua.pushNumber(@floatCast(n));
+    return 1;
+}
+
+fn genNoise2(lua: *Lua) i32 {
+    const a: f32 = @floatCast(lua.toNumber(1) catch 0);
+    const b: f32 = @floatCast(lua.toNumber(2) catch 0);
+    const n = noiseGen.noise2(a, b);
     lua.pushNumber(@floatCast(n));
     return 1;
 }
@@ -111,8 +119,10 @@ pub const Script = struct {
         self.luaInstance.setTop(0);
         {
             // push noise generator functions to lua
-            self.luaInstance.pushFunction(ziglua.wrap(genNoise));
-            self.luaInstance.setGlobal("gen_noise");
+            self.luaInstance.pushFunction(ziglua.wrap(genNoise2));
+            self.luaInstance.setGlobal("gen_noise2");
+            self.luaInstance.pushFunction(ziglua.wrap(genNoise3));
+            self.luaInstance.setGlobal("gen_noise3");
             self.luaInstance.pushFunction(ziglua.wrap(setFreq));
             self.luaInstance.setGlobal("set_frequency");
             self.luaInstance.pushFunction(ziglua.wrap(setJitter));

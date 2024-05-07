@@ -1,5 +1,4 @@
 function generate_terrain()
-    math.randomseed(SEED)
     if chunk_y == 1 then
         set_frequency(0.05)
         set_jitter(0)
@@ -33,46 +32,11 @@ function generate_terrain()
         local z = math.floor(_i / (64 * 64)) % 64
 
         blocks[i] = chunk_material
-        local n = gen_noise(x + (chunk_x * 64), y + (chunk_y * 64), z + (chunk_z * 64))
+        local n = gen_noise2(x + (chunk_x * 64), z + (chunk_z * 64))
+        local inverted_norm_y = 64 - y / 64
         if chunk_y == 1 then
-            if math.random(y % 64) > 10 then
-                blocks[i] = air
-            else
-            if y > 50 then
-                blocks[i] = air
-            else
-                if y < 6 then
-                    blocks[i] = grass
-                    if y < 5 then
-                    blocks[i] = dirt
-                    end
-                else
-                    if n > 0.7 then
-                        blocks[i] = grass
-                        if n < 0.6 then
-                            blocks[i] = dirt
-                        end
-                    end
-                end
-            end
-        end
-        else
-            chunk_material = stone
-            if y == 63 then
-                chunk_material = grass
-            else
-                if y >= 60 then
-                    chunk_material = dirt
-                end
-            end
-            if y < 25 then
-                if n >= 0.35 then
-                    blocks[i] = lava
-                else
-                    if n > 0.3 and n < 0.35 then
-                        blocks[i] = lava
-                    end
-                end
+            if y > n then
+                blocks[i] = grass
             end
         end
     end
