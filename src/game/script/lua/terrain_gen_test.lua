@@ -1,16 +1,16 @@
 function generate_terrain()
     if chunk_y == 1 then
-        set_frequency(0.05)
+        set_frequency(0.01)
         set_jitter(0)
         set_octaves(1)
-        set_noise_type(NT_CELLUAR)
-        set_rotation_type(RT_XY)
+        set_noise_type(NT_OPEN_SIMPLEX2)
+        set_rotation_type(RT_NONE)
     else
-        set_frequency(0.02)
-        set_jitter(15.5)
-        set_octaves(30)
-        set_noise_type(NT_CELLUAR)
-        set_rotation_type(RT_XY)
+        set_frequency(0.01)
+        set_jitter(0)
+        set_octaves(1)
+        set_noise_type(NT_OPEN_SIMPLEX2)
+        set_rotation_type(RT_NONE)
     end
 
     local blocks = {}
@@ -19,6 +19,7 @@ function generate_terrain()
     local grass = 2
     local dirt = 3
     local lava = 4
+    local water = 5
 
     local chunk_material = stone
     if chunk_y == 1 then
@@ -33,10 +34,19 @@ function generate_terrain()
 
         blocks[i] = chunk_material
         local n = gen_noise2(x + (chunk_x * 64), z + (chunk_z * 64))
-        local inverted_norm_y = 64 - y / 64
         if chunk_y == 1 then
-            if y > n then
+            local n_y = y / 32
+            if n_y < n then
                 blocks[i] = grass
+            end
+        else
+            local n_y = y / 32
+            if n_y < n then
+                blocks[i] = lava
+            else
+                if y == 63 then
+                    blocks[i] = grass
+                end
             end
         end
     end
