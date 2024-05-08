@@ -22,6 +22,7 @@ pub fn init(allocator: std.mem.Allocator, lua: *Lua) *Builder {
         .lua = lua,
     };
     builder = b;
+    builder.map.append(allocator, r.node) catch @panic("OOM");
     return b;
 }
 
@@ -33,6 +34,23 @@ pub fn deinit(self: *Builder) void {
 
 fn createDesc(lua: *Lua) i32 {
     const d = builder.root.createNode();
+
+    const i = builder.map.items.len;
+    builder.map.append(builder.allocator, d) catch @panic("OOM");
+    lua.pushInteger(@intCast(i));
+    return 1;
+}
+
+fn getRootNode(lua: *Lua) i32 {
+    lua.pushInteger(0);
+    return 1;
+}
+
+fn setRootNode(lua: *Lua) i32 {
+    const desc_id: u8 = @intCast(lua.toInteger(1) catch 0);
+
+    const d = builder.root.createNode();
+    builder.map.items[desc_id].y_conditional.?.is_true = d;
 
     const i = builder.map.items.len;
     builder.map.append(builder.allocator, d) catch @panic("OOM");
