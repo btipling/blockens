@@ -14,6 +14,7 @@ pub const buffer_message_type = enum(u3) {
     lighting,
     lighting_cross_chunk,
     load_chunk,
+    descriptor_gen,
     terrain_gen,
 };
 
@@ -24,6 +25,7 @@ pub const buffer_data = union(buffer_message_type) {
     lighting: lightings_data,
     lighting_cross_chunk: lightings_data,
     load_chunk: load_chunk_data,
+    descriptor_gen: descriptor_gen_data,
     terrain_gen: terrain_gen_data,
 };
 
@@ -67,6 +69,12 @@ pub const load_chunk_data = struct {
     cfg_b: ui.chunkConfig,
     exists: bool,
     start_game: bool,
+};
+
+pub const descriptor_gen_data = struct {
+    desc_root: *descriptor.root,
+    offset_x: i32,
+    offset_z: i32,
 };
 
 pub const terrain_gen_data = struct {
@@ -236,3 +244,4 @@ const ui = @import("../ui.zig");
 const blecs = @import("../blecs/blecs.zig");
 const block = @import("../block/block.zig");
 const chunk = block.chunk;
+const descriptor = chunk.descriptor;

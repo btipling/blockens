@@ -32,7 +32,7 @@ pub const Script = struct {
         return script_chunk.evalChunkFunc(self.allocator, &self.luaInstance, buf);
     }
 
-    pub fn evalTerrainFunc(self: *Script, buf: []const u8) ![]u32 {
+    pub fn evalTerrainFunc(self: *Script, buf: []const u8) !*descriptor.root {
         self.mutex.lock();
         defer self.mutex.unlock();
         std.debug.print("eval terrain starting\n", .{});
@@ -50,5 +50,8 @@ const script_texture = @import("script_texture.zig");
 const script_chunk = @import("script_chunk.zig");
 const script_terrain = @import("script_terrain.zig");
 const script_utils = @import("script_utils.zig");
+const block = @import("../block/block.zig");
+const chunk = block.chunk;
+const descriptor = chunk.descriptor;
 
 pub const utils = script_utils;

@@ -6,7 +6,7 @@ lua: *Lua = undefined,
 const Builder = @This();
 var builder: *Builder = undefined;
 
-// Only one of these can exist a time.
+// Only one of these can exist a time. Caller owns root.
 pub fn init(allocator: std.mem.Allocator, lua: *Lua) *Builder {
     const b = allocator.create(
         Builder,
@@ -25,8 +25,8 @@ pub fn init(allocator: std.mem.Allocator, lua: *Lua) *Builder {
     return b;
 }
 
+// root is not deinited intentionally
 pub fn deinit(self: *Builder) void {
-    self.root.deinit();
     self.map.deinit(self.allocator);
     self.allocator.destroy(self);
 }
@@ -36,7 +36,7 @@ fn createDesc(lua: *Lua) i32 {
 
     const i = builder.map.items.len;
     builder.map.append(builder.allocator, d) catch @panic("OOM");
-    lua.pushInteger(i);
+    lua.pushInteger(@intCast(i));
     return 1;
 }
 
@@ -49,7 +49,8 @@ fn addBlockId(lua: *Lua) i32 {
 
 fn setDescBlock(lua: *Lua) i32 {
     const desc_id: u8 = @intCast(lua.toInteger(1) catch 0);
-    const block_type: u8 = @intCast(lua.toInteger(1) catch 0);
+    const block_type_index: u8 = @intCast(lua.toInteger(1) catch 0);
+    const block_type: desc.blockType = @enumFromInt(block_type_index);
     var d = builder.map.items[desc_id];
     for (builder.root.block_ids) |bi| {
         if (bi.block_type == block_type) {
@@ -76,11 +77,11 @@ fn setYConditionTrue(lua: *Lua) i32 {
     const desc_id: u8 = @intCast(lua.toInteger(1) catch 0);
 
     const d = builder.root.createNode();
-    builder.map.items[desc_id].?.y_conditional.is_true = d;
+    builder.map.items[desc_id].y_conditional.?.is_true = d;
 
     const i = builder.map.items.len;
     builder.map.append(builder.allocator, d) catch @panic("OOM");
-    lua.pushInteger(i);
+    lua.pushInteger(@intCast(i));
     return 1;
 }
 
@@ -88,11 +89,11 @@ fn setYConditionFalse(lua: *Lua) i32 {
     const desc_id: u8 = @intCast(lua.toInteger(1) catch 0);
 
     const d = builder.root.createNode();
-    builder.map.items[desc_id].?.y_conditional.is_false = d;
+    builder.map.items[desc_id].y_conditional.?.is_false = d;
 
     const i = builder.map.items.len;
     builder.map.append(builder.allocator, d) catch @panic("OOM");
-    lua.pushInteger(i);
+    lua.pushInteger(@intCast(i));
     return 1;
 }
 
@@ -124,11 +125,11 @@ fn setNoiseConditionTrue(lua: *Lua) i32 {
     const desc_id: u8 = @intCast(lua.toInteger(1) catch 0);
 
     const d = builder.root.createNode();
-    builder.map.items[desc_id].?.noise_conditional.is_true = d;
+    builder.map.items[desc_id].noise_conditional.?.is_true = d;
 
     const i = builder.map.items.len;
     builder.map.append(builder.allocator, d) catch @panic("OOM");
-    lua.pushInteger(i);
+    lua.pushInteger(@intCast(i));
     return 1;
 }
 
@@ -136,11 +137,11 @@ fn setNoiseConditionFalse(lua: *Lua) i32 {
     const desc_id: u8 = @intCast(lua.toInteger(1) catch 0);
 
     const d = builder.root.createNode();
-    builder.map.items[desc_id].?.noise_conditional.is_false = d;
+    builder.map.items[desc_id].noise_conditional.?.is_false = d;
 
     const i = builder.map.items.len;
     builder.map.append(builder.allocator, d) catch @panic("OOM");
-    lua.pushInteger(i);
+    lua.pushInteger(@intCast(i));
     return 1;
 }
 
@@ -172,7 +173,8 @@ fn setNoiseType(lua: *Lua) i32 {
     return 1;
 }
 
-pub fn build_descriptor(li: *Lua) void {
+pub fn build_descriptor(self: *Builder) void {
+    const li = self.lua;
     {
         li.pushFunction(ziglua.wrap(createDesc));
         li.setGlobal("create_desc");
