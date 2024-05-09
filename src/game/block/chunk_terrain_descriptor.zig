@@ -90,7 +90,7 @@ pub const noiseConditional = struct {
     is_true: ?*descriptorNode = null,
     is_false: ?*descriptorNode = null,
 
-    pub fn debugPrint(self: yPositionConditional, depth: usize) void {
+    pub fn debugPrint(self: noiseConditional, depth: usize) void {
         {
             var i: usize = 0;
             while (i < depth) : (i += 1) std.debug.print("\t", .{});
@@ -143,6 +143,12 @@ pub const descriptorNode = struct {
         std.debug.print(" - descriptorNode\n", .{});
         if (self.block_id) |bi| {
             bi.debugPrint(depth + 1);
+        }
+        if (self.y_conditional) |yc| {
+            yc.debugPrint(depth + 1);
+        }
+        if (self.noise_conditional) |nc| {
+            nc.debugPrint(depth + 1);
         }
     }
 

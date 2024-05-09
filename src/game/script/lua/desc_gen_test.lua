@@ -22,11 +22,9 @@ function generate_descriptor()
     local root_node = get_root_node()
     set_desc_block(root_node, stone)
     set_y_cond(root_node, OP_GTE, 64)
-    
-    local top_chunk = create_desc()
-    set_desc_block(top_chunk, grass)
 
-    set_y_cond_true(root_node, top_chunk)
+    local top_chunk = set_y_cond_true(root_node)
+    set_desc_block(top_chunk, grass)
 
 end
 
