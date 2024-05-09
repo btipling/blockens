@@ -24,6 +24,7 @@ pub fn handle_incoming() !void {
             .lighting => handle_lighting(msg),
             .lighting_cross_chunk => handle_lighting_cross_chunk(msg),
             .load_chunk => handle_load_chunk(msg),
+            .descriptor_gen => handle_descriptor_gen(msg),
             .terrain_gen => handle_terrain_gen(msg),
         }
         i += 0;
@@ -151,6 +152,21 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
     ui_helpers.loadCharacterInWorld();
 }
 
+fn handle_descriptor_gen(msg: buffer.buffer_message) void {
+    if (!buffer.progress_report(msg).done) return;
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const dg_d: buffer.descriptor_gen_data = switch (bd) {
+        buffer.buffer_data.descriptor_gen => |d| d,
+        else => return,
+    };
+
+    _ = game.state.jobs.generateTerrain(
+        dg_d.desc_root,
+        dg_d.offset_x,
+        dg_d.offset_z,
+    );
+}
+
 fn handle_terrain_gen(msg: buffer.buffer_message) void {
     const pr = buffer.progress_report(msg);
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
@@ -159,7 +175,8 @@ fn handle_terrain_gen(msg: buffer.buffer_message) void {
         else => return,
     };
     const wp = chunk.worldPosition.initFromPositionV(tg_d.position);
-    game.state.blocks.generated_settings_chunks.put(wp, tg_d.data) catch @panic("OOM");
+    if (!tg_d.succeeded) return;
+    game.state.blocks.generated_settings_chunks.put(wp, tg_d.data.?) catch @panic("OOM");
     if (!pr.done) return;
     std.debug.print("terrain generated {d}.\n", .{
         game.state.blocks.generated_settings_chunks.count(),

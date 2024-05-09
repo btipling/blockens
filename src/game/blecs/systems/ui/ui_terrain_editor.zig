@@ -49,7 +49,7 @@ fn drawControls() !void {
             .w = btn_dms[0],
             .h = btn_dms[1],
         })) {
-            _ = game.state.jobs.generateTerrain(
+            _ = game.state.jobs.generateDescriptor(
                 game.state.ui.terrain_gen_x_buf,
                 game.state.ui.terrain_gen_z_buf,
             );

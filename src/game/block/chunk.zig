@@ -272,3 +272,4 @@ pub const worldPosition = @import("world_position.zig");
 pub const big = @import("chunk_big.zig");
 pub const column = @import("chunk_column.zig");
 pub const render = @import("chunk_render.zig");
+pub const descriptor = @import("chunk_terrain_descriptor.zig");
