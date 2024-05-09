@@ -34,7 +34,7 @@ pub const TerrainGenJob = struct {
             .value => .value,
         };
         var noiseGen = znoise.FnlGenerator{
-            .seed = 0,
+            .seed = game.state.ui.terrain_gen_seed,
             .frequency = self.desc_root.config.frequency,
             .noise_type = noise_type,
             .rotation_type3 = .none,
