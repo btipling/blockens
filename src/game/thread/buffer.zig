@@ -78,7 +78,8 @@ pub const descriptor_gen_data = struct {
 };
 
 pub const terrain_gen_data = struct {
-    data: []u32,
+    succeeded: bool,
+    data: ?[]u32,
     position: @Vector(4, f32),
 };
 

@@ -194,6 +194,8 @@ fn setNoiseType(lua: *Lua) i32 {
 pub fn build_descriptor(self: *Builder) void {
     const li = self.lua;
     {
+        li.pushFunction(ziglua.wrap(getRootNode));
+        li.setGlobal("get_root_node");
         li.pushFunction(ziglua.wrap(createDesc));
         li.setGlobal("create_desc");
         li.pushFunction(ziglua.wrap(addBlockId));

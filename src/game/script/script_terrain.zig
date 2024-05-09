@@ -1,6 +1,7 @@
 pub fn evalTerrainFunc(allocator: std.mem.Allocator, luaInstance: *ziglua.Lua, buf: []const u8) !*desc.root {
     var b = script_descripter_builder.init(allocator, luaInstance);
-    errdefer b.root.deinit();
+    const root = b.root;
+    errdefer root.deinit();
     defer b.deinit();
     b.build_descriptor();
 

@@ -66,7 +66,12 @@ pub const TerrainGenJob = struct {
             const bi = self.desc_root.node.getBlockId(
                 @intFromFloat(ci_pos[1]),
                 n,
-            ) catch @panic("misconfigured terrain gen");
+            ) catch {
+                std.log.err("Misconfigured lua desc resulted in invalid block id\n", .{});
+                game.state.allocator.free(data);
+                self.finishJob(false, null, .{ 0, 0, 0, 0 });
+                return;
+            };
             var bd: block.BlockData = block.BlockData.fromId(bi.block_id);
             bd.setSettingsAmbient();
             data[ci] = bd.toId();
@@ -81,9 +86,14 @@ pub const TerrainGenJob = struct {
             0,
         };
 
+        self.finishJob(true, data, chunk_position);
+    }
+
+    fn finishJob(self: *TerrainGenJob, succeeded: bool, data: ?[]u32, chunk_position: @Vector(4, f32)) void {
         var msg: buffer.buffer_message = buffer.new_message(.terrain_gen);
         const bd: buffer.buffer_data = .{
             .terrain_gen = .{
+                .succeeded = succeeded,
                 .data = data,
                 .position = chunk_position,
             },
