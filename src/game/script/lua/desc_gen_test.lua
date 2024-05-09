@@ -20,7 +20,7 @@ function generate_descriptor()
     add_block_id(5, water)
 
     local root_node = get_root_node()
-    add_block_id(root_node, stone)
+    set_desc_block(root_node, stone)
 
 end
 

@@ -60,14 +60,14 @@ fn setRootNode(lua: *Lua) i32 {
 
 fn addBlockId(lua: *Lua) i32 {
     const id: u8 = @intCast(lua.toInteger(1) catch 0);
-    const block_type: u8 = @intCast(lua.toInteger(1) catch 0);
+    const block_type: u8 = @intCast(lua.toInteger(2) catch 0);
     builder.root.addBlock(.{ .block_id = id, .block_type = @enumFromInt(block_type) });
     return 1;
 }
 
 fn setDescBlock(lua: *Lua) i32 {
-    const desc_id: u8 = @intCast(lua.toInteger(1) catch 0);
-    const block_type_index: u8 = @intCast(lua.toInteger(1) catch 0);
+    const desc_id: u8 = @intCast(lua.toInteger(1) catch -1);
+    const block_type_index: u8 = @intCast(lua.toInteger(2) catch -1);
     const block_type: desc.blockType = @enumFromInt(block_type_index);
     var d = builder.map.items[desc_id];
     for (builder.root.block_ids) |bi| {
@@ -76,13 +76,14 @@ fn setDescBlock(lua: *Lua) i32 {
             return 1;
         }
     }
-    @panic("Invalid block id given to desc");
+    std.log.err("Invalid block id given to desc", .{});
+    return 1;
 }
 
 fn setYCondition(lua: *Lua) i32 {
     const desc_id: u8 = @intCast(lua.toInteger(1) catch 0);
-    const operator: u8 = @intCast(lua.toInteger(1) catch 0);
-    const y: u8 = @intCast(lua.toInteger(1) catch 0);
+    const operator: u8 = @intCast(lua.toInteger(2) catch 0);
+    const y: u8 = @intCast(lua.toInteger(3) catch 0);
     var d = builder.map.items[desc_id];
     d.y_conditional = .{
         .y = y,
@@ -117,8 +118,8 @@ fn setYConditionFalse(lua: *Lua) i32 {
 
 fn setNoiseConditionWithNoise(lua: *Lua) i32 {
     const desc_id: u8 = @intCast(lua.toInteger(1) catch 0);
-    const operator: u8 = @intCast(lua.toInteger(1) catch 0);
-    const noise: f32 = @floatCast(lua.toNumber(1) catch 0);
+    const operator: u8 = @intCast(lua.toInteger(2) catch 0);
+    const noise: f32 = @floatCast(lua.toNumber(3) catch 0);
     var d = builder.map.items[desc_id];
     d.noise_conditional = .{
         .noise = noise,
@@ -129,8 +130,8 @@ fn setNoiseConditionWithNoise(lua: *Lua) i32 {
 
 fn setNoiseConditionWithDivisor(lua: *Lua) i32 {
     const desc_id: u8 = @intCast(lua.toInteger(1) catch 0);
-    const operator: u8 = @intCast(lua.toInteger(1) catch 0);
-    const divisor: f32 = @floatCast(lua.toNumber(1) catch 0);
+    const operator: u8 = @intCast(lua.toInteger(2) catch 0);
+    const divisor: f32 = @floatCast(lua.toNumber(3) catch 0);
     var d = builder.map.items[desc_id];
     d.noise_conditional = .{
         .divisor = divisor,
