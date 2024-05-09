@@ -51,6 +51,7 @@ pub const TerrainGenJob = struct {
             .domain_warp_amp = 1.0,
         };
         const chunk_x: f32 = @floatFromInt(self.position[0]);
+        const chunk_y: f32 = @floatFromInt(self.position[1]);
         const chunk_z: f32 = @floatFromInt(self.position[2]);
 
         var data = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
@@ -63,8 +64,10 @@ pub const TerrainGenJob = struct {
                 ci_pos[0] + (chunk_x * chunk.chunkDim),
                 ci_pos[2] + (chunk_z * chunk.chunkDim),
             );
+            var column_y: usize = @intFromFloat(ci_pos[1]);
+            if (chunk_y > 0) column_y += chunk.chunkDim;
             const bi = self.desc_root.node.getBlockId(
-                @intFromFloat(ci_pos[1]),
+                column_y,
                 n,
             ) catch {
                 std.log.err("Misconfigured lua desc resulted in invalid block id\n", .{});
