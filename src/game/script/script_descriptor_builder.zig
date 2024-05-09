@@ -271,6 +271,30 @@ pub fn build_descriptor(self: *Builder) void {
         li.setGlobal("NT_VALUE");
 
         li.pushInteger(0);
+        li.setGlobal("CDF_EUCLIDEAN");
+        li.pushInteger(1);
+        li.setGlobal("CDF_EUCLIDEAN_SQ");
+        li.pushInteger(2);
+        li.setGlobal("CDF_MANHATTEN");
+        li.pushInteger(3);
+        li.setGlobal("CDF_HYBRID");
+
+        li.pushInteger(0);
+        li.setGlobal("CRT_CELL_VALUE");
+        li.pushInteger(1);
+        li.setGlobal("CRT_DISTANCE");
+        li.pushInteger(2);
+        li.setGlobal("CRT_DISTANCE_2");
+        li.pushInteger(3);
+        li.setGlobal("CRT_DISTANCE_2_ADD");
+        li.pushInteger(4);
+        li.setGlobal("CRT_DISTANCE_2_SUB");
+        li.pushInteger(5);
+        li.setGlobal("CRT_DISTANCE_2_MUL");
+        li.pushInteger(6);
+        li.setGlobal("CRT_DISTANCE_2_DIV");
+
+        li.pushInteger(0);
         li.setGlobal("OP_EQ");
         li.pushInteger(1);
         li.setGlobal("OP_GT");
