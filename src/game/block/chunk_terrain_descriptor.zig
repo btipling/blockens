@@ -10,8 +10,15 @@ pub const TerrainGenError = error{
 
 pub const noiseConfig = struct {
     frequency: f32 = default_frequency,
-    octaves: i32 = default_octaves,
     noise_type: noiseType = .opensimplex2,
+
+    fractal_type: fractalType = .none,
+    octaves: i32 = default_octaves,
+    lacunarity: f32 = 2.0,
+    gain: f32 = 0.5,
+    weighted_strength: f32 = 0.0,
+    ping_pong_strength: f32 = 2.0,
+
     cellularDistanceFunc: cellularDistanceFunc = .euclideansq,
     cellularReturnType: cellularReturnType = .cellvalue,
     jitter: f32 = default_jitter,
@@ -25,6 +32,15 @@ pub const noiseType = enum(u8) {
     perlin,
     value_cubic,
     value,
+};
+
+pub const fractalType = enum(u8) {
+    none,
+    fbm,
+    ridged,
+    pingpong,
+    domain_warp_progressive,
+    domain_warp_independent,
 };
 
 pub const cellularDistanceFunc = enum(u8) {

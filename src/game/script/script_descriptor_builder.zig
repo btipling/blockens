@@ -179,6 +179,26 @@ fn setOctaves(lua: *Lua) i32 {
     return 1;
 }
 
+fn setLacunarity(lua: *Lua) i32 {
+    builder.root.config.lacunarity = @floatCast(lua.toNumber(1) catch 0);
+    return 1;
+}
+
+fn setGain(lua: *Lua) i32 {
+    builder.root.config.gain = @floatCast(lua.toNumber(1) catch 0);
+    return 1;
+}
+
+fn setWeightedStrength(lua: *Lua) i32 {
+    builder.root.config.weighted_strength = @floatCast(lua.toNumber(1) catch 0);
+    return 1;
+}
+
+fn setPingPongStrength(lua: *Lua) i32 {
+    builder.root.config.ping_pong_strength = @floatCast(lua.toNumber(1) catch 0);
+    return 1;
+}
+
 fn setNoiseType(lua: *Lua) i32 {
     const nt = lua.toInteger(1) catch 0;
     switch (nt) {
@@ -188,6 +208,19 @@ fn setNoiseType(lua: *Lua) i32 {
         3 => builder.root.config.noise_type = .perlin,
         4 => builder.root.config.noise_type = .value_cubic,
         else => builder.root.config.noise_type = .value,
+    }
+    return 1;
+}
+
+fn setFractalType(lua: *Lua) i32 {
+    const nt = lua.toInteger(1) catch 0;
+    switch (nt) {
+        0 => builder.root.config.fractal_type = .none,
+        1 => builder.root.config.fractal_type = .fbm,
+        2 => builder.root.config.fractal_type = .ridged,
+        3 => builder.root.config.fractal_type = .pingpong,
+        4 => builder.root.config.fractal_type = .domain_warp_progressive,
+        else => builder.root.config.fractal_type = .domain_warp_independent,
     }
     return 1;
 }
@@ -249,8 +282,20 @@ pub fn build_descriptor(self: *Builder) void {
         li.setGlobal("set_jitter");
         li.pushFunction(ziglua.wrap(setOctaves));
         li.setGlobal("set_octaves");
+
+        li.pushFunction(ziglua.wrap(setLacunarity));
+        li.setGlobal("set_lacunarity");
+        li.pushFunction(ziglua.wrap(setGain));
+        li.setGlobal("set_gain");
+        li.pushFunction(ziglua.wrap(setWeightedStrength));
+        li.setGlobal("set_weighted_strength");
+        li.pushFunction(ziglua.wrap(setPingPongStrength));
+        li.setGlobal("set_ping_pong_strength");
+
         li.pushFunction(ziglua.wrap(setNoiseType));
         li.setGlobal("set_noise_type");
+        li.pushFunction(ziglua.wrap(setFractalType));
+        li.setGlobal("set_fractal_type");
         li.pushFunction(ziglua.wrap(setCelluarDistanceFunc));
         li.setGlobal("set_cell_dist_func");
         li.pushFunction(ziglua.wrap(setCelluarReturnType));
@@ -269,6 +314,19 @@ pub fn build_descriptor(self: *Builder) void {
         li.setGlobal("NT_VALUE_CUBIC");
         li.pushInteger(5);
         li.setGlobal("NT_VALUE");
+
+        li.pushInteger(0);
+        li.setGlobal("FT_NONE");
+        li.pushInteger(1);
+        li.setGlobal("FT_FBM");
+        li.pushInteger(2);
+        li.setGlobal("FT_RIDGED");
+        li.pushInteger(3);
+        li.setGlobal("FT_PING_PONG");
+        li.pushInteger(4);
+        li.setGlobal("FT_DOMAIN_WARP_PROGRESSIVE");
+        li.pushInteger(5);
+        li.setGlobal("FT_DOMAIN_WARP_INDEPENDENT");
 
         li.pushInteger(0);
         li.setGlobal("CDF_EUCLIDEAN");
