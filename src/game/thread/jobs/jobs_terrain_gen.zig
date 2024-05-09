@@ -34,6 +34,15 @@ pub const TerrainGenJob = struct {
             .value => .value,
         };
 
+        const fractal_type: znoise.FnlGenerator.FractalType = switch (self.desc_root.config.fractal_type) {
+            .none => .none,
+            .fbm => .fbm,
+            .ridged => .ridged,
+            .pingpong => .pingpong,
+            .domain_warp_progressive => .domain_warp_progressive,
+            .domain_warp_independent => .domain_warp_independent,
+        };
+
         const cell_dist_func: znoise.FnlGenerator.CellularDistanceFunc = switch (self.desc_root.config.cellularDistanceFunc) {
             .euclidean => .euclidean,
             .euclideansq => .euclideansq,
@@ -56,12 +65,12 @@ pub const TerrainGenJob = struct {
             .frequency = self.desc_root.config.frequency,
             .noise_type = noise_type,
             .rotation_type3 = .none,
-            .fractal_type = .fbm,
+            .fractal_type = fractal_type,
             .octaves = self.desc_root.config.octaves,
-            .lacunarity = 1.350,
-            .gain = 0.0,
-            .weighted_strength = 0.0,
-            .ping_pong_strength = 0.0,
+            .lacunarity = self.desc_root.config.lacunarity,
+            .gain = self.desc_root.config.gain,
+            .weighted_strength = self.desc_root.config.weighted_strength,
+            .ping_pong_strength = self.desc_root.config.ping_pong_strength,
             .cellular_distance_func = cell_dist_func,
             .cellular_return_type = cell_return_type,
             .cellular_jitter_mod = self.desc_root.config.jitter,

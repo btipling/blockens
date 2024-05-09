@@ -75,7 +75,7 @@ pub const blockId = struct {
 
     pub fn debugPrint(self: blockId, depth: usize) void {
         var i: usize = 0;
-        while (i < depth) : (i += 1) std.debug.print("\t", .{});
+        while (i < depth) : (i += 1) std.debug.print("  ", .{});
         std.debug.print(" - blockId with id: {} and type: {}\n", .{ self.block_id, self.block_type });
     }
 };
@@ -97,20 +97,20 @@ pub const yPositionConditional = struct {
     pub fn debugPrint(self: yPositionConditional, depth: usize) void {
         {
             var i: usize = 0;
-            while (i < depth) : (i += 1) std.debug.print("\t", .{});
+            while (i < depth) : (i += 1) std.debug.print("  ", .{});
         }
         std.debug.print(" - yPositionConditional with y: {d} and operator: {}\n", .{ self.y, self.operator });
         if (self.is_true) |it| {
             {
                 var i: usize = 0;
-                while (i < depth) : (i += 1) std.debug.print("\t is true:\n", .{});
+                while (i < depth) : (i += 1) std.debug.print("   is true:\n", .{});
             }
             it.debugPrint(depth + 1);
         }
         if (self.is_false) |it| {
             {
                 var i: usize = 0;
-                while (i < depth) : (i += 1) std.debug.print("\t is false:\n", .{});
+                while (i < depth) : (i += 1) std.debug.print("   is false:\n", .{});
             }
             it.debugPrint(depth + 1);
         }
@@ -128,7 +128,7 @@ pub const noiseConditional = struct {
     pub fn debugPrint(self: noiseConditional, depth: usize) void {
         {
             var i: usize = 0;
-            while (i < depth) : (i += 1) std.debug.print("\t", .{});
+            while (i < depth) : (i += 1) std.debug.print("  ", .{});
         }
         std.debug.print(" - noiseConditional with operator: {} and absolute: {}", .{ self.operator, self.absolute });
         if (self.noise) |n| {
@@ -141,14 +141,14 @@ pub const noiseConditional = struct {
         if (self.is_true) |it| {
             {
                 var i: usize = 0;
-                while (i < depth) : (i += 1) std.debug.print("\t is true:\n", .{});
+                while (i < depth) : (i += 1) std.debug.print("   is true:\n", .{});
             }
             it.debugPrint(depth + 1);
         }
         if (self.is_false) |it| {
             {
                 var i: usize = 0;
-                while (i < depth) : (i += 1) std.debug.print("\t is false:\n", .{});
+                while (i < depth) : (i += 1) std.debug.print("   is false:\n", .{});
             }
             it.debugPrint(depth + 1);
         }
@@ -174,7 +174,7 @@ pub const descriptorNode = struct {
 
     pub fn debugPrint(self: descriptorNode, depth: usize) void {
         var i: usize = 0;
-        while (i < depth) : (i += 1) std.debug.print("\t", .{});
+        while (i < depth) : (i += 1) std.debug.print("  ", .{});
         std.debug.print(" - descriptorNode\n", .{});
         if (self.block_id) |bi| {
             bi.debugPrint(depth + 1);
