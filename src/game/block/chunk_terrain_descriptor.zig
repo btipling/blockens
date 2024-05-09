@@ -10,9 +10,11 @@ pub const TerrainGenError = error{
 
 pub const noiseConfig = struct {
     frequency: f32 = default_frequency,
-    jitter: f32 = default_jitter,
     octaves: i32 = default_octaves,
     noise_type: noiseType = .opensimplex2,
+    cellularDistanceFunc: cellularDistanceFunc = .euclideansq,
+    cellularReturnType: cellularReturnType = .cellvalue,
+    jitter: f32 = default_jitter,
 };
 
 // These are duplicated from znoise to avoid linking znoise for tests
@@ -23,6 +25,23 @@ pub const noiseType = enum(u8) {
     perlin,
     value_cubic,
     value,
+};
+
+pub const cellularDistanceFunc = enum(u8) {
+    euclidean,
+    euclideansq,
+    manhattan,
+    hybrid,
+};
+
+pub const cellularReturnType = enum(u8) {
+    cellvalue,
+    distance,
+    distance2,
+    distance2add,
+    distance2sub,
+    distance2mul,
+    distance2div,
 };
 
 pub const blockType = enum(u8) {

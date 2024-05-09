@@ -33,6 +33,24 @@ pub const TerrainGenJob = struct {
             .value_cubic => .value_cubic,
             .value => .value,
         };
+
+        const cell_dist_func: znoise.FnlGenerator.CellularDistanceFunc = switch (self.desc_root.config.cellularDistanceFunc) {
+            .euclidean => .euclidean,
+            .euclideansq => .euclideansq,
+            .manhattan => .manhattan,
+            .hybrid => .hybrid,
+        };
+
+        const cell_return_type: znoise.FnlGenerator.CellularReturnType = switch (self.desc_root.config.cellularReturnType) {
+            .cellvalue => .cellvalue,
+            .distance => .distance,
+            .distance2 => .distance2,
+            .distance2add => .distance2add,
+            .distance2sub => .distance2sub,
+            .distance2mul => .distance2mul,
+            .distance2div => .distance2div,
+        };
+
         var noiseGen = znoise.FnlGenerator{
             .seed = game.state.ui.terrain_gen_seed,
             .frequency = self.desc_root.config.frequency,
@@ -44,8 +62,8 @@ pub const TerrainGenJob = struct {
             .gain = 0.0,
             .weighted_strength = 0.0,
             .ping_pong_strength = 0.0,
-            .cellular_distance_func = .euclidean,
-            .cellular_return_type = .cellvalue,
+            .cellular_distance_func = cell_dist_func,
+            .cellular_return_type = cell_return_type,
             .cellular_jitter_mod = self.desc_root.config.jitter,
             .domain_warp_type = .basicgrid,
             .domain_warp_amp = 1.0,

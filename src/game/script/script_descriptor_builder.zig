@@ -192,6 +192,31 @@ fn setNoiseType(lua: *Lua) i32 {
     return 1;
 }
 
+fn setCelluarDistanceFunc(lua: *Lua) i32 {
+    const nt = lua.toInteger(1) catch 0;
+    switch (nt) {
+        0 => builder.root.config.cellularDistanceFunc = .euclidean,
+        1 => builder.root.config.cellularDistanceFunc = .euclideansq,
+        3 => builder.root.config.cellularDistanceFunc = .manhattan,
+        else => builder.root.config.cellularDistanceFunc = .hybrid,
+    }
+    return 1;
+}
+
+fn setCelluarReturnType(lua: *Lua) i32 {
+    const nt = lua.toInteger(1) catch 0;
+    switch (nt) {
+        0 => builder.root.config.cellularReturnType = .cellvalue,
+        1 => builder.root.config.cellularReturnType = .distance,
+        2 => builder.root.config.cellularReturnType = .distance2,
+        3 => builder.root.config.cellularReturnType = .distance2add,
+        4 => builder.root.config.cellularReturnType = .distance2sub,
+        5 => builder.root.config.cellularReturnType = .distance2mul,
+        else => builder.root.config.cellularReturnType = .distance2div,
+    }
+    return 1;
+}
+
 pub fn build_descriptor(self: *Builder) void {
     const li = self.lua;
     {
@@ -226,6 +251,10 @@ pub fn build_descriptor(self: *Builder) void {
         li.setGlobal("set_octaves");
         li.pushFunction(ziglua.wrap(setNoiseType));
         li.setGlobal("set_noise_type");
+        li.pushFunction(ziglua.wrap(setCelluarDistanceFunc));
+        li.setGlobal("set_cell_dist_func");
+        li.pushFunction(ziglua.wrap(setCelluarReturnType));
+        li.setGlobal("set_cell_return_type");
     }
     {
         li.pushInteger(0);
