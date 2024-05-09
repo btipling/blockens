@@ -68,6 +68,7 @@ pub const TerrainGenJob = struct {
                 n,
             ) catch {
                 std.log.err("Misconfigured lua desc resulted in invalid block id\n", .{});
+                self.desc_root.debugPrint();
                 game.state.allocator.free(data);
                 self.finishJob(false, null, .{ 0, 0, 0, 0 });
                 return;

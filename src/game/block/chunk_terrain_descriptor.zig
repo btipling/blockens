@@ -37,6 +37,12 @@ pub const blockType = enum(u8) {
 pub const blockId = struct {
     block_type: blockType,
     block_id: u8,
+
+    pub fn debugPrint(self: blockId, depth: usize) void {
+        var i: usize = 0;
+        while (i < depth) : (i += 1) std.debug.print("\t", .{});
+        std.debug.print(" - blockId with id: {} and type: {}\n", .{ self.block_id, self.block_type });
+    }
 };
 
 pub const comparisonOperator = enum(u8) {
@@ -52,6 +58,28 @@ pub const yPositionConditional = struct {
     operator: comparisonOperator = .eq,
     is_true: ?*descriptorNode = null,
     is_false: ?*descriptorNode = null,
+
+    pub fn debugPrint(self: yPositionConditional, depth: usize) void {
+        {
+            var i: usize = 0;
+            while (i < depth) : (i += 1) std.debug.print("\t", .{});
+        }
+        std.debug.print(" - yPositionConditional with y: {d} and operator: {}\n", .{ self.y, self.operator });
+        if (self.is_true) |it| {
+            {
+                var i: usize = 0;
+                while (i < depth) : (i += 1) std.debug.print("\t is true:\n", .{});
+            }
+            it.debugPrint(depth + 1);
+        }
+        if (self.is_false) |it| {
+            {
+                var i: usize = 0;
+                while (i < depth) : (i += 1) std.debug.print("\t is false:\n", .{});
+            }
+            it.debugPrint(depth + 1);
+        }
+    }
 };
 
 pub const noiseConditional = struct {
@@ -61,6 +89,35 @@ pub const noiseConditional = struct {
     divisor: ?f32 = null, // divided from y
     is_true: ?*descriptorNode = null,
     is_false: ?*descriptorNode = null,
+
+    pub fn debugPrint(self: yPositionConditional, depth: usize) void {
+        {
+            var i: usize = 0;
+            while (i < depth) : (i += 1) std.debug.print("\t", .{});
+        }
+        std.debug.print(" - noiseConditional with operator: {} and absolute: {}", .{ self.operator, self.absolute });
+        if (self.noise) |n| {
+            std.debug.print(" and noise: {}", .{n});
+        }
+        if (self.divisor) |d| {
+            std.debug.print(" and divisor: {}", .{d});
+        }
+        std.debug.print("\n", .{});
+        if (self.is_true) |it| {
+            {
+                var i: usize = 0;
+                while (i < depth) : (i += 1) std.debug.print("\t is true:\n", .{});
+            }
+            it.debugPrint(depth + 1);
+        }
+        if (self.is_false) |it| {
+            {
+                var i: usize = 0;
+                while (i < depth) : (i += 1) std.debug.print("\t is false:\n", .{});
+            }
+            it.debugPrint(depth + 1);
+        }
+    }
 };
 
 pub const descriptorNode = struct {
@@ -78,6 +135,15 @@ pub const descriptorNode = struct {
             if (nc.is_false) |d| d.deinit(allocator);
         }
         allocator.destroy(self);
+    }
+
+    pub fn debugPrint(self: descriptorNode, depth: usize) void {
+        var i: usize = 0;
+        while (i < depth) : (i += 1) std.debug.print("\t", .{});
+        std.debug.print(" - descriptorNode\n", .{});
+        if (self.block_id) |bi| {
+            bi.debugPrint(depth + 1);
+        }
     }
 
     pub fn getBlockId(self: descriptorNode, y: usize, noise: f32) !blockId {
@@ -161,6 +227,10 @@ pub const root = struct {
             .node = d,
         };
         return r;
+    }
+
+    pub fn debugPrint(self: *root) void {
+        self.node.debugPrint(0);
     }
 
     pub fn deinit(self: *root) void {
