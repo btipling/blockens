@@ -3,7 +3,9 @@ function generate_descriptor()
     set_frequency(0.005)
     set_jitter(0)
     set_octaves(10)
-    set_noise_type(NT_OPEN_SIMPLEX2)
+    set_noise_type(NT_CELLUAR)
+    set_cell_dist_func(CDF_EUCLIDEAN_SQ)
+    set_cell_return_type(CRT_CELL_VALUE)
 
     local air = 0
     local stone = 1
