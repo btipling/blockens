@@ -14,8 +14,9 @@ pub const DescriptorGenJob = struct {
     }
 
     pub fn descriptorGenJob(self: *DescriptorGenJob) void {
+        const script_buf: []const u8 = std.mem.sliceTo(&game.state.ui.terrain_gen_buf, 0);
         const desc_root: *descriptor.root = game.state.script.evalTerrainFunc(
-            &game.state.ui.terrain_gen_buf,
+            script_buf,
         ) catch |err| {
             std.debug.print("Error evaluating terrain gen function: {}\n", .{err});
             return;

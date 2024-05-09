@@ -89,7 +89,7 @@ fn setYCondition(lua: *Lua) i32 {
         .y = y,
         .operator = @enumFromInt(operator),
     };
-    @panic("Invalid block id given to desc");
+    return 1;
 }
 
 fn setYConditionTrue(lua: *Lua) i32 {
@@ -125,7 +125,7 @@ fn setNoiseConditionWithNoise(lua: *Lua) i32 {
         .noise = noise,
         .operator = @enumFromInt(operator),
     };
-    @panic("Invalid block id given to desc");
+    return 1;
 }
 
 fn setNoiseConditionWithDivisor(lua: *Lua) i32 {
@@ -137,7 +137,7 @@ fn setNoiseConditionWithDivisor(lua: *Lua) i32 {
         .divisor = divisor,
         .operator = @enumFromInt(operator),
     };
-    @panic("Invalid block id given to desc");
+    return 1;
 }
 
 fn setNoiseConditionTrue(lua: *Lua) i32 {
@@ -240,6 +240,17 @@ pub fn build_descriptor(self: *Builder) void {
         li.setGlobal("NT_VALUE_CUBIC");
         li.pushInteger(5);
         li.setGlobal("NT_VALUE");
+
+        li.pushInteger(0);
+        li.setGlobal("OP_EQ");
+        li.pushInteger(1);
+        li.setGlobal("OP_GT");
+        li.pushInteger(2);
+        li.setGlobal("OP_LT");
+        li.pushInteger(3);
+        li.setGlobal("OP_GTE");
+        li.pushInteger(4);
+        li.setGlobal("OP_LTE");
 
         // For rotation, for when this thing supports that again.
         li.pushInteger(0);
