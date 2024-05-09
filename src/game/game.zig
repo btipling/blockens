@@ -60,7 +60,7 @@ fn glErrorCallbackfn(
 const GL_DEBUG_OUTPUT_SYNCHRONOUS = 0x8242;
 const GL_DEBUG_OUTPUT = 0x92E0;
 
-pub var state: *gameState.Game = undefined;
+pub var state: *game_state.Game = undefined;
 var window_width: u32 = 0;
 var window_height: u32 = 0;
 
@@ -141,7 +141,8 @@ fn initGL(gl_major: u8, gl_minor: u8, _: *glfw.Window) !void {
 
 pub const Game = struct {
     pub fn init(allocator: std.mem.Allocator) !Game {
-        state = try allocator.create(gameState.Game);
+        state = try allocator.create(game_state.Game);
+        errdefer allocator.destroy(state);
         state.* = .{
             .allocator = allocator,
         };
@@ -280,7 +281,7 @@ const zstbi = @import("zstbi");
 const zmesh = @import("zmesh");
 const cfg = @import("config.zig");
 const data = @import("data/data.zig");
-const gameState = @import("state.zig");
+const game_state = @import("state.zig");
 const blecs = @import("blecs/blecs.zig");
 const input = @import("input/input.zig");
 const thread = @import("thread/thread.zig");
