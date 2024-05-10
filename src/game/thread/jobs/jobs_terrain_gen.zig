@@ -107,7 +107,7 @@ pub const TerrainGenJob = struct {
             bd.setSettingsAmbient();
             data[ci] = bd.toId();
         }
-        self.desc_root.debugPrint();
+        // self.desc_root.debugPrint();
         const i = self.position[3];
         const pos: @Vector(4, i32) = indexToPosition(i);
         const chunk_position: @Vector(4, f32) = .{

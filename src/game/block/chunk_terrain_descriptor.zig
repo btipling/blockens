@@ -271,7 +271,10 @@ pub const root = struct {
     }
 
     pub fn debugPrint(self: *root) void {
+        std.debug.print("\n\n*** DEBUG PRINT DESCRIPTOR BEG ***\n", .{});
+        std.debug.print("config: {}\n", .{self.config});
         self.node.debugPrint(0);
+        std.debug.print("\n*** DEBUG PRINT DESCRIPTOR END ***\n\n", .{});
     }
 
     pub fn deinit(self: *root) void {
