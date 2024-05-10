@@ -1,15 +1,15 @@
 function generate_descriptor()
 
-    set_frequency(0.015)
+    set_frequency(0.045)
     set_noise_type(NT_CELLUAR)
     set_fractal_type(FT_RIDGED)
-    set_octaves(4)
-    set_lacunarity(0)
-    set_gain(0)
-    set_weighted_strength(2)
-    set_cell_dist_func(CDF_EUCLIDEAN)
-    set_cell_return_type(CRT_DISTANCE)
-    set_jitter(0.500)
+    set_octaves(2)
+    set_lacunarity(0.548)
+    set_gain(1.0)
+    set_weighted_strength(3.5)
+    set_cell_dist_func(CDF_EUCLIDEAN_SQ)
+    set_cell_return_type(CRT_DISTANCE_2_MUL)
+    set_jitter(0.760)
 
     local air = 0
     local stone = 1
