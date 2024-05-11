@@ -48,6 +48,7 @@ pub const TerrainGenJob = struct {
                         self.finishJob(false, null, .{ 0, 0, 0, 0 });
                         return;
                     };
+                    if (result.column_hit) depth += 1;
                     var bd: block.BlockData = block.BlockData.fromId(result.block.block_id);
                     bd.setSettingsAmbient();
                     const ci = chunk.getIndexFromXYZ(x, y, z);
