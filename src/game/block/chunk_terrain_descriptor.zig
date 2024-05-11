@@ -85,7 +85,7 @@ pub const blockId = struct {
 // the block ids will chosed based on the percentage_interval given a
 // normalized noise level from 0 to 1, if an percentage_interval is 25
 // and there are 4 blocks they the first block will appear be
-// chosen for noise values from 1 to 0.75 in descending order
+// chosen for noise values from 0 to 0.25 in descending order
 // if not enough blocks are given to satisfy the interval
 // the last block will be used for remaining values
 //
@@ -118,8 +118,8 @@ pub const blockColumn = struct {
         std.debug.assert(self.percentage_interval <= 100);
         std.debug.assert(noise >= 0 and noise <= 1);
 
-        const n: usize = @intFromFloat(noise * 100);
-        const i: usize = @mod(n, self.percentage_interval);
+        const n: usize = @intFromFloat(@floor(noise * 100.0));
+        const i: usize = @divFloor(n, self.percentage_interval);
         if (i >= self.num_blocks) return self.block_ids[self.num_blocks - 1];
         return self.block_ids[i];
     }
@@ -325,7 +325,7 @@ pub const root = struct {
         self.allocator.destroy(self);
     }
 
-    pub fn addBlock(self: *root, bi: blockId) void {
+    pub fn registerBlock(self: *root, bi: blockId) void {
         self.block_ids[self.num_blocks] = bi;
         self.num_blocks += 1;
     }
@@ -345,9 +345,9 @@ test "basic test" {
     var rn: *root = root.init(std.testing.allocator);
     defer rn.deinit();
 
-    rn.addBlock(b1);
-    rn.addBlock(b2);
-    rn.addBlock(b3);
+    rn.registerBlock(b1);
+    rn.registerBlock(b2);
+    rn.registerBlock(b3);
 
     rn.node.blocks.addBlock(b2);
     rn.node.y_conditional = .{
@@ -407,9 +407,9 @@ test "basic test divisor" {
     var rn: *root = root.init(std.testing.allocator);
     defer rn.deinit();
 
-    rn.addBlock(b1);
-    rn.addBlock(b2);
-    rn.addBlock(b3);
+    rn.registerBlock(b1);
+    rn.registerBlock(b2);
+    rn.registerBlock(b3);
 
     rn.node.blocks.addBlock(b1);
     rn.node.y_conditional = .{
@@ -457,6 +457,52 @@ test "basic test divisor" {
     const test5 = rn.node.getBlockId(127, 0.3) catch @panic("expected block");
     try std.testing.expectEqual(b1.block_type, test5.block_type);
     try std.testing.expectEqual(b1.block_id, test5.block_id);
+}
+
+test "block column noise interval" {
+    const b1: blockId = .{ .block_id = 0, .block_type = .air };
+    const b2: blockId = .{ .block_id = 1, .block_type = .grass };
+    const b3: blockId = .{ .block_id = 2, .block_type = .dirt };
+    const b4: blockId = .{ .block_id = 3, .block_type = .stone };
+
+    var rn: *root = root.init(std.testing.allocator);
+    defer rn.deinit();
+
+    rn.registerBlock(b1);
+    rn.registerBlock(b2);
+    rn.registerBlock(b3);
+    rn.registerBlock(b4);
+
+    rn.node.blocks.percentage_interval = 10;
+    rn.node.blocks.addBlock(b1);
+    rn.node.blocks.addBlock(b2);
+    rn.node.blocks.addBlock(b3);
+    rn.node.blocks.addBlock(b4);
+
+    // for no noise, return the first block
+    const no_noise_test = rn.node.getBlockId(33, 0) catch @panic("expected block");
+    try std.testing.expectEqual(b1.block_type, no_noise_test.block_type);
+    try std.testing.expectEqual(b1.block_id, no_noise_test.block_id);
+
+    // for minimal noise, return grass
+    const surface_noise = rn.node.getBlockId(33, 0.1) catch @panic("expected block");
+    try std.testing.expectEqual(b2.block_type, surface_noise.block_type);
+    try std.testing.expectEqual(b2.block_id, surface_noise.block_id);
+
+    // for more noise, return dirt
+    const dirt_noise = rn.node.getBlockId(33, 0.2) catch @panic("expected block");
+    try std.testing.expectEqual(b3.block_type, dirt_noise.block_type);
+    try std.testing.expectEqual(b3.block_id, dirt_noise.block_id);
+
+    // for even more noise, return stone
+    const stone_noise = rn.node.getBlockId(33, 0.3) catch @panic("expected block");
+    try std.testing.expectEqual(b4.block_type, stone_noise.block_type);
+    try std.testing.expectEqual(b4.block_id, stone_noise.block_id);
+
+    // then stone all the way down
+    const last_noise = rn.node.getBlockId(33, 1) catch @panic("expected block");
+    try std.testing.expectEqual(b4.block_type, last_noise.block_type);
+    try std.testing.expectEqual(b4.block_id, last_noise.block_id);
 }
 
 const std = @import("std");

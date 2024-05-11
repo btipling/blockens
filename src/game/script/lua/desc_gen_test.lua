@@ -18,12 +18,12 @@ function generate_descriptor()
     local lava = 4
     local water = 5
 
-    add_block_id(0, air)
-    add_block_id(1, stone)
-    add_block_id(2, grass)
-    add_block_id(3, dirt)
-    add_block_id(4, lava)
-    add_block_id(5, water)
+    register_block_id(0, air)
+    register_block_id(1, stone)
+    register_block_id(2, grass)
+    register_block_id(3, dirt)
+    register_block_id(4, lava)
+    register_block_id(5, water)
 
     local root_node = get_root_node()
     set_desc_block(root_node, air)

@@ -58,10 +58,10 @@ fn setRootNode(lua: *Lua) i32 {
     return 1;
 }
 
-fn addBlockId(lua: *Lua) i32 {
+fn registerBlockId(lua: *Lua) i32 {
     const id: u8 = @intCast(lua.toInteger(1) catch 0);
     const block_type: u8 = @intCast(lua.toInteger(2) catch 0);
-    builder.root.addBlock(.{ .block_id = id, .block_type = @enumFromInt(block_type) });
+    builder.root.registerBlock(.{ .block_id = id, .block_type = @enumFromInt(block_type) });
     return 1;
 }
 
@@ -257,8 +257,8 @@ pub fn build_descriptor(self: *Builder) void {
         li.setGlobal("get_root_node");
         li.pushFunction(ziglua.wrap(createDesc));
         li.setGlobal("create_desc");
-        li.pushFunction(ziglua.wrap(addBlockId));
-        li.setGlobal("add_block_id");
+        li.pushFunction(ziglua.wrap(registerBlockId));
+        li.setGlobal("register_block_id");
         li.pushFunction(ziglua.wrap(setDescBlock));
         li.setGlobal("set_desc_block");
         li.pushFunction(ziglua.wrap(setYCondition));
