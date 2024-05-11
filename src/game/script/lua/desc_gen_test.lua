@@ -46,8 +46,11 @@ function generate_descriptor()
     add_desc_block(grass_field, grass)
 
     set_noise_cond_with_div(bot_chunk, OP_LTE, 128)
-    local hill = set_noise_cond_true(bot_chunk)
-    add_desc_block(hill, dirt)
+    local underground = set_noise_cond_true(bot_chunk)
+    add_desc_block(underground, stone)
+    add_desc_block_with_depth(underground, dirt, 5)
+    add_desc_block_with_depth(underground, stone, 30)
+    add_desc_block_with_depth(underground, lava, 5)
 
 end
 
