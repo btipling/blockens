@@ -72,7 +72,7 @@ fn setDescBlock(lua: *Lua) i32 {
     var d = builder.map.items[desc_id];
     for (builder.root.block_ids) |bi| {
         if (bi.block_type == block_type) {
-            d.block_id = bi;
+            d.blocks.addBlock(bi);
             return 1;
         }
     }

@@ -80,6 +80,51 @@ pub const blockId = struct {
     }
 };
 
+// blockColumn - a block column will allow multiple blocks, up to ten,
+// to be specified for a noise generator script
+// the block ids will chosed based on the percentage_interval given a
+// normalized noise level from 0 to 1, if an percentage_interval is 25
+// and there are 4 blocks they the first block will appear be
+// chosen for noise values from 1 to 0.75 in descending order
+// if not enough blocks are given to satisfy the interval
+// the last block will be used for remaining values
+//
+// If interval is 0 it is assumed to be a single block.
+pub const blockColumn = struct {
+    has_blocks: bool = false,
+    block_ids: [10]blockId = undefined,
+    num_blocks: usize = 0,
+    percentage_interval: usize = 0,
+
+    pub fn addBlock(self: *blockColumn, bi: blockId) void {
+        std.debug.assert(self.num_blocks + 1 != self.block_ids.len);
+        self.block_ids[self.num_blocks] = bi;
+        self.num_blocks += 1;
+        self.has_blocks = true;
+    }
+
+    pub fn debugPrint(self: blockColumn, depth: usize) void {
+        if (!self.has_blocks) return;
+        var i: usize = 0;
+        while (i < self.num_blocks) : (i += 1) self.block_ids[i].debugPrint(depth);
+    }
+
+    // Assumes normalized noise range from 0 to 1.
+    pub fn getBlock(self: blockColumn, noise: f32) ?blockId {
+        if (!self.has_blocks) return null;
+
+        if (self.percentage_interval == 0) return self.block_ids[0];
+
+        std.debug.assert(self.percentage_interval <= 100);
+        std.debug.assert(noise >= 0 and noise <= 1);
+
+        const n: usize = @intFromFloat(noise * 100);
+        const i: usize = @mod(n, self.percentage_interval);
+        if (i >= self.num_blocks) return self.block_ids[self.num_blocks - 1];
+        return self.block_ids[i];
+    }
+};
+
 pub const comparisonOperator = enum(u8) {
     eq,
     gt,
@@ -156,7 +201,7 @@ pub const noiseConditional = struct {
 };
 
 pub const descriptorNode = struct {
-    block_id: ?blockId = null,
+    blocks: blockColumn = .{},
     y_conditional: ?yPositionConditional = null,
     noise_conditional: ?noiseConditional = null,
 
@@ -176,9 +221,7 @@ pub const descriptorNode = struct {
         var i: usize = 0;
         while (i < depth) : (i += 1) std.debug.print("  ", .{});
         std.debug.print(" - descriptorNode\n", .{});
-        if (self.block_id) |bi| {
-            bi.debugPrint(depth + 1);
-        }
+        self.blocks.debugPrint(depth + 1);
         if (self.y_conditional) |yc| {
             yc.debugPrint(depth + 1);
         }
@@ -188,11 +231,11 @@ pub const descriptorNode = struct {
     }
 
     pub fn getBlockId(self: descriptorNode, y: usize, noise: f32) !blockId {
-        return try self._getBlockId(self.block_id, y, noise) orelse TerrainGenError.NoBlockTypeFound;
+        return try self._getBlockId(self.blocks.getBlock(noise), y, noise) orelse TerrainGenError.NoBlockTypeFound;
     }
 
     fn _getBlockId(self: descriptorNode, current_block: ?blockId, y: usize, noise: f32) !?blockId {
-        const cb = self.block_id orelse current_block;
+        const cb = self.blocks.getBlock(noise) orelse current_block;
         if (self.y_conditional) |yc| {
             if (yc.is_false == null and yc.is_true == null) return TerrainGenError.NoConditionalSet;
             switch (yc.operator) {
@@ -306,14 +349,14 @@ test "basic test" {
     rn.addBlock(b2);
     rn.addBlock(b3);
 
-    rn.node.block_id = b2;
+    rn.node.blocks.addBlock(b2);
     rn.node.y_conditional = .{
         .y = 64,
         .operator = .gte,
     };
 
     var air_block = rn.createNode();
-    air_block.block_id = b1;
+    air_block.blocks.addBlock(b1);
     rn.node.y_conditional.?.is_true = air_block;
 
     var bottom_chunk = rn.createNode();
@@ -328,7 +371,7 @@ test "basic test" {
         .operator = .lte,
     };
     var grass_block = rn.createNode();
-    grass_block.block_id = b3;
+    grass_block.blocks.addBlock(b3);
     grass_noise_conditional.is_true = grass_block;
     some_grass_on_top.noise_conditional = grass_noise_conditional;
 
@@ -368,14 +411,14 @@ test "basic test divisor" {
     rn.addBlock(b2);
     rn.addBlock(b3);
 
-    rn.node.block_id = b1;
+    rn.node.blocks.addBlock(b1);
     rn.node.y_conditional = .{
         .y = 64,
         .operator = .gte,
     };
 
     var stone_block = rn.createNode();
-    stone_block.block_id = b2;
+    stone_block.blocks.addBlock(b2);
     rn.node.y_conditional.?.is_false = stone_block;
 
     var some_hill_on_top = rn.createNode();
@@ -384,7 +427,7 @@ test "basic test divisor" {
         .operator = .lt,
     };
     var grass_block = rn.createNode();
-    grass_block.block_id = b3;
+    grass_block.blocks.addBlock(b3);
     hill_conditional.is_true = grass_block;
 
     rn.node.y_conditional.?.is_true = some_hill_on_top;
