@@ -41,14 +41,14 @@ pub const TerrainGenJob = struct {
                     const n = noise_map[x][z];
                     var column_y = y;
                     if (chunk_y > 0) column_y += chunk.chunkDim;
-                    const bi = self.desc_root.node.getBlockIdWithDepth(column_y, n, depth) catch {
+                    const result = self.desc_root.node.getBlockIdWithDepth(column_y, n, depth) catch {
                         std.log.err("Misconfigured lua desc resulted in invalid block id\n", .{});
                         self.desc_root.debugPrint();
                         game.state.allocator.free(data);
                         self.finishJob(false, null, .{ 0, 0, 0, 0 });
                         return;
                     };
-                    var bd: block.BlockData = block.BlockData.fromId(bi.block_id);
+                    var bd: block.BlockData = block.BlockData.fromId(result.block.block_id);
                     bd.setSettingsAmbient();
                     const ci = chunk.getIndexFromXYZ(x, y, z);
                     data[ci] = bd.toId();

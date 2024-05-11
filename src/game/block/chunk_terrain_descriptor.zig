@@ -85,6 +85,11 @@ const columnBlock = struct {
     stack_depth: usize,
 };
 
+pub const blockResult = struct {
+    block: blockId,
+    column_hit: bool = false,
+};
+
 pub const blockColumn = struct {
     has_blocks: bool = false,
     block_ids: [10]columnBlock = undefined,
@@ -108,10 +113,10 @@ pub const blockColumn = struct {
     }
 
     // Assumes normalized noise range from 0 to 1.
-    pub fn getBlock(self: blockColumn, depth: usize) ?blockId {
+    pub fn getBlock(self: blockColumn, depth: usize) ?blockResult {
         if (!self.has_blocks) return null;
 
-        if (self.num_blocks == 1) return self.block_ids[0].block_id;
+        if (self.num_blocks == 1) return .{ .block = self.block_ids[0].block_id };
 
         std.debug.assert(depth < chunk.chunkDim);
 
@@ -119,10 +124,16 @@ pub const blockColumn = struct {
         var d: usize = self.block_ids[0].stack_depth;
         while (d <= depth) {
             i += 1;
-            if (i + 1 >= self.num_blocks) return self.block_ids[i].block_id;
+            if (i + 1 >= self.num_blocks) return .{
+                .block = self.block_ids[i].block_id,
+                .column_hit = true,
+            };
             d += self.block_ids[i].stack_depth;
         }
-        return self.block_ids[i].block_id;
+        return .{
+            .block = self.block_ids[i].block_id,
+            .column_hit = true,
+        };
     }
 };
 
@@ -231,7 +242,7 @@ pub const descriptorNode = struct {
         }
     }
 
-    pub fn getBlockId(self: descriptorNode, y: usize, noise: f32) !blockId {
+    pub fn getBlockId(self: descriptorNode, y: usize, noise: f32) !blockResult {
         return try self._getBlockId(
             self.blocks.getBlock(0),
             y,
@@ -242,7 +253,7 @@ pub const descriptorNode = struct {
 
     // getBlockIdWithDepth - depth is 0 based, a depth of 0 checks for the very first block found, no previous block found
     // in y column
-    pub fn getBlockIdWithDepth(self: descriptorNode, y: usize, noise: f32, depth: usize) !blockId {
+    pub fn getBlockIdWithDepth(self: descriptorNode, y: usize, noise: f32, depth: usize) !blockResult {
         return try self._getBlockId(
             self.blocks.getBlock(depth),
             y,
@@ -251,8 +262,8 @@ pub const descriptorNode = struct {
         ) orelse TerrainGenError.NoBlockTypeFound;
     }
 
-    fn _getBlockId(self: descriptorNode, current_block: ?blockId, y: usize, noise: f32, depth: usize) !?blockId {
-        const cb = self.blocks.getBlock(depth) orelse current_block;
+    fn _getBlockId(self: descriptorNode, current_result: ?blockResult, y: usize, noise: f32, depth: usize) !?blockResult {
+        const cb = self.blocks.getBlock(depth) orelse current_result;
         if (self.y_conditional) |yc| {
             if (yc.is_false == null and yc.is_true == null) return TerrainGenError.NoConditionalSet;
             switch (yc.operator) {
@@ -423,24 +434,24 @@ test "basic test" {
     rn.node.y_conditional.?.is_false = bottom_chunk;
 
     // top chunk should all be air
-    const test1 = rn.node.getBlockId(65, 1) catch @panic("expected block");
-    try std.testing.expectEqual(b1.block_type, test1.block_type);
-    try std.testing.expectEqual(b1.block_id, test1.block_id);
+    const test1 = rn.node.getBlockId(65, 1) catch @panic("expected block").block;
+    try std.testing.expectEqual(b1.block_type, test1.block.block_type);
+    try std.testing.expectEqual(b1.block_id, test1.block.block_id);
 
     // test y equal and noise matches
     const test2 = rn.node.getBlockId(63, 1) catch @panic("expected block");
-    try std.testing.expectEqual(b3.block_type, test2.block_type);
-    try std.testing.expectEqual(b3.block_id, test2.block_id);
+    try std.testing.expectEqual(b3.block_type, test2.block.block_type);
+    try std.testing.expectEqual(b3.block_id, test2.block.block_id);
 
     // Test y doesn't equal
     const test3 = rn.node.getBlockId(22, 1) catch @panic("expected block");
-    try std.testing.expectEqual(b2.block_type, test3.block_type);
-    try std.testing.expectEqual(b2.block_id, test3.block_id);
+    try std.testing.expectEqual(b2.block_type, test3.block.block_type);
+    try std.testing.expectEqual(b2.block_id, test3.block.block_id);
 
     // Test noise doesn't match
     const test4 = rn.node.getBlockId(63, 0.3) catch @panic("expected block");
-    try std.testing.expectEqual(b2.block_type, test4.block_type);
-    try std.testing.expectEqual(b2.block_id, test4.block_id);
+    try std.testing.expectEqual(b2.block_type, test4.block.block_type);
+    try std.testing.expectEqual(b2.block_id, test4.block.block_id);
 }
 
 test "basic test divisor" {
@@ -479,28 +490,28 @@ test "basic test divisor" {
 
     // bot chunk should all be stone
     const test1 = rn.node.getBlockId(33, 1) catch @panic("expected block");
-    try std.testing.expectEqual(b2.block_type, test1.block_type);
-    try std.testing.expectEqual(b2.block_id, test1.block_id);
+    try std.testing.expectEqual(b2.block_type, test1.block.block_type);
+    try std.testing.expectEqual(b2.block_id, test1.block.block_id);
 
     // test grass near the bottom of top chunk
     const test2 = rn.node.getBlockId(65, 1) catch @panic("expected block");
-    try std.testing.expectEqual(b3.block_type, test2.block_type);
-    try std.testing.expectEqual(b3.block_id, test2.block_id);
+    try std.testing.expectEqual(b3.block_type, test2.block.block_type);
+    try std.testing.expectEqual(b3.block_id, test2.block.block_id);
 
     // // test grass
     const test3 = rn.node.getBlockId(70, 1) catch @panic("expected block");
-    try std.testing.expectEqual(b3.block_type, test3.block_type);
-    try std.testing.expectEqual(b3.block_id, test3.block_id);
+    try std.testing.expectEqual(b3.block_type, test3.block.block_type);
+    try std.testing.expectEqual(b3.block_id, test3.block.block_id);
 
     // // Test noise doesn't match a bit higher
     const test4 = rn.node.getBlockId(100, 0.5) catch @panic("expected block");
-    try std.testing.expectEqual(b1.block_type, test4.block_type);
-    try std.testing.expectEqual(b1.block_id, test4.block_id);
+    try std.testing.expectEqual(b1.block_type, test4.block.block_type);
+    try std.testing.expectEqual(b1.block_id, test4.block.block_id);
 
     // // Test noise doesn't match all the way up
     const test5 = rn.node.getBlockId(127, 0.3) catch @panic("expected block");
-    try std.testing.expectEqual(b1.block_type, test5.block_type);
-    try std.testing.expectEqual(b1.block_id, test5.block_id);
+    try std.testing.expectEqual(b1.block_type, test5.block.block_type);
+    try std.testing.expectEqual(b1.block_id, test5.block.block_id);
 }
 
 test "block column depth get" {
@@ -523,33 +534,33 @@ test "block column depth get" {
 
     //  return grass - reminder - depth is 0 based
     const surface_test = rn.node.getBlockIdWithDepth(33, 0, 0) catch @panic("expected block");
-    try std.testing.expectEqual(b2.block_type, surface_test.block_type);
-    try std.testing.expectEqual(b2.block_id, surface_test.block_id);
+    try std.testing.expectEqual(b2.block_type, surface_test.block.block_type);
+    try std.testing.expectEqual(b2.block_id, surface_test.block.block_id);
 
     // return dirt
     const dirt_test = rn.node.getBlockIdWithDepth(33, 1, 1) catch @panic("expected block");
-    try std.testing.expectEqual(b3.block_type, dirt_test.block_type);
-    try std.testing.expectEqual(b3.block_id, dirt_test.block_id);
+    try std.testing.expectEqual(b3.block_type, dirt_test.block.block_type);
+    try std.testing.expectEqual(b3.block_id, dirt_test.block.block_id);
 
     // return more dirt
     const more_dirt_test = rn.node.getBlockIdWithDepth(33, 1, 3) catch @panic("expected block");
-    try std.testing.expectEqual(b3.block_type, more_dirt_test.block_type);
-    try std.testing.expectEqual(b3.block_id, more_dirt_test.block_id);
+    try std.testing.expectEqual(b3.block_type, more_dirt_test.block.block_type);
+    try std.testing.expectEqual(b3.block_id, more_dirt_test.block.block_id);
 
     // return last bit of dirt
     const last_dirt_test = rn.node.getBlockIdWithDepth(33, 1, 10) catch @panic("expected block");
-    try std.testing.expectEqual(b3.block_type, last_dirt_test.block_type);
-    try std.testing.expectEqual(b3.block_id, last_dirt_test.block_id);
+    try std.testing.expectEqual(b3.block_type, last_dirt_test.block.block_type);
+    try std.testing.expectEqual(b3.block_id, last_dirt_test.block.block_id);
 
     // return stone
     const stone_test = rn.node.getBlockIdWithDepth(33, 0.3, 11) catch @panic("expected block");
-    try std.testing.expectEqual(b4.block_type, stone_test.block_type);
-    try std.testing.expectEqual(b4.block_id, stone_test.block_id);
+    try std.testing.expectEqual(b4.block_type, stone_test.block.block_type);
+    try std.testing.expectEqual(b4.block_id, stone_test.block.block_id);
 
     // then stone all the way down
     const last_test = rn.node.getBlockIdWithDepth(33, 1, 20) catch @panic("expected block");
-    try std.testing.expectEqual(b4.block_type, last_test.block_type);
-    try std.testing.expectEqual(b4.block_id, last_test.block_id);
+    try std.testing.expectEqual(b4.block_type, last_test.block.block_type);
+    try std.testing.expectEqual(b4.block_id, last_test.block.block_id);
 }
 
 const std = @import("std");
