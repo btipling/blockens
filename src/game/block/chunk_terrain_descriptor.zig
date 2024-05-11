@@ -265,26 +265,39 @@ pub const descriptorNode = struct {
             if (nc.is_false == null and nc.is_true == null) return TerrainGenError.NoConditionalSet;
             if (nc.divisor == null and nc.noise == null) return TerrainGenError.NoiseConditionalMisconfigured;
             const nv = if (nc.absolute) @abs(noise) else noise;
-            const ov = if (nc.divisor) |d| @as(f32, @floatFromInt(y)) / d else nc.noise.?;
+            var attenuate = false;
+            const ov = blk: {
+                if (nc.divisor) |d| {
+                    const _y: f32 = @floatFromInt(y);
+                    attenuate = true;
+                    break :blk _y / d;
+                } else {
+                    break :blk nc.noise.?;
+                }
+            };
             switch (nc.operator) {
                 .eq => {
                     if (ov == nv and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
                     if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
                 },
                 .gt => {
-                    if (ov > nv and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
+                    if (ov > nv and nc.is_true != null)
+                        return nc.is_true.?._getBlockId(cb, y, if (attenuate) ov / nv else noise);
                     if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
                 },
                 .lt => {
-                    if (ov < nv and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
+                    if (ov < nv and nc.is_true != null)
+                        return nc.is_true.?._getBlockId(cb, y, if (attenuate) nv / ov else noise);
                     if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
                 },
                 .gte => {
-                    if (ov >= nv and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
+                    if (ov >= nv and nc.is_true != null)
+                        return nc.is_true.?._getBlockId(cb, y, if (attenuate) ov / nv else noise);
                     if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
                 },
                 .lte => {
-                    if (ov <= nv and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
+                    if (ov <= nv and nc.is_true != null)
+                        return nc.is_true.?._getBlockId(cb, y, if (attenuate) nv / ov else noise);
                     if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
                 },
             }
