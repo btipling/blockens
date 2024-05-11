@@ -137,6 +137,10 @@ pub fn getIndexFromPositionV(p: @Vector(4, f32)) usize {
     const x = @as(u32, @intFromFloat(p[0]));
     const y = @as(u32, @intFromFloat(p[1]));
     const z = @as(u32, @intFromFloat(p[2]));
+    return getIndexFromXYZ(x, y, z);
+}
+
+pub fn getIndexFromXYZ(x: usize, y: usize, z: usize) usize {
     return @as(
         usize,
         @intCast(@mod(x, chunkDim) + @mod(y, chunkDim) * chunkDim + @mod(z, chunkDim) * chunkDim * chunkDim),

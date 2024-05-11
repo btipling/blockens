@@ -25,6 +25,52 @@ pub const TerrainGenJob = struct {
     }
 
     pub fn terrainGenJob(self: *TerrainGenJob) void {
+        const noise_map = self.generateNoiseMap();
+        const chunk_y: f32 = @floatFromInt(self.position[1]);
+
+        var data = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+        errdefer game.state.allocator.free(data);
+        std.debug.print("Generating terrain in job\n", .{});
+        var x: usize = 0;
+        while (x < chunk.chunkDim) : (x += 1) {
+            var z: usize = 0;
+            while (z < chunk.chunkDim) : (z += 1) {
+                var y: usize = 0;
+                var depth: usize = 0;
+                while (y < chunk.chunkDim) : (y += 1) {
+                    const n = noise_map[x][z];
+                    var column_y = y;
+                    if (chunk_y > 0) column_y += chunk.chunkDim;
+                    const bi = self.desc_root.node.getBlockIdWithDepth(column_y, n, depth) catch {
+                        std.log.err("Misconfigured lua desc resulted in invalid block id\n", .{});
+                        self.desc_root.debugPrint();
+                        game.state.allocator.free(data);
+                        self.finishJob(false, null, .{ 0, 0, 0, 0 });
+                        return;
+                    };
+                    var bd: block.BlockData = block.BlockData.fromId(bi.block_id);
+                    bd.setSettingsAmbient();
+                    const ci = chunk.getIndexFromXYZ(x, y, z);
+                    data[ci] = bd.toId();
+                    depth = 0;
+                }
+            }
+        }
+        // self.desc_root.debugPrint();
+        const i = self.position[3];
+        const pos: @Vector(4, i32) = indexToPosition(i);
+        const chunk_position: @Vector(4, f32) = .{
+            @as(f32, @floatFromInt(pos[0])),
+            @as(f32, @floatFromInt(pos[1])),
+            @as(f32, @floatFromInt(pos[2])),
+            0,
+        };
+
+        self.finishJob(true, data, chunk_position);
+    }
+
+    pub fn generateNoiseMap(self: *TerrainGenJob) [chunk.chunkDim][chunk.chunkDim]f32 {
+        var map: [chunk.chunkDim][chunk.chunkDim]f32 = undefined;
         const noise_type: znoise.FnlGenerator.NoiseType = switch (self.desc_root.config.noise_type) {
             .opensimplex2 => .opensimplex2,
             .opensimplex2s => .opensimplex2s,
@@ -78,46 +124,20 @@ pub const TerrainGenJob = struct {
             .domain_warp_amp = 1.0,
         };
         const chunk_x: f32 = @floatFromInt(self.position[0]);
-        const chunk_y: f32 = @floatFromInt(self.position[1]);
         const chunk_z: f32 = @floatFromInt(self.position[2]);
 
-        var data = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-        errdefer game.state.allocator.free(data);
-        std.debug.print("Generating terrain in job\n", .{});
         var ci: usize = 0;
         while (ci < chunk.chunkSize) : (ci += 1) {
             const ci_pos = chunk.getPositionAtIndexV(ci);
+            const x: usize = @intFromFloat(ci_pos[0]);
+            const z: usize = @intFromFloat(ci_pos[2]);
             const n = noiseGen.noise2(
                 ci_pos[0] + (chunk_x * chunk.chunkDim),
                 ci_pos[2] + (chunk_z * chunk.chunkDim),
             );
-            var column_y: usize = @intFromFloat(ci_pos[1]);
-            if (chunk_y > 0) column_y += chunk.chunkDim;
-            const bi = self.desc_root.node.getBlockId(
-                column_y,
-                n,
-            ) catch {
-                std.log.err("Misconfigured lua desc resulted in invalid block id\n", .{});
-                self.desc_root.debugPrint();
-                game.state.allocator.free(data);
-                self.finishJob(false, null, .{ 0, 0, 0, 0 });
-                return;
-            };
-            var bd: block.BlockData = block.BlockData.fromId(bi.block_id);
-            bd.setSettingsAmbient();
-            data[ci] = bd.toId();
+            map[x][z] = n;
         }
-        // self.desc_root.debugPrint();
-        const i = self.position[3];
-        const pos: @Vector(4, i32) = indexToPosition(i);
-        const chunk_position: @Vector(4, f32) = .{
-            @as(f32, @floatFromInt(pos[0])),
-            @as(f32, @floatFromInt(pos[1])),
-            @as(f32, @floatFromInt(pos[2])),
-            0,
-        };
-
-        self.finishJob(true, data, chunk_position);
+        return map;
     }
 
     fn finishJob(self: *TerrainGenJob, succeeded: bool, data: ?[]u32, chunk_position: @Vector(4, f32)) void {
