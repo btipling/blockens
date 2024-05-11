@@ -35,9 +35,9 @@ pub const TerrainGenJob = struct {
         while (x < chunk.chunkDim) : (x += 1) {
             var z: usize = 0;
             while (z < chunk.chunkDim) : (z += 1) {
-                var y: usize = 0;
+                var y: usize = chunk.chunkDim;
                 var depth: usize = 0;
-                while (y < chunk.chunkDim) : (y += 1) {
+                while (y > 0) : (y -= 1) {
                     const n = noise_map[x][z];
                     var column_y = y;
                     if (chunk_y > 0) column_y += chunk.chunkDim;
@@ -53,7 +53,6 @@ pub const TerrainGenJob = struct {
                     bd.setSettingsAmbient();
                     const ci = chunk.getIndexFromXYZ(x, y, z);
                     data[ci] = bd.toId();
-                    depth = 0;
                 }
             }
         }
