@@ -80,14 +80,6 @@ fn addDescBlock(lua: *Lua) i32 {
     return 1;
 }
 
-fn setBlockColumnPercentageInterval(lua: *Lua) i32 {
-    const desc_id: u8 = @intCast(lua.toInteger(1) catch -1);
-    const pi: usize = @intCast(lua.toInteger(2) catch -1);
-    var d = builder.map.items[desc_id];
-    d.blocks.percentage_interval = pi;
-    return 1;
-}
-
 fn setYCondition(lua: *Lua) i32 {
     const desc_id: u8 = @intCast(lua.toInteger(1) catch 0);
     const operator: u8 = @intCast(lua.toInteger(2) catch 0);
@@ -269,8 +261,6 @@ pub fn build_descriptor(self: *Builder) void {
         li.setGlobal("register_block_id");
         li.pushFunction(ziglua.wrap(addDescBlock));
         li.setGlobal("add_desc_block");
-        li.pushFunction(ziglua.wrap(setBlockColumnPercentageInterval));
-        li.setGlobal("set_block_column_percent_interval");
         li.pushFunction(ziglua.wrap(setYCondition));
         li.setGlobal("set_y_cond");
         li.pushFunction(ziglua.wrap(setYConditionTrue));

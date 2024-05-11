@@ -80,25 +80,23 @@ pub const blockId = struct {
     }
 };
 
-// blockColumn - a block column will allow multiple blocks, up to ten,
-// to be specified for a noise generator script
-// the block ids will chosed based on the percentage_interval given a
-// normalized noise level from 0 to 1, if an percentage_interval is 25
-// and there are 4 blocks they the first block will appear be
-// chosen for noise values from 0 to 0.25 in descending order
-// if not enough blocks are given to satisfy the interval
-// the last block will be used for remaining values
-//
-// If interval is 0 it is assumed to be a single block.
+const columnBlock = struct {
+    block_id: blockId,
+    stack_depth: usize,
+};
+
 pub const blockColumn = struct {
     has_blocks: bool = false,
-    block_ids: [10]blockId = undefined,
+    block_ids: [10]columnBlock = undefined,
     num_blocks: usize = 0,
-    percentage_interval: usize = 0,
 
     pub fn addBlock(self: *blockColumn, bi: blockId) void {
+        return self.addBlockWithDepth(bi, 0);
+    }
+
+    pub fn addBlockWithDepth(self: *blockColumn, bi: blockId, stack_depth: usize) void {
         std.debug.assert(self.num_blocks + 1 != self.block_ids.len);
-        self.block_ids[self.num_blocks] = bi;
+        self.block_ids[self.num_blocks] = .{ .block_id = bi, .stack_depth = stack_depth };
         self.num_blocks += 1;
         self.has_blocks = true;
     }
@@ -106,22 +104,25 @@ pub const blockColumn = struct {
     pub fn debugPrint(self: blockColumn, depth: usize) void {
         if (!self.has_blocks) return;
         var i: usize = 0;
-        while (i < self.num_blocks) : (i += 1) self.block_ids[i].debugPrint(depth);
+        while (i < self.num_blocks) : (i += 1) self.block_ids[i].block_id.debugPrint(depth);
     }
 
     // Assumes normalized noise range from 0 to 1.
-    pub fn getBlock(self: blockColumn, noise: f32) ?blockId {
+    pub fn getBlock(self: blockColumn, depth: usize) ?blockId {
         if (!self.has_blocks) return null;
 
-        if (self.percentage_interval == 0) return self.block_ids[0];
+        if (self.num_blocks == 1) return self.block_ids[0].block_id;
 
-        std.debug.assert(self.percentage_interval <= 100);
-        std.debug.assert(noise >= 0 and noise <= 1);
+        std.debug.assert(depth < chunk.chunkDim);
 
-        const n: usize = @intFromFloat(@floor(noise * 100.0));
-        const i: usize = @divFloor(n, self.percentage_interval);
-        if (i >= self.num_blocks) return self.block_ids[self.num_blocks - 1];
-        return self.block_ids[i];
+        var i: usize = 0;
+        var d: usize = self.block_ids[0].stack_depth;
+        while (d <= depth) {
+            i += 1;
+            if (i + 1 >= self.num_blocks) return self.block_ids[i].block_id;
+            d += self.block_ids[i].stack_depth;
+        }
+        return self.block_ids[i].block_id;
     }
 };
 
@@ -231,33 +232,59 @@ pub const descriptorNode = struct {
     }
 
     pub fn getBlockId(self: descriptorNode, y: usize, noise: f32) !blockId {
-        return try self._getBlockId(self.blocks.getBlock(noise), y, noise) orelse TerrainGenError.NoBlockTypeFound;
+        return try self._getBlockId(
+            self.blocks.getBlock(0),
+            y,
+            noise,
+            0,
+        ) orelse TerrainGenError.NoBlockTypeFound;
     }
 
-    fn _getBlockId(self: descriptorNode, current_block: ?blockId, y: usize, noise: f32) !?blockId {
-        const cb = self.blocks.getBlock(noise) orelse current_block;
+    // getBlockIdWithDepth - depth is 0 based, a depth of 0 checks for the very first block found, no previous block found
+    // in y column
+    pub fn getBlockIdWithDepth(self: descriptorNode, y: usize, noise: f32, depth: usize) !blockId {
+        return try self._getBlockId(
+            self.blocks.getBlock(depth),
+            y,
+            noise,
+            depth,
+        ) orelse TerrainGenError.NoBlockTypeFound;
+    }
+
+    fn _getBlockId(self: descriptorNode, current_block: ?blockId, y: usize, noise: f32, depth: usize) !?blockId {
+        const cb = self.blocks.getBlock(depth) orelse current_block;
         if (self.y_conditional) |yc| {
             if (yc.is_false == null and yc.is_true == null) return TerrainGenError.NoConditionalSet;
             switch (yc.operator) {
                 .eq => {
-                    if (y == yc.y and yc.is_true != null) return yc.is_true.?._getBlockId(cb, y, noise);
-                    if (yc.is_false) |d| return d._getBlockId(cb, y, noise);
+                    if (y == yc.y and yc.is_true != null)
+                        return yc.is_true.?._getBlockId(cb, y, noise, depth);
+                    if (yc.is_false) |d|
+                        return d._getBlockId(cb, y, noise, depth);
                 },
                 .gt => {
-                    if (y > yc.y and yc.is_true != null) return yc.is_true.?._getBlockId(cb, y, noise);
-                    if (yc.is_false) |d| return d._getBlockId(cb, y, noise);
+                    if (y > yc.y and yc.is_true != null)
+                        return yc.is_true.?._getBlockId(cb, y, noise, depth);
+                    if (yc.is_false) |d|
+                        return d._getBlockId(cb, y, noise, depth);
                 },
                 .lt => {
-                    if (y < yc.y and yc.is_true != null) return yc.is_true.?._getBlockId(cb, y, noise);
-                    if (yc.is_false) |d| return d._getBlockId(cb, y, noise);
+                    if (y < yc.y and yc.is_true != null)
+                        return yc.is_true.?._getBlockId(cb, y, noise, depth);
+                    if (yc.is_false) |d|
+                        return d._getBlockId(cb, y, noise, depth);
                 },
                 .gte => {
-                    if (y >= yc.y and yc.is_true != null) return yc.is_true.?._getBlockId(cb, y, noise);
-                    if (yc.is_false) |d| return d._getBlockId(cb, y, noise);
+                    if (y >= yc.y and yc.is_true != null)
+                        return yc.is_true.?._getBlockId(cb, y, noise, depth);
+                    if (yc.is_false) |d|
+                        return d._getBlockId(cb, y, noise, depth);
                 },
                 .lte => {
-                    if (y <= yc.y and yc.is_true != null) return yc.is_true.?._getBlockId(cb, y, noise);
-                    if (yc.is_false) |d| return d._getBlockId(cb, y, noise);
+                    if (y <= yc.y and yc.is_true != null)
+                        return yc.is_true.?._getBlockId(cb, y, noise, depth);
+                    if (yc.is_false) |d|
+                        return d._getBlockId(cb, y, noise, depth);
                 },
             }
         }
@@ -265,11 +292,9 @@ pub const descriptorNode = struct {
             if (nc.is_false == null and nc.is_true == null) return TerrainGenError.NoConditionalSet;
             if (nc.divisor == null and nc.noise == null) return TerrainGenError.NoiseConditionalMisconfigured;
             const nv = if (nc.absolute) @abs(noise) else noise;
-            var attenuate = false;
             const ov = blk: {
                 if (nc.divisor) |d| {
                     const _y: f32 = @floatFromInt(y);
-                    attenuate = true;
                     break :blk _y / d;
                 } else {
                     break :blk nc.noise.?;
@@ -277,28 +302,34 @@ pub const descriptorNode = struct {
             };
             switch (nc.operator) {
                 .eq => {
-                    if (ov == nv and nc.is_true != null) return nc.is_true.?._getBlockId(cb, y, noise);
-                    if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
+                    if (ov == nv and nc.is_true != null)
+                        return nc.is_true.?._getBlockId(cb, y, noise, depth);
+                    if (nc.is_false) |d|
+                        return d._getBlockId(cb, y, noise, depth);
                 },
                 .gt => {
                     if (ov > nv and nc.is_true != null)
-                        return nc.is_true.?._getBlockId(cb, y, if (attenuate) ov / nv else noise);
-                    if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
+                        return nc.is_true.?._getBlockId(cb, y, noise, depth);
+                    if (nc.is_false) |d|
+                        return d._getBlockId(cb, y, noise, depth);
                 },
                 .lt => {
                     if (ov < nv and nc.is_true != null)
-                        return nc.is_true.?._getBlockId(cb, y, if (attenuate) nv / ov else noise);
-                    if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
+                        return nc.is_true.?._getBlockId(cb, y, noise, depth);
+                    if (nc.is_false) |d|
+                        return d._getBlockId(cb, y, noise, depth);
                 },
                 .gte => {
                     if (ov >= nv and nc.is_true != null)
-                        return nc.is_true.?._getBlockId(cb, y, if (attenuate) ov / nv else noise);
-                    if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
+                        return nc.is_true.?._getBlockId(cb, y, noise, depth);
+                    if (nc.is_false) |d|
+                        return d._getBlockId(cb, y, noise, depth);
                 },
                 .lte => {
                     if (ov <= nv and nc.is_true != null)
-                        return nc.is_true.?._getBlockId(cb, y, if (attenuate) nv / ov else noise);
-                    if (nc.is_false) |d| return d._getBlockId(cb, y, noise);
+                        return nc.is_true.?._getBlockId(cb, y, noise, depth);
+                    if (nc.is_false) |d|
+                        return d._getBlockId(cb, y, noise, depth);
                 },
             }
         }
@@ -472,7 +503,7 @@ test "basic test divisor" {
     try std.testing.expectEqual(b1.block_id, test5.block_id);
 }
 
-test "block column noise interval" {
+test "block column depth get" {
     const b1: blockId = .{ .block_id = 0, .block_type = .air };
     const b2: blockId = .{ .block_id = 1, .block_type = .grass };
     const b3: blockId = .{ .block_id = 2, .block_type = .dirt };
@@ -486,36 +517,40 @@ test "block column noise interval" {
     rn.registerBlock(b3);
     rn.registerBlock(b4);
 
-    rn.node.blocks.percentage_interval = 10;
-    rn.node.blocks.addBlock(b1);
-    rn.node.blocks.addBlock(b2);
-    rn.node.blocks.addBlock(b3);
-    rn.node.blocks.addBlock(b4);
+    rn.node.blocks.addBlockWithDepth(b2, 1);
+    rn.node.blocks.addBlockWithDepth(b3, 10);
+    rn.node.blocks.addBlockWithDepth(b4, 10);
 
-    // for no noise, return the first block
-    const no_noise_test = rn.node.getBlockId(33, 0) catch @panic("expected block");
-    try std.testing.expectEqual(b1.block_type, no_noise_test.block_type);
-    try std.testing.expectEqual(b1.block_id, no_noise_test.block_id);
+    //  return grass - reminder - depth is 0 based
+    const surface_test = rn.node.getBlockIdWithDepth(33, 0, 0) catch @panic("expected block");
+    try std.testing.expectEqual(b2.block_type, surface_test.block_type);
+    try std.testing.expectEqual(b2.block_id, surface_test.block_id);
 
-    // for minimal noise, return grass
-    const surface_noise = rn.node.getBlockId(33, 0.1) catch @panic("expected block");
-    try std.testing.expectEqual(b2.block_type, surface_noise.block_type);
-    try std.testing.expectEqual(b2.block_id, surface_noise.block_id);
+    // return dirt
+    const dirt_test = rn.node.getBlockIdWithDepth(33, 1, 1) catch @panic("expected block");
+    try std.testing.expectEqual(b3.block_type, dirt_test.block_type);
+    try std.testing.expectEqual(b3.block_id, dirt_test.block_id);
 
-    // for more noise, return dirt
-    const dirt_noise = rn.node.getBlockId(33, 0.2) catch @panic("expected block");
-    try std.testing.expectEqual(b3.block_type, dirt_noise.block_type);
-    try std.testing.expectEqual(b3.block_id, dirt_noise.block_id);
+    // return more dirt
+    const more_dirt_test = rn.node.getBlockIdWithDepth(33, 1, 3) catch @panic("expected block");
+    try std.testing.expectEqual(b3.block_type, more_dirt_test.block_type);
+    try std.testing.expectEqual(b3.block_id, more_dirt_test.block_id);
 
-    // for even more noise, return stone
-    const stone_noise = rn.node.getBlockId(33, 0.3) catch @panic("expected block");
-    try std.testing.expectEqual(b4.block_type, stone_noise.block_type);
-    try std.testing.expectEqual(b4.block_id, stone_noise.block_id);
+    // return last bit of dirt
+    const last_dirt_test = rn.node.getBlockIdWithDepth(33, 1, 10) catch @panic("expected block");
+    try std.testing.expectEqual(b3.block_type, last_dirt_test.block_type);
+    try std.testing.expectEqual(b3.block_id, last_dirt_test.block_id);
+
+    // return stone
+    const stone_test = rn.node.getBlockIdWithDepth(33, 0.3, 11) catch @panic("expected block");
+    try std.testing.expectEqual(b4.block_type, stone_test.block_type);
+    try std.testing.expectEqual(b4.block_id, stone_test.block_id);
 
     // then stone all the way down
-    const last_noise = rn.node.getBlockId(33, 1) catch @panic("expected block");
-    try std.testing.expectEqual(b4.block_type, last_noise.block_type);
-    try std.testing.expectEqual(b4.block_id, last_noise.block_id);
+    const last_test = rn.node.getBlockIdWithDepth(33, 1, 20) catch @panic("expected block");
+    try std.testing.expectEqual(b4.block_type, last_test.block_type);
+    try std.testing.expectEqual(b4.block_id, last_test.block_id);
 }
 
 const std = @import("std");
+const chunk = @import("chunk.zig");
