@@ -36,10 +36,9 @@ function generate_descriptor()
 
     set_noise_cond_with_div(top_chunk, OP_LTE, 128)
     local hill = set_noise_cond_true(top_chunk)
-    add_desc_block(hill, grass)
-    add_desc_block(hill, dirt)
-    add_desc_block(hill, stone)
-    set_block_column_percent_interval(hill, 10)
+    add_desc_block_with_depth(hill, grass, 1)
+    add_desc_block_with_depth(hill, dirt, 5)
+    add_desc_block_with_depth(hill, stone, 10)
 
 
     set_y_cond(bot_chunk, OP_EQ, 63)

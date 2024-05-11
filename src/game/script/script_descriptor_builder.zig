@@ -66,13 +66,31 @@ fn registerBlockId(lua: *Lua) i32 {
 }
 
 fn addDescBlock(lua: *Lua) i32 {
-    const desc_id: u8 = @intCast(lua.toInteger(1) catch -1);
-    const block_type_index: u8 = @intCast(lua.toInteger(2) catch -1);
+    const desc_id: u8 = @intCast(lua.toInteger(1) catch 0);
+    const block_type_index: u8 = @intCast(lua.toInteger(2) catch 0);
+
     const block_type: desc.blockType = @enumFromInt(block_type_index);
     var d = builder.map.items[desc_id];
     for (builder.root.block_ids) |bi| {
         if (bi.block_type == block_type) {
             d.blocks.addBlock(bi);
+            return 1;
+        }
+    }
+    std.log.err("Invalid block id given to desc", .{});
+    return 1;
+}
+
+fn addDescBlockWithDepth(lua: *Lua) i32 {
+    const desc_id: u8 = @intCast(lua.toInteger(1) catch 0);
+    const block_type_index: u8 = @intCast(lua.toInteger(2) catch 0);
+    const depth: usize = @intCast(lua.toInteger(3) catch 0);
+
+    const block_type: desc.blockType = @enumFromInt(block_type_index);
+    var d = builder.map.items[desc_id];
+    for (builder.root.block_ids) |bi| {
+        if (bi.block_type == block_type) {
+            d.blocks.addBlockWithDepth(bi, depth);
             return 1;
         }
     }
@@ -261,6 +279,9 @@ pub fn build_descriptor(self: *Builder) void {
         li.setGlobal("register_block_id");
         li.pushFunction(ziglua.wrap(addDescBlock));
         li.setGlobal("add_desc_block");
+        li.pushFunction(ziglua.wrap(addDescBlockWithDepth));
+        li.setGlobal("add_desc_block_with_depth");
+
         li.pushFunction(ziglua.wrap(setYCondition));
         li.setGlobal("set_y_cond");
         li.pushFunction(ziglua.wrap(setYConditionTrue));
