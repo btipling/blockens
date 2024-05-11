@@ -9,7 +9,7 @@ function generate_descriptor()
     set_weighted_strength(3.5)
     set_cell_dist_func(CDF_EUCLIDEAN_SQ)
     set_cell_return_type(CRT_DISTANCE_2_MUL)
-    set_jitter(0.760)
+    set_jitter(2.460)
 
     local air = 0
     local stone = 1
