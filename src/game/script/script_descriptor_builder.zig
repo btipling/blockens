@@ -65,7 +65,7 @@ fn registerBlockId(lua: *Lua) i32 {
     return 1;
 }
 
-fn setDescBlock(lua: *Lua) i32 {
+fn addDescBlock(lua: *Lua) i32 {
     const desc_id: u8 = @intCast(lua.toInteger(1) catch -1);
     const block_type_index: u8 = @intCast(lua.toInteger(2) catch -1);
     const block_type: desc.blockType = @enumFromInt(block_type_index);
@@ -77,6 +77,14 @@ fn setDescBlock(lua: *Lua) i32 {
         }
     }
     std.log.err("Invalid block id given to desc", .{});
+    return 1;
+}
+
+fn setBlockColumnPercentageInterval(lua: *Lua) i32 {
+    const desc_id: u8 = @intCast(lua.toInteger(1) catch -1);
+    const pi: usize = @intCast(lua.toInteger(2) catch -1);
+    var d = builder.map.items[desc_id];
+    d.blocks.percentage_interval = pi;
     return 1;
 }
 
@@ -259,8 +267,10 @@ pub fn build_descriptor(self: *Builder) void {
         li.setGlobal("create_desc");
         li.pushFunction(ziglua.wrap(registerBlockId));
         li.setGlobal("register_block_id");
-        li.pushFunction(ziglua.wrap(setDescBlock));
-        li.setGlobal("set_desc_block");
+        li.pushFunction(ziglua.wrap(addDescBlock));
+        li.setGlobal("add_desc_block");
+        li.pushFunction(ziglua.wrap(setBlockColumnPercentageInterval));
+        li.setGlobal("set_block_column_percent_interval");
         li.pushFunction(ziglua.wrap(setYCondition));
         li.setGlobal("set_y_cond");
         li.pushFunction(ziglua.wrap(setYConditionTrue));
