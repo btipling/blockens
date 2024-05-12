@@ -53,17 +53,18 @@ pub const Data = struct {
     pub fn ensureDefaultWorld(self: *Data) !bool {
         chunk_file.initWorldSave(false, 1);
         if (try self.countWorlds() < 1) {
-            // First time ever launchign the game.
-            try sql_world.saveWorld(self.db, "default");
             try self.saveSchema();
             return false;
         }
         const schema_version = try self.currentSchemaVersion();
         if (schema_version == 0) {
-            // Not the first time launching the game, migrate save.
             try migrations.v2.migrate(self.allocator);
-            // There was no previous schema versioning so just insert it for the first time.
+            try migrations.v3.migrate(self.allocator);
             try self.saveSchema();
+        }
+        if (schema_version == 2) {
+            try migrations.v3.migrate(self.allocator);
+            try self.updateSchema();
         }
         return true;
     }
@@ -75,13 +76,16 @@ pub const Data = struct {
     pub fn saveSchema(self: *Data) !void {
         return sql_schema.saveSchema(self.db);
     }
+    pub fn updateSchema(self: *Data) !void {
+        return sql_schema.saveSchema(self.db);
+    }
     pub fn currentSchemaVersion(self: *Data) !i32 {
         return sql_schema.currentSchemaVersion(self.db);
     }
 
     // World
-    pub fn saveWorld(self: *Data, name: []const u8) !void {
-        return sql_world.saveWorld(self.db, name);
+    pub fn saveWorld(self: *Data, name: []const u8, seed: i32) !void {
+        return sql_world.saveWorld(self.db, name, seed);
     }
     pub fn listWorlds(self: *Data, data: *std.ArrayList(worldOption)) !void {
         return sql_world.listWorlds(self.db, data);
@@ -89,8 +93,8 @@ pub const Data = struct {
     pub fn loadWorld(self: *Data, id: i32, data: *world) !void {
         return sql_world.loadWorld(self.db, id, data);
     }
-    pub fn updateWorld(self: *Data, id: i32, name: []const u8) !void {
-        return sql_world.updateWorld(self.db, id, name);
+    pub fn updateWorld(self: *Data, id: i32, name: []const u8, seed: i32) !void {
+        return sql_world.updateWorld(self.db, id, name, seed);
     }
     pub fn deleteWorld(self: *Data, id: i32) !void {
         return sql_world.deleteWorld(self.db, id);
@@ -252,6 +256,17 @@ pub const Data = struct {
     pub fn loadDisplaySettings(self: *Data, ds: *display_settings) !void {
         return sql_display_settings.loadDisplaySettings(self.db, ds);
     }
+
+    // World Terrain
+    pub fn saveWorldTerrain(self: *Data, world_id: i32, terrain_gen_script_id: i32) !void {
+        return sql_world_terrain.saveWorldTerrain(self.db, world_id, terrain_gen_script_id);
+    }
+    pub fn listWorldTerrains(self: *Data, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
+        return sql_world_terrain.listWorldTerrains(self.db, data);
+    }
+    pub fn deleteWorldTerrain(self: *Data, id: i32) !void {
+        return sql_world_terrain.deleteWorldTerrain(self.db, id);
+    }
 };
 
 const std = @import("std");
@@ -266,6 +281,7 @@ const sql_block = @import("data_block.zig");
 const sql_chunk = @import("data_chunk.zig");
 const sql_player_position = @import("data_player_position.zig");
 const sql_display_settings = @import("data_display_settings.zig");
+const sql_world_terrain = @import("data_world_terrain.zig");
 pub const sql_utils = @import("data_sql_utils.zig");
 
 pub const chunk_file = @import("chunk_file.zig");

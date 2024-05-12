@@ -117,11 +117,11 @@ pub fn loadDisplaySettings(db: sqlite.Database, ds: *display_settings) !void {
     return sql_utils.DataErr.NotFound;
 }
 
-const insert_display_settings_stmt = @embedFile("./sql/v2/display_settings/insert.sql");
-const update_display_settings_stmt = @embedFile("./sql/v2/display_settings/update.sql");
-const select_display_settings_stmt = @embedFile("./sql/v2/display_settings/select.sql");
-const list_display_settings_stmt = @embedFile("./sql/v2/display_settings/list.sql");
-const delete_display_settings_stmt = @embedFile("./sql/v2/display_settings/delete.sql");
+const insert_display_settings_stmt = @embedFile("./sql/v3/display_settings/insert.sql");
+const update_display_settings_stmt = @embedFile("./sql/v3/display_settings/update.sql");
+const select_display_settings_stmt = @embedFile("./sql/v3/display_settings/select.sql");
+const list_display_settings_stmt = @embedFile("./sql/v3/display_settings/list.sql");
+const delete_display_settings_stmt = @embedFile("./sql/v3/display_settings/delete.sql");
 
 const std = @import("std");
 const sqlite = @import("sqlite");

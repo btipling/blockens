@@ -145,10 +145,10 @@ pub fn deletePlayerPosition(db: sqlite.Database, world_id: i32) !void {
     };
 }
 
-const insert_player_pos_stmt = @embedFile("./sql/v2/player_position/insert.sql");
-const update_player_pos_stmt = @embedFile("./sql/v2/player_position/update.sql");
-const select_player_pos_stmt = @embedFile("./sql/v2/player_position/select.sql");
-const delete_player_pos_stmt = @embedFile("./sql/v2/player_position/delete.sql");
+const insert_player_pos_stmt = @embedFile("./sql/v3/player_position/insert.sql");
+const update_player_pos_stmt = @embedFile("./sql/v3/player_position/update.sql");
+const select_player_pos_stmt = @embedFile("./sql/v3/player_position/select.sql");
+const delete_player_pos_stmt = @embedFile("./sql/v3/player_position/delete.sql");
 
 const std = @import("std");
 const sqlite = @import("sqlite");

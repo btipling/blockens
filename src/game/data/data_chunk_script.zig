@@ -111,11 +111,11 @@ pub fn deleteChunkScript(db: sqlite.Database, id: i32) !void {
     };
 }
 
-const insert_chunk_script_stmt = @embedFile("./sql/v2/chunk_script/insert.sql");
-const update_chunk_script_stmt = @embedFile("./sql/v2/chunk_script/update.sql");
-const select_chunk_stmt = @embedFile("./sql/v2/chunk_script/select.sql");
-const list_chunk_stmt = @embedFile("./sql/v2/chunk_script/list.sql");
-const delete_chunk_stmt = @embedFile("./sql/v2/chunk_script/delete.sql");
+const insert_chunk_script_stmt = @embedFile("./sql/v3/chunk_script/insert.sql");
+const update_chunk_script_stmt = @embedFile("./sql/v3/chunk_script/update.sql");
+const select_chunk_stmt = @embedFile("./sql/v3/chunk_script/select.sql");
+const list_chunk_stmt = @embedFile("./sql/v3/chunk_script/list.sql");
+const delete_chunk_stmt = @embedFile("./sql/v3/chunk_script/delete.sql");
 
 const std = @import("std");
 const sqlite = @import("sqlite");

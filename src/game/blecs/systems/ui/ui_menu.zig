@@ -25,9 +25,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     zgui.endMenu();
                 }
                 if (zgui.beginMenu("Editors", true)) {
-                    if (zgui.menuItem("World", .{})) {
-                        screen_helpers.showWorldEditor();
-                    }
                     if (zgui.menuItem("Textures", .{})) {
                         screen_helpers.showBlockTextureGen();
                     }

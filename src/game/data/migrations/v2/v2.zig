@@ -5,8 +5,6 @@ pub const v1_chunk_size: comptime_int = v1_chunk_dim * v1_chunk_dim * v1_chunk_d
 pub fn migrate(allocator: std.mem.Allocator) !void {
     var db_v1 = try v1.Data.init(allocator);
     defer db_v1.deinit();
-    var db_v2 = try v2.Data.init(allocator);
-    defer db_v2.deinit();
 
     var world_list = std.ArrayList(v1.worldOption).init(allocator);
     defer world_list.deinit();
@@ -105,6 +103,6 @@ fn loadV1Chunks(db_v1: *v1.Data, world_id: i32, x: i32, y: i32, z: i32) ![]u32 {
 
 const std = @import("std");
 const v1 = @import("data.v1.zig");
-const v2 = @import("../../data.zig");
+const v2 = @import("data.v2.zig");
 const block = @import("../../../block/block.zig");
 const chunk = block.chunk;

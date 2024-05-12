@@ -76,7 +76,6 @@ pub const BlockEditor = struct {};
 pub const ChunkEditor = struct {};
 pub const CharacterEditor = struct {};
 pub const TerrainEditor = struct {};
-pub const WorldEditor = struct {};
 pub const TitleScreen = struct {};
 pub const LightingEditor = struct {};
 pub const SettingUpScreen = struct {};
@@ -119,7 +118,6 @@ pub fn init() void {
     ecs.TAG(world, ChunkEditor);
     ecs.TAG(world, CharacterEditor);
     ecs.TAG(world, TerrainEditor);
-    ecs.TAG(world, WorldEditor);
     ecs.TAG(world, TitleScreen);
     ecs.TAG(world, SettingUpScreen);
     ecs.TAG(world, LoadingScreen);

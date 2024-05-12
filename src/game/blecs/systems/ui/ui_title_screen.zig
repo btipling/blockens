@@ -34,7 +34,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     .w = btn_dms[0],
                     .h = btn_dms[1],
                 })) {
-                    screen_helpers.showWorldEditor();
+                    screen_helpers.showBlockTextureGen();
                 }
                 var default_world: i32 = 0;
 

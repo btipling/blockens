@@ -11,17 +11,20 @@ pub const worldOptionSQL = struct {
 pub const worldSQL = struct {
     id: i32,
     name: sqlite.Text,
+    seed: i32,
 };
 
 pub const world = struct {
     id: i32,
     name: [21]u8,
+    seed: i32,
 };
 
-pub fn saveWorld(db: sqlite.Database, name: []const u8) !void {
+pub fn saveWorld(db: sqlite.Database, name: []const u8, seed: i32) !void {
     var insert_stmt = try db.prepare(
         struct {
             name: sqlite.Text,
+            seed: i32,
         },
         void,
         insert_world_stmt,
@@ -29,7 +32,7 @@ pub fn saveWorld(db: sqlite.Database, name: []const u8) !void {
     defer insert_stmt.deinit();
 
     insert_stmt.exec(
-        .{ .name = sqlite.text(name) },
+        .{ .name = sqlite.text(name), .seed = seed },
     ) catch |err| {
         std.log.err("Failed to insert world: {}", .{err});
         return err;
@@ -80,6 +83,7 @@ pub fn loadWorld(db: sqlite.Database, id: i32, data: *world) !void {
             std.debug.print("Found world: {s}\n", .{r.name.data});
             data.id = r.id;
             data.name = sql_utils.sqlNameToArray(r.name);
+            data.seed = r.seed;
             return;
         }
     }
@@ -87,7 +91,7 @@ pub fn loadWorld(db: sqlite.Database, id: i32, data: *world) !void {
     return error.Unreachable;
 }
 
-pub fn updateWorld(db: sqlite.Database, id: i32, name: []const u8) !void {
+pub fn updateWorld(db: sqlite.Database, id: i32, name: []const u8, seed: i32) !void {
     var update_stmt = try db.prepare(
         worldSQL,
         void,
@@ -99,6 +103,7 @@ pub fn updateWorld(db: sqlite.Database, id: i32, name: []const u8) !void {
         .{
             .id = id,
             .name = sqlite.text(name),
+            .seed = seed,
         },
     ) catch |err| {
         std.log.err("Failed to update world: {}", .{err});
@@ -142,13 +147,13 @@ pub fn countWorlds(db: sqlite.Database) !i32 {
     return 0;
 }
 
-const insert_world_stmt = @embedFile("./sql/v2/world/insert.sql");
-const selectWorldByNameStmt = @embedFile("./sql/v2/world/select_by_name.sql");
-const selectWorldByIdStmt = @embedFile("./sql/v2/world/select_by_id.sql");
-const listWorldStmt = @embedFile("./sql/v2/world/list.sql");
-const updateWorldStmt = @embedFile("./sql/v2/world/update.sql");
-const deleteWorldStmt = @embedFile("./sql/v2/world/delete.sql");
-const count_worlds_stmt = @embedFile("./sql/v2/world/count_worlds.sql");
+const insert_world_stmt = @embedFile("./sql/v3/world/insert.sql");
+const selectWorldByNameStmt = @embedFile("./sql/v3/world/select_by_name.sql");
+const selectWorldByIdStmt = @embedFile("./sql/v3/world/select_by_id.sql");
+const listWorldStmt = @embedFile("./sql/v3/world/list.sql");
+const updateWorldStmt = @embedFile("./sql/v3/world/update.sql");
+const deleteWorldStmt = @embedFile("./sql/v3/world/delete.sql");
+const count_worlds_stmt = @embedFile("./sql/v3/world/count_worlds.sql");
 
 const std = @import("std");
 const sqlite = @import("sqlite");

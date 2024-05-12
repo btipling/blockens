@@ -1,0 +1,1 @@
+INSERT INTO world (name, created_at, updated_at, seed) VALUES (:name, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :seed);

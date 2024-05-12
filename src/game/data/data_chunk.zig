@@ -185,14 +185,14 @@ pub fn deleteChunkDataById(db: sqlite.Database, id: i32, world_id: i32) !void {
     };
 }
 
-const insert_chunk_data_stmt = @embedFile("./sql/v2/chunk/insert.sql");
-const update_chunk_data_stmt = @embedFile("./sql/v2/chunk/update.sql");
-const select_chunk_data_by_id_stmt = @embedFile("./sql/v2/chunk/select_by_id.sql");
-const select_world_data_for_id_stmt = @embedFile("./sql/v2/chunk/select_world_data_for_id.sql");
-const select_chunk_data_by_coords_stmt = @embedFile("./sql/v2/chunk/select_by_coords.sql");
-const list_chunk_data_stmt = @embedFile("./sql/v2/chunk/list.sql");
-const delete_chunk_data_stmt = @embedFile("./sql/v2/chunk/delete.sql");
-const delete_chunk_data_by_id_stmt = @embedFile("./sql/v2/chunk/delete_by_id.sql");
+const insert_chunk_data_stmt = @embedFile("./sql/v3/chunk/insert.sql");
+const update_chunk_data_stmt = @embedFile("./sql/v3/chunk/update.sql");
+const select_chunk_data_by_id_stmt = @embedFile("./sql/v3/chunk/select_by_id.sql");
+const select_world_data_for_id_stmt = @embedFile("./sql/v3/chunk/select_world_data_for_id.sql");
+const select_chunk_data_by_coords_stmt = @embedFile("./sql/v3/chunk/select_by_coords.sql");
+const list_chunk_data_stmt = @embedFile("./sql/v3/chunk/list.sql");
+const delete_chunk_data_stmt = @embedFile("./sql/v3/chunk/delete.sql");
+const delete_chunk_data_by_id_stmt = @embedFile("./sql/v3/chunk/delete_by_id.sql");
 
 const std = @import("std");
 const sqlite = @import("sqlite");
