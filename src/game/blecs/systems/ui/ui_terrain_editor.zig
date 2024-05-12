@@ -58,7 +58,7 @@ fn drawControls() !void {
         if (zgui.sliderInt("seed", .{
             .v = &game.state.ui.terrain_gen_seed,
             .min = 0,
-            .max = 10_000,
+            .max = 100_000,
         })) {
             entities.screen.initDemoChunkCamera(false);
         }
