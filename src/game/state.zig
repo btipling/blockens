@@ -85,18 +85,6 @@ pub const Game = struct {
         try self.db.listWorlds(&self.ui.world_options);
         try self.db.listTerrainGenScripts(&self.ui.terrain_gen_script_options);
 
-        var world_data: data.world = undefined;
-        try self.db.loadWorld(1, &world_data);
-        var world_name_buf = [_]u8{0} ** ui.max_world_name;
-        for (world_data.name, 0..) |c, i| {
-            if (i >= ui.max_world_name) {
-                break;
-            }
-            world_name_buf[i] = c;
-        }
-        self.ui.world_name_buf = world_name_buf;
-        self.ui.world_loaded_id = 1;
-
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
         const defaultLuaScript = @embedFile("script/lua/gen_grass_texture.lua");
         for (defaultLuaScript, 0..) |c, i| {

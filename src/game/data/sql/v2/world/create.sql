@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS world (
     name TEXT NOT NULL,
     created_at DATETIME,
     updated_at DATETIME,
-    seed INTEGER NOT NULL,
+    seed INTEGER NOT NULL
 );

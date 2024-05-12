@@ -81,6 +81,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 if (combo) zgui.endCombo();
 
                 centerNext(ww);
+                zgui.beginDisabled(.{ .disabled = game.state.ui.world_options.items.len == 0 });
                 if (zgui.button("Play", .{
                     .w = btn_dms[0],
                     .h = btn_dms[1],
@@ -94,6 +95,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         screen_helpers.showGameScreen();
                     }
                 }
+                zgui.endDisabled();
                 centerNext(ww);
                 if (zgui.button("Display Settings", .{
                     .w = btn_dms[0],
