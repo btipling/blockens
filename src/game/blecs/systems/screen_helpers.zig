@@ -30,6 +30,10 @@ pub fn showLoadingScreen() void {
     showSettingsScreen(blecs.components.screen.LoadingScreen);
 }
 
+pub fn showCreateWorldScreen() void {
+    showSettingsScreen(blecs.components.screen.CreateWorldScreen);
+}
+
 pub fn showDisplaySettingsScreen() void {
     showSettingsScreen(blecs.components.screen.DisplaySettings);
 }

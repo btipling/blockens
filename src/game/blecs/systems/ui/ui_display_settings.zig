@@ -20,7 +20,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .w = game.state.ui.imguiWidth(600),
                 .h = game.state.ui.imguiHeight(300),
             });
-            if (zgui.begin("DisplaymSettings", .{
+            if (zgui.begin("Display Settings", .{
                 .flags = zgui.WindowFlags.no_decoration,
             })) {
                 const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();

@@ -5,6 +5,7 @@ pub fn init() void {
     block_editor.init();
     chunk_editor.init();
     title_screen.init();
+    create_world_screen.init();
     setting_up_screen.init();
     loading_screen.init();
     display_settings.init();
@@ -25,6 +26,7 @@ const texture_gen = @import("ui_texture_gen.zig");
 const block_editor = @import("ui_block_editor.zig");
 const chunk_editor = @import("ui_chunk_editor.zig");
 const title_screen = @import("ui_title_screen.zig");
+const create_world_screen = @import("ui_create_world_screen.zig");
 const setting_up_screen = @import("ui_setting_up_screen.zig");
 const loading_screen = @import("ui_loading_screen.zig");
 const display_settings = @import("ui_display_settings.zig");

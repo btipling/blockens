@@ -77,7 +77,7 @@ pub const Data = struct {
         return sql_schema.saveSchema(self.db);
     }
     pub fn updateSchema(self: *Data) !void {
-        return sql_schema.saveSchema(self.db);
+        return sql_schema.updateSchema(self.db);
     }
     pub fn currentSchemaVersion(self: *Data) !i32 {
         return sql_schema.currentSchemaVersion(self.db);
