@@ -27,17 +27,17 @@ pub const TerrainGenJob = struct {
     pub fn terrainGenJob(self: *TerrainGenJob) void {
         const noise_map = self.generateNoiseMap();
         const chunk_y: f32 = @floatFromInt(self.position[1]);
-
         var data = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
         errdefer game.state.allocator.free(data);
         std.debug.print("Generating terrain in job\n", .{});
+        @memset(data, 0);
         var x: usize = 0;
         while (x < chunk.chunkDim) : (x += 1) {
             var z: usize = 0;
             while (z < chunk.chunkDim) : (z += 1) {
-                var y: usize = chunk.chunkDim;
+                var y: usize = chunk.chunkDim - 1;
                 var depth: usize = 0;
-                while (y > 0) : (y -= 1) {
+                while (true) : (y -= 1) {
                     const n = noise_map[x][z];
                     var column_y = y;
                     if (chunk_y > 0) column_y += chunk.chunkDim;
@@ -53,6 +53,7 @@ pub const TerrainGenJob = struct {
                     bd.setSettingsAmbient();
                     const ci = chunk.getIndexFromXYZ(x, y, z);
                     data[ci] = bd.toId();
+                    if (y == 0) break;
                 }
             }
         }
