@@ -87,8 +87,8 @@ pub const Data = struct {
     pub fn saveWorld(self: *Data, name: []const u8, seed: i32) !void {
         return sql_world.saveWorld(self.db, name, seed);
     }
-    pub fn listWorlds(self: *Data, data: *std.ArrayList(worldOption)) !void {
-        return sql_world.listWorlds(self.db, data);
+    pub fn listWorlds(self: *Data, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(worldOption)) !void {
+        return sql_world.listWorlds(self.db, allocator, data);
     }
     pub fn loadWorld(self: *Data, id: i32, data: *world) !void {
         return sql_world.loadWorld(self.db, id, data);
@@ -113,8 +113,8 @@ pub const Data = struct {
     pub fn updateTextureScript(self: *Data, id: i32, name: []const u8, textureScript: []const u8) !void {
         return sql_texture_script.updateTextureScript(self.db, id, name, textureScript);
     }
-    pub fn listTextureScripts(self: *Data, data: *std.ArrayList(scriptOption)) !void {
-        return sql_texture_script.listTextureScripts(self.db, data);
+    pub fn listTextureScripts(self: *Data, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(scriptOption)) !void {
+        return sql_texture_script.listTextureScripts(self.db, allocator, data);
     }
     pub fn loadTextureScript(self: *Data, id: i32, data: *script) !void {
         return sql_texture_script.loadTextureScript(self.db, id, data);
@@ -130,8 +130,8 @@ pub const Data = struct {
     pub fn updateChunkScript(self: *Data, id: i32, name: []const u8, cScript: []const u8, color: [3]f32) !void {
         return sql_chunk_script.updateChunkScript(self.db, id, name, cScript, color);
     }
-    pub fn listChunkScripts(self: *Data, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
-        return sql_chunk_script.listChunkScripts(self.db, data);
+    pub fn listChunkScripts(self: *Data, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(sql_utils.colorScriptOption)) !void {
+        return sql_chunk_script.listChunkScripts(self.db, allocator, data);
     }
     pub fn loadChunkScript(self: *Data, id: i32, data: *sql_utils.colorScript) !void {
         return sql_chunk_script.loadChunkScript(self.db, id, data);
@@ -147,8 +147,8 @@ pub const Data = struct {
     pub fn updateTerrainGenScript(self: *Data, id: i32, name: []const u8, cScript: []const u8, color: [3]f32) !void {
         return sql_terrain_gen_script.updateTerrainGenScript(self.db, id, name, cScript, color);
     }
-    pub fn listTerrainGenScripts(self: *Data, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
-        return sql_terrain_gen_script.listTerrainGenScripts(self.db, data);
+    pub fn listTerrainGenScripts(self: *Data, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(sql_utils.colorScriptOption)) !void {
+        return sql_terrain_gen_script.listTerrainGenScripts(self.db, allocator, data);
     }
     pub fn loadTerrainGenScript(self: *Data, id: i32, data: *sql_utils.colorScript) !void {
         return sql_terrain_gen_script.loadTerrainGenScript(self.db, id, data);
@@ -164,8 +164,8 @@ pub const Data = struct {
     pub fn updateBlock(self: *Data, id: i32, name: []const u8, texture: []u32, transparent: bool, light_level: u8) !void {
         return sql_block.updateBlock(self.db, id, name, texture, transparent, light_level);
     }
-    pub fn listBlocks(self: *Data, data: *std.ArrayList(blockOption)) !void {
-        return sql_block.listBlocks(self.db, data);
+    pub fn listBlocks(self: *Data, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(blockOption)) !void {
+        return sql_block.listBlocks(self.db, allocator, data);
     }
     // caller owns texture data slice
     pub fn loadBlock(self: *Data, id: i32, data: *block) !void {

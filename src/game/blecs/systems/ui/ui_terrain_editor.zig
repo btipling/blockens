@@ -136,7 +136,7 @@ fn drawInput() !void {
 }
 
 fn listTerrainGenScripts() !void {
-    try game.state.db.listTerrainGenScripts(&game.state.ui.terrain_gen_script_options);
+    try game.state.db.listTerrainGenScripts(game.state.ui.allocator, &game.state.ui.terrain_gen_script_options);
 }
 
 fn loadTerrainGenScriptFunc(scriptId: i32) !void {

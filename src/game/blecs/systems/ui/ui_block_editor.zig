@@ -48,7 +48,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 }
 
 fn listBlocks() !void {
-    try game.state.db.listBlocks(&game.state.ui.block_options);
+    try game.state.db.listBlocks(game.state.ui.allocator, &game.state.ui.block_options);
     for (game.state.ui.block_options.items) |bo| {
         if (!game.state.blocks.blocks.contains(bo.id)) {
             // detected a new block to load:
@@ -59,7 +59,7 @@ fn listBlocks() !void {
 }
 
 fn listTextureScripts() !void {
-    try game.state.db.listTextureScripts(&game.state.ui.texture_script_options);
+    try game.state.db.listTextureScripts(game.state.ui.allocator, &game.state.ui.texture_script_options);
 }
 
 fn saveBlock() !void {

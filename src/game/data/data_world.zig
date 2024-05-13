@@ -39,7 +39,7 @@ pub fn saveWorld(db: sqlite.Database, name: []const u8, seed: i32) !void {
     };
 }
 
-pub fn listWorlds(db: sqlite.Database, data: *std.ArrayList(worldOption)) !void {
+pub fn listWorlds(db: sqlite.Database, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(worldOption)) !void {
     var listStmt = try db.prepare(
         struct {},
         worldOptionSQL,
@@ -55,6 +55,7 @@ pub fn listWorlds(db: sqlite.Database, data: *std.ArrayList(worldOption)) !void 
         while (try listStmt.step()) |row| {
             chunk_file.initWorldSave(false, row.id);
             try data.append(
+                allocator,
                 worldOption{
                     .id = row.id,
                     .name = sql_utils.sqlNameToArray(row.name),

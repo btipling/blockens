@@ -63,7 +63,7 @@ fn handle_chunk_gen(msg: buffer.buffer_message) !void {
         game.state.allocator.free(cd.chunkData);
         cleared_data = true;
     }
-    game.state.ui.world_chunk_table_data.put(chunk_data.wp, ch_cfg) catch @panic("OOM");
+    game.state.ui.world_chunk_table_data.put(game.state.ui.allocator, chunk_data.wp, ch_cfg) catch @panic("OOM");
 }
 
 fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
@@ -142,8 +142,16 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
     };
     game.state.ui.load_percentage_load_chunks = pr.percent;
     if (lcd.exists) {
-        game.state.ui.world_chunk_table_data.put(lcd.wp_t, lcd.cfg_t) catch @panic("OOM");
-        game.state.ui.world_chunk_table_data.put(lcd.wp_b, lcd.cfg_b) catch @panic("OOM");
+        game.state.ui.world_chunk_table_data.put(
+            game.state.ui.allocator,
+            lcd.wp_t,
+            lcd.cfg_t,
+        ) catch @panic("OOM");
+        game.state.ui.world_chunk_table_data.put(
+            game.state.ui.allocator,
+            lcd.wp_b,
+            lcd.cfg_b,
+        ) catch @panic("OOM");
     }
     if (!pr.done) return;
     if (!lcd.start_game) return;

@@ -66,7 +66,7 @@ pub const Game = struct {
         self.jobs.deinit();
         self.script.deinit();
         self.db.deinit();
-        ui.deinit(self.allocator);
+        ui.deinit();
         gfx.deinit(self.allocator);
         block.deinit(self.allocator);
         thread.buffer.deinit();
@@ -79,11 +79,11 @@ pub const Game = struct {
 
     pub fn populateUIOptions(self: *Game) !void {
         std.debug.print("populate ui options\n", .{});
-        try self.db.listBlocks(&self.ui.block_options);
-        try self.db.listTextureScripts(&self.ui.texture_script_options);
-        try self.db.listChunkScripts(&self.ui.chunk_script_options);
-        try self.db.listWorlds(&self.ui.world_options);
-        try self.db.listTerrainGenScripts(&self.ui.terrain_gen_script_options);
+        try self.db.listBlocks(self.ui.allocator, &self.ui.block_options);
+        try self.db.listTextureScripts(self.ui.allocator, &self.ui.texture_script_options);
+        try self.db.listChunkScripts(self.ui.allocator, &self.ui.chunk_script_options);
+        try self.db.listWorlds(self.ui.allocator, &self.ui.world_options);
+        try self.db.listTerrainGenScripts(self.ui.allocator, &self.ui.terrain_gen_script_options);
 
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
         const defaultLuaScript = @embedFile("script/lua/gen_grass_texture.lua");

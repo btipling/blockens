@@ -188,7 +188,7 @@ fn evalWorldChunkFunc() !void {
 }
 
 fn listChunkScripts() !void {
-    try game.state.db.listChunkScripts(&game.state.ui.chunk_script_options);
+    try game.state.db.listChunkScripts(game.state.ui.allocator, &game.state.ui.chunk_script_options);
 }
 
 fn loadChunkScriptFunc(scriptId: i32) !void {

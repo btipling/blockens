@@ -88,7 +88,7 @@ pub fn updateBlock(db: sqlite.Database, id: i32, name: []const u8, texture: []u3
     };
 }
 
-pub fn listBlocks(db: sqlite.Database, data: *std.ArrayList(blockOption)) !void {
+pub fn listBlocks(db: sqlite.Database, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(blockOption)) !void {
     var listStmt = try db.prepare(
         struct {},
         blockOptionSQL,
@@ -103,6 +103,7 @@ pub fn listBlocks(db: sqlite.Database, data: *std.ArrayList(blockOption)) !void 
 
         while (try listStmt.step()) |row| {
             try data.append(
+                allocator,
                 blockOption{
                     .id = @intCast(row.id),
                     .name = sql_utils.sqlNameToArray(row.name),
