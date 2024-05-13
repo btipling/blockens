@@ -1,4 +1,5 @@
 pub const max_world_name = 20;
+pub const max_world_gen_scripts = 5;
 
 const robotoMonoFont = @embedFile("assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
 const proggyCleanFont = @embedFile("assets/fonts/ProggyClean/ProggyClean.ttf");
@@ -58,6 +59,8 @@ world_chunk_table_data: std.AutoHashMap(chunk.worldPosition, chunkConfig) = unde
 world_loaded_name: [max_world_name:0]u8 = std.mem.zeroes([max_world_name:0]u8),
 world_loaded_id: i32 = 0,
 world_player_relocation: @Vector(4, f32) = .{ 32, 64, 32, 0 },
+world_gen_scripts: [max_world_gen_scripts]i32 = undefined,
+world_gen_scripts_size: usize = 0,
 
 demo_screen_rotation_x: f32 = 0,
 demo_screen_rotation_y: f32 = 0.341,
@@ -170,6 +173,33 @@ pub fn imguiPadding(self: *UI) [2]f32 {
         self.imguiWidth(5),
         self.imguiHeight(5),
     };
+}
+
+pub fn clearUISettingsState(self: *UI) void {
+    self.clearRemoveWorldGenScripts();
+}
+
+pub fn addWorldGenScript(self: *UI, id: i32) void {
+    if (self.world_gen_scripts_size + 1 == self.world_gen_scripts.len) return;
+    var i: usize = 0;
+    while (i < self.world_gen_scripts_size) : (i += 1) if (self.world_gen_scripts[i] == id) return;
+
+    self.world_gen_scripts[self.world_gen_scripts_size] = id;
+    self.world_gen_scripts_size += 1;
+}
+
+pub fn remWorldGenScript(self: *UI, id: i32) void {
+    const buf: [max_world_gen_scripts]i32 = self.world_gen_scripts;
+    self.clearRemoveWorldGenScripts();
+
+    for (buf) |bi| {
+        if (bi == id) continue;
+        self.addWorldGenScript(bi);
+    }
+}
+
+pub fn clearRemoveWorldGenScripts(self: *UI) void {
+    self.world_gen_scripts_size = 0;
 }
 
 const std = @import("std");

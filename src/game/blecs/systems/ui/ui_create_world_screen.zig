@@ -46,6 +46,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 var params: helpers.ScriptOptionsParams = .{};
                 if (helpers.scriptOptionsListBox(game.state.ui.terrain_gen_script_options, &params)) |scriptOptionId| {
                     std.debug.print("selected script: {}\n", .{scriptOptionId});
+                    game.state.ui.addWorldGenScript(scriptOptionId);
                 }
 
                 centerNext(ww);
@@ -60,6 +61,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         }
     }
 }
+
+fn createWorld() void {}
 
 fn centerNext(ww: f32) void {
     zgui.newLine();

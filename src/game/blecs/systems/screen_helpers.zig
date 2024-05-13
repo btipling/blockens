@@ -60,8 +60,10 @@ pub fn showSettingsScreen(comptime T: type) void {
         game.state.entities.screen,
         blecs.components.screen.Screen,
     ) orelse @panic("no screen");
-    // reset any previous demo objects added to the settings screen
+    // reset any setting ui state and previous demo objects added to the settings screen
     blecs.entities.screen.clearDemoObjects();
+    game.state.ui.clearUISettingsState();
+
     // clear out the screens previous child, world or setting, this doesn't clear world objects, they are not cleared
     blecs.helpers.delete_children(game.state.world, game.state.entities.screen);
     // make a new current screen of the settings type
