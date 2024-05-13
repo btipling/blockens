@@ -43,7 +43,7 @@ pub fn listWorlds(db: sqlite.Database, data: *std.ArrayList(worldOption)) !void 
     var listStmt = try db.prepare(
         struct {},
         worldOptionSQL,
-        listWorldStmt,
+        list_world_stmt,
     );
     defer listStmt.deinit();
 
@@ -71,7 +71,7 @@ pub fn loadWorld(db: sqlite.Database, id: i32, data: *world) !void {
             id: i32,
         },
         worldSQL,
-        selectWorldByIdStmt,
+        select_world_by_id_stmt,
     );
     defer select_stmt.deinit();
 
@@ -91,11 +91,32 @@ pub fn loadWorld(db: sqlite.Database, id: i32, data: *world) !void {
     return error.Unreachable;
 }
 
+pub fn getNewestWorldId(db: sqlite.Database) !i32 {
+    var select_stmt = try db.prepare(
+        void,
+        struct {
+            id: i32,
+        },
+        select_world_by_id_stmt,
+    );
+    defer select_stmt.deinit();
+
+    {
+        defer select_stmt.reset();
+
+        while (try select_stmt.step()) |r| {
+            return r.id;
+        }
+    }
+
+    return error.Unreachable;
+}
+
 pub fn updateWorld(db: sqlite.Database, id: i32, name: []const u8, seed: i32) !void {
     var update_stmt = try db.prepare(
         worldSQL,
         void,
-        updateWorldStmt,
+        update_world_stmt,
     );
     defer update_stmt.deinit();
 
@@ -117,7 +138,7 @@ pub fn deleteWorld(db: sqlite.Database, id: i32) !void {
             id: i32,
         },
         void,
-        deleteWorldStmt,
+        delete_world_stmt,
     );
 
     delete_stmt.exec(.{ .id = id }) catch |err| {
@@ -148,11 +169,12 @@ pub fn countWorlds(db: sqlite.Database) !i32 {
 }
 
 const insert_world_stmt = @embedFile("./sql/v3/world/insert.sql");
-const selectWorldByNameStmt = @embedFile("./sql/v3/world/select_by_name.sql");
-const selectWorldByIdStmt = @embedFile("./sql/v3/world/select_by_id.sql");
-const listWorldStmt = @embedFile("./sql/v3/world/list.sql");
-const updateWorldStmt = @embedFile("./sql/v3/world/update.sql");
-const deleteWorldStmt = @embedFile("./sql/v3/world/delete.sql");
+const select_world_by_name_stmt = @embedFile("./sql/v3/world/select_by_name.sql");
+const select_world_by_id_stmt = @embedFile("./sql/v3/world/select_by_id.sql");
+const select_newest_id_stmt = @embedFile("./sql/v3/world/select_newest_id.sql");
+const list_world_stmt = @embedFile("./sql/v3/world/list.sql");
+const update_world_stmt = @embedFile("./sql/v3/world/update.sql");
+const delete_world_stmt = @embedFile("./sql/v3/world/delete.sql");
 const count_worlds_stmt = @embedFile("./sql/v3/world/count_worlds.sql");
 
 const std = @import("std");

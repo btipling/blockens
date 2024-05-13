@@ -176,7 +176,7 @@ pub fn imguiPadding(self: *UI) [2]f32 {
 }
 
 pub fn clearUISettingsState(self: *UI) void {
-    self.clearRemoveWorldGenScripts();
+    self.clearWorldGenScripts();
 }
 
 pub fn addWorldGenScript(self: *UI, id: i32) void {
@@ -190,7 +190,7 @@ pub fn addWorldGenScript(self: *UI, id: i32) void {
 
 pub fn remWorldGenScript(self: *UI, id: i32) void {
     const buf: [max_world_gen_scripts]i32 = self.world_gen_scripts;
-    self.clearRemoveWorldGenScripts();
+    self.clearWorldGenScripts();
 
     for (buf) |bi| {
         if (bi == id) continue;
@@ -198,7 +198,7 @@ pub fn remWorldGenScript(self: *UI, id: i32) void {
     }
 }
 
-pub fn clearRemoveWorldGenScripts(self: *UI) void {
+pub fn clearWorldGenScripts(self: *UI) void {
     self.world_gen_scripts_size = 0;
 }
 

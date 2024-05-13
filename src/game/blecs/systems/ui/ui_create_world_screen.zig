@@ -62,7 +62,19 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
     }
 }
 
-fn createWorld() void {}
+fn createWorld() !void {
+    game.state.db.saveWorld(
+        game.state.ui.world_name_buf,
+        game.state.ui.terrain_gen_seed,
+    ) catch @panic("db error");
+    const world_id = game.state.db.getNewestWorldId() catch @panic("db error");
+    var i: usize = 0;
+    while (i < game.state.ui.world_gen_scripts_size) : (i += 1) {
+        const si = game.state.ui.world_gen_scripts[i];
+        game.state.db.saveWorldTerrain(world_id, si) catch @panic("db error");
+    }
+    game.state.ui.clearWorldGenScripts();
+}
 
 fn centerNext(ww: f32) void {
     zgui.newLine();

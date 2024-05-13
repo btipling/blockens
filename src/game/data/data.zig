@@ -102,6 +102,9 @@ pub const Data = struct {
     pub fn countWorlds(self: *Data) !i32 {
         return sql_world.countWorlds(self.db);
     }
+    pub fn getNewestWorldId(self: *Data) !i32 {
+        return sql_world.getNewestWorldId(self.db);
+    }
 
     // Texture script
     pub fn saveTextureScript(self: *Data, name: []const u8, textureScript: []const u8) !void {
