@@ -152,7 +152,7 @@ pub const Jobs = struct {
         }
     }
 
-    pub fn load_chunks(self: *Jobs, world_id: i32, start_game: bool) void {
+    pub fn loadChunks(self: *Jobs, world_id: i32, start_game: bool) void {
         const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
         pt.* = .{
             .num_started = game_config.worldChunkDims * game_config.worldChunkDims,
@@ -172,7 +172,7 @@ pub const Jobs = struct {
                         .pt = pt,
                     },
                 ) catch |e| {
-                    std.debug.print("error scheduling cross chunk lighting job: {}\n", .{e});
+                    std.debug.print("error scheduling load chunks job: {}\n", .{e});
                     return;
                 };
             }
@@ -232,6 +232,33 @@ pub const Jobs = struct {
         }
     }
 
+    pub fn generateWorldTerrain(self: *Jobs, world_id: i32, descriptors: std.ArrayList(*descriptor.root)) void {
+        const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
+        pt.* = .{
+            .num_started = game_config.worldChunkDims * game_config.worldChunkDims,
+            .num_completed = 0,
+        };
+        for (0..game_config.worldChunkDims) |i| {
+            const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
+            for (0..game_config.worldChunkDims) |ii| {
+                const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
+                _ = self.jobs.schedule(
+                    zjobs.JobId.none,
+                    job_world_terrain_gen.WorldTerrainGenJob{
+                        .descriptors = descriptors,
+                        .world_id = world_id,
+                        .x = x,
+                        .z = z,
+                        .pt = pt,
+                    },
+                ) catch |e| {
+                    std.debug.print("error scheduling world terrain gen job: {}\n", .{e});
+                    return;
+                };
+            }
+        }
+    }
+
     pub fn generateWorld(
         self: *Jobs,
         world_id: i32,
@@ -264,6 +291,7 @@ const job_load_chunk = @import("jobs_load_chunks.zig");
 const job_demo_descriptor_gen = @import("jobs_demo_descriptor_gen.zig");
 const job_demo_terrain_gen = @import("jobs_demo_terrain_gen.zig");
 const job_world_descriptor_gen = @import("jobs_world_descriptor_gen.zig");
+const job_world_terrain_gen = @import("jobs_world_terrain_gen.zig");
 const job_startup = @import("jobs_startup.zig");
 const buffer = @import("../buffer.zig");
 const game_config = @import("../../config.zig");

@@ -17,6 +17,7 @@ pub const buffer_message_type = enum(u8) {
     demo_descriptor_gen,
     demo_terrain_gen,
     world_descriptor_gen,
+    world_terrain_gen,
 };
 
 pub const buffer_data = union(buffer_message_type) {
@@ -29,6 +30,7 @@ pub const buffer_data = union(buffer_message_type) {
     demo_descriptor_gen: demo_descriptor_gen_data,
     demo_terrain_gen: demo_terrain_gen_data,
     world_descriptor_gen: world_descriptor_gen_data,
+    world_terrain_gen: world_terrain_gen_data,
 };
 
 pub const buffer_message = packed struct {
@@ -89,6 +91,11 @@ pub const demo_terrain_gen_data = struct {
     succeeded: bool,
     data: ?[]u32,
     position: @Vector(4, f32),
+};
+
+pub const world_terrain_gen_data = struct {
+    world_id: i32,
+    descriptors: std.ArrayList(*descriptor.root),
 };
 
 pub const ChunkColumn = struct {

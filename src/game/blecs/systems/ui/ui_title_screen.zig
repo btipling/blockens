@@ -46,7 +46,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     const loadedGame = game.state.ui.world_chunk_table_data.count() > 0;
                     if (!loadedGame or game.state.ui.world_loaded_id == 0) {
                         screen_helpers.showLoadingScreen();
-                        _ = game.state.jobs.lighting(game.state.ui.world_loaded_id);
+                        _ = game.state.jobs.loadChunks(game.state.ui.world_loaded_id, true);
                     } else {
                         screen_helpers.showGameScreen();
                     }

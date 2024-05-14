@@ -94,6 +94,7 @@ fn createWorld() !void {
         const si = game.state.ui.terrain_gen_script_options_selected.items[i];
         try game.state.db.saveWorldTerrain(world_id, si.id);
     }
+    chunk_file.initWorldSave(false, 1);
     _ = game.state.jobs.generateWorld(world_id);
 }
 
@@ -114,3 +115,5 @@ const helpers = @import("ui_helpers.zig");
 const components = @import("../../components/components.zig");
 const screen_helpers = @import("../screen_helpers.zig");
 const game = @import("../../../game.zig");
+const data = @import("../../../data/data.zig");
+const chunk_file = data.chunk_file;

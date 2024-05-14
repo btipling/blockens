@@ -27,6 +27,7 @@ pub fn handle_incoming() !void {
             .demo_descriptor_gen => handle_demo_descriptor_gen(msg),
             .demo_terrain_gen => handle_demo_terrain_gen(msg),
             .world_descriptor_gen => handle_world_descriptor_gen(msg),
+            .world_terrain_gen => handle_world_terrain_gen(msg),
         }
         i += 0;
         if (i >= maxHandlersPerFrame) return;
@@ -131,7 +132,7 @@ fn handle_lighting_cross_chunk(msg: buffer.buffer_message) void {
     };
     game.state.ui.load_percentage_lighting_cross_chunk = pr.percent;
     if (!pr.done) return;
-    _ = game.state.jobs.load_chunks(ld.world_id, true);
+    _ = game.state.jobs.loadChunks(ld.world_id, true);
 }
 
 fn handle_load_chunk(msg: buffer.buffer_message) void {
@@ -184,8 +185,25 @@ fn handle_world_descriptor_gen(msg: buffer.buffer_message) void {
         else => return,
     };
     std.debug.print("generated world descriptors for world: {d}\n", .{dg_d.world_id});
+    screen_helpers.showLoadingScreen();
+    _ = game.state.jobs.generateWorldTerrain(dg_d.world_id, dg_d.descriptors);
+}
+
+fn handle_world_terrain_gen(msg: buffer.buffer_message) void {
+    const pr = buffer.progress_report(msg);
+    if (!buffer.progress_report(msg).done) return;
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const dg_d: buffer.world_terrain_gen_data = switch (bd) {
+        buffer.buffer_data.world_terrain_gen => |d| d,
+        else => return,
+    };
+    game.state.ui.load_percentage_world_gen = pr.percent;
+    if (!pr.done) return;
+    std.debug.print("generated world terrain for world: {d}\n", .{dg_d.world_id});
     for (dg_d.descriptors.items) |d| d.deinit();
     dg_d.descriptors.deinit();
+    game.state.ui.world_loaded_id = dg_d.world_id;
+    _ = game.state.jobs.lighting(game.state.ui.world_loaded_id);
 }
 
 fn handle_demo_terrain_gen(msg: buffer.buffer_message) void {
