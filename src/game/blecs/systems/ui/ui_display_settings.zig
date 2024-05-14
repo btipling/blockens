@@ -19,6 +19,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             zgui.setNextWindowSize(.{
                 .w = game.state.ui.imguiWidth(600),
                 .h = game.state.ui.imguiHeight(300),
+                .cond = .always,
             });
             if (zgui.begin("Display Settings", .{
                 .flags = zgui.WindowFlags.no_decoration,

@@ -18,6 +18,7 @@ pub fn init() void {
     game_chunks_info.init();
     game_mob_info.init();
     lighting_controls.init();
+    world_management.init();
     cursor.init();
 }
 const menu = @import("ui_menu.zig");
@@ -39,4 +40,5 @@ const settings_camera = @import("ui_settings_camera.zig");
 const game_chunks_info = @import("ui_game_chunks_info.zig");
 const game_mob_info = @import("ui_game_mob_info.zig");
 const lighting_controls = @import("ui_game_lighting_controls.zig");
+const world_management = @import("ui_game_manage_worlds.zig");
 const cursor = @import("ui_cursor.zig");

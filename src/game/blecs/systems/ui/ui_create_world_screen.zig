@@ -11,11 +11,11 @@ fn system() ecs.system_desc_t {
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
+    const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
             const xPos: f32 = game.state.ui.imguiX(660);
             const yPos: f32 = game.state.ui.imguiY(100);
-            const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
                 .w = game.state.ui.imguiWidth(600),

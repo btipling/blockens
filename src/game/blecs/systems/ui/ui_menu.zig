@@ -67,6 +67,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     if (zgui.menuItem("Toogle Lighting Controls", .{})) {
                         screen_helpers.toggleLightingControls();
                     }
+                    if (zgui.menuItem("World Management", .{})) {
+                        screen_helpers.toggleWorldManagement();
+                    }
                     zgui.endMenu();
                 }
                 const ww = zgui.getWindowWidth();

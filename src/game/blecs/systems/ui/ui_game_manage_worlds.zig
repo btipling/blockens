@@ -1,11 +1,11 @@
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "UILightingControlsSystem", ecs.OnStore, @constCast(&s));
+    ecs.SYSTEM(game.state.world, "UIWorldManagementSystem", ecs.OnStore, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
-    desc.query.filter.terms[0] = .{ .id = ecs.id(components.ui.LightingControls) };
+    desc.query.filter.terms[0] = .{ .id = ecs.id(components.ui.WorldManagement) };
     desc.run = run;
     return desc;
 }
@@ -21,37 +21,26 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 .h = game.state.ui.imguiHeight(685),
                 .cond = .first_use_ever,
             });
-            if (zgui.begin("Lighting Controls", .{
+            if (zgui.begin("World Management", .{
                 .flags = .{
                     .menu_bar = true,
                 },
             })) {
                 if (zgui.beginMenuBar()) {
                     if (zgui.menuItem("Close", .{})) {
-                        screen_helpers.toggleLightingControls();
+                        screen_helpers.toggleWorldManagement();
                     }
                     zgui.endMenuBar();
                 }
-                showLightingControls() catch @panic("nope");
+                worldList() catch @panic("nope");
             }
             zgui.end();
         }
     }
 }
 
-fn showLightingControls() !void {
-    if (zgui.inputFloat("lighting input", .{
-        .v = &game.state.gfx.ambient_lighting,
-    })) {
-        game.state.gfx.update_lighting();
-    }
-    if (zgui.sliderFloat("lighting slider", .{
-        .v = &game.state.gfx.ambient_lighting,
-        .min = 0,
-        .max = 1,
-    })) {
-        game.state.gfx.update_lighting();
-    }
+fn worldList() !void {
+    zgui.text("world list", .{});
 }
 
 const std = @import("std");

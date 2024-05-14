@@ -121,6 +121,10 @@ pub fn toggleLightingControls() void {
     toggleUI(blecs.components.ui.LightingControls);
 }
 
+pub fn toggleWorldManagement() void {
+    toggleUI(blecs.components.ui.WorldManagement);
+}
+
 fn toggleUI(comptime T: type) void {
     const world = game.state.world;
     const entity = game.state.entities.ui;
