@@ -29,49 +29,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 zgui.newLine();
                 zgui.newLine();
 
-                var default_world: i32 = 0;
-
                 centerNext(ww);
-                var combo: bool = false;
-                var cw: bool = false;
-                for (game.state.ui.world_options.items, 0..) |world_opt, i| {
-                    var buffer: [ui.max_world_name + 10]u8 = undefined;
-                    const selectable_name = std.fmt.bufPrint(
-                        &buffer,
-                        "{d}: {s}",
-                        .{ world_opt.id, world_opt.name },
-                    ) catch @panic("invalid buffer size");
-                    var name: [ui.max_world_name:0]u8 = undefined;
-                    for (name, 0..) |_, ii| {
-                        if (selectable_name.len <= ii) {
-                            name[ii] = 0;
-                            break;
-                        }
-                        name[ii] = selectable_name[ii];
-                    }
-                    const loaded_world_id = game.state.ui.world_loaded_id;
-                    if (i == 0) {
-                        var preview_name = &game.state.ui.world_loaded_name;
-                        if (loaded_world_id == 0 or loaded_world_id == 1) {
-                            default_world = world_opt.id;
-                            game.state.ui.world_loaded_id = default_world;
-                            preview_name = &name;
-                        }
-                        zgui.setNextItemWidth(game.state.ui.imguiWidth(250));
-                        combo = zgui.beginCombo("##listbox", .{
-                            .preview_value = preview_name,
-                        });
-                        cw = zgui.beginPopupContextWindow();
-                    }
-                    if (combo) {
-                        const selected = world_opt.id == loaded_world_id;
-                        if (zgui.selectable(&name, .{ .selected = selected })) {
-                            loadWorld(world_opt.id, name);
-                        }
-                    }
+                if (helpers.worldChooser()) |selected| {
+                    loadWorld(selected.world_id, selected.name);
                 }
-                if (cw) zgui.endPopup();
-                if (combo) zgui.endCombo();
 
                 centerNext(ww);
                 zgui.beginDisabled(.{ .disabled = game.state.ui.world_options.items.len == 0 });
@@ -79,9 +40,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     .w = btn_dms[0],
                     .h = btn_dms[1],
                 })) {
-                    if (game.state.ui.world_loaded_id == 0) game.state.ui.world_loaded_id = default_world;
                     const loadedGame = game.state.ui.world_chunk_table_data.count() > 0;
-                    if (!loadedGame) {
+                    if (!loadedGame or game.state.ui.world_loaded_id == 0) {
                         screen_helpers.showLoadingScreen();
                         _ = game.state.jobs.lighting(game.state.ui.world_loaded_id);
                     } else {

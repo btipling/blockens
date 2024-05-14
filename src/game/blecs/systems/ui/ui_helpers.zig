@@ -50,6 +50,60 @@ pub fn scriptOptionsListBox(id: [:0]const u8, scriptOptions: std.ArrayListUnmana
     return rv;
 }
 
+pub const worldChoice = struct {
+    world_id: i32 = 0,
+    name: [ui.max_world_name:0]u8,
+};
+
+pub fn worldChooser() ?worldChoice {
+    var choice: ?worldChoice = null;
+    var default_world: i32 = 0;
+    var combo: bool = false;
+    var cw: bool = false;
+    for (game.state.ui.world_options.items, 0..) |world_opt, i| {
+        var buffer: [ui.max_world_name + 10]u8 = undefined;
+        const selectable_name = std.fmt.bufPrint(
+            &buffer,
+            "{d}: {s}",
+            .{ world_opt.id, world_opt.name },
+        ) catch @panic("invalid buffer size");
+        var name: [ui.max_world_name:0]u8 = undefined;
+        for (name, 0..) |_, ii| {
+            if (selectable_name.len <= ii) {
+                name[ii] = 0;
+                break;
+            }
+            name[ii] = selectable_name[ii];
+        }
+        const loaded_world_id = game.state.ui.world_loaded_id;
+        if (i == 0) {
+            var preview_name = &game.state.ui.world_loaded_name;
+            if (loaded_world_id == 0 or loaded_world_id == 1) {
+                default_world = world_opt.id;
+                game.state.ui.world_loaded_id = default_world;
+                preview_name = &name;
+            }
+            zgui.setNextItemWidth(game.state.ui.imguiWidth(250));
+            combo = zgui.beginCombo("##listbox", .{
+                .preview_value = preview_name,
+            });
+            cw = zgui.beginPopupContextWindow();
+        }
+        if (combo) {
+            const selected = world_opt.id == loaded_world_id;
+            if (zgui.selectable(&name, .{ .selected = selected })) {
+                choice = .{
+                    .world_id = world_opt.id,
+                    .name = name,
+                };
+            }
+        }
+    }
+    if (cw) zgui.endPopup();
+    if (combo) zgui.endCombo();
+    return choice;
+}
+
 pub fn loadChunksInWorld() void {
     entities.screen.clearWorld();
     var instancedKeys = game.state.ui.world_chunk_table_data.keyIterator();
