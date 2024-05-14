@@ -1,5 +1,4 @@
 pub const max_world_name = 20;
-pub const max_world_gen_scripts = 5;
 
 const robotoMonoFont = @embedFile("assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
 const proggyCleanFont = @embedFile("assets/fonts/ProggyClean/ProggyClean.ttf");
@@ -63,8 +62,6 @@ world_chunk_table_data: std.AutoHashMapUnmanaged(chunk.worldPosition, chunkConfi
 world_loaded_name: [max_world_name:0]u8 = std.mem.zeroes([max_world_name:0]u8),
 world_loaded_id: i32 = 0,
 world_player_relocation: @Vector(4, f32) = .{ 32, 64, 32, 0 },
-world_gen_scripts: [max_world_gen_scripts]i32 = undefined,
-world_gen_scripts_size: usize = 0,
 
 demo_screen_rotation_x: f32 = 0,
 demo_screen_rotation_y: f32 = 0.341,
@@ -114,6 +111,8 @@ pub fn deinit() void {
     ui.block_options.deinit(ui.allocator);
     ui.chunk_script_options.deinit(ui.allocator);
     ui.terrain_gen_script_options.deinit(ui.allocator);
+    ui.terrain_gen_script_options_available.deinit(ui.allocator);
+    ui.terrain_gen_script_options_selected.deinit(ui.allocator);
     ui.world_options.deinit(ui.allocator);
     var td = ui.world_chunk_table_data.valueIterator();
     while (td.next()) |cc| {
@@ -183,30 +182,36 @@ pub fn imguiPadding(self: *UI) [2]f32 {
 }
 
 pub fn clearUISettingsState(self: *UI) void {
-    self.clearWorldGenScripts();
+    self.terrain_gen_script_options_available.clearRetainingCapacity();
+    self.terrain_gen_script_options_available.appendSlice(
+        self.allocator,
+        self.terrain_gen_script_options.items,
+    ) catch @panic("OOM");
+    self.terrain_gen_script_options_selected.clearRetainingCapacity();
 }
 
-pub fn addWorldGenScript(self: *UI, id: i32) void {
-    if (self.world_gen_scripts_size + 1 == self.world_gen_scripts.len) return;
+fn swapScriptOptions(
+    self: *UI,
+    a: *std.ArrayListUnmanaged(data.colorScriptOption),
+    b: *std.ArrayListUnmanaged(data.colorScriptOption),
+    v: i32,
+) void {
+    var index: usize = 0;
     var i: usize = 0;
-    while (i < self.world_gen_scripts_size) : (i += 1) if (self.world_gen_scripts[i] == id) return;
-
-    self.world_gen_scripts[self.world_gen_scripts_size] = id;
-    self.world_gen_scripts_size += 1;
-}
-
-pub fn remWorldGenScript(self: *UI, id: i32) void {
-    const buf: [max_world_gen_scripts]i32 = self.world_gen_scripts;
-    self.clearWorldGenScripts();
-
-    for (buf) |bi| {
-        if (bi == id) continue;
-        self.addWorldGenScript(bi);
+    while (i < a.items.len) : (i += 1) {
+        index = i;
+        if (a.items[i].id == v) break;
     }
+    const so = a.swapRemove(index);
+    b.append(self.allocator, so) catch @panic("OOM");
 }
 
-pub fn clearWorldGenScripts(self: *UI) void {
-    self.world_gen_scripts_size = 0;
+pub fn TerrainGenSelectScript(self: *UI, id: i32) void {
+    self.swapScriptOptions(&self.terrain_gen_script_options_available, &self.terrain_gen_script_options_selected, id);
+}
+
+pub fn TerrainGenDeselectScript(self: *UI, id: i32) void {
+    self.swapScriptOptions(&self.terrain_gen_script_options_selected, &self.terrain_gen_script_options_available, id);
 }
 
 const std = @import("std");

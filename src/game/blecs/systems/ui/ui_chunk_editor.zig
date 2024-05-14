@@ -128,7 +128,11 @@ fn drawControls() !void {
         }
         zgui.popStyleVar(.{ .count = 1 });
         var params: helpers.ScriptOptionsParams = .{};
-        if (helpers.scriptOptionsListBox(game.state.ui.chunk_script_options, &params)) |scriptOptionId| {
+        if (helpers.scriptOptionsListBox(
+            "#script_options_list",
+            game.state.ui.chunk_script_options,
+            &params,
+        )) |scriptOptionId| {
             try loadChunkScriptFunc(scriptOptionId);
         }
     }

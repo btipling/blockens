@@ -108,7 +108,11 @@ fn drawControls() !void {
             try listTerrainGenScripts();
         }
         var params: helpers.ScriptOptionsParams = .{};
-        if (helpers.scriptOptionsListBox(game.state.ui.terrain_gen_script_options, &params)) |scriptOptionId| {
+        if (helpers.scriptOptionsListBox(
+            "#script_options_list",
+            game.state.ui.terrain_gen_script_options,
+            &params,
+        )) |scriptOptionId| {
             try loadTerrainGenScriptFunc(scriptOptionId);
         }
     }
