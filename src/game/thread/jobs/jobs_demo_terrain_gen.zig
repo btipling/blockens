@@ -1,20 +1,20 @@
-pub const TerrainGenJob = struct {
+pub const DemoTerrainGenJob = struct {
     desc_root: *descriptor.root,
     position: @Vector(4, i32),
     pt: *buffer.ProgressTracker,
-    pub fn exec(self: *TerrainGenJob) void {
+    pub fn exec(self: *DemoTerrainGenJob) void {
         if (config.use_tracy) {
             const ztracy = @import("ztracy");
-            ztracy.SetThreadName("TerrainGen");
-            const tracy_zone = ztracy.ZoneNC(@src(), "TerrainGen", 0xF0_00_ff_f0);
+            ztracy.SetThreadName("DemoTerrainGen");
+            const tracy_zone = ztracy.ZoneNC(@src(), "DemoTerrainGen", 0xF0_00_ff_f0);
             defer tracy_zone.End();
-            self.terrainGenJob();
+            self.demoTerrainGenJob();
         } else {
-            self.terrainGenJob();
+            self.demoTerrainGenJob();
         }
     }
 
-    pub fn terrainGenJob(self: *TerrainGenJob) void {
+    pub fn demoTerrainGenJob(self: *DemoTerrainGenJob) void {
         std.debug.print("Generating terrain in job\n", .{});
         var gen: terrain_gen = .{
             .desc_root = self.desc_root,
@@ -27,13 +27,14 @@ pub const TerrainGenJob = struct {
         self.finishJob(false, null, .{ 0, 0, 0, 0 });
     }
 
-    fn finishJob(self: *TerrainGenJob, succeeded: bool, data: ?[]u32, chunk_position: @Vector(4, f32)) void {
-        const msg: buffer.buffer_message = buffer.new_message(.terrain_gen);
+    fn finishJob(self: *DemoTerrainGenJob, succeeded: bool, data: ?[]u32, chunk_position: @Vector(4, f32)) void {
+        const msg: buffer.buffer_message = buffer.new_message(.demo_terrain_gen);
         const bd: buffer.buffer_data = .{
-            .terrain_gen = .{
+            .demo_terrain_gen = .{
                 .succeeded = succeeded,
                 .data = data,
                 .position = chunk_position,
+                .desc_root = self.desc_root,
             },
         };
         self.pt.completeOne(msg, bd);

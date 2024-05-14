@@ -14,8 +14,8 @@ pub const buffer_message_type = enum(u3) {
     lighting,
     lighting_cross_chunk,
     load_chunk,
-    descriptor_gen,
-    terrain_gen,
+    demo_descriptor_gen,
+    demo_terrain_gen,
 };
 
 pub const buffer_data = union(buffer_message_type) {
@@ -25,8 +25,8 @@ pub const buffer_data = union(buffer_message_type) {
     lighting: lightings_data,
     lighting_cross_chunk: lightings_data,
     load_chunk: load_chunk_data,
-    descriptor_gen: descriptor_gen_data,
-    terrain_gen: terrain_gen_data,
+    demo_descriptor_gen: demo_descriptor_gen_data,
+    demo_terrain_gen: demo_terrain_gen_data,
 };
 
 pub const buffer_message = packed struct {
@@ -71,13 +71,14 @@ pub const load_chunk_data = struct {
     start_game: bool,
 };
 
-pub const descriptor_gen_data = struct {
+pub const demo_descriptor_gen_data = struct {
     desc_root: *descriptor.root,
     offset_x: i32,
     offset_z: i32,
 };
 
-pub const terrain_gen_data = struct {
+pub const demo_terrain_gen_data = struct {
+    desc_root: *descriptor.root,
     succeeded: bool,
     data: ?[]u32,
     position: @Vector(4, f32),

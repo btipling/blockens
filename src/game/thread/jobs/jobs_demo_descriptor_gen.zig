@@ -1,19 +1,19 @@
-pub const DescriptorGenJob = struct {
+pub const DemoDescriptorGenJob = struct {
     offset_x: i32,
     offset_z: i32,
-    pub fn exec(self: *DescriptorGenJob) void {
+    pub fn exec(self: *DemoDescriptorGenJob) void {
         if (config.use_tracy) {
             const ztracy = @import("ztracy");
-            ztracy.SetThreadName("DescriptorGen");
-            const tracy_zone = ztracy.ZoneNC(@src(), "DescriptorGen", 0xF0_00_ff_f0);
+            ztracy.SetThreadName("DemoDescriptorGen");
+            const tracy_zone = ztracy.ZoneNC(@src(), "DemoDescriptorGen", 0xF0_00_ff_f0);
             defer tracy_zone.End();
-            self.descriptorGenJob();
+            self.demoDescriptorGenJob();
         } else {
-            self.descriptorGenJob();
+            self.demoDescriptorGenJob();
         }
     }
 
-    pub fn descriptorGenJob(self: *DescriptorGenJob) void {
+    pub fn demoDescriptorGenJob(self: *DemoDescriptorGenJob) void {
         const script_buf: []const u8 = std.mem.sliceTo(&game.state.ui.terrain_gen_buf, 0);
         const desc_root: *descriptor.root = game.state.script.evalTerrainFunc(
             script_buf,
@@ -23,9 +23,9 @@ pub const DescriptorGenJob = struct {
         };
         errdefer desc_root.deinit();
         std.debug.print("Generated descriptor in job\n", .{});
-        var msg: buffer.buffer_message = buffer.new_message(.descriptor_gen);
+        var msg: buffer.buffer_message = buffer.new_message(.demo_descriptor_gen);
         const bd: buffer.buffer_data = .{
-            .descriptor_gen = .{
+            .demo_descriptor_gen = .{
                 .desc_root = desc_root,
                 .offset_x = self.offset_x,
                 .offset_z = self.offset_z,

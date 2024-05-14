@@ -187,7 +187,7 @@ pub const Jobs = struct {
     ) void {
         _ = self.jobs.schedule(
             zjobs.JobId.none,
-            job_descriptor_gen.DescriptorGenJob{
+            job_demo_descriptor_gen.DemoDescriptorGenJob{
                 .offset_x = offset_x,
                 .offset_z = offset_z,
             },
@@ -198,7 +198,7 @@ pub const Jobs = struct {
     }
 
     // generateTerrain generates a 2^3 cube of chunks
-    pub fn generateTerrain(
+    pub fn generateDemoTerrain(
         self: *Jobs,
         desc_root: *descriptor.root,
         offset_x: i32,
@@ -214,7 +214,7 @@ pub const Jobs = struct {
             const pos: @Vector(4, i32) = terrain_gen.indexToPosition(i);
             _ = self.jobs.schedule(
                 zjobs.JobId.none,
-                job_terrain_gen.TerrainGenJob{
+                job_demo_terrain_gen.DemoTerrainGenJob{
                     .desc_root = desc_root,
                     // job will generate terrain for x y z, but use i for actual rendered position
                     .position = .{
@@ -246,8 +246,8 @@ const job_save_chunk = @import("jobs_save_chunk.zig");
 const job_lighting = @import("jobs_lighting.zig");
 const job_lighting_cross_chunk = @import("jobs_lighting_cross_chunk.zig");
 const job_load_chunk = @import("jobs_load_chunks.zig");
-const job_descriptor_gen = @import("jobs_descriptor_gen.zig");
-const job_terrain_gen = @import("jobs_terrain_gen.zig");
+const job_demo_descriptor_gen = @import("jobs_demo_descriptor_gen.zig");
+const job_demo_terrain_gen = @import("jobs_demo_terrain_gen.zig");
 const job_startup = @import("jobs_startup.zig");
 const buffer = @import("../buffer.zig");
 const game_config = @import("../../config.zig");

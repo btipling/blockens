@@ -24,8 +24,8 @@ pub fn handle_incoming() !void {
             .lighting => handle_lighting(msg),
             .lighting_cross_chunk => handle_lighting_cross_chunk(msg),
             .load_chunk => handle_load_chunk(msg),
-            .descriptor_gen => handle_descriptor_gen(msg),
-            .terrain_gen => handle_terrain_gen(msg),
+            .demo_descriptor_gen => handle_demo_descriptor_gen(msg),
+            .demo_terrain_gen => handle_demo_terrain_gen(msg),
         }
         i += 0;
         if (i >= maxHandlersPerFrame) return;
@@ -160,26 +160,26 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
     ui_helpers.loadCharacterInWorld();
 }
 
-fn handle_descriptor_gen(msg: buffer.buffer_message) void {
+fn handle_demo_descriptor_gen(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    const dg_d: buffer.descriptor_gen_data = switch (bd) {
-        buffer.buffer_data.descriptor_gen => |d| d,
+    const dg_d: buffer.demo_descriptor_gen_data = switch (bd) {
+        buffer.buffer_data.demo_descriptor_gen => |d| d,
         else => return,
     };
 
-    _ = game.state.jobs.generateTerrain(
+    _ = game.state.jobs.generateDemoTerrain(
         dg_d.desc_root,
         dg_d.offset_x,
         dg_d.offset_z,
     );
 }
 
-fn handle_terrain_gen(msg: buffer.buffer_message) void {
+fn handle_demo_terrain_gen(msg: buffer.buffer_message) void {
     const pr = buffer.progress_report(msg);
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    const tg_d: buffer.terrain_gen_data = switch (bd) {
-        buffer.buffer_data.terrain_gen => |d| d,
+    const tg_d: buffer.demo_terrain_gen_data = switch (bd) {
+        buffer.buffer_data.demo_terrain_gen => |d| d,
         else => return,
     };
     const wp = chunk.worldPosition.initFromPositionV(tg_d.position);
@@ -190,6 +190,7 @@ fn handle_terrain_gen(msg: buffer.buffer_message) void {
         game.state.blocks.generated_settings_chunks.count(),
     });
     blecs.entities.screen.initDemoTerrainGen(true);
+    tg_d.desc_root.deinit();
 }
 
 fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entity_t {
