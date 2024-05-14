@@ -97,6 +97,10 @@ pub const Game = struct {
             buf[i] = c;
         }
         self.ui.chunk_buf = buf;
+        if (self.ui.world_options.items.len > 0) {
+            self.ui.world_loaded_id = self.ui.world_options.items[0].id;
+            @memcpy(self.ui.world_loaded_name[0..20], self.ui.world_options.items[0].name[0..20]);
+        }
     }
 };
 
