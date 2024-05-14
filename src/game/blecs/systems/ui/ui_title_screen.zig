@@ -11,6 +11,7 @@ fn system() ecs.system_desc_t {
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
+    const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
             const xPos: f32 = game.state.ui.imguiX(660);
@@ -23,7 +24,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (zgui.begin("#TitleScreen", .{
                 .flags = zgui.WindowFlags.no_decoration,
             })) {
-                const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();
                 zgui.text("Blockens!", .{});
                 const ww = zgui.getWindowWidth();
                 zgui.newLine();

@@ -32,14 +32,15 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                     zgui.endMenuBar();
                 }
-                worldList() catch @panic("nope");
+                worldManager() catch @panic("nope");
             }
             zgui.end();
         }
     }
 }
 
-fn worldList() !void {
+fn worldManager() !void {
+    const btn_dms: [2]f32 = game.state.ui.imguiButtonDims();
     zgui.text("world list", .{});
     if (helpers.worldChooser(.{
         .world_id = game.state.ui.world_mananaged_id,
@@ -48,12 +49,36 @@ fn worldList() !void {
         game.state.ui.world_mananaged_id = selected.world_id;
         game.state.ui.world_managed_name = selected.name;
     }
-    if (game.state.ui.world_mananaged_id != 0) {
-        zgui.text("Managing world id {d} - {s}", .{
-            game.state.ui.world_mananaged_id,
-            std.mem.sliceTo(&game.state.ui.world_managed_name, 0),
-        });
+    if (game.state.ui.world_mananaged_id == 0) return;
+    zgui.text("Managing world id {d} - {s}", .{
+        game.state.ui.world_mananaged_id,
+        std.mem.sliceTo(&game.state.ui.world_managed_name, 0),
+    });
+    if (zgui.button("Delete World", .{
+        .w = btn_dms[0],
+        .h = btn_dms[1],
+    })) {
+        try deleteWorld();
     }
+}
+
+fn deleteWorld() !void {
+    // TODO: exit exit world if it's the one being deleted
+    const world_id = game.state.ui.world_mananaged_id;
+    try game.state.db.deleteAllWorldTerrain(world_id);
+    try game.state.db.deletePlayerPosition(world_id);
+    try game.state.db.deleteChunkData(world_id);
+    // TODO: delete gzip chunk data
+    try game.state.db.deleteWorld(world_id);
+    var index: usize = 0;
+    var i: usize = 0;
+    while (i < game.state.ui.world_options.items.len) : (i += 1) {
+        index = i;
+        if (game.state.ui.world_options.items[i].id == world_id) break;
+    }
+    _ = game.state.ui.world_options.swapRemove(index);
+    game.state.ui.world_loaded_id = 0;
+    game.state.ui.world_mananaged_id = 0;
 }
 
 const std = @import("std");

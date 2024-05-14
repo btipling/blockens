@@ -270,6 +270,9 @@ pub const Data = struct {
     pub fn deleteWorldTerrain(self: *Data, id: i32) !void {
         return sql_world_terrain.deleteWorldTerrain(self.db, id);
     }
+    pub fn deleteAllWorldTerrain(self: *Data, world_id: i32) !void {
+        return sql_world_terrain.deleteAllWorldTerrain(self.db, world_id);
+    }
 };
 
 const std = @import("std");

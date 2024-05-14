@@ -62,9 +62,27 @@ pub fn deleteWorldTerrain(db: sqlite.Database, id: i32) !void {
     };
 }
 
+pub fn deleteAllWorldTerrain(db: sqlite.Database, world_id: i32) !void {
+    var delete_stmt = try db.prepare(
+        struct {
+            world_id: i32,
+        },
+        void,
+        delete_all_world_terrain_stmt,
+    );
+
+    delete_stmt.exec(
+        .{ .world_id = world_id },
+    ) catch |err| {
+        std.log.err("Failed to delete all world terrain: {}", .{err});
+        return err;
+    };
+}
+
 const insert_world_terrain_stmt = @embedFile("./sql/v3/world_terrain/insert.sql");
 const list_world_terrain_stmt = @embedFile("./sql/v3/world_terrain/list.sql");
 const delete_world_terrain_stmt = @embedFile("./sql/v3/world_terrain/delete.sql");
+const delete_all_world_terrain_stmt = @embedFile("./sql/v3/world_terrain/delete_all.sql");
 
 const std = @import("std");
 const sqlite = @import("sqlite");
