@@ -28,6 +28,7 @@ pub fn handle_incoming() !void {
             .demo_terrain_gen => handle_demo_terrain_gen(msg),
             .world_descriptor_gen => handle_world_descriptor_gen(msg),
             .world_terrain_gen => handle_world_terrain_gen(msg),
+            .player_pos => handle_player_pos(msg),
         }
         i += 0;
         if (i >= maxHandlersPerFrame) return;
@@ -203,6 +204,18 @@ fn handle_world_terrain_gen(msg: buffer.buffer_message) void {
     for (dg_d.descriptors.items) |d| d.deinit();
     dg_d.descriptors.deinit();
     game.state.ui.world_loaded_id = dg_d.world_id;
+
+    _ = game.state.jobs.findPlayerPosition(game.state.ui.world_loaded_id);
+}
+
+fn handle_player_pos(msg: buffer.buffer_message) void {
+    if (!buffer.progress_report(msg).done) return;
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    _ = switch (bd) {
+        buffer.buffer_data.player_pos => |d| d,
+        else => return,
+    };
+
     _ = game.state.jobs.lighting(game.state.ui.world_loaded_id);
 }
 

@@ -18,6 +18,7 @@ pub const buffer_message_type = enum(u8) {
     demo_terrain_gen,
     world_descriptor_gen,
     world_terrain_gen,
+    player_pos,
 };
 
 pub const buffer_data = union(buffer_message_type) {
@@ -31,6 +32,7 @@ pub const buffer_data = union(buffer_message_type) {
     demo_terrain_gen: demo_terrain_gen_data,
     world_descriptor_gen: world_descriptor_gen_data,
     world_terrain_gen: world_terrain_gen_data,
+    player_pos: player_pos_data,
 };
 
 pub const buffer_message = packed struct {
@@ -97,6 +99,8 @@ pub const world_terrain_gen_data = struct {
     world_id: i32,
     descriptors: std.ArrayList(*descriptor.root),
 };
+
+pub const player_pos_data = struct {};
 
 pub const ChunkColumn = struct {
     x: i8,

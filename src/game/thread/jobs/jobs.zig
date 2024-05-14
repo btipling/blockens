@@ -273,6 +273,21 @@ pub const Jobs = struct {
             return;
         };
     }
+
+    pub fn findPlayerPosition(
+        self: *Jobs,
+        world_id: i32,
+    ) void {
+        _ = self.jobs.schedule(
+            zjobs.JobId.none,
+            job_find_player_pos.FindPlayerPositionJob{
+                .world_id = world_id,
+            },
+        ) catch |e| {
+            std.debug.print("error scheduling finding player position job: {}\n", .{e});
+            return;
+        };
+    }
 };
 
 const std = @import("std");
@@ -292,6 +307,7 @@ const job_demo_descriptor_gen = @import("jobs_demo_descriptor_gen.zig");
 const job_demo_terrain_gen = @import("jobs_demo_terrain_gen.zig");
 const job_world_descriptor_gen = @import("jobs_world_descriptor_gen.zig");
 const job_world_terrain_gen = @import("jobs_world_terrain_gen.zig");
+const job_find_player_pos = @import("jobs_find_player_position.zig");
 const job_startup = @import("jobs_startup.zig");
 const buffer = @import("../buffer.zig");
 const game_config = @import("../../config.zig");

@@ -94,7 +94,7 @@ fn createWorld() !void {
         const si = game.state.ui.terrain_gen_script_options_selected.items[i];
         try game.state.db.saveWorldTerrain(world_id, si.id);
     }
-    chunk_file.initWorldSave(false, 1);
+    chunk_file.initWorldSave(false, world_id);
     _ = game.state.jobs.generateWorld(world_id);
 }
 
