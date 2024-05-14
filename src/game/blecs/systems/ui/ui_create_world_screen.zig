@@ -75,7 +75,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     .w = btn_dms[0],
                     .h = btn_dms[1],
                 })) {
-                    // generate world
+                    createWorld() catch |e| std.debug.panic("db error: {}", .{e});
                 }
             }
             zgui.end();
@@ -85,14 +85,14 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
 fn createWorld() !void {
     game.state.db.saveWorld(
-        game.state.ui.world_name_buf,
+        game.state.ui.world_name_buf[0..],
         game.state.ui.terrain_gen_seed,
     ) catch @panic("db error");
-    const world_id = game.state.db.getNewestWorldId() catch @panic("db error");
+    const world_id = try game.state.db.getNewestWorldId();
     var i: usize = 0;
-    while (i < game.state.ui.terrain_gen_script_options_selected.items) : (i += 1) {
+    while (i < game.state.ui.terrain_gen_script_options_selected.items.len) : (i += 1) {
         const si = game.state.ui.terrain_gen_script_options_selected.items[i];
-        game.state.db.saveWorldTerrain(world_id, si) catch @panic("db error");
+        try game.state.db.saveWorldTerrain(world_id, si.id);
     }
 }
 

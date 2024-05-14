@@ -93,12 +93,13 @@ pub fn loadWorld(db: sqlite.Database, id: i32, data: *world) !void {
 }
 
 pub fn getNewestWorldId(db: sqlite.Database) !i32 {
+    const p = struct {};
     var select_stmt = try db.prepare(
-        void,
+        p,
         struct {
             id: i32,
         },
-        select_world_by_id_stmt,
+        select_newest_id_stmt,
     );
     defer select_stmt.deinit();
 
