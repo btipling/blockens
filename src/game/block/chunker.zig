@@ -79,14 +79,14 @@ pub fn run(self: *Chunker) !void {
                 p[0] += 1;
                 break;
             }
-            if (p[1] + 1 < chunk.chunkDim) {
+            if (p[2] + 1 < chunk.chunkDim) {
                 numDimsTravelled = 2;
-                p[1] += 1;
+                p[2] += 1;
                 break;
             }
-            if (p[2] + 1 < chunk.chunkDim) {
+            if (p[1] + 1 < chunk.chunkDim) {
                 numDimsTravelled = 3;
-                p[2] += 1;
+                p[1] += 1;
                 break;
             }
             continue;
@@ -100,17 +100,17 @@ pub fn run(self: *Chunker) !void {
         }
         self.currentVoxel = i;
         var endX: f32 = op[0];
-        var endY: f32 = op[1];
+        var endZ: f32 = op[2];
         var numXAdded: f32 = 0;
-        var numYAdded: f32 = 0;
+        var numZAdded: f32 = 0;
         inner: while (true) {
             if (numDimsTravelled == 1) {
                 const ii = chunk.getIndexFromPositionV(p);
                 if (blockId != self.chunk.data[ii] or self.meshed[ii]) {
                     numDimsTravelled += 1;
                     p[0] = op[0];
-                    p[1] += 1;
-                    p[2] = op[2]; // Happens when near chunk.chunkDims
+                    p[2] += 1;
+                    p[1] = op[1]; // Happens when near chunk.chunkDims
                     continue :inner;
                 }
                 if (numXAdded == 0) {
@@ -123,15 +123,15 @@ pub fn run(self: *Chunker) !void {
                 p[0] += 1;
                 if (p[0] >= chunk.chunkDim) {
                     numDimsTravelled += 1;
-                    p[1] += 1;
+                    p[2] += 1;
                     p[0] = op[0];
                     continue :inner;
                 }
                 numXAdded += 1;
             } else if (numDimsTravelled == 2) {
-                if (p[1] >= chunk.chunkDim) {
-                    p[1] = op[1];
-                    p[2] += 1;
+                if (p[2] >= chunk.chunkDim) {
+                    p[2] = op[2];
+                    p[1] += 1;
                     numDimsTravelled += 1;
                     continue :inner;
                 }
@@ -139,15 +139,15 @@ pub fn run(self: *Chunker) !void {
                 // doing y here, only add if all x along the y are the same
                 if (blockId != self.chunk.data[ii] or self.meshed[ii]) {
                     p[0] = op[0];
-                    p[1] = op[1];
-                    p[2] += 1;
-                    if (p[2] >= chunk.chunkDim) {
+                    p[2] = op[2];
+                    p[1] += 1;
+                    if (p[1] >= chunk.chunkDim) {
                         break :inner;
                     }
                     numDimsTravelled += 1;
                     continue :inner;
                 }
-                if (numYAdded == 0) {
+                if (numZAdded == 0) {
                     try self.updateMeshed(i);
                 }
                 if (p[0] != endX) {
@@ -163,10 +163,10 @@ pub fn run(self: *Chunker) !void {
                     const iii = chunk.getIndexFromPositionV(np);
                     if (self.chunk.data[iii] != 0) try self.updateMeshed(iii);
                 }
-                numYAdded += 1;
-                endY = p[1];
-                self.currentScale[1] = endY - op[1] + 1;
-                p[1] += 1;
+                numZAdded += 1;
+                endZ = p[2];
+                self.currentScale[2] = endZ - op[2] + 1;
+                p[2] += 1;
                 p[0] = op[0];
             } else {
                 const ii = chunk.getIndexFromPositionV(p);
@@ -180,8 +180,8 @@ pub fn run(self: *Chunker) !void {
                     p[0] += 1;
                     continue :inner;
                 }
-                if (p[1] != endY) {
-                    p[1] += 1;
+                if (p[2] != endZ) {
+                    p[2] += 1;
                     p[0] = op[0];
                     continue :inner;
                 }
@@ -190,20 +190,20 @@ pub fn run(self: *Chunker) !void {
                 const _endX = @as(usize, @intFromFloat(endX)) + 1;
                 for (_begX.._endX) |xToAdd| {
                     const _xToAdd = @as(f32, @floatFromInt(xToAdd));
-                    const _begY = @as(usize, @intFromFloat(op[1]));
-                    const _endY = @as(usize, @intFromFloat(endY)) + 1;
-                    for (_begY.._endY) |yToAdd| {
-                        const _yToAdd = @as(f32, @floatFromInt(yToAdd));
-                        const iii = chunk.getIndexFromPositionV(.{ _xToAdd, _yToAdd, p[2], 0 });
+                    const _begZ = @as(usize, @intFromFloat(op[2]));
+                    const _endZ = @as(usize, @intFromFloat(endZ)) + 1;
+                    for (_begZ.._endZ) |zToAdd| {
+                        const _zToAdd = @as(f32, @floatFromInt(zToAdd));
+                        const iii = chunk.getIndexFromPositionV(.{ _xToAdd, p[1], _zToAdd, 0 });
                         // a one off bug I think?
                         if (self.chunk.data[iii] != 0) try self.updateMeshed(iii);
                     }
                 }
-                self.currentScale[2] = p[2] - op[2] + 1;
-                p[2] += 1;
+                self.currentScale[1] = p[1] - op[1] + 1;
+                p[1] += 1;
                 p[0] = op[0];
-                p[1] = op[1];
-                if (p[2] >= chunk.chunkDim) {
+                p[2] = op[2];
+                if (p[1] >= chunk.chunkDim) {
                     break :inner;
                 }
                 continue :inner;
