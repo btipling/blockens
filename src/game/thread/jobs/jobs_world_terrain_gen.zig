@@ -53,6 +53,8 @@ pub const WorldTerrainGenJob = struct {
                 top_chunk[i] = @intCast(t_data[i]);
                 bottom_chunk[i] = @intCast(b_data[i]);
             }
+            game.state.db.saveChunkMetadata(self.world_id, self.x, 1, self.z, 0) catch @panic("db error");
+            game.state.db.saveChunkMetadata(self.world_id, self.x, 0, self.z, 0) catch @panic("db error");
             data.chunk_file.saveChunkData(
                 game.state.allocator,
                 self.world_id,
