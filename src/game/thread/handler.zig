@@ -26,6 +26,7 @@ pub fn handle_incoming() !void {
             .load_chunk => handle_load_chunk(msg),
             .demo_descriptor_gen => handle_demo_descriptor_gen(msg),
             .demo_terrain_gen => handle_demo_terrain_gen(msg),
+            .world_descriptor_gen => handle_world_descriptor_gen(msg),
         }
         i += 0;
         if (i >= maxHandlersPerFrame) return;
@@ -173,6 +174,18 @@ fn handle_demo_descriptor_gen(msg: buffer.buffer_message) void {
         dg_d.offset_x,
         dg_d.offset_z,
     );
+}
+
+fn handle_world_descriptor_gen(msg: buffer.buffer_message) void {
+    if (!buffer.progress_report(msg).done) return;
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const dg_d: buffer.world_descriptor_gen_data = switch (bd) {
+        buffer.buffer_data.world_descriptor_gen => |d| d,
+        else => return,
+    };
+    std.debug.print("generated world descriptors for world: {d}\n", .{dg_d.world_id});
+    for (dg_d.descriptors.items) |d| d.deinit();
+    dg_d.descriptors.deinit();
 }
 
 fn handle_demo_terrain_gen(msg: buffer.buffer_message) void {

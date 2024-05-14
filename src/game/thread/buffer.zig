@@ -7,7 +7,7 @@ pub const BufferErr = error{
     Invalid,
 };
 
-pub const buffer_message_type = enum(u3) {
+pub const buffer_message_type = enum(u8) {
     startup,
     chunk_gen,
     chunk_mesh,
@@ -16,6 +16,7 @@ pub const buffer_message_type = enum(u3) {
     load_chunk,
     demo_descriptor_gen,
     demo_terrain_gen,
+    world_descriptor_gen,
 };
 
 pub const buffer_data = union(buffer_message_type) {
@@ -27,12 +28,13 @@ pub const buffer_data = union(buffer_message_type) {
     load_chunk: load_chunk_data,
     demo_descriptor_gen: demo_descriptor_gen_data,
     demo_terrain_gen: demo_terrain_gen_data,
+    world_descriptor_gen: world_descriptor_gen_data,
 };
 
 pub const buffer_message = packed struct {
     id: u64 = 0,
     ts: i64 = 0,
-    type: u3,
+    type: u8,
     flags: u16 = 0,
     data: u16 = 0,
 };
@@ -75,6 +77,11 @@ pub const demo_descriptor_gen_data = struct {
     desc_root: *descriptor.root,
     offset_x: i32,
     offset_z: i32,
+};
+
+pub const world_descriptor_gen_data = struct {
+    world_id: i32,
+    descriptors: std.ArrayList(*descriptor.root),
 };
 
 pub const demo_terrain_gen_data = struct {
@@ -143,7 +150,7 @@ pub fn new_message(msg_type: buffer_message_type) buffer_message {
         id = 0;
     }
     id += 1;
-    const mt: u3 = @intFromEnum(msg_type);
+    const mt: u8 = @intFromEnum(msg_type);
     return .{
         .id = id,
         .ts = std.time.milliTimestamp(),
