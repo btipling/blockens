@@ -90,11 +90,10 @@ fn createWorld() !void {
     ) catch @panic("db error");
     const world_id = game.state.db.getNewestWorldId() catch @panic("db error");
     var i: usize = 0;
-    while (i < game.state.ui.world_gen_scripts_size) : (i += 1) {
-        const si = game.state.ui.world_gen_scripts[i];
+    while (i < game.state.ui.terrain_gen_script_options_selected.items) : (i += 1) {
+        const si = game.state.ui.terrain_gen_script_options_selected.items[i];
         game.state.db.saveWorldTerrain(world_id, si) catch @panic("db error");
     }
-    game.state.ui.clearWorldGenScripts();
 }
 
 fn centerNext(ww: f32, w: f32) void {
