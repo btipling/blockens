@@ -54,8 +54,10 @@ fn drawControls() !void {
                 game.state.ui.terrain_gen_z_buf,
             );
         }
+        zgui.text("seed", .{});
 
-        if (zgui.sliderInt("seed", .{
+        zgui.setNextItemWidth(btn_dms[0]);
+        if (zgui.sliderInt("##seed", .{
             .v = &game.state.ui.terrain_gen_seed,
             .min = 0,
             .max = 100_000,
@@ -109,7 +111,7 @@ fn drawControls() !void {
         }
         var params: helpers.ScriptOptionsParams = .{};
         if (helpers.scriptOptionsListBox(
-            "#script_options_list",
+            "##script_options_list",
             game.state.ui.terrain_gen_script_options,
             &params,
         )) |scriptOptionId| {

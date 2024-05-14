@@ -195,7 +195,8 @@ pub const ProgressReport = struct {
 pub const ProgressTracker = struct {
     num_started: usize,
     num_completed: usize,
-    pub fn completeOne(self: *ProgressTracker) struct { bool, usize, usize } {
+    pub fn completeOne(self: *ProgressTracker, bmset: buffer_message, bd: buffer_data) void {
+        var msg = bmset;
         buffer.mutex.lock();
         defer buffer.mutex.unlock();
         if (self.num_completed == self.num_started) std.debug.print(
@@ -206,11 +207,18 @@ pub const ProgressTracker = struct {
             },
         );
         self.num_completed += 1;
-        return .{
-            self.num_started == self.num_completed,
-            self.num_started,
-            self.num_completed,
-        };
+        const ns: f16 = @floatFromInt(self.num_started);
+        const nd: f16 = @floatFromInt(self.num_completed);
+        const pr: f16 = nd / ns;
+        const done = self.num_started == self.num_completed;
+        set_progress(
+            &msg,
+            done,
+            pr,
+        );
+        buffer.data.put(msg, bd) catch @panic("OOM");
+        buffer.messages.append(msg) catch @panic("unable to write message");
+        if (done) ta.allocator().destroy(self);
     }
 };
 

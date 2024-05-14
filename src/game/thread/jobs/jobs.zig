@@ -211,7 +211,7 @@ pub const Jobs = struct {
         };
         var i: i32 = 0;
         while (i < 8) : (i += 1) {
-            const pos: @Vector(4, i32) = job_terrain_gen.indexToPosition(i);
+            const pos: @Vector(4, i32) = terrain_gen.indexToPosition(i);
             _ = self.jobs.schedule(
                 zjobs.JobId.none,
                 job_terrain_gen.TerrainGenJob{
@@ -251,6 +251,7 @@ const job_terrain_gen = @import("jobs_terrain_gen.zig");
 const job_startup = @import("jobs_startup.zig");
 const buffer = @import("../buffer.zig");
 const game_config = @import("../../config.zig");
+const terrain_gen = @import("../../block/chunk_terrain_gen.zig");
 const block = @import("../../block/block.zig");
 const chunk = block.chunk;
 const descriptor = chunk.descriptor;
