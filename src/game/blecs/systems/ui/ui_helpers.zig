@@ -55,13 +55,12 @@ pub const worldChoice = struct {
     name: [ui.max_world_name:0]u8,
 };
 
-pub fn worldChooser() ?worldChoice {
+pub fn worldChooser(sel: worldChoice) ?worldChoice {
     var choice: ?worldChoice = null;
-    var default_world: i32 = 0;
     var combo: bool = false;
     var cw: bool = false;
     for (game.state.ui.world_options.items, 0..) |world_opt, i| {
-        var buffer: [ui.max_world_name + 10]u8 = undefined;
+        var buffer: [ui.max_world_name + 10]u8 = std.mem.zeroes([ui.max_world_name + 10]u8);
         const selectable_name = std.fmt.bufPrint(
             &buffer,
             "{d}: {s}",
@@ -75,13 +74,11 @@ pub fn worldChooser() ?worldChoice {
             }
             name[ii] = selectable_name[ii];
         }
-        const loaded_world_id = game.state.ui.world_loaded_id;
+        const loaded_world_id = sel.world_id;
         if (i == 0) {
-            var preview_name = &game.state.ui.world_loaded_name;
-            if (loaded_world_id == 0 or loaded_world_id == 1) {
-                default_world = world_opt.id;
-                game.state.ui.world_loaded_id = default_world;
-                preview_name = &name;
+            var preview_name: [:0]const u8 = &sel.name;
+            if (loaded_world_id == 0) {
+                preview_name = "Choose";
             }
             zgui.setNextItemWidth(game.state.ui.imguiWidth(250));
             combo = zgui.beginCombo("##listbox", .{
@@ -92,10 +89,14 @@ pub fn worldChooser() ?worldChoice {
         if (combo) {
             const selected = world_opt.id == loaded_world_id;
             if (zgui.selectable(&name, .{ .selected = selected })) {
-                choice = .{
-                    .world_id = world_opt.id,
-                    .name = name,
-                };
+                if (world_opt.id != 0) {
+                    var wc: worldChoice = .{
+                        .world_id = world_opt.id,
+                        .name = std.mem.zeroes([ui.max_world_name:0]u8),
+                    };
+                    @memcpy(wc.name[0..20], world_opt.name[0..20]);
+                    choice = wc;
+                }
             }
         }
     }

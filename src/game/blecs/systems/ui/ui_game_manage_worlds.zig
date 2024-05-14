@@ -41,6 +41,19 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
 fn worldList() !void {
     zgui.text("world list", .{});
+    if (helpers.worldChooser(.{
+        .world_id = game.state.ui.world_mananaged_id,
+        .name = game.state.ui.world_managed_name,
+    })) |selected| {
+        game.state.ui.world_mananaged_id = selected.world_id;
+        game.state.ui.world_managed_name = selected.name;
+    }
+    if (game.state.ui.world_mananaged_id != 0) {
+        zgui.text("Managing world id {d} - {s}", .{
+            game.state.ui.world_mananaged_id,
+            std.mem.sliceTo(&game.state.ui.world_managed_name, 0),
+        });
+    }
 }
 
 const std = @import("std");
@@ -49,4 +62,5 @@ const zgui = @import("zgui");
 const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
+const helpers = @import("ui_helpers.zig");
 const screen_helpers = @import("../screen_helpers.zig");

@@ -30,7 +30,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 zgui.newLine();
 
                 centerNext(ww);
-                if (helpers.worldChooser()) |selected| {
+                if (helpers.worldChooser(.{
+                    .world_id = game.state.ui.world_loaded_id,
+                    .name = game.state.ui.world_loaded_name,
+                })) |selected| {
                     loadWorld(selected.world_id, selected.name);
                 }
 
