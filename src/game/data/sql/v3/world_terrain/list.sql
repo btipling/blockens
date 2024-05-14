@@ -1,5 +1,5 @@
 SELECT
-    world_terrain.id,
+    world_terrain.terrain_gen_script_id as id,
     terrain_gen_script.name,
     terrain_gen_script.color
 FROM

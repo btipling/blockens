@@ -94,6 +94,7 @@ fn createWorld() !void {
         const si = game.state.ui.terrain_gen_script_options_selected.items[i];
         try game.state.db.saveWorldTerrain(world_id, si.id);
     }
+    _ = game.state.jobs.generateWorld(world_id);
 }
 
 fn centerNext(ww: f32, w: f32) void {

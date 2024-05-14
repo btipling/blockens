@@ -26,21 +26,21 @@ pub fn listWorldTerrains(
     allocator: std.mem.Allocator,
     data: *std.ArrayListUnmanaged(sql_utils.colorScriptOption),
 ) !void {
-    var listStmt = try db.prepare(
+    var list_stmt = try db.prepare(
         struct {
             world_id: i32,
         },
         sql_utils.colorScriptOptionSQL,
         list_world_terrain_stmt,
     );
-    defer listStmt.deinit();
+    defer list_stmt.deinit();
 
     data.clearRetainingCapacity();
     {
-        try listStmt.bind(.{ .world_id = world_id });
-        defer listStmt.reset();
+        try list_stmt.bind(.{ .world_id = world_id });
+        defer list_stmt.reset();
 
-        while (try listStmt.step()) |r| {
+        while (try list_stmt.step()) |r| {
             try data.append(
                 allocator,
                 sql_utils.colorScriptOption{

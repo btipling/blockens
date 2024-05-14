@@ -180,7 +180,7 @@ pub const Jobs = struct {
     }
 
     // generateTerrain generates a 2^3 cube of chunks
-    pub fn generateDescriptor(
+    pub fn generateDemoDescriptor(
         self: *Jobs,
         offset_x: i32,
         offset_z: i32,
@@ -231,6 +231,21 @@ pub const Jobs = struct {
             };
         }
     }
+
+    pub fn generateWorld(
+        self: *Jobs,
+        world_id: i32,
+    ) void {
+        _ = self.jobs.schedule(
+            zjobs.JobId.none,
+            job_world_descriptor_gen.WorldDescriptorGenJob{
+                .world_id = world_id,
+            },
+        ) catch |e| {
+            std.debug.print("error scheduling world generator job: {}\n", .{e});
+            return;
+        };
+    }
 };
 
 const std = @import("std");
@@ -248,6 +263,7 @@ const job_lighting_cross_chunk = @import("jobs_lighting_cross_chunk.zig");
 const job_load_chunk = @import("jobs_load_chunks.zig");
 const job_demo_descriptor_gen = @import("jobs_demo_descriptor_gen.zig");
 const job_demo_terrain_gen = @import("jobs_demo_terrain_gen.zig");
+const job_world_descriptor_gen = @import("jobs_world_descriptor_gen.zig");
 const job_startup = @import("jobs_startup.zig");
 const buffer = @import("../buffer.zig");
 const game_config = @import("../../config.zig");

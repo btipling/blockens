@@ -1,7 +1,7 @@
 pub const WorldDescriptorGenJob = struct {
     world_id: i32,
-    seed: i32,
-    terrain_scripts: std.ArrayList(data.colorScriptOption),
+    seed: i32 = 0,
+    terrain_scripts: std.ArrayListUnmanaged(data.colorScriptOption) = .{},
 
     pub fn exec(self: *WorldDescriptorGenJob) void {
         if (config.use_tracy) {
@@ -20,7 +20,7 @@ pub const WorldDescriptorGenJob = struct {
         errdefer self.terrain_scripts.deinit();
         var descriptors = std.ArrayList(*descriptor.root).init(game.state.allocator);
         errdefer errClearDescriptors(descriptors);
-        for (self.terrain_scripts) |ts| {
+        for (self.terrain_scripts.items) |ts| {
             var scriptData: data.colorScript = undefined;
             game.state.db.loadTerrainGenScript(ts.id, &scriptData) catch @panic("db error");
             const script_buf: []const u8 = std.mem.sliceTo(&scriptData.script, 0);
@@ -41,9 +41,7 @@ pub const WorldDescriptorGenJob = struct {
     }
 
     fn loadWorldData(self: *WorldDescriptorGenJob) void {
-        self.terrain_scripts = std.ArrayList(data.colorScriptOption).init(game.state.allocator);
-        errdefer self.terrain_scripts.deinit();
-
+        errdefer self.terrain_scripts.deinit(game.state.allocator);
         var w: data.world = undefined;
         game.state.db.loadWorld(self.world_id, &w) catch @panic("db error");
         self.seed = w.seed;
@@ -57,12 +55,12 @@ pub const WorldDescriptorGenJob = struct {
     fn finishJob(self: *WorldDescriptorGenJob, descriptors: std.ArrayList(*descriptor.root)) void {
         errdefer errClearDescriptors(descriptors);
         std.debug.print("Generated descriptor in job\n", .{});
-        self.terrain_scripts.deinit();
+        self.terrain_scripts.deinit(game.state.allocator);
         var msg: buffer.buffer_message = buffer.new_message(.world_descriptor_gen);
         const bd: buffer.buffer_data = .{
             .world_descriptor_gen = .{
                 .world_id = self.world_id,
-                .descriptors = descriptor,
+                .descriptors = descriptors,
             },
         };
 
