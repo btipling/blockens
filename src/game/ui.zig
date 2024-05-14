@@ -64,6 +64,7 @@ world_loaded_id: i32 = 0,
 world_mananaged_id: i32 = 0,
 world_managed_name: [max_world_name:0]u8 = std.mem.zeroes([max_world_name:0]u8),
 world_managed_seed: i32 = 0,
+world_managed_seed_terrain_scripts: std.ArrayListUnmanaged(data.colorScriptOption) = undefined,
 world_player_relocation: @Vector(4, f32) = .{ 32, 64, 32, 0 },
 
 demo_screen_rotation_x: f32 = 0,
@@ -106,6 +107,7 @@ pub fn init(allocator: std.mem.Allocator) void {
         .terrain_gen_script_options = std.ArrayListUnmanaged(data.colorScriptOption){},
         .terrain_gen_script_options_available = std.ArrayListUnmanaged(data.colorScriptOption){},
         .terrain_gen_script_options_selected = std.ArrayListUnmanaged(data.colorScriptOption){},
+        .world_managed_seed_terrain_scripts = std.ArrayListUnmanaged(data.colorScriptOption){},
     };
 }
 
@@ -116,6 +118,7 @@ pub fn deinit() void {
     ui.terrain_gen_script_options.deinit(ui.allocator);
     ui.terrain_gen_script_options_available.deinit(ui.allocator);
     ui.terrain_gen_script_options_selected.deinit(ui.allocator);
+    ui.world_managed_seed_terrain_scripts.deinit(ui.allocator);
     ui.world_options.deinit(ui.allocator);
     var td = ui.world_chunk_table_data.valueIterator();
     while (td.next()) |cc| {

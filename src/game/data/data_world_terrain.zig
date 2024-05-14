@@ -20,9 +20,16 @@ pub fn saveWorldTerrain(db: sqlite.Database, world_id: i32, terrain_gen_script_i
     };
 }
 
-pub fn listWorldTerrains(db: sqlite.Database, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
+pub fn listWorldTerrains(
+    db: sqlite.Database,
+    world_id: i32,
+    allocator: std.mem.Allocator,
+    data: *std.ArrayListUnmanaged(sql_utils.colorScriptOption),
+) !void {
     var listStmt = try db.prepare(
-        struct {},
+        struct {
+            world_id: i32,
+        },
         sql_utils.colorScriptOptionSQL,
         list_world_terrain_stmt,
     );
@@ -30,11 +37,12 @@ pub fn listWorldTerrains(db: sqlite.Database, data: *std.ArrayList(sql_utils.col
 
     data.clearRetainingCapacity();
     {
-        try listStmt.bind(.{});
+        try listStmt.bind(.{ .world_id = world_id });
         defer listStmt.reset();
 
         while (try listStmt.step()) |r| {
             try data.append(
+                allocator,
                 sql_utils.colorScriptOption{
                     .id = r.id,
                     .name = sql_utils.sqlNameToArray(r.name),

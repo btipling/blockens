@@ -28,7 +28,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             })) {
                 if (zgui.beginMenuBar()) {
                     if (zgui.menuItem("Close", .{})) {
-                        screen_helpers.toggleWorldManagement();
+                        close();
                     }
                     zgui.endMenuBar();
                 }
@@ -54,6 +54,15 @@ fn worldManager() !void {
         std.mem.sliceTo(&game.state.ui.world_managed_name, 0),
     });
     zgui.text("Seed: {d}", .{game.state.ui.world_managed_seed});
+
+    var params: helpers.ScriptOptionsParams = .{};
+    if (helpers.scriptOptionsListBox(
+        "##so_managed",
+        game.state.ui.world_managed_seed_terrain_scripts,
+        &params,
+    )) |_| {
+        // do nothing
+    }
     if (zgui.button("Delete World", .{
         .w = btn_dms[0],
         .h = btn_dms[1],
@@ -68,6 +77,11 @@ fn manageWorld(world_id: i32, world_name: [ui.max_world_name:0]u8) void {
     var w: data.world = undefined;
     game.state.db.loadWorld(world_id, &w) catch @panic("db error");
     game.state.ui.world_managed_seed = w.seed;
+    game.state.db.listWorldTerrains(
+        world_id,
+        game.state.ui.allocator,
+        &game.state.ui.world_managed_seed_terrain_scripts,
+    ) catch @panic("db error");
 }
 
 fn deleteWorld() !void {
@@ -87,6 +101,11 @@ fn deleteWorld() !void {
     _ = game.state.ui.world_options.swapRemove(index);
     game.state.ui.world_loaded_id = 0;
     game.state.ui.world_mananaged_id = 0;
+}
+
+fn close() void {
+    screen_helpers.toggleWorldManagement();
+    game.state.ui.world_managed_seed_terrain_scripts.clearRetainingCapacity();
 }
 
 const std = @import("std");

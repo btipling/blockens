@@ -264,8 +264,13 @@ pub const Data = struct {
     pub fn saveWorldTerrain(self: *Data, world_id: i32, terrain_gen_script_id: i32) !void {
         return sql_world_terrain.saveWorldTerrain(self.db, world_id, terrain_gen_script_id);
     }
-    pub fn listWorldTerrains(self: *Data, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
-        return sql_world_terrain.listWorldTerrains(self.db, data);
+    pub fn listWorldTerrains(
+        self: *Data,
+        world_id: i32,
+        allocator: std.mem.Allocator,
+        data: *std.ArrayListUnmanaged(sql_utils.colorScriptOption),
+    ) !void {
+        return sql_world_terrain.listWorldTerrains(self.db, world_id, allocator, data);
     }
     pub fn deleteWorldTerrain(self: *Data, id: i32) !void {
         return sql_world_terrain.deleteWorldTerrain(self.db, id);
