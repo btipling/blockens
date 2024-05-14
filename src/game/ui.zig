@@ -63,6 +63,7 @@ world_loaded_name: [max_world_name:0]u8 = std.mem.zeroes([max_world_name:0]u8),
 world_loaded_id: i32 = 0,
 world_mananaged_id: i32 = 0,
 world_managed_name: [max_world_name:0]u8 = std.mem.zeroes([max_world_name:0]u8),
+world_managed_seed: i32 = 0,
 world_player_relocation: @Vector(4, f32) = .{ 32, 64, 32, 0 },
 
 demo_screen_rotation_x: f32 = 0,

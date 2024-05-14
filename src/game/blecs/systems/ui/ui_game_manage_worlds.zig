@@ -46,20 +46,28 @@ fn worldManager() !void {
         .world_id = game.state.ui.world_mananaged_id,
         .name = game.state.ui.world_managed_name,
     })) |selected| {
-        game.state.ui.world_mananaged_id = selected.world_id;
-        game.state.ui.world_managed_name = selected.name;
+        manageWorld(selected.world_id, selected.name);
     }
     if (game.state.ui.world_mananaged_id == 0) return;
     zgui.text("Managing world id {d} - {s}", .{
         game.state.ui.world_mananaged_id,
         std.mem.sliceTo(&game.state.ui.world_managed_name, 0),
     });
+    zgui.text("Seed: {d}", .{game.state.ui.world_managed_seed});
     if (zgui.button("Delete World", .{
         .w = btn_dms[0],
         .h = btn_dms[1],
     })) {
         try deleteWorld();
     }
+}
+
+fn manageWorld(world_id: i32, world_name: [ui.max_world_name:0]u8) void {
+    game.state.ui.world_mananaged_id = world_id;
+    game.state.ui.world_managed_name = world_name;
+    var w: data.world = undefined;
+    game.state.db.loadWorld(world_id, &w) catch @panic("db error");
+    game.state.ui.world_managed_seed = w.seed;
 }
 
 fn deleteWorld() !void {
@@ -87,5 +95,7 @@ const zgui = @import("zgui");
 const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
+const ui = @import("../../../ui.zig");
+const data = @import("../../../data/data.zig");
 const helpers = @import("ui_helpers.zig");
 const screen_helpers = @import("../screen_helpers.zig");
