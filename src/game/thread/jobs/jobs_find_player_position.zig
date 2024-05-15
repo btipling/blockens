@@ -43,12 +43,20 @@ pub const FindPlayerPositionJob = struct {
         var pp: @Vector(4, f32) = .{ 32, 0, 32, 0 };
         {
             // find player position
-            var i: usize = 0;
-            while (i < chunk.chunkDim) : (i += 1) {
-                pp[1] = @as(f32, @floatFromInt(i)) + 32.0;
-                const ci = chunk.getIndexFromPositionV(.{ 0, @as(f32, @floatFromInt(i)), 0, 0 });
+            var i: usize = chunk.chunkDim - 1;
+            var set = false;
+            while (i > 0) : (i -= 1) {
+                pp[1] = @as(f32, @floatFromInt(i)) + 64.0;
+                const pos = chunk.chunkBlockPosFromWorldLocation(pp);
+                const ci = chunk.getIndexFromPositionV(pos);
                 const bd: block.BlockData = block.BlockData.fromId(t_block_data[ci]);
-                if (bd.block_id == 0) break;
+                if (bd.block_id != 0) {
+                    set = true;
+                    break;
+                }
+            }
+            if (!set) {
+                pp[1] = 64;
             }
         }
 
