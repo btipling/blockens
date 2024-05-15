@@ -50,9 +50,10 @@ pub const Data = struct {
         self.db.deinit();
     }
 
-    pub fn ensureDefaultWorld(self: *Data) !bool {
+    pub fn ensureState(self: *Data) !bool {
         if (try self.countWorlds() < 1) {
             try self.saveSchema();
+            data_startup.generateRequiredData();
             return false;
         }
         const schema_version = try self.currentSchemaVersion();
@@ -64,6 +65,7 @@ pub const Data = struct {
         if (schema_version == 2) {
             try migrations.v3.migrate(self.allocator);
             try self.updateSchema();
+            data_startup.generateRequiredData();
         }
         return true;
     }
@@ -292,6 +294,7 @@ const sql_chunk = @import("data_chunk.zig");
 const sql_player_position = @import("data_player_position.zig");
 const sql_display_settings = @import("data_display_settings.zig");
 const sql_world_terrain = @import("data_world_terrain.zig");
-pub const sql_utils = @import("data_sql_utils.zig");
+const data_startup = @import("data_startup.zig");
 
+pub const sql_utils = @import("data_sql_utils.zig");
 pub const chunk_file = @import("chunk_file.zig");
