@@ -13,7 +13,14 @@ fn system() ecs.system_desc_t {
 fn run(it: *ecs.iter_t) callconv(.C) void {
     while (ecs.iter_next(it)) {
         for (0..it.count()) |_| {
-            zgui.setNextItemWidth(-1);
+            const xPos: f32 = game.state.ui.imguiX(100);
+            const yPos: f32 = game.state.ui.imguiY(100);
+            zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .first_use_ever });
+            zgui.setNextWindowSize(.{
+                .w = game.state.ui.imguiWidth(600),
+                .h = game.state.ui.imguiHeight(685),
+                .cond = .first_use_ever,
+            });
             if (zgui.begin("Demo Character", .{
                 .flags = .{},
             })) {

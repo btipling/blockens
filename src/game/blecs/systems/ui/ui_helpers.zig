@@ -3,11 +3,11 @@ pub const ScriptOptionsParams = struct {
     h: f32 = 0,
 };
 
-pub fn scriptOptionsListBox(scriptOptions: std.ArrayList(data.colorScriptOption), params: *ScriptOptionsParams) ?i32 {
+pub fn scriptOptionsListBox(id: [:0]const u8, scriptOptions: std.ArrayListUnmanaged(data.colorScriptOption), params: *ScriptOptionsParams) ?i32 {
     if (params.w == 0) params.w = game.state.ui.imguiWidth(250);
     if (params.h == 0) params.h = game.state.ui.imguiWidth(450);
     var rv: ?i32 = null;
-    if (zgui.beginListBox("##color_script_options", .{
+    if (zgui.beginListBox(id, .{
         .w = params.w,
         .h = params.h,
     })) {
@@ -48,6 +48,61 @@ pub fn scriptOptionsListBox(scriptOptions: std.ArrayList(data.colorScriptOption)
         zgui.endListBox();
     }
     return rv;
+}
+
+pub const worldChoice = struct {
+    world_id: i32 = 0,
+    name: [ui.max_world_name:0]u8,
+};
+
+pub fn worldChooser(sel: worldChoice) ?worldChoice {
+    var choice: ?worldChoice = null;
+    var combo: bool = false;
+    var cw: bool = false;
+    for (game.state.ui.world_options.items, 0..) |world_opt, i| {
+        var buffer: [ui.max_world_name + 10]u8 = std.mem.zeroes([ui.max_world_name + 10]u8);
+        const selectable_name = std.fmt.bufPrint(
+            &buffer,
+            "{d}: {s}",
+            .{ world_opt.id, world_opt.name },
+        ) catch @panic("invalid buffer size");
+        var name: [ui.max_world_name:0]u8 = undefined;
+        for (name, 0..) |_, ii| {
+            if (selectable_name.len <= ii) {
+                name[ii] = 0;
+                break;
+            }
+            name[ii] = selectable_name[ii];
+        }
+        const loaded_world_id = sel.world_id;
+        if (i == 0) {
+            var preview_name: [:0]const u8 = &sel.name;
+            if (loaded_world_id == 0) {
+                preview_name = "Choose";
+            }
+            zgui.setNextItemWidth(game.state.ui.imguiWidth(250));
+            combo = zgui.beginCombo("##listbox", .{
+                .preview_value = preview_name,
+            });
+            cw = zgui.beginPopupContextWindow();
+        }
+        if (combo) {
+            const selected = world_opt.id == loaded_world_id;
+            if (zgui.selectable(&name, .{ .selected = selected })) {
+                if (world_opt.id != 0) {
+                    var wc: worldChoice = .{
+                        .world_id = world_opt.id,
+                        .name = std.mem.zeroes([ui.max_world_name:0]u8),
+                    };
+                    @memcpy(wc.name[0..20], world_opt.name[0..20]);
+                    choice = wc;
+                }
+            }
+        }
+    }
+    if (cw) zgui.endPopup();
+    if (combo) zgui.endCombo();
+    return choice;
 }
 
 pub fn loadChunksInWorld() void {

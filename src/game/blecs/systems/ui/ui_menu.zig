@@ -25,9 +25,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     zgui.endMenu();
                 }
                 if (zgui.beginMenu("Editors", true)) {
-                    if (zgui.menuItem("World", .{})) {
-                        screen_helpers.showWorldEditor();
-                    }
                     if (zgui.menuItem("Textures", .{})) {
                         screen_helpers.showBlockTextureGen();
                     }
@@ -69,6 +66,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                     if (zgui.menuItem("Toogle Lighting Controls", .{})) {
                         screen_helpers.toggleLightingControls();
+                    }
+                    if (zgui.menuItem("World Management", .{})) {
+                        screen_helpers.toggleWorldManagement();
                     }
                     zgui.endMenu();
                 }

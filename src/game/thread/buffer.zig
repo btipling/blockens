@@ -7,15 +7,18 @@ pub const BufferErr = error{
     Invalid,
 };
 
-pub const buffer_message_type = enum(u3) {
+pub const buffer_message_type = enum(u8) {
     startup,
     chunk_gen,
     chunk_mesh,
     lighting,
     lighting_cross_chunk,
     load_chunk,
-    descriptor_gen,
-    terrain_gen,
+    demo_descriptor_gen,
+    demo_terrain_gen,
+    world_descriptor_gen,
+    world_terrain_gen,
+    player_pos,
 };
 
 pub const buffer_data = union(buffer_message_type) {
@@ -25,14 +28,17 @@ pub const buffer_data = union(buffer_message_type) {
     lighting: lightings_data,
     lighting_cross_chunk: lightings_data,
     load_chunk: load_chunk_data,
-    descriptor_gen: descriptor_gen_data,
-    terrain_gen: terrain_gen_data,
+    demo_descriptor_gen: demo_descriptor_gen_data,
+    demo_terrain_gen: demo_terrain_gen_data,
+    world_descriptor_gen: world_descriptor_gen_data,
+    world_terrain_gen: world_terrain_gen_data,
+    player_pos: player_pos_data,
 };
 
 pub const buffer_message = packed struct {
     id: u64 = 0,
     ts: i64 = 0,
-    type: u3,
+    type: u8,
     flags: u16 = 0,
     data: u16 = 0,
 };
@@ -71,17 +77,30 @@ pub const load_chunk_data = struct {
     start_game: bool,
 };
 
-pub const descriptor_gen_data = struct {
+pub const demo_descriptor_gen_data = struct {
     desc_root: *descriptor.root,
     offset_x: i32,
     offset_z: i32,
 };
 
-pub const terrain_gen_data = struct {
+pub const world_descriptor_gen_data = struct {
+    world_id: i32,
+    descriptors: std.ArrayList(*descriptor.root),
+};
+
+pub const demo_terrain_gen_data = struct {
+    desc_root: *descriptor.root,
     succeeded: bool,
     data: ?[]u32,
     position: @Vector(4, f32),
 };
+
+pub const world_terrain_gen_data = struct {
+    world_id: i32,
+    descriptors: std.ArrayList(*descriptor.root),
+};
+
+pub const player_pos_data = struct {};
 
 pub const ChunkColumn = struct {
     x: i8,
@@ -142,7 +161,7 @@ pub fn new_message(msg_type: buffer_message_type) buffer_message {
         id = 0;
     }
     id += 1;
-    const mt: u3 = @intFromEnum(msg_type);
+    const mt: u8 = @intFromEnum(msg_type);
     return .{
         .id = id,
         .ts = std.time.milliTimestamp(),
@@ -195,7 +214,8 @@ pub const ProgressReport = struct {
 pub const ProgressTracker = struct {
     num_started: usize,
     num_completed: usize,
-    pub fn completeOne(self: *ProgressTracker) struct { bool, usize, usize } {
+    pub fn completeOne(self: *ProgressTracker, bmset: buffer_message, bd: buffer_data) void {
+        var msg = bmset;
         buffer.mutex.lock();
         defer buffer.mutex.unlock();
         if (self.num_completed == self.num_started) std.debug.print(
@@ -206,11 +226,18 @@ pub const ProgressTracker = struct {
             },
         );
         self.num_completed += 1;
-        return .{
-            self.num_started == self.num_completed,
-            self.num_started,
-            self.num_completed,
-        };
+        const ns: f16 = @floatFromInt(self.num_started);
+        const nd: f16 = @floatFromInt(self.num_completed);
+        const pr: f16 = nd / ns;
+        const done = self.num_started == self.num_completed;
+        set_progress(
+            &msg,
+            done,
+            pr,
+        );
+        buffer.data.put(msg, bd) catch @panic("OOM");
+        buffer.messages.append(msg) catch @panic("unable to write message");
+        if (done) ta.allocator().destroy(self);
     }
 };
 

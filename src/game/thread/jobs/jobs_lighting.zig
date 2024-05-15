@@ -77,17 +77,7 @@ pub const LightingJob = struct {
     }
 
     fn finishJob(self: *LightingJob) void {
-        var msg: buffer.buffer_message = buffer.new_message(.lighting);
-        const done: bool, const num_started: usize, const num_done: usize = self.pt.completeOne();
-        if (done) game.state.allocator.destroy(self.pt);
-        const ns: f16 = @floatFromInt(num_started);
-        const nd: f16 = @floatFromInt(num_done);
-        const pr: f16 = nd / ns;
-        buffer.set_progress(
-            &msg,
-            done,
-            pr,
-        );
+        const msg: buffer.buffer_message = buffer.new_message(.lighting);
         const bd: buffer.buffer_data = .{
             .lighting = .{
                 .world_id = self.world_id,
@@ -95,8 +85,7 @@ pub const LightingJob = struct {
                 .z = self.z,
             },
         };
-        buffer.put_data(msg, bd) catch @panic("OOM");
-        buffer.write_message(msg) catch @panic("unable to write message");
+        self.pt.completeOne(msg, bd);
     }
 };
 

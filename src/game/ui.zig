@@ -12,7 +12,9 @@ pub const chunkConfig = struct {
 gameFont: zgui.Font = undefined,
 codeFont: zgui.Font = undefined,
 
-texture_script_options: std.ArrayList(data.scriptOption) = undefined,
+allocator: std.mem.Allocator,
+
+texture_script_options: std.ArrayListUnmanaged(data.scriptOption) = undefined,
 texture_loaded_script_id: i32 = 0,
 texture_buf: [script.maxLuaScriptSize]u8 = std.mem.zeroes([script.maxLuaScriptSize]u8),
 texture_name_buf: [script.maxLuaScriptNameSize]u8 = std.mem.zeroes([script.maxLuaScriptNameSize]u8),
@@ -21,7 +23,7 @@ texture_atlas_rgba_data: ?[]u32 = null,
 texture_atlas_block_index: [blecs.entities.block.MaxBlocks]usize = std.mem.zeroes([blecs.entities.block.MaxBlocks]usize),
 texture_atlas_num_blocks: usize = 0,
 
-block_options: std.ArrayList(data.blockOption) = undefined,
+block_options: std.ArrayListUnmanaged(data.blockOption) = undefined,
 block_create_name_buf: [data.maxBlockSizeName]u8 = std.mem.zeroes([data.maxBlockSizeName]u8),
 block_update_name_buf: [data.maxBlockSizeName]u8 = std.mem.zeroes([data.maxBlockSizeName]u8),
 block_emits_light: bool = false,
@@ -39,7 +41,7 @@ chunk_buf: [script.maxLuaScriptSize]u8 = std.mem.zeroes([script.maxLuaScriptSize
 chunk_x_buf: [5]u8 = std.mem.zeroes([5]u8),
 chunk_y_buf: [5]u8 = std.mem.zeroes([5]u8),
 chunk_z_buf: [5]u8 = std.mem.zeroes([5]u8),
-chunk_script_options: std.ArrayList(data.colorScriptOption) = undefined,
+chunk_script_options: std.ArrayListUnmanaged(data.colorScriptOption) = undefined,
 chunk_loaded_script_id: i32 = 0,
 chunk_script_color: [3]f32 = std.mem.zeroes([3]f32),
 
@@ -48,18 +50,22 @@ terrain_gen_name_buf: [script.maxLuaScriptNameSize]u8 = std.mem.zeroes([script.m
 terrain_gen_buf: [script.maxLuaScriptSize]u8 = std.mem.zeroes([script.maxLuaScriptSize]u8),
 terrain_gen_x_buf: i32 = 0,
 terrain_gen_z_buf: i32 = 0,
-terrain_gen_script_options: std.ArrayList(data.colorScriptOption) = undefined,
+terrain_gen_script_options: std.ArrayListUnmanaged(data.colorScriptOption) = undefined,
+terrain_gen_script_options_available: std.ArrayListUnmanaged(data.colorScriptOption) = undefined,
+terrain_gen_script_options_selected: std.ArrayListUnmanaged(data.colorScriptOption) = undefined,
 terrain_gen_loaded_script_id: i32 = 0,
 terrain_gen_script_color: [3]f32 = std.mem.zeroes([3]f32),
 
 world_name_buf: [max_world_name]u8 = std.mem.zeroes([max_world_name]u8),
-world_options: std.ArrayList(data.worldOption) = undefined,
-world_chunk_table_data: std.AutoHashMap(chunk.worldPosition, chunkConfig) = undefined,
+world_options: std.ArrayListUnmanaged(data.worldOption) = undefined,
+world_chunk_table_data: std.AutoHashMapUnmanaged(chunk.worldPosition, chunkConfig) = undefined,
 world_loaded_name: [max_world_name:0]u8 = std.mem.zeroes([max_world_name:0]u8),
 world_loaded_id: i32 = 0,
-world_chunk_y: i32 = 0,
+world_mananaged_id: i32 = 0,
+world_managed_name: [max_world_name:0]u8 = std.mem.zeroes([max_world_name:0]u8),
+world_managed_seed: i32 = 0,
+world_managed_seed_terrain_scripts: std.ArrayListUnmanaged(data.colorScriptOption) = undefined,
 world_player_relocation: @Vector(4, f32) = .{ 32, 64, 32, 0 },
-world_current_chunk: @Vector(4, f32) = undefined,
 
 demo_screen_rotation_x: f32 = 0,
 demo_screen_rotation_y: f32 = 0.341,
@@ -79,6 +85,7 @@ demo_atlas_scale: @Vector(4, f32) = @Vector(4, f32){ 0.100, 1.940, 1, 0 },
 demo_atlas_translation: @Vector(4, f32) = @Vector(4, f32){ -0.976, -0.959, 0, 0 },
 demo_atlas_rotation: f32 = 0.5,
 
+load_percentage_world_gen: f16 = 0,
 load_percentage_lighting_initial: f16 = 0,
 load_percentage_lighting_cross_chunk: f16 = 0,
 load_percentage_load_chunks: f16 = 0,
@@ -92,29 +99,36 @@ pub fn init(allocator: std.mem.Allocator) void {
     ui = allocator.create(UI) catch @panic("OOM");
 
     ui.* = .{
-        .texture_script_options = std.ArrayList(data.scriptOption).init(allocator),
-        .block_options = std.ArrayList(data.blockOption).init(allocator),
-        .chunk_script_options = std.ArrayList(data.colorScriptOption).init(allocator),
-        .world_options = std.ArrayList(data.worldOption).init(allocator),
-        .world_chunk_table_data = std.AutoHashMap(chunk.worldPosition, chunkConfig).init(allocator),
-        .terrain_gen_script_options = std.ArrayList(data.colorScriptOption).init(allocator),
+        .allocator = allocator,
+        .texture_script_options = std.ArrayListUnmanaged(data.scriptOption){},
+        .block_options = std.ArrayListUnmanaged(data.blockOption){},
+        .chunk_script_options = std.ArrayListUnmanaged(data.colorScriptOption){},
+        .world_options = std.ArrayListUnmanaged(data.worldOption){},
+        .world_chunk_table_data = std.AutoHashMapUnmanaged(chunk.worldPosition, chunkConfig){},
+        .terrain_gen_script_options = std.ArrayListUnmanaged(data.colorScriptOption){},
+        .terrain_gen_script_options_available = std.ArrayListUnmanaged(data.colorScriptOption){},
+        .terrain_gen_script_options_selected = std.ArrayListUnmanaged(data.colorScriptOption){},
+        .world_managed_seed_terrain_scripts = std.ArrayListUnmanaged(data.colorScriptOption){},
     };
 }
 
-pub fn deinit(allocator: std.mem.Allocator) void {
-    ui.texture_script_options.deinit();
-    ui.block_options.deinit();
-    ui.chunk_script_options.deinit();
-    ui.terrain_gen_script_options.deinit();
-    ui.world_options.deinit();
+pub fn deinit() void {
+    ui.texture_script_options.deinit(ui.allocator);
+    ui.block_options.deinit(ui.allocator);
+    ui.chunk_script_options.deinit(ui.allocator);
+    ui.terrain_gen_script_options.deinit(ui.allocator);
+    ui.terrain_gen_script_options_available.deinit(ui.allocator);
+    ui.terrain_gen_script_options_selected.deinit(ui.allocator);
+    ui.world_managed_seed_terrain_scripts.deinit(ui.allocator);
+    ui.world_options.deinit(ui.allocator);
     var td = ui.world_chunk_table_data.valueIterator();
     while (td.next()) |cc| {
-        allocator.free(cc.*.chunkData);
+        ui.allocator.free(cc.*.chunkData);
     }
-    ui.world_chunk_table_data.deinit();
-    if (ui.texture_rgba_data) |d| allocator.free(d);
-    if (ui.texture_atlas_rgba_data) |d| allocator.free(d);
-    allocator.destroy(ui);
+    ui.world_chunk_table_data.deinit(ui.allocator);
+    if (ui.texture_rgba_data) |d| ui.allocator.free(d);
+    if (ui.texture_atlas_rgba_data) |d| ui.allocator.free(d);
+    ui.allocator.destroy(ui);
 }
 
 const reference_height: f32 = 1080;
@@ -172,6 +186,39 @@ pub fn imguiPadding(self: *UI) [2]f32 {
         self.imguiWidth(5),
         self.imguiHeight(5),
     };
+}
+
+pub fn clearUISettingsState(self: *UI) void {
+    self.terrain_gen_script_options_available.clearRetainingCapacity();
+    self.terrain_gen_script_options_available.appendSlice(
+        self.allocator,
+        self.terrain_gen_script_options.items,
+    ) catch @panic("OOM");
+    self.terrain_gen_script_options_selected.clearRetainingCapacity();
+}
+
+fn swapScriptOptions(
+    self: *UI,
+    a: *std.ArrayListUnmanaged(data.colorScriptOption),
+    b: *std.ArrayListUnmanaged(data.colorScriptOption),
+    v: i32,
+) void {
+    var index: usize = 0;
+    var i: usize = 0;
+    while (i < a.items.len) : (i += 1) {
+        index = i;
+        if (a.items[i].id == v) break;
+    }
+    const so = a.swapRemove(index);
+    b.append(self.allocator, so) catch @panic("OOM");
+}
+
+pub fn TerrainGenSelectScript(self: *UI, id: i32) void {
+    self.swapScriptOptions(&self.terrain_gen_script_options_available, &self.terrain_gen_script_options_selected, id);
+}
+
+pub fn TerrainGenDeselectScript(self: *UI, id: i32) void {
+    self.swapScriptOptions(&self.terrain_gen_script_options_selected, &self.terrain_gen_script_options_available, id);
 }
 
 const std = @import("std");

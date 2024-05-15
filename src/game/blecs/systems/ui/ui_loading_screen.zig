@@ -31,6 +31,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 centerNext(ww);
                 zgui.text("Starting world.", .{});
                 zgui.newLine();
+                zgui.text("Terrain generation: {d:.2}%", .{game.state.ui.load_percentage_world_gen * 100});
                 zgui.text("Lighting initial: {d:.2}%", .{game.state.ui.load_percentage_lighting_initial * 100});
                 zgui.text("Lighting cross chunk: {d:.2}%", .{game.state.ui.load_percentage_lighting_cross_chunk * 100});
                 zgui.text("Loading chunks: {d:.2}%", .{game.state.ui.load_percentage_load_chunks * 100});

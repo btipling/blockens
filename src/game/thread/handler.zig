@@ -24,8 +24,11 @@ pub fn handle_incoming() !void {
             .lighting => handle_lighting(msg),
             .lighting_cross_chunk => handle_lighting_cross_chunk(msg),
             .load_chunk => handle_load_chunk(msg),
-            .descriptor_gen => handle_descriptor_gen(msg),
-            .terrain_gen => handle_terrain_gen(msg),
+            .demo_descriptor_gen => handle_demo_descriptor_gen(msg),
+            .demo_terrain_gen => handle_demo_terrain_gen(msg),
+            .world_descriptor_gen => handle_world_descriptor_gen(msg),
+            .world_terrain_gen => handle_world_terrain_gen(msg),
+            .player_pos => handle_player_pos(msg),
         }
         i += 0;
         if (i >= maxHandlersPerFrame) return;
@@ -63,7 +66,7 @@ fn handle_chunk_gen(msg: buffer.buffer_message) !void {
         game.state.allocator.free(cd.chunkData);
         cleared_data = true;
     }
-    game.state.ui.world_chunk_table_data.put(chunk_data.wp, ch_cfg) catch @panic("OOM");
+    game.state.ui.world_chunk_table_data.put(game.state.ui.allocator, chunk_data.wp, ch_cfg) catch @panic("OOM");
 }
 
 fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
@@ -130,7 +133,7 @@ fn handle_lighting_cross_chunk(msg: buffer.buffer_message) void {
     };
     game.state.ui.load_percentage_lighting_cross_chunk = pr.percent;
     if (!pr.done) return;
-    _ = game.state.jobs.load_chunks(ld.world_id, true);
+    _ = game.state.jobs.loadChunks(ld.world_id, true);
 }
 
 fn handle_load_chunk(msg: buffer.buffer_message) void {
@@ -142,8 +145,16 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
     };
     game.state.ui.load_percentage_load_chunks = pr.percent;
     if (lcd.exists) {
-        game.state.ui.world_chunk_table_data.put(lcd.wp_t, lcd.cfg_t) catch @panic("OOM");
-        game.state.ui.world_chunk_table_data.put(lcd.wp_b, lcd.cfg_b) catch @panic("OOM");
+        game.state.ui.world_chunk_table_data.put(
+            game.state.ui.allocator,
+            lcd.wp_t,
+            lcd.cfg_t,
+        ) catch @panic("OOM");
+        game.state.ui.world_chunk_table_data.put(
+            game.state.ui.allocator,
+            lcd.wp_b,
+            lcd.cfg_b,
+        ) catch @panic("OOM");
     }
     if (!pr.done) return;
     if (!lcd.start_game) return;
@@ -152,26 +163,67 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
     ui_helpers.loadCharacterInWorld();
 }
 
-fn handle_descriptor_gen(msg: buffer.buffer_message) void {
+fn handle_demo_descriptor_gen(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    const dg_d: buffer.descriptor_gen_data = switch (bd) {
-        buffer.buffer_data.descriptor_gen => |d| d,
+    const dg_d: buffer.demo_descriptor_gen_data = switch (bd) {
+        buffer.buffer_data.demo_descriptor_gen => |d| d,
         else => return,
     };
 
-    _ = game.state.jobs.generateTerrain(
+    _ = game.state.jobs.generateDemoTerrain(
         dg_d.desc_root,
         dg_d.offset_x,
         dg_d.offset_z,
     );
 }
 
-fn handle_terrain_gen(msg: buffer.buffer_message) void {
+fn handle_world_descriptor_gen(msg: buffer.buffer_message) void {
+    if (!buffer.progress_report(msg).done) return;
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const dg_d: buffer.world_descriptor_gen_data = switch (bd) {
+        buffer.buffer_data.world_descriptor_gen => |d| d,
+        else => return,
+    };
+    std.debug.print("generated world descriptors for world: {d}\n", .{dg_d.world_id});
+    screen_helpers.showLoadingScreen();
+    _ = game.state.jobs.generateWorldTerrain(dg_d.world_id, dg_d.descriptors);
+}
+
+fn handle_world_terrain_gen(msg: buffer.buffer_message) void {
+    const pr = buffer.progress_report(msg);
+    if (!buffer.progress_report(msg).done) return;
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const dg_d: buffer.world_terrain_gen_data = switch (bd) {
+        buffer.buffer_data.world_terrain_gen => |d| d,
+        else => return,
+    };
+    game.state.ui.load_percentage_world_gen = pr.percent;
+    if (!pr.done) return;
+    std.debug.print("generated world terrain for world: {d}\n", .{dg_d.world_id});
+    for (dg_d.descriptors.items) |d| d.deinit();
+    dg_d.descriptors.deinit();
+    game.state.ui.world_loaded_id = dg_d.world_id;
+
+    _ = game.state.jobs.findPlayerPosition(game.state.ui.world_loaded_id);
+}
+
+fn handle_player_pos(msg: buffer.buffer_message) void {
+    if (!buffer.progress_report(msg).done) return;
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    _ = switch (bd) {
+        buffer.buffer_data.player_pos => |d| d,
+        else => return,
+    };
+
+    _ = game.state.jobs.lighting(game.state.ui.world_loaded_id);
+}
+
+fn handle_demo_terrain_gen(msg: buffer.buffer_message) void {
     const pr = buffer.progress_report(msg);
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    const tg_d: buffer.terrain_gen_data = switch (bd) {
-        buffer.buffer_data.terrain_gen => |d| d,
+    const tg_d: buffer.demo_terrain_gen_data = switch (bd) {
+        buffer.buffer_data.demo_terrain_gen => |d| d,
         else => return,
     };
     const wp = chunk.worldPosition.initFromPositionV(tg_d.position);
@@ -182,6 +234,7 @@ fn handle_terrain_gen(msg: buffer.buffer_message) void {
         game.state.blocks.generated_settings_chunks.count(),
     });
     blecs.entities.screen.initDemoTerrainGen(true);
+    tg_d.desc_root.deinit();
 }
 
 fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entity_t {

@@ -88,7 +88,7 @@ pub fn updateBlock(db: sqlite.Database, id: i32, name: []const u8, texture: []u3
     };
 }
 
-pub fn listBlocks(db: sqlite.Database, data: *std.ArrayList(blockOption)) !void {
+pub fn listBlocks(db: sqlite.Database, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(blockOption)) !void {
     var listStmt = try db.prepare(
         struct {},
         blockOptionSQL,
@@ -103,6 +103,7 @@ pub fn listBlocks(db: sqlite.Database, data: *std.ArrayList(blockOption)) !void 
 
         while (try listStmt.step()) |row| {
             try data.append(
+                allocator,
                 blockOption{
                     .id = @intCast(row.id),
                     .name = sql_utils.sqlNameToArray(row.name),
@@ -196,11 +197,11 @@ fn blobToTexture(blob: sqlite.Blob) ![]u32 {
     return rv;
 }
 
-const insert_block_stmt = @embedFile("./sql/v2/block/insert.sql");
-const update_block_stmt = @embedFile("./sql/v2/block/update.sql");
-const select_block_stmt = @embedFile("./sql/v2/block/select.sql");
-const list_block_stmt = @embedFile("./sql/v2/block/list.sql");
-const delete_block_stmt = @embedFile("./sql/v2/block/delete.sql");
+const insert_block_stmt = @embedFile("./sql/v3/block/insert.sql");
+const update_block_stmt = @embedFile("./sql/v3/block/update.sql");
+const select_block_stmt = @embedFile("./sql/v3/block/select.sql");
+const list_block_stmt = @embedFile("./sql/v3/block/list.sql");
+const delete_block_stmt = @embedFile("./sql/v3/block/delete.sql");
 
 const std = @import("std");
 const sqlite = @import("sqlite");

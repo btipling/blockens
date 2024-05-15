@@ -18,10 +18,6 @@ pub fn showTerrainEditor() void {
     showSettingsScreen(blecs.components.screen.TerrainEditor);
 }
 
-pub fn showWorldEditor() void {
-    showSettingsScreen(blecs.components.screen.WorldEditor);
-}
-
 pub fn showTitleScreen() void {
     showSettingsScreen(blecs.components.screen.TitleScreen);
 }
@@ -32,6 +28,10 @@ pub fn showSettingUpScreen() void {
 
 pub fn showLoadingScreen() void {
     showSettingsScreen(blecs.components.screen.LoadingScreen);
+}
+
+pub fn showCreateWorldScreen() void {
+    showSettingsScreen(blecs.components.screen.CreateWorldScreen);
 }
 
 pub fn showDisplaySettingsScreen() void {
@@ -60,8 +60,10 @@ pub fn showSettingsScreen(comptime T: type) void {
         game.state.entities.screen,
         blecs.components.screen.Screen,
     ) orelse @panic("no screen");
-    // reset any previous demo objects added to the settings screen
+    // reset any setting ui state and previous demo objects added to the settings screen
     blecs.entities.screen.clearDemoObjects();
+    game.state.ui.clearUISettingsState();
+
     // clear out the screens previous child, world or setting, this doesn't clear world objects, they are not cleared
     blecs.helpers.delete_children(game.state.world, game.state.entities.screen);
     // make a new current screen of the settings type
@@ -117,6 +119,10 @@ pub fn toggleGameMobInfo() void {
 
 pub fn toggleLightingControls() void {
     toggleUI(blecs.components.ui.LightingControls);
+}
+
+pub fn toggleWorldManagement() void {
+    toggleUI(blecs.components.ui.WorldManagement);
 }
 
 fn toggleUI(comptime T: type) void {

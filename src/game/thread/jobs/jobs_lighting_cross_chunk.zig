@@ -87,17 +87,7 @@ pub const LightingCrossChunkJob = struct {
     }
 
     fn finishJob(self: *LightingCrossChunkJob) void {
-        var msg: buffer.buffer_message = buffer.new_message(.lighting_cross_chunk);
-        const done: bool, const num_started: usize, const num_done: usize = self.pt.completeOne();
-        if (done) game.state.allocator.destroy(self.pt);
-        const ns: f16 = @floatFromInt(num_started);
-        const nd: f16 = @floatFromInt(num_done);
-        const pr: f16 = nd / ns;
-        buffer.set_progress(
-            &msg,
-            done,
-            pr,
-        );
+        const msg: buffer.buffer_message = buffer.new_message(.lighting_cross_chunk);
         const bd: buffer.buffer_data = .{
             .lighting = .{
                 .world_id = self.world_id,
@@ -105,8 +95,7 @@ pub const LightingCrossChunkJob = struct {
                 .z = self.z,
             },
         };
-        buffer.put_data(msg, bd) catch @panic("OOM");
-        buffer.write_message(msg) catch @panic("unable to write message");
+        self.pt.completeOne(msg, bd);
     }
 
     fn lightFallDimensional(

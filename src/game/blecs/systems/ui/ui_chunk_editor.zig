@@ -128,7 +128,11 @@ fn drawControls() !void {
         }
         zgui.popStyleVar(.{ .count = 1 });
         var params: helpers.ScriptOptionsParams = .{};
-        if (helpers.scriptOptionsListBox(game.state.ui.chunk_script_options, &params)) |scriptOptionId| {
+        if (helpers.scriptOptionsListBox(
+            "##script_options_list",
+            game.state.ui.chunk_script_options,
+            &params,
+        )) |scriptOptionId| {
             try loadChunkScriptFunc(scriptOptionId);
         }
     }
@@ -188,7 +192,7 @@ fn evalWorldChunkFunc() !void {
 }
 
 fn listChunkScripts() !void {
-    try game.state.db.listChunkScripts(&game.state.ui.chunk_script_options);
+    try game.state.db.listChunkScripts(game.state.ui.allocator, &game.state.ui.chunk_script_options);
 }
 
 fn loadChunkScriptFunc(scriptId: i32) !void {

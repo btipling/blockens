@@ -152,7 +152,7 @@ pub const Jobs = struct {
         }
     }
 
-    pub fn load_chunks(self: *Jobs, world_id: i32, start_game: bool) void {
+    pub fn loadChunks(self: *Jobs, world_id: i32, start_game: bool) void {
         const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
         pt.* = .{
             .num_started = game_config.worldChunkDims * game_config.worldChunkDims,
@@ -172,7 +172,7 @@ pub const Jobs = struct {
                         .pt = pt,
                     },
                 ) catch |e| {
-                    std.debug.print("error scheduling cross chunk lighting job: {}\n", .{e});
+                    std.debug.print("error scheduling load chunks job: {}\n", .{e});
                     return;
                 };
             }
@@ -180,14 +180,14 @@ pub const Jobs = struct {
     }
 
     // generateTerrain generates a 2^3 cube of chunks
-    pub fn generateDescriptor(
+    pub fn generateDemoDescriptor(
         self: *Jobs,
         offset_x: i32,
         offset_z: i32,
     ) void {
         _ = self.jobs.schedule(
             zjobs.JobId.none,
-            job_descriptor_gen.DescriptorGenJob{
+            job_demo_descriptor_gen.DemoDescriptorGenJob{
                 .offset_x = offset_x,
                 .offset_z = offset_z,
             },
@@ -198,7 +198,7 @@ pub const Jobs = struct {
     }
 
     // generateTerrain generates a 2^3 cube of chunks
-    pub fn generateTerrain(
+    pub fn generateDemoTerrain(
         self: *Jobs,
         desc_root: *descriptor.root,
         offset_x: i32,
@@ -211,10 +211,10 @@ pub const Jobs = struct {
         };
         var i: i32 = 0;
         while (i < 8) : (i += 1) {
-            const pos: @Vector(4, i32) = job_terrain_gen.indexToPosition(i);
+            const pos: @Vector(4, i32) = terrain_gen.indexToPosition(i);
             _ = self.jobs.schedule(
                 zjobs.JobId.none,
-                job_terrain_gen.TerrainGenJob{
+                job_demo_terrain_gen.DemoTerrainGenJob{
                     .desc_root = desc_root,
                     // job will generate terrain for x y z, but use i for actual rendered position
                     .position = .{
@@ -231,6 +231,63 @@ pub const Jobs = struct {
             };
         }
     }
+
+    pub fn generateWorldTerrain(self: *Jobs, world_id: i32, descriptors: std.ArrayList(*descriptor.root)) void {
+        const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
+        pt.* = .{
+            .num_started = game_config.worldChunkDims * game_config.worldChunkDims,
+            .num_completed = 0,
+        };
+        for (0..game_config.worldChunkDims) |i| {
+            const x: i32 = @as(i32, @intCast(i)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
+            for (0..game_config.worldChunkDims) |ii| {
+                const z: i32 = @as(i32, @intCast(ii)) - @as(i32, @intCast(game_config.worldChunkDims / 2));
+                _ = self.jobs.schedule(
+                    zjobs.JobId.none,
+                    job_world_terrain_gen.WorldTerrainGenJob{
+                        .descriptors = descriptors,
+                        .world_id = world_id,
+                        .x = x,
+                        .z = z,
+                        .pt = pt,
+                    },
+                ) catch |e| {
+                    std.debug.print("error scheduling world terrain gen job: {}\n", .{e});
+                    return;
+                };
+            }
+        }
+    }
+
+    pub fn generateWorld(
+        self: *Jobs,
+        world_id: i32,
+    ) void {
+        _ = self.jobs.schedule(
+            zjobs.JobId.none,
+            job_world_descriptor_gen.WorldDescriptorGenJob{
+                .world_id = world_id,
+            },
+        ) catch |e| {
+            std.debug.print("error scheduling world generator job: {}\n", .{e});
+            return;
+        };
+    }
+
+    pub fn findPlayerPosition(
+        self: *Jobs,
+        world_id: i32,
+    ) void {
+        _ = self.jobs.schedule(
+            zjobs.JobId.none,
+            job_find_player_pos.FindPlayerPositionJob{
+                .world_id = world_id,
+            },
+        ) catch |e| {
+            std.debug.print("error scheduling finding player position job: {}\n", .{e});
+            return;
+        };
+    }
 };
 
 const std = @import("std");
@@ -246,11 +303,15 @@ const job_save_chunk = @import("jobs_save_chunk.zig");
 const job_lighting = @import("jobs_lighting.zig");
 const job_lighting_cross_chunk = @import("jobs_lighting_cross_chunk.zig");
 const job_load_chunk = @import("jobs_load_chunks.zig");
-const job_descriptor_gen = @import("jobs_descriptor_gen.zig");
-const job_terrain_gen = @import("jobs_terrain_gen.zig");
+const job_demo_descriptor_gen = @import("jobs_demo_descriptor_gen.zig");
+const job_demo_terrain_gen = @import("jobs_demo_terrain_gen.zig");
+const job_world_descriptor_gen = @import("jobs_world_descriptor_gen.zig");
+const job_world_terrain_gen = @import("jobs_world_terrain_gen.zig");
+const job_find_player_pos = @import("jobs_find_player_position.zig");
 const job_startup = @import("jobs_startup.zig");
 const buffer = @import("../buffer.zig");
 const game_config = @import("../../config.zig");
+const terrain_gen = @import("../../block/chunk_terrain_gen.zig");
 const block = @import("../../block/block.zig");
 const chunk = block.chunk;
 const descriptor = chunk.descriptor;

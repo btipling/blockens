@@ -40,7 +40,7 @@ pub fn updateTextureScript(db: sqlite.Database, id: i32, name: []const u8, textu
     };
 }
 
-pub fn listTextureScripts(db: sqlite.Database, data: *std.ArrayList(sql_utils.scriptOption)) !void {
+pub fn listTextureScripts(db: sqlite.Database, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(sql_utils.scriptOption)) !void {
     var listStmt = try db.prepare(
         struct {},
         sql_utils.scriptOptionSQL,
@@ -55,6 +55,7 @@ pub fn listTextureScripts(db: sqlite.Database, data: *std.ArrayList(sql_utils.sc
 
         while (try listStmt.step()) |r| {
             try data.append(
+                allocator,
                 sql_utils.scriptOption{
                     .id = r.id,
                     .name = sql_utils.sqlNameToArray(r.name),
@@ -106,11 +107,11 @@ pub fn deleteTextureScript(db: sqlite.Database, id: i32) !void {
     };
 }
 
-const insert_texture_script_stmt = @embedFile("./sql/v2/texture_script/insert.sql");
-const update_texture_script_stmt = @embedFile("./sql/v2/texture_script/update.sql");
-const select_texture_stmt = @embedFile("./sql/v2/texture_script/select.sql");
-const list_texture_stmt = @embedFile("./sql/v2/texture_script/list.sql");
-const delete_texture_stmt = @embedFile("./sql/v2/texture_script/delete.sql");
+const insert_texture_script_stmt = @embedFile("./sql/v3/texture_script/insert.sql");
+const update_texture_script_stmt = @embedFile("./sql/v3/texture_script/update.sql");
+const select_texture_stmt = @embedFile("./sql/v3/texture_script/select.sql");
+const list_texture_stmt = @embedFile("./sql/v3/texture_script/list.sql");
+const delete_texture_stmt = @embedFile("./sql/v3/texture_script/delete.sql");
 
 const std = @import("std");
 const sqlite = @import("sqlite");

@@ -43,7 +43,7 @@ pub fn updateTerrainGenScript(db: sqlite.Database, id: i32, name: []const u8, cS
     };
 }
 
-pub fn listTerrainGenScripts(db: sqlite.Database, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
+pub fn listTerrainGenScripts(db: sqlite.Database, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(sql_utils.colorScriptOption)) !void {
     var listStmt = try db.prepare(
         struct {},
         sql_utils.colorScriptOptionSQL,
@@ -58,6 +58,7 @@ pub fn listTerrainGenScripts(db: sqlite.Database, data: *std.ArrayList(sql_utils
 
         while (try listStmt.step()) |r| {
             try data.append(
+                allocator,
                 sql_utils.colorScriptOption{
                     .id = r.id,
                     .name = sql_utils.sqlNameToArray(r.name),
@@ -111,11 +112,11 @@ pub fn deleteTerrainGenScript(db: sqlite.Database, id: i32) !void {
     };
 }
 
-const insert_terrain_gen_script_stmt = @embedFile("./sql/v2/terrain_gen_script/insert.sql");
-const update_terrain_gen_script_stmt = @embedFile("./sql/v2/terrain_gen_script/update.sql");
-const select_terrain_gen_stmt = @embedFile("./sql/v2/terrain_gen_script/select.sql");
-const list_terrain_gen_stmt = @embedFile("./sql/v2/terrain_gen_script/list.sql");
-const delete_terrain_gen_stmt = @embedFile("./sql/v2/terrain_gen_script/delete.sql");
+const insert_terrain_gen_script_stmt = @embedFile("./sql/v3/terrain_gen_script/insert.sql");
+const update_terrain_gen_script_stmt = @embedFile("./sql/v3/terrain_gen_script/update.sql");
+const select_terrain_gen_stmt = @embedFile("./sql/v3/terrain_gen_script/select.sql");
+const list_terrain_gen_stmt = @embedFile("./sql/v3/terrain_gen_script/list.sql");
+const delete_terrain_gen_stmt = @embedFile("./sql/v3/terrain_gen_script/delete.sql");
 
 const std = @import("std");
 const sqlite = @import("sqlite");

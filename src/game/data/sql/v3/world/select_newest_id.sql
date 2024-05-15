@@ -1,0 +1,1 @@
+SELECT id FROM world ORDER BY created_at DESC limit 1;

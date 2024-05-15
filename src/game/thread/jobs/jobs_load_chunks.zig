@@ -94,17 +94,7 @@ pub const LoadChunkJob = struct {
         cfg_t: ui.chunkConfig,
         cfg_b: ui.chunkConfig,
     ) void {
-        var msg: buffer.buffer_message = buffer.new_message(.load_chunk);
-        const done: bool, const num_started: usize, const num_done: usize = self.pt.completeOne();
-        if (done) game.state.allocator.destroy(self.pt);
-        const ns: f16 = @floatFromInt(num_started);
-        const nd: f16 = @floatFromInt(num_done);
-        const pr: f16 = nd / ns;
-        buffer.set_progress(
-            &msg,
-            done,
-            pr,
-        );
+        const msg: buffer.buffer_message = buffer.new_message(.load_chunk);
         const bd: buffer.buffer_data = .{
             .load_chunk = .{
                 .world_id = self.world_id,
@@ -118,8 +108,7 @@ pub const LoadChunkJob = struct {
                 .start_game = self.start_game,
             },
         };
-        buffer.put_data(msg, bd) catch @panic("OOM");
-        buffer.write_message(msg) catch @panic("unable to write message");
+        self.pt.completeOne(msg, bd);
     }
 };
 

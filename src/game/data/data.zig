@@ -50,20 +50,22 @@ pub const Data = struct {
         self.db.deinit();
     }
 
-    pub fn ensureDefaultWorld(self: *Data) !bool {
-        chunk_file.initWorldSave(false, 1);
+    pub fn ensureState(self: *Data) !bool {
         if (try self.countWorlds() < 1) {
-            // First time ever launchign the game.
-            try sql_world.saveWorld(self.db, "default");
             try self.saveSchema();
+            data_startup.generateRequiredData();
             return false;
         }
         const schema_version = try self.currentSchemaVersion();
         if (schema_version == 0) {
-            // Not the first time launching the game, migrate save.
             try migrations.v2.migrate(self.allocator);
-            // There was no previous schema versioning so just insert it for the first time.
+            try migrations.v3.migrate(self.allocator);
             try self.saveSchema();
+        }
+        if (schema_version == 2) {
+            try migrations.v3.migrate(self.allocator);
+            try self.updateSchema();
+            data_startup.generateRequiredData();
         }
         return true;
     }
@@ -75,28 +77,34 @@ pub const Data = struct {
     pub fn saveSchema(self: *Data) !void {
         return sql_schema.saveSchema(self.db);
     }
+    pub fn updateSchema(self: *Data) !void {
+        return sql_schema.updateSchema(self.db);
+    }
     pub fn currentSchemaVersion(self: *Data) !i32 {
         return sql_schema.currentSchemaVersion(self.db);
     }
 
     // World
-    pub fn saveWorld(self: *Data, name: []const u8) !void {
-        return sql_world.saveWorld(self.db, name);
+    pub fn saveWorld(self: *Data, name: []const u8, seed: i32) !void {
+        return sql_world.saveWorld(self.db, name, seed);
     }
-    pub fn listWorlds(self: *Data, data: *std.ArrayList(worldOption)) !void {
-        return sql_world.listWorlds(self.db, data);
+    pub fn listWorlds(self: *Data, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(worldOption)) !void {
+        return sql_world.listWorlds(self.db, allocator, data);
     }
     pub fn loadWorld(self: *Data, id: i32, data: *world) !void {
         return sql_world.loadWorld(self.db, id, data);
     }
-    pub fn updateWorld(self: *Data, id: i32, name: []const u8) !void {
-        return sql_world.updateWorld(self.db, id, name);
+    pub fn updateWorld(self: *Data, id: i32, name: []const u8, seed: i32) !void {
+        return sql_world.updateWorld(self.db, id, name, seed);
     }
     pub fn deleteWorld(self: *Data, id: i32) !void {
         return sql_world.deleteWorld(self.db, id);
     }
     pub fn countWorlds(self: *Data) !i32 {
         return sql_world.countWorlds(self.db);
+    }
+    pub fn getNewestWorldId(self: *Data) !i32 {
+        return sql_world.getNewestWorldId(self.db);
     }
 
     // Texture script
@@ -106,8 +114,8 @@ pub const Data = struct {
     pub fn updateTextureScript(self: *Data, id: i32, name: []const u8, textureScript: []const u8) !void {
         return sql_texture_script.updateTextureScript(self.db, id, name, textureScript);
     }
-    pub fn listTextureScripts(self: *Data, data: *std.ArrayList(scriptOption)) !void {
-        return sql_texture_script.listTextureScripts(self.db, data);
+    pub fn listTextureScripts(self: *Data, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(scriptOption)) !void {
+        return sql_texture_script.listTextureScripts(self.db, allocator, data);
     }
     pub fn loadTextureScript(self: *Data, id: i32, data: *script) !void {
         return sql_texture_script.loadTextureScript(self.db, id, data);
@@ -123,8 +131,8 @@ pub const Data = struct {
     pub fn updateChunkScript(self: *Data, id: i32, name: []const u8, cScript: []const u8, color: [3]f32) !void {
         return sql_chunk_script.updateChunkScript(self.db, id, name, cScript, color);
     }
-    pub fn listChunkScripts(self: *Data, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
-        return sql_chunk_script.listChunkScripts(self.db, data);
+    pub fn listChunkScripts(self: *Data, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(sql_utils.colorScriptOption)) !void {
+        return sql_chunk_script.listChunkScripts(self.db, allocator, data);
     }
     pub fn loadChunkScript(self: *Data, id: i32, data: *sql_utils.colorScript) !void {
         return sql_chunk_script.loadChunkScript(self.db, id, data);
@@ -140,8 +148,8 @@ pub const Data = struct {
     pub fn updateTerrainGenScript(self: *Data, id: i32, name: []const u8, cScript: []const u8, color: [3]f32) !void {
         return sql_terrain_gen_script.updateTerrainGenScript(self.db, id, name, cScript, color);
     }
-    pub fn listTerrainGenScripts(self: *Data, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
-        return sql_terrain_gen_script.listTerrainGenScripts(self.db, data);
+    pub fn listTerrainGenScripts(self: *Data, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(sql_utils.colorScriptOption)) !void {
+        return sql_terrain_gen_script.listTerrainGenScripts(self.db, allocator, data);
     }
     pub fn loadTerrainGenScript(self: *Data, id: i32, data: *sql_utils.colorScript) !void {
         return sql_terrain_gen_script.loadTerrainGenScript(self.db, id, data);
@@ -157,8 +165,8 @@ pub const Data = struct {
     pub fn updateBlock(self: *Data, id: i32, name: []const u8, texture: []u32, transparent: bool, light_level: u8) !void {
         return sql_block.updateBlock(self.db, id, name, texture, transparent, light_level);
     }
-    pub fn listBlocks(self: *Data, data: *std.ArrayList(blockOption)) !void {
-        return sql_block.listBlocks(self.db, data);
+    pub fn listBlocks(self: *Data, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(blockOption)) !void {
+        return sql_block.listBlocks(self.db, allocator, data);
     }
     // caller owns texture data slice
     pub fn loadBlock(self: *Data, id: i32, data: *block) !void {
@@ -252,6 +260,25 @@ pub const Data = struct {
     pub fn loadDisplaySettings(self: *Data, ds: *display_settings) !void {
         return sql_display_settings.loadDisplaySettings(self.db, ds);
     }
+
+    // World Terrain
+    pub fn saveWorldTerrain(self: *Data, world_id: i32, terrain_gen_script_id: i32) !void {
+        return sql_world_terrain.saveWorldTerrain(self.db, world_id, terrain_gen_script_id);
+    }
+    pub fn listWorldTerrains(
+        self: *Data,
+        world_id: i32,
+        allocator: std.mem.Allocator,
+        data: *std.ArrayListUnmanaged(sql_utils.colorScriptOption),
+    ) !void {
+        return sql_world_terrain.listWorldTerrains(self.db, world_id, allocator, data);
+    }
+    pub fn deleteWorldTerrain(self: *Data, id: i32) !void {
+        return sql_world_terrain.deleteWorldTerrain(self.db, id);
+    }
+    pub fn deleteAllWorldTerrain(self: *Data, world_id: i32) !void {
+        return sql_world_terrain.deleteAllWorldTerrain(self.db, world_id);
+    }
 };
 
 const std = @import("std");
@@ -266,6 +293,8 @@ const sql_block = @import("data_block.zig");
 const sql_chunk = @import("data_chunk.zig");
 const sql_player_position = @import("data_player_position.zig");
 const sql_display_settings = @import("data_display_settings.zig");
-pub const sql_utils = @import("data_sql_utils.zig");
+const sql_world_terrain = @import("data_world_terrain.zig");
+const data_startup = @import("data_startup.zig");
 
+pub const sql_utils = @import("data_sql_utils.zig");
 pub const chunk_file = @import("chunk_file.zig");

@@ -159,7 +159,7 @@ pub const Game = struct {
         errdefer zgui.deinit();
 
         ui.init(allocator);
-        errdefer ui.deinit(allocator);
+        errdefer ui.deinit();
         state.ui = ui.ui;
 
         glfw.init() catch @panic("Unable to init glfw");

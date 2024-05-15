@@ -66,7 +66,7 @@ pub const Game = struct {
         self.jobs.deinit();
         self.script.deinit();
         self.db.deinit();
-        ui.deinit(self.allocator);
+        ui.deinit();
         gfx.deinit(self.allocator);
         block.deinit(self.allocator);
         thread.buffer.deinit();
@@ -79,23 +79,11 @@ pub const Game = struct {
 
     pub fn populateUIOptions(self: *Game) !void {
         std.debug.print("populate ui options\n", .{});
-        try self.db.listBlocks(&self.ui.block_options);
-        try self.db.listTextureScripts(&self.ui.texture_script_options);
-        try self.db.listChunkScripts(&self.ui.chunk_script_options);
-        try self.db.listWorlds(&self.ui.world_options);
-        try self.db.listTerrainGenScripts(&self.ui.terrain_gen_script_options);
-
-        var world_data: data.world = undefined;
-        try self.db.loadWorld(1, &world_data);
-        var world_name_buf = [_]u8{0} ** ui.max_world_name;
-        for (world_data.name, 0..) |c, i| {
-            if (i >= ui.max_world_name) {
-                break;
-            }
-            world_name_buf[i] = c;
-        }
-        self.ui.world_name_buf = world_name_buf;
-        self.ui.world_loaded_id = 1;
+        try self.db.listBlocks(self.ui.allocator, &self.ui.block_options);
+        try self.db.listTextureScripts(self.ui.allocator, &self.ui.texture_script_options);
+        try self.db.listChunkScripts(self.ui.allocator, &self.ui.chunk_script_options);
+        try self.db.listWorlds(self.ui.allocator, &self.ui.world_options);
+        try self.db.listTerrainGenScripts(self.ui.allocator, &self.ui.terrain_gen_script_options);
 
         var buf = [_]u8{0} ** script.maxLuaScriptSize;
         const defaultLuaScript = @embedFile("script/lua/gen_grass_texture.lua");
@@ -109,6 +97,10 @@ pub const Game = struct {
             buf[i] = c;
         }
         self.ui.chunk_buf = buf;
+        if (self.ui.world_options.items.len > 0) {
+            self.ui.world_loaded_id = self.ui.world_options.items[0].id;
+            @memcpy(self.ui.world_loaded_name[0..20], self.ui.world_options.items[0].name[0..20]);
+        }
     }
 };
 

@@ -43,7 +43,7 @@ pub fn updateChunkScript(db: sqlite.Database, id: i32, name: []const u8, cScript
     };
 }
 
-pub fn listChunkScripts(db: sqlite.Database, data: *std.ArrayList(sql_utils.colorScriptOption)) !void {
+pub fn listChunkScripts(db: sqlite.Database, allocator: std.mem.Allocator, data: *std.ArrayListUnmanaged(sql_utils.colorScriptOption)) !void {
     var listStmt = try db.prepare(
         struct {},
         sql_utils.colorScriptOptionSQL,
@@ -58,6 +58,7 @@ pub fn listChunkScripts(db: sqlite.Database, data: *std.ArrayList(sql_utils.colo
 
         while (try listStmt.step()) |r| {
             try data.append(
+                allocator,
                 sql_utils.colorScriptOption{
                     .id = r.id,
                     .name = sql_utils.sqlNameToArray(r.name),
@@ -111,11 +112,11 @@ pub fn deleteChunkScript(db: sqlite.Database, id: i32) !void {
     };
 }
 
-const insert_chunk_script_stmt = @embedFile("./sql/v2/chunk_script/insert.sql");
-const update_chunk_script_stmt = @embedFile("./sql/v2/chunk_script/update.sql");
-const select_chunk_stmt = @embedFile("./sql/v2/chunk_script/select.sql");
-const list_chunk_stmt = @embedFile("./sql/v2/chunk_script/list.sql");
-const delete_chunk_stmt = @embedFile("./sql/v2/chunk_script/delete.sql");
+const insert_chunk_script_stmt = @embedFile("./sql/v3/chunk_script/insert.sql");
+const update_chunk_script_stmt = @embedFile("./sql/v3/chunk_script/update.sql");
+const select_chunk_stmt = @embedFile("./sql/v3/chunk_script/select.sql");
+const list_chunk_stmt = @embedFile("./sql/v3/chunk_script/list.sql");
+const delete_chunk_stmt = @embedFile("./sql/v3/chunk_script/delete.sql");
 
 const std = @import("std");
 const sqlite = @import("sqlite");

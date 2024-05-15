@@ -49,13 +49,15 @@ fn drawControls() !void {
             .w = btn_dms[0],
             .h = btn_dms[1],
         })) {
-            _ = game.state.jobs.generateDescriptor(
+            _ = game.state.jobs.generateDemoDescriptor(
                 game.state.ui.terrain_gen_x_buf,
                 game.state.ui.terrain_gen_z_buf,
             );
         }
+        zgui.text("seed", .{});
 
-        if (zgui.sliderInt("seed", .{
+        zgui.setNextItemWidth(btn_dms[0]);
+        if (zgui.sliderInt("##seed", .{
             .v = &game.state.ui.terrain_gen_seed,
             .min = 0,
             .max = 100_000,
@@ -108,7 +110,11 @@ fn drawControls() !void {
             try listTerrainGenScripts();
         }
         var params: helpers.ScriptOptionsParams = .{};
-        if (helpers.scriptOptionsListBox(game.state.ui.terrain_gen_script_options, &params)) |scriptOptionId| {
+        if (helpers.scriptOptionsListBox(
+            "##script_options_list",
+            game.state.ui.terrain_gen_script_options,
+            &params,
+        )) |scriptOptionId| {
             try loadTerrainGenScriptFunc(scriptOptionId);
         }
     }
@@ -136,7 +142,7 @@ fn drawInput() !void {
 }
 
 fn listTerrainGenScripts() !void {
-    try game.state.db.listTerrainGenScripts(&game.state.ui.terrain_gen_script_options);
+    try game.state.db.listTerrainGenScripts(game.state.ui.allocator, &game.state.ui.terrain_gen_script_options);
 }
 
 fn loadTerrainGenScriptFunc(scriptId: i32) !void {

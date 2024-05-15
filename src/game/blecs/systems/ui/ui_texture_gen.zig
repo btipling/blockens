@@ -142,7 +142,10 @@ fn drawScriptList() !void {
 }
 
 fn listTextureScripts() !void {
-    try game.state.db.listTextureScripts(&game.state.ui.texture_script_options);
+    try game.state.db.listTextureScripts(
+        game.state.ui.allocator,
+        &game.state.ui.texture_script_options,
+    );
 }
 
 fn loadTextureScriptFunc(scriptId: i32) !void {
