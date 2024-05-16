@@ -1,14 +1,23 @@
+const system_name = "ScreenCameraSystem";
+
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "ScreenCameraSystem", ecs.OnStore, @constCast(&s));
+    ecs.SYSTEM(game.state.world, system_name, ecs.OnStore, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
     desc.query.filter.terms[0] = .{ .id = ecs.id(components.screen.Camera) };
     desc.query.filter.terms[1] = .{ .id = ecs.id(components.screen.CurrentCamera) };
-    desc.run = run;
+    desc.run = if (config.use_tracy) runWithTrace else run;
     return desc;
+}
+
+fn runWithTrace(it: *ecs.iter_t) callconv(.C) void {
+    ztracy.Message(system_name);
+    const tracy_zone = ztracy.ZoneNC(@src(), system_name, 0x00_33_ff_f0);
+    defer tracy_zone.End();
+    return run(it);
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
@@ -24,13 +33,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             const parent = ecs.get_parent(world, entity);
             const c: []components.screen.Camera = ecs.field(it, components.screen.Camera, 1) orelse continue;
-            if (config.use_tracy) {
-                const tracy_zone = ztracy.ZoneNC(@src(), "ScreenCameraSystem", 0x00_33_ff_f0);
-                defer tracy_zone.End();
-                _ = screenCameraSystem(world, entity, it, parent, screen, c[i]);
-            } else {
-                _ = screenCameraSystem(world, entity, it, parent, screen, c[i]);
-            }
+            _ = screenCameraSystem(world, entity, it, parent, screen, c[i]);
         }
     }
 }

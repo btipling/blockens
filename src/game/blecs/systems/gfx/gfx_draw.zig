@@ -1,14 +1,23 @@
+const system_name = "GfxDrawSystem";
+
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "GfxDrawSystem", ecs.OnStore, @constCast(&s));
+    ecs.SYSTEM(game.state.world, system_name, ecs.OnStore, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
     desc.query.filter.terms[0] = .{ .id = ecs.id(components.gfx.ElementsRenderer) };
     desc.query.filter.terms[1] = .{ .id = ecs.id(components.gfx.CanDraw) };
-    desc.run = run;
+    desc.run = if (config.use_tracy) runWithTrace else run;
     return desc;
+}
+
+fn runWithTrace(it: *ecs.iter_t) callconv(.C) void {
+    ztracy.Message(system_name);
+    const tracy_zone = ztracy.ZoneNC(@src(), system_name, 0xff_00_ff_f0);
+    defer tracy_zone.End();
+    return run(it);
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
@@ -29,13 +38,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             const ers: []components.gfx.ElementsRenderer = ecs.field(it, components.gfx.ElementsRenderer, 1) orelse continue;
             const er = ers[i];
-            if (config.use_tracy) {
-                const tracy_zone = ztracy.ZoneNC(@src(), "GfxDrawSystem", 0x00_83_ff_f8);
-                defer tracy_zone.End();
-                gfxDraw(world, entity, screen, er);
-            } else {
-                gfxDraw(world, entity, screen, er);
-            }
+            gfxDraw(world, entity, screen, er);
         }
     }
     if (enableWireframe) gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);

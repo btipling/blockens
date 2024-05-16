@@ -1,24 +1,23 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zmesh = @import("zmesh");
-const gl = @import("zopengl").bindings;
-const tags = @import("../../tags.zig");
-const components = @import("../../components/components.zig");
-const game = @import("../../../game.zig");
-const screen_entity = @import("../../entities/entities_screen.zig");
-const gfx = @import("../../../gfx/gfx.zig");
+const system_name = "GfxDeleteSystem";
 
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "GfxDeleteSystem", ecs.OnStore, @constCast(&s));
+    ecs.SYSTEM(game.state.world, system_name, ecs.OnStore, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
     desc.query.filter.terms[0] = .{ .id = ecs.id(components.gfx.ElementsRenderer) };
     desc.query.filter.terms[1] = .{ .id = ecs.id(components.gfx.NeedsDeletion) };
-    desc.run = run;
+    desc.run = if (config.use_tracy) runWithTrace else run;
     return desc;
+}
+
+fn runWithTrace(it: *ecs.iter_t) callconv(.C) void {
+    ztracy.Message(system_name);
+    const tracy_zone = ztracy.ZoneNC(@src(), system_name, 0xff_00_ff_f0);
+    defer tracy_zone.End();
+    return run(it);
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
@@ -45,3 +44,15 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         }
     }
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zmesh = @import("zmesh");
+const ztracy = @import("ztracy");
+const config = @import("config");
+const gl = @import("zopengl").bindings;
+const tags = @import("../../tags.zig");
+const components = @import("../../components/components.zig");
+const game = @import("../../../game.zig");
+const screen_entity = @import("../../entities/entities_screen.zig");
+const gfx = @import("../../../gfx/gfx.zig");

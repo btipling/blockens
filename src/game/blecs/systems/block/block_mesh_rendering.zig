@@ -1,14 +1,23 @@
+const system_name = "BlockMeshRenderingSystem";
+
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "BlockMeshRenderingSystem", ecs.PreUpdate, @constCast(&s));
+    ecs.SYSTEM(game.state.world, system_name, ecs.PreUpdate, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
     desc.query.filter.terms[0] = .{ .id = ecs.id(components.block.Chunk) };
     desc.query.filter.terms[1] = .{ .id = ecs.id(components.block.NeedsMeshRendering) };
-    desc.run = run;
+    desc.run = if (config.use_tracy) runWithTrace else run;
     return desc;
+}
+
+fn runWithTrace(it: *ecs.iter_t) callconv(.C) void {
+    ztracy.Message(system_name);
+    const tracy_zone = ztracy.ZoneNC(@src(), system_name, 0xff_00_ff_f0);
+    defer tracy_zone.End();
+    return run(it);
 }
 
 var did_debug: bool = false;
@@ -68,6 +77,8 @@ fn render_multidraw(world: *ecs.world_t, entity: ecs.entity_t, _: @Vector(4, f32
 const std = @import("std");
 const ecs = @import("zflecs");
 const zm = @import("zmath");
+const ztracy = @import("ztracy");
+const config = @import("config");
 const components = @import("../../components/components.zig");
 const helpers = @import("../../helpers.zig");
 const game = @import("../../../game.zig");

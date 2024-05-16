@@ -1,13 +1,22 @@
+const system_name = "GfxMeshSystem";
+
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "GfxMeshSystem", ecs.PreStore, @constCast(&s));
+    ecs.SYSTEM(game.state.world, system_name, ecs.PreStore, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
     desc.query.filter.terms[0] = .{ .id = ecs.id(components.gfx.ElementsRendererConfig) };
-    desc.run = run;
+    desc.run = if (config.use_tracy) runWithTrace else run;
     return desc;
+}
+
+fn runWithTrace(it: *ecs.iter_t) callconv(.C) void {
+    ztracy.Message(system_name);
+    const tracy_zone = ztracy.ZoneNC(@src(), system_name, 0x00_ff_f3_f0);
+    defer tracy_zone.End();
+    return run(it);
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
@@ -22,13 +31,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             const entity = it.entities()[i];
             const ers: []components.gfx.ElementsRendererConfig = ecs.field(it, components.gfx.ElementsRendererConfig, 1) orelse return;
             const erc = ers[i];
-            if (config.use_tracy) {
-                const tracy_zone = ztracy.ZoneNC(@src(), "GfxMeshSystem", 0x00_ff_f3_f0);
-                defer tracy_zone.End();
-                meshSystem(world, entity, screen, erc);
-            } else {
-                meshSystem(world, entity, screen, erc);
-            }
+            meshSystem(world, entity, screen, erc);
         }
     }
 }

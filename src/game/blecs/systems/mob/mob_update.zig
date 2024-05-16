@@ -1,23 +1,23 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const zm = @import("zmath");
-const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
-const game = @import("../../../game.zig");
-const math = @import("../../../math/math.zig");
-const gfx = @import("../../../gfx/gfx.zig");
+const system_name = "MobUpdateSystem";
 
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "MobUpdateSystem", ecs.OnUpdate, @constCast(&s));
+    ecs.SYSTEM(game.state.world, system_name, ecs.OnUpdate, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
     desc.query.filter.terms[0] = .{ .id = ecs.id(components.mob.Mob) };
     desc.query.filter.terms[1] = .{ .id = ecs.id(components.mob.NeedsUpdate) };
-    desc.run = run;
+    desc.run = if (config.use_tracy) runWithTrace else run;
     return desc;
+}
+
+fn runWithTrace(it: *ecs.iter_t) callconv(.C) void {
+    ztracy.Message(system_name);
+    const tracy_zone = ztracy.ZoneNC(@src(), system_name, 0xff_00_ff_f0);
+    defer tracy_zone.End();
+    return run(it);
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
@@ -139,3 +139,14 @@ fn updateThirdPersonCamera(world: *ecs.world_t, loc: @Vector(4, f32), rotation: 
         // TODO: camera collision detection with world around so the camera doesn't pass through objects in the world and the ground.
     }
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const zm = @import("zmath");
+const ztracy = @import("ztracy");
+const config = @import("config");
+const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
+const game = @import("../../../game.zig");
+const math = @import("../../../math/math.zig");
+const gfx = @import("../../../gfx/gfx.zig");

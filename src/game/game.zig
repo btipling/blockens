@@ -209,22 +209,21 @@ pub const Game = struct {
         if (config.use_tracy) {}
         std.debug.print("\nHello blockens!\n", .{});
         main_loop: while (!state.window.shouldClose()) {
-            glfw.pollEvents();
-            {
-                const frame: f32 = @floatCast(glfw.getTime());
-                state.input.delta_time = frame - state.input.lastframe;
-                state.input.lastframe = frame;
-            }
-            if (state.quit) {
-                break :main_loop;
-            }
-            {
-                gl.viewport(0, 0, @intFromFloat(state.ui.screen_size[0]), @intFromFloat(state.ui.screen_size[1]));
-            }
-
             if (config.use_tracy) {
                 const render_frame_zone = ztracy.ZoneNC(@src(), "RenderFrame", 0x00_00_00_ff);
                 defer render_frame_zone.End();
+                glfw.pollEvents();
+                {
+                    const frame: f32 = @floatCast(glfw.getTime());
+                    state.input.delta_time = frame - state.input.lastframe;
+                    state.input.lastframe = frame;
+                }
+                if (state.quit) {
+                    break :main_loop;
+                }
+                {
+                    gl.viewport(0, 0, @intFromFloat(state.ui.screen_size[0]), @intFromFloat(state.ui.screen_size[1]));
+                }
                 {
                     const imgui_new_frame_zone = ztracy.ZoneN(@src(), "ImguiNewFrame");
                     defer imgui_new_frame_zone.End();
@@ -255,6 +254,18 @@ pub const Game = struct {
                 }
                 ztracy.FrameMark();
             } else {
+                glfw.pollEvents();
+                {
+                    const frame: f32 = @floatCast(glfw.getTime());
+                    state.input.delta_time = frame - state.input.lastframe;
+                    state.input.lastframe = frame;
+                }
+                if (state.quit) {
+                    break :main_loop;
+                }
+                {
+                    gl.viewport(0, 0, @intFromFloat(state.ui.screen_size[0]), @intFromFloat(state.ui.screen_size[1]));
+                }
                 {
                     const fb_size = state.window.getFramebufferSize();
                     const w: u32 = @intCast(fb_size[0]);

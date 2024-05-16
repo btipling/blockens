@@ -1,24 +1,23 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const components = @import("../../components/components.zig");
-const entities = @import("../../entities/entities.zig");
-const helpers = @import("../../helpers.zig");
-const game = @import("../../../game.zig");
-const game_state = @import("../../../state.zig");
-const cltf_mesh = @import("../../../gfx/cltf_mesh.zig");
-const gfx = @import("../../../gfx/gfx.zig");
+const system_name = "MobBoundingBoxSetupSystem";
 
 pub fn init() void {
     const s = system();
-    ecs.SYSTEM(game.state.world, "MobBoundingBoxSetupSystem", ecs.PreUpdate, @constCast(&s));
+    ecs.SYSTEM(game.state.world, system_name, ecs.PreUpdate, @constCast(&s));
 }
 
 fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
     desc.query.filter.terms[0] = .{ .id = ecs.id(components.mob.BoundingBox) };
     desc.query.filter.terms[1] = .{ .id = ecs.id(components.mob.NeedsSetup) };
-    desc.run = run;
+    desc.run = if (config.use_tracy) runWithTrace else run;
     return desc;
+}
+
+fn runWithTrace(it: *ecs.iter_t) callconv(.C) void {
+    ztracy.Message(system_name);
+    const tracy_zone = ztracy.ZoneNC(@src(), system_name, 0xff_00_ff_f0);
+    defer tracy_zone.End();
+    return run(it);
 }
 
 fn run(it: *ecs.iter_t) callconv(.C) void {
@@ -63,3 +62,15 @@ fn setupBoundingBox(world: *ecs.world_t, entity: ecs.entity_t, parent: ecs.entit
     ecs.add(world, entity, components.shape.NeedsSetup);
     return true;
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const ztracy = @import("ztracy");
+const config = @import("config");
+const components = @import("../../components/components.zig");
+const entities = @import("../../entities/entities.zig");
+const helpers = @import("../../helpers.zig");
+const game = @import("../../../game.zig");
+const game_state = @import("../../../state.zig");
+const cltf_mesh = @import("../../../gfx/cltf_mesh.zig");
+const gfx = @import("../../../gfx/gfx.zig");
