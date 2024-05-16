@@ -19,8 +19,9 @@ pub fn handle_incoming() !void {
         const mt: buffer.buffer_message_type = @enumFromInt(msg.type);
         switch (mt) {
             .startup => try handle_startup(msg),
-            .chunk_gen => try handle_chunk_gen(msg),
+            .chunk_gen => handle_demo_chunk_gen(msg),
             .chunk_mesh => handle_chunk_mesh(msg),
+            .small_chunk_gen => handle_small_chunk_gen(msg),
             .lighting => handle_lighting(msg),
             .lighting_cross_chunk => handle_lighting_cross_chunk(msg),
             .load_chunk => handle_load_chunk(msg),
@@ -48,25 +49,15 @@ fn handle_startup(msg: buffer.buffer_message) !void {
     blecs.entities.block.init();
 }
 
-fn handle_chunk_gen(msg: buffer.buffer_message) !void {
+fn handle_small_chunk_gen(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
-    if (try buffer.is_demo_chunk(msg)) return handle_demo_chunk_gen(msg);
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    var cleared_data = false;
-    const chunk_data: buffer.chunk_gen_data = switch (bd) {
-        buffer.buffer_data.chunk_gen => |d| d,
+    const scd: buffer.small_chunk_gen_data = switch (bd) {
+        buffer.buffer_data.small_chunk_gen => |d| d,
         else => return,
     };
-    errdefer if (!cleared_data) game.state.allocator.free(chunk_data.chunk_data);
-    var ch_cfg = game.state.ui.world_chunk_table_data.get(chunk_data.wp) orelse {
-        std.debug.panic("handled chunk gen for non existent chunk in chunk table\n", .{});
-    };
-    ch_cfg.chunkData = chunk_data.chunk_data;
-    if (game.state.ui.world_chunk_table_data.get(chunk_data.wp)) |cd| {
-        game.state.allocator.free(cd.chunkData);
-        cleared_data = true;
-    }
-    game.state.ui.world_chunk_table_data.put(game.state.ui.allocator, chunk_data.wp, ch_cfg) catch @panic("OOM");
+    defer game.state.allocator.free(scd.chunk_data);
+    std.debug.print("generated small chunk with data len: {d}\n", .{scd.chunk_data.len});
 }
 
 fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {

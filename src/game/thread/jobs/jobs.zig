@@ -50,17 +50,12 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn generateWorldChunk(self: *Jobs, wp: chunk.worldPosition, script: []u8) zjobs.JobId {
-        const s = game.state.allocator.alloc(u8, script.len) catch unreachable;
-        @memcpy(s, script);
+    pub fn generateSmallChunk(self: *Jobs) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
-            generate_world_chunk.GenerateWorldChunkJob{
-                .wp = wp,
-                .script = s,
-            },
+            generate_small_chunk.GenerateSmallChunkJob{},
         ) catch |e| {
-            std.debug.print("error scheduling gen world chunk job: {}\n", .{e});
+            std.debug.print("error scheduling gen small chunk job: {}\n", .{e});
             return zjobs.JobId.none;
         };
     }
@@ -297,7 +292,7 @@ const state = @import("../../state.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const job_chunk_meshing = @import("jobs_chunk_meshing.zig");
 const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
-const generate_world_chunk = @import("jobs_generate_world_chunk.zig");
+const generate_small_chunk = @import("jobs_generate_small_chunk.zig");
 const job_save_player = @import("jobs_save_player.zig");
 const job_save_chunk = @import("jobs_save_chunk.zig");
 const job_lighting = @import("jobs_lighting.zig");

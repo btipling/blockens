@@ -1,31 +1,27 @@
-pub const GenerateWorldChunkJob = struct {
-    wp: chunk.worldPosition,
-    script: []u8,
-
+pub const GenerateSmallChunkJob = struct {
     pub fn exec(self: *@This()) void {
         if (config.use_tracy) {
             const ztracy = @import("ztracy");
-            ztracy.SetThreadName("GenerateWorldChunkJob");
-            const tracy_zone = ztracy.ZoneNC(@src(), "GenerateWorldChunkJob", 0x00_00_ff_f0);
+            ztracy.SetThreadName("GenerateSmallChunkJob");
+            const tracy_zone = ztracy.ZoneNC(@src(), "GenerateSmallChunkJob", 0x00_00_ff_f0);
             defer tracy_zone.End();
-            self.generateWorldChunkJob();
+            self.generateSmallChunkJob();
         } else {
-            self.generateWorldChunkJob();
+            self.generateSmallChunkJob();
         }
     }
 
-    pub fn generateWorldChunkJob(self: *@This()) void {
-        const chunk_data = game.state.script.evalChunkFunc(self.script) catch |err| {
+    pub fn generateSmallChunkJob(_: *GenerateSmallChunkJob) void {
+        const chunk_data = game.state.script.evalChunkFunc(&game.state.ui.chunk_buf) catch |err| {
             std.debug.print("Error evaluating chunk in eval chunks function: {}\n", .{err});
             return;
         };
-        game.state.allocator.free(self.script);
-        var msg: buffer.buffer_message = buffer.new_message(.chunk_gen);
+        errdefer game.state.allocator.free(chunk_data);
+        var msg: buffer.buffer_message = buffer.new_message(.small_chunk_gen);
         buffer.set_progress(&msg, true, 1);
         const bd: buffer.buffer_data = .{
-            .chunk_gen = .{
+            .small_chunk_gen = .{
                 .chunk_data = chunk_data,
-                .wp = self.wp,
             },
         };
         buffer.put_data(msg, bd) catch @panic("OOM");

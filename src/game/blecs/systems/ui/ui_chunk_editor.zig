@@ -73,30 +73,9 @@ fn drawControls() !void {
         })) {
             toggleWireframe();
         }
-        zgui.text("Chunk xyz:", .{});
-        zgui.sameLine(.{});
-        zgui.pushItemWidth(game.state.ui.imguiWidth(35));
-        _ = zgui.inputTextWithHint("##chunkXPos", .{
-            .buf = game.state.ui.chunk_x_buf[0..],
-            .hint = "x",
+        _ = zgui.checkbox("Small chunks", .{
+            .v = &game.state.ui.chunks_small,
         });
-        zgui.sameLine(.{});
-        _ = zgui.inputTextWithHint("##chunkYPos", .{
-            .buf = game.state.ui.chunk_y_buf[0..],
-            .hint = "y",
-        });
-        zgui.sameLine(.{});
-        _ = zgui.inputTextWithHint("##chunkZPos", .{
-            .buf = game.state.ui.chunk_z_buf[0..],
-            .hint = "z",
-        });
-        zgui.popItemWidth();
-        if (zgui.button("Generate to world", .{
-            .w = btn_dms[0],
-            .h = btn_dms[1],
-        })) {
-            try evalWorldChunkFunc();
-        }
         if (zgui.colorEdit3("##Script color", .{
             .col = &game.state.ui.chunk_script_color,
             .flags = .{
@@ -178,6 +157,9 @@ fn toggleWireframe() void {
 }
 
 fn evalChunkFunc() !void {
+    if (game.state.ui.chunks_small) {
+        _ = game.state.jobs.generateSmallChunk();
+    }
     _ = game.state.jobs.generateDemoChunk();
 }
 
@@ -188,16 +170,6 @@ fn floatFromChunkBuf(buf: []u8) f32 {
         std.debug.print("Error parsing chunk position: {}\n", .{err});
         return 0.0;
     };
-}
-
-fn evalWorldChunkFunc() !void {
-    const x = floatFromChunkBuf(&game.state.ui.chunk_x_buf);
-    const y = floatFromChunkBuf(&game.state.ui.chunk_y_buf);
-    const z = floatFromChunkBuf(&game.state.ui.chunk_z_buf);
-    std.debug.print("Writing chunk to world at position: {}, {}, {}\n", .{ x, y, z });
-    const p = @Vector(4, f32){ x, y, z, 0 };
-    const wp = chunk.worldPosition.initFromPositionV(p);
-    _ = game.state.jobs.generateWorldChunk(wp, &game.state.ui.chunk_buf);
 }
 
 fn listChunkScripts() !void {
