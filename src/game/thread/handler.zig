@@ -74,8 +74,8 @@ fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
     const is_demo: bool = buffer.is_demo_chunk(msg) catch return;
     if (!is_demo) return;
     var cleared_data = false;
-    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    const chunk_data: buffer.chunk_gen_data = switch (bd) {
+    const c_data: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const chunk_data: buffer.chunk_gen_data = switch (c_data) {
         buffer.buffer_data.chunk_gen => |d| d,
         else => return,
     };

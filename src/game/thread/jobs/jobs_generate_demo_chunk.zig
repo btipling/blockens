@@ -16,6 +16,7 @@ pub const GenerateDemoChunkJob = struct {
             std.debug.print("Error evaluating chunk function: {}\n", .{err});
             return;
         };
+        errdefer game.state.allocator.free(chunk_data);
         var i: usize = 0;
         while (i < chunk.chunkSize) : (i += 1) {
             var bd: block.BlockData = block.BlockData.fromId(chunk_data[i]);
