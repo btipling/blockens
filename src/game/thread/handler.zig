@@ -21,6 +21,7 @@ pub fn handle_incoming() !void {
             .startup => try handle_startup(msg),
             .chunk_gen => handle_demo_chunk_gen(msg),
             .chunk_mesh => handle_chunk_mesh(msg),
+            .sub_chunk_mesh => handle_sub_chunks_mesh(msg),
             .sub_chunks_gen => handle_sub_chunks_gen(msg),
             .lighting => handle_lighting(msg),
             .lighting_cross_chunk => handle_lighting_cross_chunk(msg),
@@ -62,7 +63,7 @@ fn handle_sub_chunks_gen(msg: buffer.buffer_message) void {
     }
     game.state.blocks.generated_settings_chunks.put(scd.wp, scd.chunk_data) catch @panic("OOM");
     std.debug.print("generated sub chunks with data len: {d}\n", .{scd.chunk_data.len});
-    blecs.entities.screen.initSubchunks(true);
+    _ = game.state.jobs.meshSubChunk(scd.wp, .pos_x_pos_y, scd.chunk_data);
 }
 
 fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
@@ -104,6 +105,17 @@ fn handle_chunk_mesh(msg: buffer.buffer_message) void {
         return;
     }
     blecs.ecs.add(world, entity, blecs.components.block.NeedsMeshRendering);
+}
+
+fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
+    if (!buffer.progress_report(msg).done) return;
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const scd: buffer.sub_chunk_mesh_data = switch (bd) {
+        buffer.buffer_data.sub_chunk_mesh => |d| d,
+        else => return,
+    };
+    std.debug.print("handled subchunk mesh {}\n", .{scd});
+    blecs.entities.screen.initSubchunks(true);
 }
 
 fn handle_lighting(msg: buffer.buffer_message) void {

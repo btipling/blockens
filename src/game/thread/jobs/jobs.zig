@@ -40,6 +40,31 @@ pub const Jobs = struct {
         };
     }
 
+    pub fn meshSubChunk(
+        self: *Jobs,
+        wp: chunk.worldPosition,
+        sub_pos: chunk.subchunk.subPosition,
+        chunk_data: []const u32,
+    ) zjobs.JobId {
+        const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
+        pt.* = .{
+            .num_started = 1,
+            .num_completed = 0,
+        };
+        return self.jobs.schedule(
+            zjobs.JobId.none,
+            job_sub_chunk_meshing.SubChunkMeshJob{
+                .wp = wp,
+                .sub_pos = sub_pos,
+                .chunk_data = chunk_data,
+                .pt = pt,
+            },
+        ) catch |e| {
+            std.debug.print("error scheduling sub chunk mesh job: {}\n", .{e});
+            return zjobs.JobId.none;
+        };
+    }
+
     pub fn generateDemoChunk(self: *Jobs) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
@@ -291,6 +316,7 @@ const game = @import("../../game.zig");
 const state = @import("../../state.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const job_chunk_meshing = @import("jobs_chunk_meshing.zig");
+const job_sub_chunk_meshing = @import("jobs_sub_chunk_meshing.zig");
 const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
 const generate_subchunks = @import("jobs_generate_subchunks.zig");
 const job_save_player = @import("jobs_save_player.zig");

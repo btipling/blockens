@@ -12,6 +12,7 @@ pub const buffer_message_type = enum(u8) {
     chunk_gen,
     sub_chunks_gen,
     chunk_mesh,
+    sub_chunk_mesh,
     lighting,
     lighting_cross_chunk,
     load_chunk,
@@ -27,6 +28,7 @@ pub const buffer_data = union(buffer_message_type) {
     chunk_gen: chunk_gen_data,
     sub_chunks_gen: sub_chunks_gen_data,
     chunk_mesh: chunk_mesh_data,
+    sub_chunk_mesh: sub_chunk_mesh_data,
     lighting: lightings_data,
     lighting_cross_chunk: lightings_data,
     load_chunk: load_chunk_data,
@@ -64,6 +66,11 @@ pub const chunk_mesh_data = struct {
     entity: ?blecs.ecs.entity_t = null,
     empty: bool = false,
     chunk: *chunk.Chunk,
+};
+
+pub const sub_chunk_mesh_data = struct {
+    wp: chunk.worldPosition,
+    sub_pos: chunk.subchunk.subPosition,
 };
 
 pub const lightings_data = struct {

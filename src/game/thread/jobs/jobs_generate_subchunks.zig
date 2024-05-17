@@ -5,13 +5,13 @@ pub const GenerateSubChunksJob = struct {
             ztracy.SetThreadName("GenerateSubChunksJob");
             const tracy_zone = ztracy.ZoneNC(@src(), "GenerateSubChunksJob", 0x00_00_ff_f0);
             defer tracy_zone.End();
-            self.benerateSubChunksJob();
+            self.generateSubChunksJob();
         } else {
-            self.benerateSubChunksJob();
+            self.generateSubChunksJob();
         }
     }
 
-    pub fn benerateSubChunksJob(_: *GenerateSubChunksJob) void {
+    pub fn generateSubChunksJob(_: *GenerateSubChunksJob) void {
         const chunk_data = game.state.script.evalChunkFunc(&game.state.ui.chunk_buf) catch |err| {
             std.debug.print("Error evaluating chunk in eval chunks function: {}\n", .{err});
             return;
