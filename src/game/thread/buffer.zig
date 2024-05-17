@@ -55,6 +55,7 @@ pub const chunk_gen_data = struct {
 };
 
 pub const small_chunk_gen_data = struct {
+    wp: chunk.worldPosition,
     chunk_data: []u32,
 };
 

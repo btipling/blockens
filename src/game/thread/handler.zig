@@ -56,7 +56,11 @@ fn handle_small_chunk_gen(msg: buffer.buffer_message) void {
         buffer.buffer_data.small_chunk_gen => |d| d,
         else => return,
     };
-    defer game.state.allocator.free(scd.chunk_data);
+    errdefer game.state.allocator.free(scd.chunk_data);
+    if (game.state.blocks.generated_settings_chunks.get(scd.wp)) |data| {
+        game.state.allocator.free(data);
+    }
+    game.state.blocks.generated_settings_chunks.put(scd.wp, scd.chunk_data) catch @panic("OOM");
     std.debug.print("generated small chunk with data len: {d}\n", .{scd.chunk_data.len});
     blecs.entities.screen.initSmallChunk(true);
 }
@@ -65,16 +69,14 @@ fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
     const is_demo: bool = buffer.is_demo_chunk(msg) catch return;
     if (!is_demo) return;
-    var cleared_data = false;
     const c_data: buffer.buffer_data = buffer.get_data(msg) orelse return;
     const chunk_data: buffer.chunk_gen_data = switch (c_data) {
         buffer.buffer_data.chunk_gen => |d| d,
         else => return,
     };
-    errdefer if (!cleared_data) game.state.allocator.free(chunk_data.chunk_data);
+    errdefer game.state.allocator.free(chunk_data.chunk_data);
     if (game.state.blocks.generated_settings_chunks.get(chunk_data.wp)) |data| {
         game.state.allocator.free(data);
-        cleared_data = true;
     }
     game.state.blocks.generated_settings_chunks.put(chunk_data.wp, chunk_data.chunk_data) catch @panic("OOM");
     blecs.entities.screen.initDemoChunk(true);

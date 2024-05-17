@@ -19,8 +19,10 @@ pub const GenerateSmallChunkJob = struct {
         errdefer game.state.allocator.free(chunk_data);
         var msg: buffer.buffer_message = buffer.new_message(.small_chunk_gen);
         buffer.set_progress(&msg, true, 1);
+        const pos: @Vector(4, f32) = .{ 0, 0, 0, 0 };
         const bd: buffer.buffer_data = .{
             .small_chunk_gen = .{
+                .wp = chunk.worldPosition.initFromPositionV(pos),
                 .chunk_data = chunk_data,
             },
         };
