@@ -21,7 +21,7 @@ pub fn handle_incoming() !void {
             .startup => try handle_startup(msg),
             .chunk_gen => handle_demo_chunk_gen(msg),
             .chunk_mesh => handle_chunk_mesh(msg),
-            .small_chunk_gen => handle_small_chunk_gen(msg),
+            .sub_chunks_gen => handle_sub_chunks_gen(msg),
             .lighting => handle_lighting(msg),
             .lighting_cross_chunk => handle_lighting_cross_chunk(msg),
             .load_chunk => handle_load_chunk(msg),
@@ -49,11 +49,11 @@ fn handle_startup(msg: buffer.buffer_message) !void {
     blecs.entities.block.init();
 }
 
-fn handle_small_chunk_gen(msg: buffer.buffer_message) void {
+fn handle_sub_chunks_gen(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    const scd: buffer.small_chunk_gen_data = switch (bd) {
-        buffer.buffer_data.small_chunk_gen => |d| d,
+    const scd: buffer.sub_chunks_gen_data = switch (bd) {
+        buffer.buffer_data.sub_chunks_gen => |d| d,
         else => return,
     };
     errdefer game.state.allocator.free(scd.chunk_data);
@@ -61,8 +61,8 @@ fn handle_small_chunk_gen(msg: buffer.buffer_message) void {
         game.state.allocator.free(data);
     }
     game.state.blocks.generated_settings_chunks.put(scd.wp, scd.chunk_data) catch @panic("OOM");
-    std.debug.print("generated small chunk with data len: {d}\n", .{scd.chunk_data.len});
-    blecs.entities.screen.initSmallChunk(true);
+    std.debug.print("generated sub chunks with data len: {d}\n", .{scd.chunk_data.len});
+    blecs.entities.screen.initSubchunks(true);
 }
 
 fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {

@@ -393,7 +393,7 @@ pub fn initDemoTextureAtlas() void {
     ecs.add(world, c_atlas, components.shape.NeedsSetup);
 }
 
-pub fn initSmallChunkCamera(reset: bool) void {
+pub fn initSubchunksCamera(reset: bool) void {
     const world = game.state.world;
 
     if (reset) {
@@ -448,10 +448,10 @@ pub fn initSmallChunkCamera(reset: bool) void {
     );
 }
 
-pub fn initSmallChunk(reset: bool) void {
+pub fn initSubchunks(reset: bool) void {
     clearDemoObjects();
     const world = game.state.world;
-    initSmallChunkCamera(reset);
+    initSubchunksCamera(reset);
     _ = world;
     return;
 }

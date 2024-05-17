@@ -50,12 +50,12 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn generateSmallChunk(self: *Jobs) zjobs.JobId {
+    pub fn generateSubChunks(self: *Jobs) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
-            generate_small_chunk.GenerateSmallChunkJob{},
+            generate_subchunks.GenerateSubChunksJob{},
         ) catch |e| {
-            std.debug.print("error scheduling gen small chunk job: {}\n", .{e});
+            std.debug.print("error scheduling gen  subchunks job: {}\n", .{e});
             return zjobs.JobId.none;
         };
     }
@@ -292,7 +292,7 @@ const state = @import("../../state.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const job_chunk_meshing = @import("jobs_chunk_meshing.zig");
 const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
-const generate_small_chunk = @import("jobs_generate_small_chunk.zig");
+const generate_subchunks = @import("jobs_generate_subchunks.zig");
 const job_save_player = @import("jobs_save_player.zig");
 const job_save_chunk = @import("jobs_save_chunk.zig");
 const job_lighting = @import("jobs_lighting.zig");
