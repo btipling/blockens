@@ -58,6 +58,7 @@ fn handle_small_chunk_gen(msg: buffer.buffer_message) void {
     };
     defer game.state.allocator.free(scd.chunk_data);
     std.debug.print("generated small chunk with data len: {d}\n", .{scd.chunk_data.len});
+    blecs.entities.screen.initSmallChunk(true);
 }
 
 fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {

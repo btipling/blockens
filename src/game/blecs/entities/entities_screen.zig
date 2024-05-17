@@ -393,6 +393,69 @@ pub fn initDemoTextureAtlas() void {
     ecs.add(world, c_atlas, components.shape.NeedsSetup);
 }
 
+pub fn initSmallChunkCamera(reset: bool) void {
+    const world = game.state.world;
+
+    if (reset) {
+        game.state.ui.demo_screen_translation = .{
+            4.902,
+            -0.516,
+            -0.676,
+            0,
+        };
+        game.state.ui.demo_screen_pp_translation = .{
+            -0.650,
+            0.100,
+            0,
+            0,
+        };
+        game.state.ui.demo_screen_scale = 0.042;
+        game.state.ui.demo_screen_rotation_x = -0.307;
+        game.state.ui.demo_screen_rotation_y = 0.740;
+        game.state.ui.demo_screen_rotation_z = 0.333;
+    }
+
+    // Demo chunks also needs a camera adjustment to keep perspective centered on it
+    const camera = game.state.entities.settings_camera;
+    _ = ecs.set(world, camera, components.screen.PostPerspective, .{
+        .translation = game.state.ui.demo_screen_pp_translation,
+    });
+
+    const chunk_scale = game.state.ui.demo_screen_scale;
+    _ = ecs.set(
+        world,
+        camera,
+        components.screen.WorldScale,
+        .{ .scale = @Vector(4, f32){ chunk_scale, chunk_scale, chunk_scale, 0 } },
+    );
+
+    const chunk_rot = zm.quatFromRollPitchYaw(
+        game.state.ui.demo_screen_rotation_x,
+        game.state.ui.demo_screen_rotation_y,
+        game.state.ui.demo_screen_rotation_z,
+    );
+    _ = ecs.set(
+        game.state.world,
+        camera,
+        components.screen.WorldRotation,
+        .{ .rotation = chunk_rot },
+    );
+    _ = ecs.set(
+        world,
+        camera,
+        components.screen.WorldTranslation,
+        .{ .translation = game.state.ui.demo_screen_translation },
+    );
+}
+
+pub fn initSmallChunk(reset: bool) void {
+    clearDemoObjects();
+    const world = game.state.world;
+    initSmallChunkCamera(reset);
+    _ = world;
+    return;
+}
+
 pub fn initDemoChunkCamera(reset: bool) void {
     const world = game.state.world;
 
