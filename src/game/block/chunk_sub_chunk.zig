@@ -5,16 +5,10 @@ allocator: std.mem.Allocator,
 
 const SubChunk = @This();
 
-pub const subPosition = enum {
-    pos_x_pos_y,
-    pos_x_neg_y,
-    neg_x_pos_y,
-    neg_x_neg_y,
-    pos_z_pos_y,
-    pos_z_neg_y,
-    neg_z_pos_y,
-    neg_z_neg_y,
-};
+pub const subChunkDim = 64;
+pub const subChunkSize: comptime_int = subChunkDim * subChunkDim * subChunkDim;
+
+pub const subPosition = @Vector(3, i32);
 
 pub fn init(
     allocator: std.mem.Allocator,
