@@ -41,6 +41,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                     zgui.endMenuBar();
                 }
+
+                _ = zgui.checkbox("Wire frame mode", .{
+                    .v = &game.state.ui.gfx_wire_frames,
+                });
                 showChunkList() catch continue;
             }
             zgui.end();

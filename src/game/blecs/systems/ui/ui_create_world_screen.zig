@@ -42,7 +42,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 zgui.newLine();
 
                 centerNext(ww, 125);
-                zgui.pushFont(game.state.ui.codeFont);
+                zgui.pushFont(game.state.ui.code_font);
                 zgui.pushItemWidth(game.state.ui.imguiWidth(200));
                 _ = zgui.inputTextWithHint("Name", .{
                     .buf = game.state.ui.world_name_buf[0..],

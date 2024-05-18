@@ -54,7 +54,7 @@ fn selectBlock(world: *ecs.world_t) !void {
     const camera_pos: @Vector(4, f32) = cp.pos;
     const ray_direction = zm.normalize3(cf.front);
     const step_size: f32 = 0.01;
-    const max_distance: f32 = 25;
+    const max_distance: f32 = game.state.ui.block_picking_distance;
     var i: f32 = 5;
     var prev_pos: ?@Vector(4, f32) = null;
     while (i < max_distance) : (i += step_size) {

@@ -114,7 +114,7 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
         buffer.buffer_data.sub_chunk_mesh => |d| d,
         else => return,
     };
-    std.debug.print("handled subchunk mesh {}\n", .{scd});
+    std.debug.print("handled sub chunk mesh {}\n", .{scd});
     blecs.entities.screen.initSubchunks(true);
 }
 

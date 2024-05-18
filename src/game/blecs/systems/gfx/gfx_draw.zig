@@ -32,7 +32,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
         return;
     }
     const enableWireframe = ecs.has_id(world, screen.current, ecs.id(components.gfx.Wireframe));
-    if (enableWireframe) gl.polygonMode(gl.FRONT_AND_BACK, gl.LINE);
+    if (game.state.ui.gfx_wire_frames or enableWireframe) gl.polygonMode(gl.FRONT_AND_BACK, gl.LINE);
     while (ecs.iter_next(it)) {
         for (0..it.count()) |i| {
             const entity = it.entities()[i];
@@ -41,7 +41,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             gfxDraw(world, entity, screen, er);
         }
     }
-    if (enableWireframe) gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
+    if (game.state.ui.gfx_wire_frames or enableWireframe) gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
 }
 
 fn gfxDraw(

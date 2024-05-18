@@ -86,7 +86,7 @@ fn drawControls() !void {
                 .picker_hue_bar = true,
             },
         })) {}
-        zgui.pushFont(game.state.ui.codeFont);
+        zgui.pushFont(game.state.ui.code_font);
         zgui.pushItemWidth(game.state.ui.imguiWidth(250));
         _ = zgui.inputTextWithHint("##script name", .{
             .buf = game.state.ui.terrain_gen_name_buf[0..],
@@ -139,7 +139,7 @@ fn drawInput() !void {
             .border = true,
         },
     )) {
-        zgui.pushFont(game.state.ui.codeFont);
+        zgui.pushFont(game.state.ui.code_font);
         _ = zgui.inputTextMultiline("##terrain_gen_input", .{
             .buf = game.state.ui.terrain_gen_buf[0..],
             .w = game.state.ui.imguiWidth(884),

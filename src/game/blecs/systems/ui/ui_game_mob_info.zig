@@ -60,6 +60,11 @@ fn showMobActions() !void {
     })) {
         std.debug.print("player relocation updated.\n", .{});
     }
+    if (zgui.inputFloat("Set block picking distance", .{
+        .v = &game.state.ui.block_picking_distance,
+    })) {
+        std.debug.print("player block picking distance updated.\n", .{});
+    }
     if (zgui.button("Relocate Player", .{
         .w = 600,
         .h = 100,

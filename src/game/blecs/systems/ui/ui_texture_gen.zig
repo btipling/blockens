@@ -76,7 +76,7 @@ fn drawInput() !void {
         }
         zgui.popStyleVar(.{ .count = 1 });
         zgui.sameLine(.{});
-        zgui.pushFont(game.state.ui.codeFont);
+        zgui.pushFont(game.state.ui.code_font);
         zgui.pushItemWidth(game.state.ui.imguiWidth(500));
         _ = zgui.inputTextWithHint("Script name", .{
             .buf = @ptrCast(&game.state.ui.texture_name_buf),

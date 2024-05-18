@@ -9,8 +9,8 @@ pub const chunkConfig = struct {
     chunkData: []u32 = undefined,
 };
 
-gameFont: zgui.Font = undefined,
-codeFont: zgui.Font = undefined,
+game_font: zgui.Font = undefined,
+code_font: zgui.Font = undefined,
 
 allocator: std.mem.Allocator,
 
@@ -29,6 +29,7 @@ block_update_name_buf: [data.maxBlockSizeName]u8 = std.mem.zeroes([data.maxBlock
 block_emits_light: bool = false,
 block_transparent: bool = false,
 block_loaded_block_id: u8 = 0,
+block_picking_distance: f32 = 20,
 
 display_settings_fullscreen: bool = false,
 display_settings_maximized: bool = true,
@@ -88,6 +89,8 @@ load_percentage_lighting_initial: f16 = 0,
 load_percentage_lighting_cross_chunk: f16 = 0,
 load_percentage_load_chunks: f16 = 0,
 
+gfx_wire_frames: bool = false,
+
 screen_size: [2]f32 = .{ 0, 0 },
 
 const UI = @This();
@@ -141,19 +144,19 @@ pub fn setScreenSize(self: *UI, window: *glfw.Window) void {
     const base_proggy_clean_font_size: f32 = 14;
     const base_roboto_font_size: f32 = 18;
 
-    self.gameFont = zgui.io.addFontFromMemory(
+    self.game_font = zgui.io.addFontFromMemory(
         proggyCleanFont,
         std.math.floor(
             base_proggy_clean_font_size * (self.screen_size[1] / reference_height),
         ),
     );
-    self.codeFont = zgui.io.addFontFromMemory(
+    self.code_font = zgui.io.addFontFromMemory(
         robotoMonoFont,
         std.math.floor(
             base_roboto_font_size * (self.screen_size[1] / reference_height),
         ),
     );
-    zgui.io.setDefaultFont(self.gameFont);
+    zgui.io.setDefaultFont(self.game_font);
 }
 
 pub fn imguiWidth(self: *UI, w: f32) f32 {
