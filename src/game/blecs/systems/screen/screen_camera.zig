@@ -132,14 +132,37 @@ fn screenCameraSystem(
     if (world_translation) |t| {
         m = zm.mul(m, zm.translationV(t));
     }
-    const lookAt = zm.lookAtRh(
+    const perspective = zm.perspectiveFovRh(fovy, aspect, near, far);
+    const look_at = zm.lookAtRh(
         camera_position,
         camera_position + camera_front,
         up_direction,
     );
-    const perspective = zm.perspectiveFovRh(fovy, aspect, near, far);
-    cullChunks(camera_position, lookAt, perspective);
-    m = zm.mul(m, lookAt);
+    var cull_position = camera_position;
+    var cull_look_at = look_at;
+    if (game.state.ui.gfx_lock_cull_to_player_pos) {
+        var cull_front = camera_front;
+        var cull_up = up_direction;
+        if (ecs.get_id(world, game.state.entities.third_person_camera, ecs.id(components.screen.CameraPosition))) |opaque_ptr| {
+            const cp: *const components.screen.CameraPosition = @ptrCast(@alignCast(opaque_ptr));
+            cull_position = cp.pos;
+        } else {}
+        if (ecs.get_id(world, game.state.entities.third_person_camera, ecs.id(components.screen.CameraFront))) |opaque_ptr| {
+            const cf: *const components.screen.CameraFront = @ptrCast(@alignCast(opaque_ptr));
+            cull_front = cf.front;
+        } else {}
+        if (ecs.get_id(world, game.state.entities.third_person_camera, ecs.id(components.screen.UpDirection))) |opaque_ptr| {
+            const ud: *const components.screen.UpDirection = @ptrCast(@alignCast(opaque_ptr));
+            cull_up = ud.up;
+        } else {}
+        cull_look_at = zm.lookAtRh(
+            cull_position,
+            cull_position + cull_front,
+            cull_up,
+        );
+    }
+    cullChunks(cull_position, cull_look_at, perspective);
+    m = zm.mul(m, look_at);
     m = zm.mul(m, perspective);
     if (post_perspective) |pp| {
         m = zm.mul(m, zm.translationV(pp));

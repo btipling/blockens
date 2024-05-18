@@ -45,6 +45,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 _ = zgui.checkbox("Wire frame mode", .{
                     .v = &game.state.ui.gfx_wire_frames,
                 });
+                _ = zgui.checkbox("Lock cull from player position", .{
+                    .v = &game.state.ui.gfx_lock_cull_to_player_pos,
+                });
                 showChunkList() catch continue;
             }
             zgui.end();
