@@ -8,7 +8,7 @@ const SubChunk = @This();
 pub const subChunkDim = 64;
 pub const subChunkSize: comptime_int = subChunkDim * subChunkDim * subChunkDim;
 
-pub const subPosition = @Vector(3, i32);
+pub const subPosition = @Vector(4, f32);
 
 pub fn init(
     allocator: std.mem.Allocator,
