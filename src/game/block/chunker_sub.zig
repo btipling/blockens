@@ -34,9 +34,19 @@ test chunkToSubChunk {
     const chunk_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
     defer std.testing.allocator.free(chunk_data);
     @memset(chunk_data, 0);
-    const actual = chunkToSubChunk(std.testing.allocator, chunk_data, .{ 0, 0, 0, 0 });
-    defer std.testing.allocator.free(actual);
-    try std.testing.expectEqual(chunk.subchunk.subChunkSize, actual.len);
+    var pos: @Vector(4, f32) = .{ 1, 2, 3, 0 };
+    _ = &pos;
+    var ci = chunk.getIndexFromPositionV(pos);
+    _ = &ci;
+    var bd: block.BlockData = block.BlockData.fromId(0);
+    bd.block_id = 3;
+    chunk_data[ci] = bd.toId();
+    const t1 = chunkToSubChunk(std.testing.allocator, chunk_data, .{ 0, 0, 0, 0 });
+    defer std.testing.allocator.free(t1);
+    try std.testing.expectEqual(chunk.subchunk.subChunkSize, t1.len);
+    var tbd: block.BlockData = block.BlockData.fromId(3);
+    _ = &tbd;
+    try std.testing.expectEqual(3, tbd.block_id);
 }
 
 const std = @import("std");
