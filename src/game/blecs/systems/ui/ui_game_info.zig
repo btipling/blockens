@@ -129,7 +129,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     const c_p = chunk.worldPosition.positionFromWorldLocation(p);
                     zgui.text("[chunk pos:{d},{d},{d}]", .{ c_p[0], c_p[1], c_p[2] });
                     zgui.sameLine(.{});
-                    zgui.text("[meshes drawn: {d}]", .{game.state.ui.gfx_meshes_drawn});
+                    var meshes_buf: [100:0]u8 = std.mem.zeroes([100:0]u8);
+                    ui.format.prettyUnsignedInt(@ptrCast(&meshes_buf), game.state.ui.gfx_meshes_drawn) catch @panic("too many meshes to count");
+                    zgui.text("[meshes drawn: {s}]", .{std.mem.sliceTo(&meshes_buf, 0)});
                 }
             }
             zgui.end();
@@ -148,4 +150,5 @@ const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
 const block = @import("../../../block/block.zig");
+const ui = @import("../../../ui/ui.zig");
 const chunk = block.chunk;
