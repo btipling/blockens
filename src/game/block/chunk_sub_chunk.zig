@@ -44,7 +44,7 @@ pub const subPositionIndex = struct {
     sub_chunk_index: usize = 0,
 };
 
-pub fn chunkPosToSubPositionIndex(pos: @Vector(4, f32)) subPositionIndex {
+pub fn chunkPosToSubPositionData(pos: @Vector(4, f32)) subPositionIndex {
     const sub_pos_x = @divFloor(pos[0], subChunkDim);
     const sub_pos_y = @divFloor(pos[1], subChunkDim);
     const sub_pos_z = @divFloor(pos[2], subChunkDim);
@@ -78,56 +78,56 @@ pub fn chunkPosToSubPositionIndex(pos: @Vector(4, f32)) subPositionIndex {
 
 test subPositionIndex {
     var pos: @Vector(4, f32) = .{ 38, 60, 1, 0 };
-    var actual = chunkPosToSubPositionIndex(pos);
+    var actual = chunkPosToSubPositionData(pos);
     try std.testing.expectEqual(pos, actual.chunk_pos);
     try std.testing.expectEqual(7974, actual.chunk_index);
     try std.testing.expectEqual(.{ 2, 3, 0, 0 }, actual.sub_pos);
     try std.testing.expectEqual(.{ 6, 12, 1, 0 }, actual.sub_index_pos);
     try std.testing.expectEqual(454, actual.sub_chunk_index);
     pos = .{ 39, 60, 1, 0 };
-    actual = chunkPosToSubPositionIndex(pos);
+    actual = chunkPosToSubPositionData(pos);
     try std.testing.expectEqual(7975, actual.chunk_index);
     try std.testing.expectEqual(.{ 2, 3, 0, 0 }, actual.sub_pos);
     try std.testing.expectEqual(.{ 7, 12, 1, 0 }, actual.sub_index_pos);
     try std.testing.expectEqual(455, actual.sub_chunk_index);
     pos = .{ 1, 1, 0, 0 };
-    actual = chunkPosToSubPositionIndex(pos);
+    actual = chunkPosToSubPositionData(pos);
     try std.testing.expectEqual(65, actual.chunk_index);
     try std.testing.expectEqual(.{ 0, 0, 0, 0 }, actual.sub_pos);
     try std.testing.expectEqual(.{ 1, 1, 0, 0 }, actual.sub_index_pos);
     try std.testing.expectEqual(17, actual.sub_chunk_index);
     pos = .{ 0, 2, 0, 0 };
-    actual = chunkPosToSubPositionIndex(pos);
+    actual = chunkPosToSubPositionData(pos);
     try std.testing.expectEqual(128, actual.chunk_index);
     try std.testing.expectEqual(.{ 0, 0, 0, 0 }, actual.sub_pos);
     try std.testing.expectEqual(.{ 0, 2, 0, 0 }, actual.sub_index_pos);
     try std.testing.expectEqual(32, actual.sub_chunk_index);
     pos = .{ 1, 2, 0, 0 };
-    actual = chunkPosToSubPositionIndex(pos);
+    actual = chunkPosToSubPositionData(pos);
     try std.testing.expectEqual(129, actual.chunk_index);
     try std.testing.expectEqual(.{ 0, 0, 0, 0 }, actual.sub_pos);
     try std.testing.expectEqual(.{ 1, 2, 0, 0 }, actual.sub_index_pos);
     try std.testing.expectEqual(33, actual.sub_chunk_index);
     pos = .{ 63, 63, 63, 0 };
-    actual = chunkPosToSubPositionIndex(pos);
+    actual = chunkPosToSubPositionData(pos);
     try std.testing.expectEqual(262_143, actual.chunk_index);
     try std.testing.expectEqual(.{ 3, 3, 3, 0 }, actual.sub_pos);
     try std.testing.expectEqual(.{ 15, 15, 15, 0 }, actual.sub_index_pos);
     try std.testing.expectEqual(4_095, actual.sub_chunk_index);
     pos = .{ 63, 0, 0, 0 };
-    actual = chunkPosToSubPositionIndex(pos);
+    actual = chunkPosToSubPositionData(pos);
     try std.testing.expectEqual(63, actual.chunk_index);
     try std.testing.expectEqual(.{ 3, 0, 0, 0 }, actual.sub_pos);
     try std.testing.expectEqual(.{ 15, 0, 0, 0 }, actual.sub_index_pos);
     try std.testing.expectEqual(15, actual.sub_chunk_index);
     pos = .{ 0, 63, 0, 0 };
-    actual = chunkPosToSubPositionIndex(pos);
+    actual = chunkPosToSubPositionData(pos);
     try std.testing.expectEqual(4_032, actual.chunk_index);
     try std.testing.expectEqual(.{ 0, 3, 0, 0 }, actual.sub_pos);
     try std.testing.expectEqual(.{ 0, 15, 0, 0 }, actual.sub_index_pos);
     try std.testing.expectEqual(240, actual.sub_chunk_index);
     pos = .{ 0, 0, 63, 0 };
-    actual = chunkPosToSubPositionIndex(pos);
+    actual = chunkPosToSubPositionData(pos);
     try std.testing.expectEqual(258_048, actual.chunk_index);
     try std.testing.expectEqual(.{ 0, 0, 3, 0 }, actual.sub_pos);
     try std.testing.expectEqual(.{ 0, 0, 15, 0 }, actual.sub_index_pos);

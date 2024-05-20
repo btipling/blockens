@@ -16,13 +16,14 @@ pub fn chunkToSubChunk(allocator: std.mem.Allocator, chunk_data: []u32, pos: chu
             var y: usize = 0;
             while (y < chunk.subchunk.subChunkDim) : (y += 1) {
                 const _y: f32 = @floatFromInt(y);
-                const ci = chunk.getIndexFromPositionV(.{
+                const c_pos: @Vector(4, f32) = .{
                     _x + pos_x,
                     _y + pos_y,
                     _z + pos_z,
                     0,
-                });
-                sub_chunk_data[i] = chunk_data[ci];
+                };
+                const scd = chunk.subchunk.chunkPosToSubPositionData(c_pos);
+                sub_chunk_data[scd.sub_chunk_index] = chunk_data[scd.chunk_index];
                 i += 1;
             }
         }
@@ -35,17 +36,26 @@ test chunkToSubChunk {
     defer std.testing.allocator.free(chunk_data);
     @memset(chunk_data, 0);
     var pos: @Vector(4, f32) = .{ 1, 2, 3, 0 };
-    _ = &pos;
-    var ci = chunk.getIndexFromPositionV(pos);
-    _ = &ci;
-    var bd: block.BlockData = block.BlockData.fromId(0);
+    const scd = chunk.subchunk.chunkPosToSubPositionData(pos);
+    var bd: block.BlockData = block.BlockData.fromId(chunk_data[scd.chunk_index]);
     bd.block_id = 3;
-    chunk_data[ci] = bd.toId();
-    const t1 = chunkToSubChunk(std.testing.allocator, chunk_data, .{ 0, 0, 0, 0 });
+    chunk_data[scd.chunk_index] = bd.toId();
+    const t1 = chunkToSubChunk(std.testing.allocator, chunk_data, scd.sub_pos);
     defer std.testing.allocator.free(t1);
     try std.testing.expectEqual(chunk.subchunk.subChunkSize, t1.len);
-    var tbd: block.BlockData = block.BlockData.fromId(3);
-    _ = &tbd;
+
+    var tbd: block.BlockData = block.BlockData.fromId(t1[scd.sub_chunk_index]);
+    try std.testing.expectEqual(3, tbd.block_id);
+
+    @memset(chunk_data, 0);
+    pos = .{ 63, 63, 63, 0 };
+    bd = block.BlockData.fromId(0);
+    bd.block_id = 3;
+    chunk_data[scd.chunk_index] = bd.toId();
+    const t2 = chunkToSubChunk(std.testing.allocator, chunk_data, scd.sub_pos);
+    defer std.testing.allocator.free(t2);
+    try std.testing.expectEqual(chunk.subchunk.subChunkSize, t2.len);
+    tbd = block.BlockData.fromId(t2[scd.sub_chunk_index]);
     try std.testing.expectEqual(3, tbd.block_id);
 }
 
