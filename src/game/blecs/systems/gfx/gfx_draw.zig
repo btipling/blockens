@@ -107,6 +107,7 @@ fn gfxDraw(
             draws = c.draws;
         }
         if (draws) |d| {
+            game.state.ui.gfx_meshes_drawn_counter += @intCast(d.len);
             gl.multiDrawElements(gl.TRIANGLES, d.ptr, gl.UNSIGNED_INT, @ptrCast(offsets.?.ptr), @intCast(d.len));
         } else {
             std.debug.print("cant draw the thing\n", .{});

@@ -128,6 +128,8 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     zgui.sameLine(.{});
                     const c_p = chunk.worldPosition.positionFromWorldLocation(p);
                     zgui.text("[chunk pos:{d},{d},{d}]", .{ c_p[0], c_p[1], c_p[2] });
+                    zgui.sameLine(.{});
+                    zgui.text("[meshes drawn: {d}]", .{game.state.ui.gfx_meshes_drawn});
                 }
             }
             zgui.end();
