@@ -112,6 +112,6 @@ const ztracy = @import("ztracy");
 const config = @import("config");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
-const ui = @import("../../../ui.zig");
+const ui = @import("../../../ui/ui.zig");
 const screen_helpers = @import("../screen_helpers.zig");
 const helpers = @import("ui_helpers.zig");

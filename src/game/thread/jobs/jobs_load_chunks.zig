@@ -113,7 +113,7 @@ pub const LoadChunkJob = struct {
 };
 
 const std = @import("std");
-const ui = @import("../../ui.zig");
+const ui = @import("../../ui/ui.zig");
 const game = @import("../../game.zig");
 const data = @import("../../data/data.zig");
 const buffer = @import("../buffer.zig");

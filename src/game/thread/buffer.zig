@@ -282,7 +282,7 @@ pub fn is_demo_chunk(msg: buffer_message) !bool {
 
 const std = @import("std");
 const state = @import("../state.zig");
-const ui = @import("../ui.zig");
+const ui = @import("../ui/ui.zig");
 const blecs = @import("../blecs/blecs.zig");
 const block = @import("../block/block.zig");
 const chunk = block.chunk;

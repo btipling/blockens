@@ -1,7 +1,7 @@
 pub const max_world_name = 20;
 
-const robotoMonoFont = @embedFile("assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
-const proggyCleanFont = @embedFile("assets/fonts/ProggyClean/ProggyClean.ttf");
+const robotoMonoFont = @embedFile("../assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
+const proggyCleanFont = @embedFile("../assets/fonts/ProggyClean/ProggyClean.ttf");
 
 pub const chunkConfig = struct {
     id: i32 = 0, // from sqlite
@@ -229,8 +229,8 @@ const std = @import("std");
 const zgui = @import("zgui");
 const zm = @import("zmath");
 const glfw = @import("zglfw");
-const data = @import("data/data.zig");
-const script = @import("script/script.zig");
-const blecs = @import("blecs/blecs.zig");
-const block = @import("block/block.zig");
+const data = @import("../data/data.zig");
+const script = @import("../script/script.zig");
+const blecs = @import("../blecs/blecs.zig");
+const block = @import("../block/block.zig");
 const chunk = block.chunk;
