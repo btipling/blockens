@@ -13,14 +13,12 @@ pub fn deinit(_: *MeshData, _: std.mem.Allocator) void {}
 pub fn add(self: *MeshData, _: [][3]f32, ssbos: *std.AutoHashMap(u32, u32)) void {
     const md = [_]gl.mesh_buffer.meshData{};
 
-    _ = ssbos.get(self.animation_binding_point) orelse blk: {
-        const new_ssbo = gl.mesh_buffer.initMeshShaderStorageBufferObject(
-            self.mesh_binding_point,
-            &md,
-        );
-        ssbos.put(self.animation_binding_point, new_ssbo) catch @panic("OOM");
-        break :blk new_ssbo;
-    };
+    if (ssbos.contains(self.mesh_binding_point)) return;
+    const new_ssbo = gl.mesh_buffer.initMeshShaderStorageBufferObject(
+        self.mesh_binding_point,
+        &md,
+    );
+    ssbos.put(self.mesh_binding_point, new_ssbo) catch @panic("OOM");
 }
 
 const std = @import("std");
