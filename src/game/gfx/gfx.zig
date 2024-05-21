@@ -9,7 +9,7 @@ pub fn init(allocator: std.mem.Allocator) *Gfx {
         .renderConfigs = std.AutoHashMap(blecs.ecs.entity_t, *ElementsRendererConfig).init(allocator),
         .mob_data = std.AutoHashMap(i32, *mob.Mob).init(allocator),
         .animation_data = AnimationData.init(allocator),
-        .lighting_ssbo = gl.Gl.initLightingShaderStorageBufferObject(constants.LightingBindingPoint),
+        .lighting_ssbo = gl.lighting_buffer.initLightingShaderStorageBufferObject(constants.LightingBindingPoint),
     };
 
     return gfx;
@@ -50,7 +50,7 @@ pub const Gfx = struct {
     ambient_lighting: f32 = 1,
 
     pub fn update_lighting(self: *Gfx) void {
-        gl.Gl.updateLightingShaderStorageBufferObject(
+        gl.lighting_buffer.updateLightingShaderStorageBufferObject(
             self.lighting_ssbo,
             0,
             .{
