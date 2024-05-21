@@ -84,6 +84,8 @@ demo_atlas_scale: @Vector(4, f32) = @Vector(4, f32){ 0.100, 1.940, 1, 0 },
 demo_atlas_translation: @Vector(4, f32) = @Vector(4, f32){ -0.976, -0.959, 0, 0 },
 demo_atlas_rotation: f32 = 0.5,
 
+demo_sub_chunks_renderer: blecs.ecs.entity_desc_t = 0,
+
 load_percentage_world_gen: f16 = 0,
 load_percentage_lighting_initial: f16 = 0,
 load_percentage_lighting_cross_chunk: f16 = 0,
