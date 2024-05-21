@@ -21,78 +21,6 @@ pub fn deinit(allocator: std.mem.Allocator) void {
     mesh.deinit();
 }
 
-pub const Animation = struct {
-    pub const AnimationKeyFrame = struct {
-        frame: f32,
-        scale: @Vector(4, f32),
-        rotation: @Vector(4, f32),
-        translation: @Vector(4, f32),
-    };
-    animation_id: u32 = 0,
-    animation_offset: usize = 0,
-    keyframes: ?[]AnimationKeyFrame = null,
-    added: bool = false,
-};
-pub const AnimationData = struct {
-    animation_binding_point: u32 = constants.AnimationBindingPoint,
-    data: std.AutoHashMap(AnimationRefKey, *Animation) = undefined,
-    animations_running: u32 = constants.DemoCubeAnimationID, // Democube animation is always running atm.
-    num_frames: usize = 0,
-
-    // AnimationRefKey - outside of the animation_id, these fields are whatever makes sense, creating
-    // and using the same key twice will overwrite previous data which is probably an error.
-    pub const AnimationRefKey = struct {
-        animation_id: u32,
-        animation_mesh_id: u8 = 0,
-        ref_id: u8 = 0,
-    };
-
-    fn init(allocator: std.mem.Allocator) AnimationData {
-        return .{
-            .data = std.AutoHashMap(AnimationRefKey, *Animation).init(allocator),
-        };
-    }
-
-    fn deinit(self: *AnimationData, allocator: std.mem.Allocator) void {
-        var it = self.data.iterator();
-        while (it.next()) |e| {
-            const a: *Animation = e.value_ptr.*;
-            if (a.keyframes) |k| allocator.free(k);
-            allocator.destroy(a);
-        }
-        self.data.deinit();
-    }
-
-    pub fn add(self: *AnimationData, key: AnimationRefKey, animation: *Animation) void {
-        var ssbo: u32 = 0;
-        var added = false;
-        const kf = animation.keyframes orelse return;
-
-        animation.animation_offset = self.num_frames;
-        self.data.put(key, animation) catch @panic("OOM");
-        self.num_frames += kf.len;
-
-        ssbo = gfx.ssbos.get(self.animation_binding_point) orelse blk: {
-            added = true;
-            const new_ssbo = gl.Gl.initAnimationShaderStorageBufferObject(
-                self.animation_binding_point,
-                kf,
-            );
-            gfx.ssbos.put(self.animation_binding_point, new_ssbo) catch @panic("OOM");
-            break :blk new_ssbo;
-        };
-        if (!added) {
-            gl.Gl.resizeAnimationShaderStorageBufferObject(ssbo, self.num_frames);
-            var it = self.data.iterator();
-            while (it.next()) |e| {
-                const ani: *Animation = e.value_ptr.*;
-                const akf = ani.keyframes orelse continue;
-                gl.Gl.addAnimationShaderStorageBufferData(ssbo, ani.animation_offset, akf);
-            }
-        }
-    }
-};
-
 pub const ElementsRendererConfig = struct {
     pub const MobRef = struct {
         mob_id: i32,
@@ -150,14 +78,11 @@ pub const Gfx = struct {
         }
         self.mob_data.deinit();
     }
-};
 
-pub const shadergen = @import("shadergen.zig");
-pub const buffer_data = @import("buffer_data.zig");
-pub const constants = @import("gfx_constants.zig");
-pub const mesh = @import("mesh.zig");
-pub const cltf = @import("cltf_mesh.zig");
-pub const gl = @import("gl.zig");
+    pub fn addAnimation(self: *Gfx, key: AnimationData.AnimationRefKey, a: *Animation) void {
+        self.animation_data.add(key, a, &self.ssbos);
+    }
+};
 
 const std = @import("std");
 const zm = @import("zmath");
@@ -166,3 +91,13 @@ const data = @import("../data/data.zig");
 const mob = @import("../mob.zig");
 const block = @import("../block/block.zig");
 const chunk = block.chunk;
+
+pub const shadergen = @import("shadergen.zig");
+pub const buffer_data = @import("buffer_data.zig");
+pub const constants = @import("gfx_constants.zig");
+pub const mesh = @import("mesh.zig");
+pub const cltf = @import("cltf_mesh.zig");
+pub const gl = @import("gl.zig");
+pub const animation = @import("gfx_animation.zig");
+pub const Animation = animation.Animation;
+pub const AnimationData = animation.AnimationData;

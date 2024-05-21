@@ -287,7 +287,7 @@ const extractions = struct {
             .animation_id = akr.animation_id,
             .keyframes = ar.toOwnedSlice(game.state.allocator) catch @panic("OOM"),
         };
-        game.state.gfx.animation_data.add(akr, animation);
+        game.state.gfx.addAnimation(akr, animation);
         e.animation = animation;
     }
 
@@ -339,7 +339,7 @@ const extractions = struct {
                     .animation_id = akr.animation_id,
                     .keyframes = ar.toOwnedSlice(game.state.allocator) catch @panic("OOM"),
                 };
-                game.state.gfx.animation_data.add(akr, animation);
+                game.state.gfx.addAnimation(akr, animation);
                 e.animation = animation;
             }
         }

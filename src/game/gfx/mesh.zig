@@ -307,6 +307,12 @@ const bounding_box_positions: [36][3]f32 = .{
     .{ 0, 1, 0 },
 };
 
+const sub_chunk_positions: [3][3]f32 = .{
+    .{ -0.5, -0.5, 0.5 },
+    .{ 0.5, -0.5, 0.5 },
+    .{ 0.5, 0.5, 0.5 },
+};
+
 pub fn cube() meshData {
     const positions: [][3]f32 = game.state.allocator.alloc([3]f32, cube_positions.len) catch @panic("OOM");
     @memcpy(positions, &cube_positions);
