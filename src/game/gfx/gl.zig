@@ -312,3 +312,4 @@ const game = @import("../game.zig");
 const buffer_data = @import("buffer_data.zig");
 
 pub const animation_buffer = @import("gl_animation_buffer.zig");
+pub const mesh_buffer = @import("gl_mesh_buffer.zig");
