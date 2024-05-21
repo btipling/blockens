@@ -1,9 +1,3 @@
-const std = @import("std");
-const zmesh = @import("zmesh");
-const game = @import("../game.zig");
-const game_mob = @import("../mob.zig");
-const blecs = @import("../blecs/blecs.zig");
-
 pub const meshData = struct {
     positions: [][3]f32 = undefined,
     indices: []u32 = undefined,
@@ -484,3 +478,9 @@ pub fn block_highlight() meshData {
     @memcpy(bc, &barycentric_coordinates);
     return .{ .positions = positions, .indices = indices, .edges = e, .barycentric = bc };
 }
+
+const std = @import("std");
+const zmesh = @import("zmesh");
+const game = @import("../game.zig");
+const game_mob = @import("../mob.zig");
+const blecs = @import("../blecs/blecs.zig");

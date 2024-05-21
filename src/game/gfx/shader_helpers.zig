@@ -1,5 +1,3 @@
-const std = @import("std");
-
 pub const varType = enum {
     vec2,
     vec3,
@@ -59,3 +57,5 @@ pub fn scalar(
     _ = try std.fmt.bufPrint(&buffer, fmt, .{v});
     return buffer;
 }
+
+const std = @import("std");

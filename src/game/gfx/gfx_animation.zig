@@ -52,7 +52,7 @@ pub const AnimationData = struct {
 
         ssbo = ssbos.get(self.animation_binding_point) orelse blk: {
             added = true;
-            const new_ssbo = gl.Gl.initAnimationShaderStorageBufferObject(
+            const new_ssbo = gl.animation_buffer.initAnimationShaderStorageBufferObject(
                 self.animation_binding_point,
                 kf,
             );
@@ -60,12 +60,12 @@ pub const AnimationData = struct {
             break :blk new_ssbo;
         };
         if (!added) {
-            gl.Gl.resizeAnimationShaderStorageBufferObject(ssbo, self.num_frames);
+            gl.animation_buffer.resizeAnimationShaderStorageBufferObject(ssbo, self.num_frames);
             var it = self.data.iterator();
             while (it.next()) |e| {
                 const ani: *Animation = e.value_ptr.*;
                 const akf = ani.keyframes orelse continue;
-                gl.Gl.addAnimationShaderStorageBufferData(ssbo, ani.animation_offset, akf);
+                gl.animation_buffer.addAnimationShaderStorageBufferData(ssbo, ani.animation_offset, akf);
             }
         }
     }

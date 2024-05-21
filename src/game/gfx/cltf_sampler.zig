@@ -1,9 +1,3 @@
-const std = @import("std");
-const zmesh = @import("zmesh");
-const zm = @import("zmath");
-const gltf = zmesh.io.zcgltf;
-const game = @import("../game.zig");
-
 pub const SamplerErr = error{
     MissingDataErr,
     UnsupportedErr,
@@ -175,3 +169,9 @@ pub const Sampler = struct {
         }
     }
 };
+
+const std = @import("std");
+const zmesh = @import("zmesh");
+const zm = @import("zmath");
+const gltf = zmesh.io.zcgltf;
+const game = @import("../game.zig");

@@ -1,12 +1,3 @@
-const std = @import("std");
-const zm = @import("zmath");
-const zmesh = @import("zmesh");
-const sampler = @import("./cltf_sampler.zig");
-const game = @import("../game.zig");
-const data = @import("../data/data.zig");
-const game_mob = @import("../mob.zig");
-const gltf = zmesh.io.zcgltf;
-
 pub const MeshErr = error{
     NoScenes,
     NoTexture,
@@ -263,3 +254,12 @@ pub const Mesh = struct {
         return MeshErr.NoTexture;
     }
 };
+
+const std = @import("std");
+const zm = @import("zmath");
+const zmesh = @import("zmesh");
+const sampler = @import("./cltf_sampler.zig");
+const game = @import("../game.zig");
+const data = @import("../data/data.zig");
+const game_mob = @import("../mob.zig");
+const gltf = zmesh.io.zcgltf;

@@ -1,7 +1,3 @@
-const std = @import("std");
-const gl = @import("zopengl").bindings;
-const game = @import("../game.zig");
-
 pub const AttributeBuilder = struct {
     vbo: u32 = 0,
     stride: gl.Sizei = 0, // The size of each vertexes attribute variable bufferXS
@@ -207,3 +203,7 @@ pub const AttributeBuilder = struct {
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
     }
 };
+
+const std = @import("std");
+const gl = @import("zopengl").bindings;
+const game = @import("../game.zig");
