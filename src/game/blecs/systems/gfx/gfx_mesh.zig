@@ -275,7 +275,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
 
     if (config.use_tracy) ztracy.Message("cleaning up memory");
     ecs.remove(world, entity, components.gfx.ElementsRendererConfig);
-    const num_indices: usize = if (er.is_sub_chunks) gfx.mesh.sub_chunk_indices.len else er.mesh_data.indices.len;
+    const num_indices: usize = if (er.is_sub_chunks) gfx.mesh.cube_indices.len else er.mesh_data.indices.len;
     _ = ecs.set(world, entity, components.gfx.ElementsRenderer, .{
         .program = program,
         .vao = vao,

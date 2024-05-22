@@ -7,7 +7,7 @@ opaque_draws: std.ArrayListUnmanaged(c_int) = .{},
 opaque_draw_offsets: std.ArrayListUnmanaged(?*const anyopaque) = .{},
 
 const sorter = @This();
-const num_indices: c_int = @intCast(gfx.mesh.sub_chunk_indices.len);
+const num_indices: c_int = @intCast(gfx.mesh.cube_indices.len);
 
 pub fn init(allocator: std.mem.Allocator) *sorter {
     const s = allocator.create(sorter) catch @panic("OOM");
@@ -22,7 +22,7 @@ pub fn addSubChunk(self: *sorter, sc: *chunk.subchunk) void {
 }
 
 pub fn opaqueIndices(self: *sorter) []u32 {
-    const count: usize = self.all_sub_chunks.items.len * gfx.mesh.sub_chunk_indices.len;
+    const count: usize = self.all_sub_chunks.items.len * gfx.mesh.cube_indices.len;
     var inds = std.ArrayListUnmanaged(u32).initCapacity(
         self.allocator,
         @sizeOf(u32) * count,

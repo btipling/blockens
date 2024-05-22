@@ -59,7 +59,7 @@ pub fn plane() meshData {
 }
 
 // :: Cube
-const cube_positions: [36][3]f32 = .{
+pub const cube_positions: [36][3]f32 = .{
     // front
     .{ -0.5, -0.5, 0.5 },
     .{ 0.5, -0.5, 0.5 },
@@ -105,7 +105,7 @@ const cube_positions: [36][3]f32 = .{
     .{ -0.5, 0.5, -0.5 },
 };
 
-const cube_indices: [36]u32 = .{
+pub const cube_indices: [36]u32 = .{
     0, 1, 2, 3, 4, 5, // front
     6, 7, 8, 9, 10, 11, // right
     12, 13, 14, 15, 16, 17, // back
@@ -299,16 +299,6 @@ const bounding_box_positions: [36][3]f32 = .{
     .{ 0, 1, 1 },
     .{ 1, 1, 0 },
     .{ 0, 1, 0 },
-};
-
-pub const sub_chunk_positions: [3][3]f32 = .{
-    .{ -0.5, -0.5, 0.5 },
-    .{ 0.5, -0.5, 0.5 },
-    .{ 0.5, 0.5, 0.5 },
-};
-
-pub const sub_chunk_indices = [_]u32{
-    0, 1, 2,
 };
 
 pub fn cube() meshData {

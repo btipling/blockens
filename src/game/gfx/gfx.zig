@@ -13,7 +13,7 @@ pub fn init(allocator: std.mem.Allocator) *Gfx {
     };
 
     var mb = mesh_buffer_builder{};
-    mb.init(mesh.sub_chunk_positions[0..], &gfx.ssbos);
+    mb.init(mesh.cube_positions[0..], &gfx.ssbos);
 
     return gfx;
 }
