@@ -9,6 +9,7 @@ fn system() ecs.system_desc_t {
     var desc: ecs.system_desc_t = .{};
     desc.query.filter.terms[0] = .{ .id = ecs.id(components.gfx.ElementsRenderer) };
     desc.query.filter.terms[1] = .{ .id = ecs.id(components.gfx.CanDraw) };
+    desc.query.filter.terms[2] = .{ .id = ecs.id(components.gfx.SortedMultiDraw), .oper = .Not };
     desc.run = if (config.use_tracy) runWithTrace else run;
     return desc;
 }

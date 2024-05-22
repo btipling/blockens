@@ -461,6 +461,7 @@ pub fn initSubchunks(reset: bool) void {
     //     .loc = @Vector(4, f32){ 30, 63, 30, 0 },
     // });
     ecs.add(world, sc_e, components.block.SubChunks);
+    ecs.add(world, sc_e, components.gfx.SortedMultiDraw);
     ecs.add(world, sc_e, components.shape.NeedsSetup);
     ecs.add(world, sc_e, components.Debug);
     return;
