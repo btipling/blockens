@@ -117,6 +117,8 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             builder.usage = gl.STATIC_DRAW;
             _c.attr_builder = null;
         }
+    } else if (er.is_sub_chunks) {
+        ebo = gfx.gl.Gl.initEBO(gfx.mesh.sub_chunk_indices[0..]) catch @panic("nope");
     } else {
         ebo = gfx.gl.Gl.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
     }

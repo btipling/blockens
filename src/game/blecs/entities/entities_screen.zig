@@ -452,7 +452,17 @@ pub fn initSubchunks(reset: bool) void {
     clearDemoObjects();
     const world = game.state.world;
     initSubchunksCamera(reset);
-    _ = world;
+    const sc_e = helpers.new_child(world, game_data);
+    _ = ecs.set(world, sc_e, components.shape.Shape, .{ .shape_type = .sub_chunks });
+    const cr_c = math.vecs.Vflx4.initBytes(0, 0, 1, 0);
+    _ = ecs.set(world, sc_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
+    _ = ecs.set(world, sc_e, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
+    _ = ecs.set(game.state.world, sc_e, components.screen.WorldLocation, .{
+        .loc = @Vector(4, f32){ 30, 63, 30, 0 },
+    });
+    ecs.add(world, sc_e, components.block.SubChunks);
+    ecs.add(world, sc_e, components.shape.NeedsSetup);
+    ecs.add(world, sc_e, components.Debug);
     return;
 }
 

@@ -15,7 +15,7 @@ pub fn init(self: *MeshData, vertices: []const [3]f32, ssbos: *std.AutoHashMap(u
                 v[0],
                 v[1],
                 v[2],
-                0,
+                1,
             },
         }) catch @panic("OOM");
     }

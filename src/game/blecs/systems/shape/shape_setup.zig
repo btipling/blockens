@@ -52,6 +52,7 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         .mob => gfx.mesh.mob(world, entity),
         .bounding_box => gfx.mesh.bounding_box(e.mob_id), // just to setup the positions
         .block_highlight => gfx.mesh.block_highlight(),
+        .sub_chunks => .{},
     };
 
     var erc: *gfx.ElementsRendererConfig = game.state.allocator.create(gfx.ElementsRendererConfig) catch @panic("nope");
@@ -69,6 +70,7 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         .has_block_texture_atlas = e.has_texture_atlas,
         .is_multi_draw = e.is_multi_draw,
         .has_attr_translation = e.is_multi_draw,
+        .is_sub_chunks = e.is_sub_chunks,
     };
     if (!e.is_multi_draw or !gfx.gl.Gl.hasMultiDrawShaders()) {
         erc.vertexShader = shaders.genVertexShader(&e, &mesh_data);
@@ -108,6 +110,7 @@ const shaders = struct {
                 if (e.mesh_transforms) |mt| break :blk mt.items;
                 break :blk null;
             },
+            .is_sub_chunks = e.is_sub_chunks,
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch @panic("vertex shader gen fail");
     }
@@ -161,6 +164,7 @@ const extractions = struct {
     mesh_transforms: ?std.ArrayList(gfx.shadergen.vertex.MeshTransforms) = null,
     is_multi_draw: bool = false,
     mob_id: i32 = 0,
+    is_sub_chunks: bool = false,
 
     fn deinit(self: *extractions) void {
         if (self.mesh_transforms) |mt| mt.deinit();
@@ -204,6 +208,13 @@ const extractions = struct {
                 if (e.debug) std.debug.print("extractBlock: is meshed\n", .{});
                 e.is_meshed = true;
             }
+        }
+    }
+
+    fn extractSubChunks(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
+        if (ecs.has_id(world, entity, ecs.id(components.block.SubChunks))) {
+            if (e.debug) std.debug.print("extractBlock: is meshed\n", .{});
+            e.is_sub_chunks = true;
         }
     }
 
@@ -397,6 +408,7 @@ const extractions = struct {
         extractBoundingBox(&e, world, entity);
         extractOutline(&e, world, entity);
         extractLighting(&e, world, entity);
+        extractSubChunks(&e, world, entity);
         return e;
     }
 };

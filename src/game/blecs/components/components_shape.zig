@@ -8,6 +8,7 @@ pub const Shape = struct {
         mob,
         bounding_box,
         block_highlight,
+        sub_chunks,
     };
 };
 

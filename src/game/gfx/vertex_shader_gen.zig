@@ -22,6 +22,7 @@ pub const VertexShaderGen = struct {
         is_multi_draw: bool = false,
         is_meshed: bool = false,
         mesh_transforms: ?[]MeshTransforms,
+        is_sub_chunks: bool = false,
     };
 
     // genVertexShader - call ower owns the returned slice and must free it
@@ -68,6 +69,7 @@ pub const VertexShaderGen = struct {
             try r.gen_uniforms();
             try r.gen_ubo();
             try r.gen_animation_block();
+            try r.gen_sub_chunk_block();
             try r.gen_math();
             try r.gen_animation_functions();
             try r.gen_main();
@@ -194,6 +196,22 @@ pub const VertexShaderGen = struct {
                 r.a("    key_frame frames[];\n");
                 r.a("};\n\n");
             }
+        }
+
+        fn gen_sub_chunk_block(r: *runner) !void {
+            if (!r.cfg.is_sub_chunks) return;
+            r.a("struct bl_mesh_data {\n");
+            r.a("    vec4 bl_mesh_data_pos;\n");
+            r.a("};\n\n");
+            r.a("\n");
+            const line = try shader_helpers.ssbo_binding(
+                constants.MeshDataBindinggPoint,
+                constants.SubChunksBlockName,
+            );
+            r.l(&line);
+            r.a("{\n");
+            r.a("    bl_mesh_data bl_meshes[];\n");
+            r.a("};\n\n");
         }
 
         fn gen_mesh_transforms_decls(r: *runner) !void {
@@ -356,7 +374,11 @@ pub const VertexShaderGen = struct {
             r.a("void main()\n");
             r.a("{\n");
             r.a("    vec4 pos;\n");
-            r.a("    pos = vec4(position.xyz, 1.0);\n");
+            if (r.cfg.is_sub_chunks) {
+                r.a("    pos = bl_meshes[gl_VertexID].bl_mesh_data_pos;\n");
+            } else {
+                r.a("    pos = vec4(position.xyz, 1.0);\n");
+            }
             try r.gen_inline_mesh_transforms();
             try r.gen_attr_translation();
             try r.gen_inline_mat();

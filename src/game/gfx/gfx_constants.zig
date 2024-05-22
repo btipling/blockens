@@ -11,6 +11,7 @@ pub const UBOGFXDataName: []const u8 = "gfx_data";
 pub const UBOShaderDataName: []const u8 = "shader_data";
 pub const AnimationBlockName: []const u8 = "bl_animation_block";
 pub const LightingBlockName: []const u8 = "bl_lighting_block";
+pub const SubChunksBlockName: []const u8 = "bl_sub_chunks_block";
 
 // Binding points
 pub const GameUBOBindingPoint: u32 = 0;

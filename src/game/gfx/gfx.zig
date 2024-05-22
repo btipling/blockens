@@ -41,6 +41,7 @@ pub const ElementsRendererConfig = struct {
     is_multi_draw: bool = false,
     has_attr_translation: bool = false,
     mob: ?MobRef = null,
+    is_sub_chunks: bool = false,
 };
 
 pub const Gfx = struct {
