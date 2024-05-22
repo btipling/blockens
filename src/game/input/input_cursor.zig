@@ -1,11 +1,3 @@
-const std = @import("std");
-const zm = @import("zmath");
-const glfw = @import("zglfw");
-const game = @import("../game.zig");
-const blecs = @import("../blecs/blecs.zig");
-const zgui = @import("zgui");
-const gameState = @import("../state.zig");
-
 pub fn cursorPosCallback(_: *glfw.Window, xpos: f64, ypos: f64) callconv(.C) void {
     handleCursor(xpos, ypos);
 }
@@ -145,3 +137,11 @@ fn handleCursor(xpos: f64, ypos: f64) void {
         blecs.components.screen.Updated,
     );
 }
+
+const std = @import("std");
+const zm = @import("zmath");
+const glfw = @import("zglfw");
+const game = @import("../game.zig");
+const blecs = @import("../blecs/blecs.zig");
+const zgui = @import("zgui");
+const gameState = @import("../state.zig");

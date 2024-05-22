@@ -1,11 +1,3 @@
-const std = @import("std");
-const ecs = @import("zflecs");
-const gl = @import("zopengl").bindings;
-const math = @import("../../math/math.zig");
-const game = @import("../../game.zig");
-const components = @import("../components/components.zig");
-const helpers = @import("../helpers.zig");
-
 pub fn init() void {
     initBaseRenderer();
     initClock();
@@ -31,3 +23,11 @@ fn initSky() void {
         .sun = .rising,
     });
 }
+
+const std = @import("std");
+const ecs = @import("zflecs");
+const gl = @import("zopengl").bindings;
+const math = @import("../../math/math.zig");
+const game = @import("../../game.zig");
+const components = @import("../components/components.zig");
+const helpers = @import("../helpers.zig");

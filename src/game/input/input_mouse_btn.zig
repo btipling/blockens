@@ -1,9 +1,3 @@
-const std = @import("std");
-const glfw = @import("zglfw");
-const zgui = @import("zgui");
-const blecs = @import("../blecs/blecs.zig");
-const game = @import("../game.zig");
-
 pub fn mouseBtnCallback(_: *glfw.Window, btn: glfw.MouseButton, action: glfw.Action, mods: glfw.Mods) callconv(.C) void {
     handleMouseBtn(btn, action, mods) catch |e| {
         std.debug.print("mouse button error {}\n", .{e});
@@ -43,3 +37,9 @@ fn handleGameMouseBtn(btn: glfw.MouseButton, action: glfw.Action, mods: glfw.Mod
         else => {},
     }
 }
+
+const std = @import("std");
+const glfw = @import("zglfw");
+const zgui = @import("zgui");
+const blecs = @import("../blecs/blecs.zig");
+const game = @import("../game.zig");

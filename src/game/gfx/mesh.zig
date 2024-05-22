@@ -301,7 +301,7 @@ const bounding_box_positions: [36][3]f32 = .{
     .{ 0, 1, 0 },
 };
 
-const sub_chunk_positions: [3][3]f32 = .{
+pub const sub_chunk_positions: [3][3]f32 = .{
     .{ -0.5, -0.5, 0.5 },
     .{ 0.5, -0.5, 0.5 },
     .{ 0.5, 0.5, 0.5 },

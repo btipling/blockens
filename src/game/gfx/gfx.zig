@@ -12,6 +12,9 @@ pub fn init(allocator: std.mem.Allocator) *Gfx {
         .lighting_ssbo = gl.lighting_buffer.initLightingShaderStorageBufferObject(constants.LightingBindingPoint),
     };
 
+    var mb = mesh_buffer_builder{};
+    mb.init(mesh.sub_chunk_positions[0..], &gfx.ssbos);
+
     return gfx;
 }
 
@@ -101,3 +104,4 @@ pub const gl = @import("gl.zig");
 pub const animation = @import("gfx_animation.zig");
 pub const Animation = animation.Animation;
 pub const AnimationData = animation.AnimationData;
+pub const mesh_buffer_builder = @import("gfx_mesh_buffer_builder.zig");
