@@ -122,10 +122,12 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         }
     } else if (er.is_sub_chunks) {
         if (game.state.ui.demo_sub_chunks_sorter.ebo != 0) @panic("TODO: sorter update existing ebo");
-        const inds = game.state.ui.demo_sub_chunks_sorter.opaqueIndices();
+        const inds = game.state.ui.demo_sub_chunks_sorter.getMeshData();
         defer game.state.allocator.free(inds);
         ebo = gfx.gl.Gl.initEBO(inds) catch @panic("nope");
         game.state.ui.demo_sub_chunks_sorter.ebo = ebo;
+        builder = game.state.ui.demo_sub_chunks_sorter.builder orelse @panic("nope");
+        game.state.ui.demo_sub_chunks_sorter.builder = null;
     } else {
         ebo = gfx.gl.Gl.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
     }
@@ -209,7 +211,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     }
 
     if (config.use_tracy) ztracy.Message("writing vbo buffer to gpu");
-    if (!er.is_sub_chunks) builder.write();
+    builder.write();
 
     if (config.use_tracy) ztracy.Message("writing uniforms to gpu");
     if (er.transform) |t| {
@@ -289,7 +291,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     _ = game.state.gfx.renderConfigs.remove(erc.id);
     ecs.delete(world, erc.id);
     if (deinit_mesh) er.mesh_data.deinit();
-    if (!er.is_sub_chunks) builder.deinit();
+    builder.deinit();
     game.state.allocator.destroy(er);
     if (config.use_tracy) ztracy.Message("gfx mesh system is done");
 }

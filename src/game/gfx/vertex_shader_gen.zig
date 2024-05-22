@@ -80,11 +80,9 @@ pub const VertexShaderGen = struct {
 
         fn gen_attribute_vars(r: *runner) !void {
             var line: [250:0]u8 = undefined;
-            if (!r.cfg.is_sub_chunks) {
-                line = try shader_helpers.attribute_location(r.location, "position", .vec3);
-                r.l(&line);
-                r.location += 1;
-            }
+            line = try shader_helpers.attribute_location(r.location, "position", .vec3);
+            r.l(&line);
+            r.location += 1;
             if (r.cfg.has_texture_coords) {
                 line = try shader_helpers.attribute_location(r.location, "eTexCoord", .vec2);
                 r.l(&line);
@@ -202,7 +200,7 @@ pub const VertexShaderGen = struct {
         }
 
         fn gen_sub_chunk_block(r: *runner) !void {
-            if (!r.cfg.is_sub_chunks) return;
+            if (true) return;
             r.a("struct bl_mesh_data {\n");
             r.a("    vec4 bl_mesh_data_pos;\n");
             r.a("};\n\n");
@@ -377,11 +375,7 @@ pub const VertexShaderGen = struct {
             r.a("void main()\n");
             r.a("{\n");
             r.a("    vec4 pos;\n");
-            if (r.cfg.is_sub_chunks) {
-                r.a("    pos = bl_meshes[gl_VertexID].bl_mesh_data_pos;\n");
-            } else {
-                r.a("    pos = vec4(position.xyz, 1.0);\n");
-            }
+            r.a("    pos = vec4(position.xyz, 1.0);\n");
             try r.gen_inline_mesh_transforms();
             try r.gen_attr_translation();
             try r.gen_inline_mat();
