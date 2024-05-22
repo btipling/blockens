@@ -1,6 +1,6 @@
 wp: worldPosition,
 sub_pos: subPosition,
-entity: blecs.ecs.entity_t = 0,
+chunker: chunker,
 allocator: std.mem.Allocator,
 
 const SubChunk = @This();
@@ -13,14 +13,14 @@ pub const subPosition = @Vector(4, f32);
 pub fn init(
     allocator: std.mem.Allocator,
     wp: worldPosition,
-    entity: blecs.ecs.entity_t,
     sub_pos: subPosition,
+    csc: chunker,
 ) !*SubChunk {
     const c: *SubChunk = try allocator.create(SubChunk);
     c.* = SubChunk{
         .wp = wp,
         .sub_pos = sub_pos,
-        .entity = entity,
+        .chunker = csc,
         .allocator = allocator,
     };
     return c;
@@ -139,3 +139,4 @@ const worldPosition = @import("world_position.zig");
 const chunk = @import("chunk.zig");
 
 pub const sorter = @import("chunk_sub_chunk_sorter.zig");
+pub const chunker = @import("chunk_sub_chunker.zig");

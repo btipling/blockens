@@ -69,8 +69,7 @@ pub const chunk_mesh_data = struct {
 };
 
 pub const sub_chunk_mesh_data = struct {
-    wp: chunk.worldPosition,
-    sub_pos: chunk.subchunk.subPosition,
+    subchunk: *chunk.subchunk,
 };
 
 pub const lightings_data = struct {

@@ -115,13 +115,7 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
         else => return,
     };
     std.debug.print("handled sub chunk mesh {}\n", .{scd});
-    const sc = chunk.subchunk.init(
-        game.state.allocator,
-        scd.wp,
-        0,
-        .{ 0, 0, 0, 0 },
-    ) catch @panic("OOM");
-    game.state.ui.demo_sub_chunks_sorter.addSubChunk(sc);
+    game.state.ui.demo_sub_chunks_sorter.addSubChunk(scd.subchunk);
     game.state.ui.demo_sub_chunks_sorter.sort(.{ 0, 0, 0, 0 });
     blecs.entities.screen.initSubchunks(true);
 }

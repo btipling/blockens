@@ -19,16 +19,23 @@ pub const SubChunkMeshJob = struct {
 
     pub fn mesh(self: *SubChunkMeshJob) void {
         if (config.use_tracy) ztracy.Message("starting subchunk mesh");
-        self.finishJob();
+        const chunk_data = self.chunk_data;
+        const chunker = chunk.subchunk.chunker.init(chunk_data, self.sub_pos);
+        const sc = chunk.subchunk.init(
+            game.state.allocator,
+            self.wp,
+            self.sub_pos,
+            chunker,
+        ) catch @panic("OOM");
+        self.finishJob(sc);
         if (config.use_tracy) ztracy.Message("done with sub chunk mesh job");
     }
 
-    fn finishJob(self: *SubChunkMeshJob) void {
+    fn finishJob(self: *SubChunkMeshJob, sc: *chunk.subchunk) void {
         const msg: buffer.buffer_message = buffer.new_message(.sub_chunk_mesh);
         const bd: buffer.buffer_data = .{
             .sub_chunk_mesh = .{
-                .wp = self.wp,
-                .sub_pos = self.sub_pos,
+                .subchunk = sc,
             },
         };
         self.pt.completeOne(msg, bd);
