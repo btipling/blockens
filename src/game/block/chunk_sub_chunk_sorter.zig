@@ -3,12 +3,12 @@ allocator: std.mem.Allocator,
 all_sub_chunks: std.ArrayListUnmanaged(*chunk.subchunk) = .{},
 ebo: u32 = 0,
 builder: ?*gfx.buffer_data.AttributeBuilder = null,
+num_indices: usize = 0,
 
 opaque_draws: std.ArrayListUnmanaged(c_int) = .{},
 opaque_draw_offsets: std.ArrayListUnmanaged(?*const anyopaque) = .{},
 
 const sorter = @This();
-const num_indices: c_int = @intCast(gfx.mesh.cube_indices.len);
 
 pub fn init(allocator: std.mem.Allocator) *sorter {
     const s = allocator.create(sorter) catch @panic("OOM");
@@ -67,6 +67,7 @@ pub fn getMeshData(self: *sorter) []u32 {
 
     std.debug.print("count: {d}\n", .{count});
     inds.appendSliceAssumeCapacity(res.indices);
+    self.num_indices = res.indices.len;
     return inds.toOwnedSlice(self.allocator) catch @panic("OOM");
 }
 
@@ -83,21 +84,13 @@ pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
     self.opaque_draws.clearRetainingCapacity();
     self.opaque_draw_offsets.clearRetainingCapacity();
     // TODO actually track index per sub chunk.
-    const count = self.all_sub_chunks.items.len;
-    var i: usize = 0;
-    var index_offset: c_uint = 0;
-    while (i < count) : (i += 1) {
-        self.opaque_draws.append(self.allocator, num_indices) catch @panic("OOM");
-        if (i == 0) {
-            self.opaque_draw_offsets.append(self.allocator, null) catch @panic("OOM");
-        } else {
-            self.opaque_draw_offsets.append(
-                self.allocator,
-                @as(*anyopaque, @ptrFromInt(@sizeOf(c_uint) * index_offset)),
-            ) catch @panic("OOM");
-        }
-        index_offset += num_indices;
-    }
+    // const count = self.all_sub_chunks.items.len;
+    // var i: usize = 0;
+    // var index_offset: c_uint = 0;
+    self.opaque_draws.append(self.allocator, @intCast(self.num_indices)) catch @panic("OOM");
+    self.opaque_draw_offsets.append(self.allocator, null) catch @panic("OOM");
+
+    // index_offset += @intCast(self.num_indices);
 }
 
 pub fn deinit(self: *sorter) void {

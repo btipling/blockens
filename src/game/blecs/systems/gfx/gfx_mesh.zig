@@ -127,6 +127,8 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         ebo = gfx.gl.Gl.initEBO(inds) catch @panic("nope");
         game.state.ui.demo_sub_chunks_sorter.ebo = ebo;
         builder = game.state.ui.demo_sub_chunks_sorter.builder orelse @panic("nope");
+        builder.vbo = vbo;
+        builder.usage = gl.STATIC_DRAW;
         game.state.ui.demo_sub_chunks_sorter.builder = null;
     } else {
         ebo = gfx.gl.Gl.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
