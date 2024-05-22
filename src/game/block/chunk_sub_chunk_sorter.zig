@@ -21,6 +21,20 @@ pub fn addSubChunk(self: *sorter, sc: *chunk.subchunk) void {
     self.all_sub_chunks.append(self.allocator, sc) catch @panic("OOM");
 }
 
+fn getMeshData(_: *sorter, sc: *chunk.subchunk, full_offset: u32) void {
+    var indices_buf: [chunk.subchunk.subChunkSize * 36]u32 = undefined;
+    var vertices_buf: [chunk.subchunk.subChunkSize * 36][3]f32 = undefined;
+    const res = sc.chunker.getMeshData(&indices_buf, &vertices_buf, full_offset);
+    std.debug.print(
+        "idfk bro - \n   indices: {any}\n   vertices: {any}\n   new full offset: {d}\n\n",
+        .{
+            res.indices,
+            res.positions,
+            res.full_offset,
+        },
+    );
+}
+
 pub fn opaqueIndices(self: *sorter) []u32 {
     const count: usize = self.all_sub_chunks.items.len * gfx.mesh.cube_indices.len;
     var inds = std.ArrayListUnmanaged(u32).initCapacity(
@@ -30,7 +44,9 @@ pub fn opaqueIndices(self: *sorter) []u32 {
     errdefer inds.deinit(self.allocator);
 
     var i: u32 = 0;
-    while (i < count) : (i += 1) inds.appendAssumeCapacity(i);
+    std.debug.print("count: {d}\n", .{count});
+    self.getMeshData(self.all_sub_chunks.items[0], 0);
+    while (i < 30) : (i += 1) inds.appendAssumeCapacity(i);
     return inds.toOwnedSlice(self.allocator) catch @panic("OOM");
 }
 

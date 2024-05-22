@@ -14,13 +14,51 @@ pub fn init(chunk_data: []const u32, pos: chunk.subchunk.subPosition) chunkerSub
 pub const subChunkVoxelData = struct {
     scd: chunk.subchunk.subPositionIndex,
     bd: block.BlockData,
-    x_pos: bool = false,
-    x_neg: bool = false,
-    y_pos: bool = false,
-    y_neg: bool = false,
-    z_pos: bool = false,
-    z_neg: bool = false,
+    positions: [36][3]f32 = undefined,
+    indices: [36]u32 = undefined,
+    normals: [36][3]f32 = undefined,
+    num_indices: usize = 0,
 };
+
+pub const meshData = struct {
+    indices: []u32,
+    positions: [][3]f32,
+    normals: [][3]f32 = undefined,
+    full_offset: u32 = 0,
+};
+
+pub fn getMeshData(
+    self: *chunkerSubChunker,
+    indices_buf: *[chunk.subchunk.subChunkSize * 36]u32,
+    vertices_buf: *[chunk.subchunk.subChunkSize * 36][3]f32,
+    full_offset: u32,
+) meshData {
+    var offset: u32 = 0;
+    var i: usize = 0;
+    var rv_i: usize = 0;
+    while (i < chunk.subchunk.subChunkSize) : (i += 1) {
+        const vd = self.data[i];
+        const sub_pos = vd.scd.sub_pos;
+        var ii: usize = 0;
+        while (ii < vd.num_indices) : (ii += 1) {
+            const index = vd.indices[ii];
+            indices_buf[rv_i] = index + offset + full_offset;
+            rv_i += 1;
+            const vd_pos: [3]f32 = vd.positions[ii];
+            vertices_buf[rv_i] = [3]f32{
+                vd_pos[0] + sub_pos[0],
+                vd_pos[1] + sub_pos[1],
+                vd_pos[2] + sub_pos[2],
+            };
+        }
+        offset += 36;
+    }
+    return .{
+        .indices = indices_buf[0..rv_i],
+        .positions = vertices_buf[0..rv_i],
+        .full_offset = full_offset + offset,
+    };
+}
 
 fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
     const pos_x: f32 = self.pos[0] * 16;
@@ -58,37 +96,79 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
         if (vd.bd.block_id == 0) continue;
         x_pos: {
             if (vd.scd.sub_index_pos[0] == chunk.subchunk.subChunkDim - 1) {
-                vd.x_pos = true;
+                const n = vd.num_indices;
+                const e = vd.num_indices + 6;
+                const ob: usize = 6;
+                const oe: usize = 12;
+                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[ob..oe]);
+                @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
+                @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
+                vd.num_indices += 6;
                 break :x_pos;
             }
         }
         x_neg: {
             if (vd.scd.sub_index_pos[0] == 0) {
-                vd.x_neg = true;
+                const n = vd.num_indices;
+                const e = vd.num_indices + 6;
+                const ob: usize = 18;
+                const oe: usize = 24;
+                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[ob..oe]);
+                @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
+                @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
+                vd.num_indices += 6;
                 break :x_neg;
             }
         }
         y_pos: {
             if (vd.scd.sub_index_pos[1] == chunk.subchunk.subChunkDim - 1) {
-                vd.y_pos = true;
+                const n = vd.num_indices;
+                const e = vd.num_indices + 6;
+                const ob: usize = 30;
+                const oe: usize = 36;
+                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[ob..oe]);
+                @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
+                @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
+                vd.num_indices += 6;
                 break :y_pos;
             }
         }
         y_neg: {
             if (vd.scd.sub_index_pos[1] == 0) {
-                vd.y_neg = true;
+                const n = vd.num_indices;
+                const e = vd.num_indices + 6;
+                const ob: usize = 24;
+                const oe: usize = 30;
+                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[ob..oe]);
+                @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
+                @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
+                vd.num_indices += 6;
                 break :y_neg;
             }
         }
         z_pos: {
             if (vd.scd.sub_index_pos[2] == chunk.subchunk.subChunkDim - 1) {
-                vd.z_pos = true;
+                const n = vd.num_indices;
+                const e = vd.num_indices + 6;
+                const ob: usize = 0;
+                const oe: usize = 6;
+                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[ob..oe]);
+                @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
+                @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
+                vd.num_indices += 6;
                 break :z_pos;
             }
         }
         z_neg: {
             if (vd.scd.sub_index_pos[2] == 0) {
-                vd.z_neg = true;
+                const n = vd.num_indices;
+                const e = vd.num_indices + 6;
+                const ob: usize = 12;
+                const oe: usize = 18;
+                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[ob..oe]);
+                @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
+                @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
+                vd.num_indices += 6;
                 break :z_neg;
             }
         }
@@ -123,4 +203,5 @@ test run {
 
 const std = @import("std");
 const block = @import("block.zig");
+const gfx = @import("../gfx/gfx.zig");
 const chunk = block.chunk;
