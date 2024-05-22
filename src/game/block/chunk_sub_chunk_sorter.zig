@@ -39,6 +39,7 @@ pub fn getMeshData(self: *sorter) []u32 {
     var builder = game.state.allocator.create(
         gfx.buffer_data.AttributeBuilder,
     ) catch @panic("OOM");
+    std.debug.print("initing with {d} positions\n", .{res.positions.len});
     builder.* = gfx.buffer_data.AttributeBuilder.init(
         @intCast(res.positions.len),
         0, // set in gfx_mesh
@@ -79,18 +80,41 @@ pub fn cullFrustum(self: *sorter, camera_position: @Vector(4, f32), view: zm.Mat
     _ = perspective;
 }
 
+const num_indices: c_int = @intCast(gfx.mesh.cube_indices.len);
+// pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
+//     _ = loc; // TODO: sort by loc
+//     self.opaque_draws.clearRetainingCapacity();
+//     self.opaque_draw_offsets.clearRetainingCapacity();
+//     // TODO actually track index per sub chunk.
+//     // const count = self.all_sub_chunks.items.len;
+//     // var i: usize = 0;
+//     // var index_offset: c_uint = 0;
+//     self.opaque_draws.append(self.allocator, @intCast(self.num_indices)) catch @panic("OOM");
+//     self.opaque_draw_offsets.append(self.allocator, null) catch @panic("OOM");
+
+//     // index_offset += @intCast(self.num_indices);
+// }
+
 pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
     _ = loc; // TODO: sort by loc
     self.opaque_draws.clearRetainingCapacity();
     self.opaque_draw_offsets.clearRetainingCapacity();
     // TODO actually track index per sub chunk.
-    // const count = self.all_sub_chunks.items.len;
-    // var i: usize = 0;
-    // var index_offset: c_uint = 0;
-    self.opaque_draws.append(self.allocator, @intCast(self.num_indices)) catch @panic("OOM");
-    self.opaque_draw_offsets.append(self.allocator, null) catch @panic("OOM");
-
-    // index_offset += @intCast(self.num_indices);
+    const count = self.all_sub_chunks.items.len;
+    var i: usize = 0;
+    var index_offset: c_uint = 0;
+    while (i < count) : (i += 1) {
+        self.opaque_draws.append(self.allocator, num_indices) catch @panic("OOM");
+        if (i == 0) {
+            self.opaque_draw_offsets.append(self.allocator, null) catch @panic("OOM");
+        } else {
+            self.opaque_draw_offsets.append(
+                self.allocator,
+                @as(*anyopaque, @ptrFromInt(@sizeOf(c_uint) * index_offset)),
+            ) catch @panic("OOM");
+        }
+        index_offset += num_indices;
+    }
 }
 
 pub fn deinit(self: *sorter) void {

@@ -37,9 +37,12 @@ pub fn getMeshData(
     var i: usize = 0;
     var rv_i: usize = 0;
     while (i < chunk.subchunk.subChunkSize) : (i += 1) {
+        // while (i < 1) : (i += 1) {
         const vd = self.data[i];
         const sub_pos = vd.scd.sub_pos;
         var ii: usize = 0;
+        // while (ii < vd.num_indices) : (ii += 1) {
+        std.debug.print("getMeshData num indices: {d}\n", .{vd.num_indices});
         while (ii < vd.num_indices) : (ii += 1) {
             const index = vd.indices[ii];
             indices_buf[rv_i] = index + offset + full_offset;
@@ -52,6 +55,7 @@ pub fn getMeshData(
             };
         }
         offset += 36;
+        if (vd.num_indices != 0) break;
     }
     return .{
         .indices = indices_buf[0..rv_i],
@@ -172,6 +176,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                 break :z_neg;
             }
         }
+        self.data[i] = vd;
     }
 }
 
