@@ -160,7 +160,6 @@ pub const Chunk = struct {
     attr_builder: ?*gfx.buffer_data.AttributeBuilder = null,
     indices: ?[]u32 = null,
     draws: ?[]c_int = null,
-    draw_offsets: ?[]c_int = null, // this only exists to hold the values that draw_offsets_gl points to...
     draw_offsets_gl: ?[]?*const anyopaque = null,
     prev_draw_offsets_gl: ?[]?*const anyopaque = null,
     prev_draws: ?[]c_int = null,
@@ -223,8 +222,6 @@ pub const Chunk = struct {
 
     pub fn deinitRenderData(self: *Chunk) void {
         self.backupDrawsData();
-        if (self.draw_offsets) |d| self.allocator.free(d);
-        self.draw_offsets = null;
         self.draws = null;
         self.draw_offsets_gl = null;
     }

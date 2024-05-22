@@ -19,7 +19,6 @@ pub const SubChunkMeshJob = struct {
 
     pub fn mesh(self: *SubChunkMeshJob) void {
         if (config.use_tracy) ztracy.Message("starting subchunk mesh");
-
         self.finishJob();
         if (config.use_tracy) ztracy.Message("done with sub chunk mesh job");
     }

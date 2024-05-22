@@ -73,7 +73,16 @@ fn gfxSortedMultiDraw(
     gl.bindVertexArray(er.vao);
 
     game.state.ui.gfx_meshes_drawn_counter += 0;
-    gl.multiDrawElements(gl.TRIANGLES, 0, gl.UNSIGNED_INT, 0, 0);
+
+    const offsets = game.state.ui.demo_sub_chunks_sorter.opaque_draw_offsets;
+    const draws = game.state.ui.demo_sub_chunks_sorter.opaque_draws;
+    gl.multiDrawElements(
+        gl.TRIANGLES,
+        draws.items.ptr,
+        gl.UNSIGNED_INT,
+        @ptrCast(offsets.items.ptr),
+        @intCast(draws.items.len),
+    );
 }
 
 const std = @import("std");

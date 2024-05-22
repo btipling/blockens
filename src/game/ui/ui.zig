@@ -84,7 +84,7 @@ demo_atlas_scale: @Vector(4, f32) = @Vector(4, f32){ 0.100, 1.940, 1, 0 },
 demo_atlas_translation: @Vector(4, f32) = @Vector(4, f32){ -0.976, -0.959, 0, 0 },
 demo_atlas_rotation: f32 = 0.5,
 
-demo_sub_chunks_renderer: blecs.ecs.entity_t = 0,
+demo_sub_chunks_sorter: *chunk.subchunk.sorter,
 
 load_percentage_world_gen: f16 = 0,
 load_percentage_lighting_initial: f16 = 0,
@@ -115,10 +115,12 @@ pub fn init(allocator: std.mem.Allocator) void {
         .terrain_gen_script_options_available = std.ArrayListUnmanaged(data.colorScriptOption){},
         .terrain_gen_script_options_selected = std.ArrayListUnmanaged(data.colorScriptOption){},
         .world_managed_seed_terrain_scripts = std.ArrayListUnmanaged(data.colorScriptOption){},
+        .demo_sub_chunks_sorter = chunk.subchunk.sorter.init(allocator),
     };
 }
 
 pub fn deinit() void {
+    ui.demo_sub_chunks_sorter.deinit();
     ui.texture_script_options.deinit(ui.allocator);
     ui.block_options.deinit(ui.allocator);
     ui.chunk_script_options.deinit(ui.allocator);

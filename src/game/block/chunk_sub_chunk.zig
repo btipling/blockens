@@ -27,7 +27,6 @@ pub fn init(
 }
 
 pub fn deinit(self: *SubChunk) void {
-    self.allocator.free(self.data);
     self.allocator.destroy(self);
 }
 
@@ -138,3 +137,5 @@ const std = @import("std");
 const blecs = @import("../blecs/blecs.zig");
 const worldPosition = @import("world_position.zig");
 const chunk = @import("chunk.zig");
+
+pub const sorter = @import("chunk_sub_chunk_sorter.zig");

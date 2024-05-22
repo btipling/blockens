@@ -121,7 +121,11 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             _c.attr_builder = null;
         }
     } else if (er.is_sub_chunks) {
-        ebo = gfx.gl.Gl.initEBO(gfx.mesh.sub_chunk_indices[0..]) catch @panic("nope");
+        if (game.state.ui.demo_sub_chunks_sorter.ebo != 0) @panic("TODO: sorter update existing ebo");
+        const inds = game.state.ui.demo_sub_chunks_sorter.opaqueIndices();
+        defer game.state.allocator.free(inds);
+        ebo = gfx.gl.Gl.initEBO(inds) catch @panic("nope");
+        game.state.ui.demo_sub_chunks_sorter.ebo = ebo;
     } else {
         ebo = gfx.gl.Gl.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
     }
