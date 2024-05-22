@@ -49,6 +49,9 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             .meshed_voxel => {
                 deinit_mesh = false;
             },
+            .sub_chunks => {
+                deinit_mesh = false;
+            },
             else => {},
         }
     }
@@ -123,7 +126,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         ebo = gfx.gl.Gl.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
     }
 
-    if (!er.is_multi_draw) {
+    if (!er.is_multi_draw and !er.is_sub_chunks) {
         if (config.use_tracy) ztracy.Message("building non-multidraw shader attribute variables");
         builder = game.state.allocator.create(
             gfx.buffer_data.AttributeBuilder,
@@ -202,7 +205,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     }
 
     if (config.use_tracy) ztracy.Message("writing vbo buffer to gpu");
-    builder.write();
+    if (!er.is_sub_chunks) builder.write();
 
     if (config.use_tracy) ztracy.Message("writing uniforms to gpu");
     if (er.transform) |t| {
@@ -259,26 +262,31 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     }
 
     if (config.use_tracy) ztracy.Message("ready to draw");
+    if (er.is_sub_chunks) std.debug.print("can draw sub chunks\n", .{});
+    if (ecs.has_id(world, entity, ecs.id(components.block.SubChunks))) {
+        std.debug.print("drawing sub chunks in gfx_mesh?\n", .{});
+    }
     ecs.add(world, entity, components.gfx.CanDraw);
     gl.finish();
 
     if (config.use_tracy) ztracy.Message("cleaning up memory");
     ecs.remove(world, entity, components.gfx.ElementsRendererConfig);
+    const num_indices: usize = if (er.is_sub_chunks) gfx.mesh.sub_chunk_indices.len else er.mesh_data.indices.len;
     _ = ecs.set(world, entity, components.gfx.ElementsRenderer, .{
         .program = program,
         .vao = vao,
         .vbo = vbo,
         .ebo = ebo,
         .texture = texture,
-        .numIndices = @intCast(er.mesh_data.indices.len),
+        .num_indices = @intCast(num_indices),
     });
     if (vertexShader) |v| game.state.allocator.free(v);
     if (fragmentShader) |f| game.state.allocator.free(f);
     _ = game.state.gfx.renderConfigs.remove(erc.id);
     ecs.delete(world, erc.id);
     if (deinit_mesh) er.mesh_data.deinit();
+    if (!er.is_sub_chunks) builder.deinit();
     game.state.allocator.destroy(er);
-    builder.deinit();
     if (config.use_tracy) ztracy.Message("gfx mesh system is done");
 }
 

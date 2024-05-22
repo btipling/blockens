@@ -21,6 +21,7 @@ pub fn initAnimationShaderStorageBufferObject(
     }
     var ssbo: u32 = undefined;
     gl.genBuffers(1, &ssbo);
+    std.debug.print("animation storage ssbo: {d}\n", .{ssbo});
     gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
 
     const data_ptr: *const anyopaque = ar.items.ptr;

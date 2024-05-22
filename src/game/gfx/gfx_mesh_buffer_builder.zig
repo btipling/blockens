@@ -2,7 +2,7 @@
 
 const MeshData = @This();
 
-mesh_binding_point: u32 = constants.MeshDataBindinggPoint,
+mesh_binding_point: u32 = constants.MeshDataBindingPoint,
 
 pub fn init(self: *MeshData, vertices: []const [3]f32, ssbos: *std.AutoHashMap(u32, u32)) void {
     var buf: [1000 * @sizeOf(gl.mesh_buffer.meshData)]u8 = undefined;

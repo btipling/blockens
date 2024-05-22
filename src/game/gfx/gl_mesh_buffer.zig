@@ -14,12 +14,13 @@ pub fn initMeshShaderStorageBufferObject(
     }
     var ssbo: u32 = undefined;
     gl.genBuffers(1, &ssbo);
+    std.debug.print("mesh storage ssbo: {d}\n", .{ssbo});
     gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
 
     const data_ptr: *const anyopaque = mdl.items.ptr;
     const struct_size = @sizeOf(meshData);
     const size = @as(isize, @intCast(mdl.items.len * struct_size));
-    gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, data_ptr, gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, data_ptr, gl.STATIC_DRAW);
     gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, block_binding_point, ssbo);
     gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, 0);
     return ssbo;

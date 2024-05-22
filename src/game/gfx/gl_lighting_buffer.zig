@@ -10,6 +10,7 @@ pub fn initLightingShaderStorageBufferObject(
     };
     var ssbo: u32 = undefined;
     gl.genBuffers(1, &ssbo);
+    std.debug.print("lighting storage ssbo: {d}\n", .{ssbo});
     gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
 
     const struct_size = @sizeOf(lightingData);
@@ -36,4 +37,5 @@ pub fn updateLightingShaderStorageBufferObject(
     gl.bufferSubData(gl.SHADER_STORAGE_BUFFER, buffer_offset, size, &ld);
 }
 
+const std = @import("std");
 const gl = @import("zopengl").bindings;

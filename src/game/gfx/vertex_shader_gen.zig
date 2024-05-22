@@ -79,9 +79,12 @@ pub const VertexShaderGen = struct {
         }
 
         fn gen_attribute_vars(r: *runner) !void {
-            var line = try shader_helpers.attribute_location(r.location, "position", .vec3);
-            r.l(&line);
-            r.location += 1;
+            var line: [250:0]u8 = undefined;
+            if (!r.cfg.is_sub_chunks) {
+                line = try shader_helpers.attribute_location(r.location, "position", .vec3);
+                r.l(&line);
+                r.location += 1;
+            }
             if (r.cfg.has_texture_coords) {
                 line = try shader_helpers.attribute_location(r.location, "eTexCoord", .vec2);
                 r.l(&line);
@@ -205,7 +208,7 @@ pub const VertexShaderGen = struct {
             r.a("};\n\n");
             r.a("\n");
             const line = try shader_helpers.ssbo_binding(
-                constants.MeshDataBindinggPoint,
+                constants.MeshDataBindingPoint,
                 constants.SubChunksBlockName,
             );
             r.l(&line);

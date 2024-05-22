@@ -63,7 +63,7 @@ fn gfxSortedMultiDraw(
             return;
         }
     }
-    if (er.enableDepthTest) gl.enable(gl.DEPTH_TEST);
+    if (er.enable_depth_test) gl.enable(gl.DEPTH_TEST);
     gl.useProgram(er.program);
     if (er.texture != 0) {
         gl.activeTexture(gl.TEXTURE0);

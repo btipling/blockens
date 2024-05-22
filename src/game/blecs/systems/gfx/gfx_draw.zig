@@ -63,7 +63,7 @@ fn gfxDraw(
             return;
         }
     }
-    if (er.enableDepthTest) gl.enable(gl.DEPTH_TEST);
+    if (er.enable_depth_test) gl.enable(gl.DEPTH_TEST);
     gl.useProgram(er.program);
     if (er.texture != 0) {
         gl.activeTexture(gl.TEXTURE0);
@@ -72,7 +72,7 @@ fn gfxDraw(
     gl.bindVertexArray(er.vao);
     const use_multidraw = ecs.has_id(world, entity, ecs.id(components.block.UseMultiDraw));
     if (!use_multidraw) {
-        gl.drawElements(gl.TRIANGLES, er.numIndices, gl.UNSIGNED_INT, null);
+        gl.drawElements(gl.TRIANGLES, er.num_indices, gl.UNSIGNED_INT, null);
         return;
     }
     if (use_multidraw) {

@@ -13,8 +13,8 @@ pub const ElementsRenderer = struct {
     vbo: u32 = 0,
     ebo: u32 = 0,
     texture: u32 = 0,
-    numIndices: gl.Int = 0,
-    enableDepthTest: bool = true,
+    num_indices: gl.Int = 0,
+    enable_depth_test: bool = true,
 };
 
 pub const AnimationMesh = struct {
