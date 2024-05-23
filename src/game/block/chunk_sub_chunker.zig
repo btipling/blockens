@@ -35,7 +35,8 @@ pub const subChunkVoxelData = struct {
 pub const meshData = struct {
     indices: []u32,
     positions: [][3]f32,
-    normals: [][3]f32 = undefined,
+    normals: [][3]f32,
+    block_data: []u32,
     full_offset: u32 = 0,
 };
 
@@ -44,6 +45,7 @@ pub fn getMeshData(
     indices_buf: *[chunk.subchunk.subChunkSize * 36]u32,
     vertices_buf: *[chunk.subchunk.subChunkSize * 36][3]f32,
     normals_buf: *[chunk.subchunk.subChunkSize * 36][3]f32,
+    block_data_buf: *[chunk.subchunk.subChunkSize * 36]u32,
     full_offset: u32,
 ) meshData {
     var offset: u32 = 0;
@@ -62,6 +64,7 @@ pub fn getMeshData(
                 vd_pos[2] + sub_index_pos[2],
             };
             normals_buf[ii + offset] = vd.normals[ii];
+            block_data_buf[ii + offset] = vd.bd.toId();
         }
         offset += @intCast(vd.num_indices);
     }
@@ -69,6 +72,7 @@ pub fn getMeshData(
         .indices = indices_buf[0..offset],
         .positions = vertices_buf[0..offset],
         .normals = normals_buf[0..offset],
+        .block_data = block_data_buf[0..offset],
         .full_offset = full_offset + offset,
     };
 }

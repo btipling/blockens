@@ -158,7 +158,7 @@ fn toggleWireframe() void {
 
 fn evalChunkFunc() !void {
     if (game.state.ui.chunks_small) {
-        _ = game.state.jobs.generateSubChunks();
+        _ = game.state.jobs.generateDemoSubChunks();
         return;
     }
     _ = game.state.jobs.generateDemoChunk();

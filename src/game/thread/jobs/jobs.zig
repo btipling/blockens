@@ -68,17 +68,17 @@ pub const Jobs = struct {
     pub fn generateDemoChunk(self: *Jobs) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
-            generate_demo_chunk.GenerateDemoChunkJob{},
+            job_demo_generate_chunk.GenerateDemoChunkJob{},
         ) catch |e| {
             std.debug.print("error scheduling demo chunk job: {}\n", .{e});
             return zjobs.JobId.none;
         };
     }
 
-    pub fn generateSubChunks(self: *Jobs) zjobs.JobId {
+    pub fn generateDemoSubChunks(self: *Jobs) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
-            generate_subchunks.GenerateSubChunksJob{},
+            job_demo_generate_subchunks.GenerateDemoSubChunksJob{},
         ) catch |e| {
             std.debug.print("error scheduling gen  subchunks job: {}\n", .{e});
             return zjobs.JobId.none;
@@ -317,15 +317,15 @@ const state = @import("../../state.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const job_chunk_meshing = @import("jobs_chunk_meshing.zig");
 const job_sub_chunk_meshing = @import("jobs_sub_chunk_meshing.zig");
-const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
-const generate_subchunks = @import("jobs_generate_subchunks.zig");
+const job_demo_generate_chunk = @import("jobs_demo_generate_chunk.zig");
+const job_demo_descriptor_gen = @import("jobs_demo_descriptor_gen.zig");
+const job_demo_terrain_gen = @import("jobs_demo_terrain_gen.zig");
+const job_demo_generate_subchunks = @import("jobs_demo_generate_subchunks.zig");
 const job_save_player = @import("jobs_save_player.zig");
 const job_save_chunk = @import("jobs_save_chunk.zig");
 const job_lighting = @import("jobs_lighting.zig");
 const job_lighting_cross_chunk = @import("jobs_lighting_cross_chunk.zig");
 const job_load_chunk = @import("jobs_load_chunks.zig");
-const job_demo_descriptor_gen = @import("jobs_demo_descriptor_gen.zig");
-const job_demo_terrain_gen = @import("jobs_demo_terrain_gen.zig");
 const job_world_descriptor_gen = @import("jobs_world_descriptor_gen.zig");
 const job_world_terrain_gen = @import("jobs_world_terrain_gen.zig");
 const job_find_player_pos = @import("jobs_find_player_position.zig");

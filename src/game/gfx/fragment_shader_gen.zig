@@ -99,6 +99,11 @@ pub const FragmentShaderGen = struct {
             } else {
                 r.a("    vec4 Color = vec4(1.0, 0.0, 1.0, 1.0);\n");
             }
+            std.debug.print("has texture: {} is meshed: {} has_normals: {}\n", .{
+                r.cfg.has_texture,
+                r.cfg.is_meshed,
+                r.cfg.has_normals,
+            });
             if (r.cfg.has_texture) {
                 r.a("    vec4 textColor;\n");
                 if (r.cfg.is_meshed and r.cfg.has_normals) {

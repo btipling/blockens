@@ -28,7 +28,14 @@ pub fn getMeshData(self: *sorter) []u32 {
     var indices_buf: [chunk.subchunk.subChunkSize * 36]u32 = undefined;
     var vertices_buf: [chunk.subchunk.subChunkSize * 36][3]f32 = undefined;
     var normals_buf: [chunk.subchunk.subChunkSize * 36][3]f32 = undefined;
-    const res = sc.chunker.getMeshData(&indices_buf, &vertices_buf, &normals_buf, full_offset);
+    var block_data_buf: [chunk.subchunk.subChunkSize * 36]u32 = undefined;
+    const res = sc.chunker.getMeshData(
+        &indices_buf,
+        &vertices_buf,
+        &normals_buf,
+        &block_data_buf,
+        full_offset,
+    );
     var builder = game.state.allocator.create(
         gfx.buffer_data.AttributeBuilder,
     ) catch @panic("OOM");
@@ -41,6 +48,7 @@ pub fn getMeshData(self: *sorter) []u32 {
     // same order as defined in shader gen, just like gfx_mesh
     const pos_loc: u32 = builder.defineFloatAttributeValue(3);
     const nor_loc: u32 = builder.defineFloatAttributeValue(3);
+    const block_data_loc: u32 = builder.defineFloatAttributeValue(4);
     builder.initBuffer();
 
     for (0..res.positions.len) |ii| {
@@ -52,6 +60,15 @@ pub fn getMeshData(self: *sorter) []u32 {
         {
             const n = res.normals[ii];
             builder.addFloatAtLocation(nor_loc, &n, vertex_index);
+        }
+        {
+            const bd: block.BlockData = block.BlockData.fromId(res.block_data[ii]);
+            const ambient: f32 = @bitCast(@as(u32, @intCast(bd.ambient)));
+            const lighting: f32 = @bitCast(@as(u32, @intCast(bd.lighting)));
+            const block_index: f32 = @floatFromInt(game.state.ui.texture_atlas_block_index[@intCast(bd.block_id)]);
+            const num_blocks: f32 = @floatFromInt(game.state.ui.texture_atlas_num_blocks);
+            const _bd: [4]f32 = [_]f32{ block_index, num_blocks, ambient, lighting };
+            builder.addFloatAtLocation(block_data_loc, &_bd, vertex_index);
         }
         builder.nextVertex();
     }

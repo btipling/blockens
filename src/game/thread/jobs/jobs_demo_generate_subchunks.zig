@@ -1,4 +1,4 @@
-pub const GenerateSubChunksJob = struct {
+pub const GenerateDemoSubChunksJob = struct {
     pub fn exec(self: *@This()) void {
         if (config.use_tracy) {
             const ztracy = @import("ztracy");
@@ -11,12 +11,18 @@ pub const GenerateSubChunksJob = struct {
         }
     }
 
-    pub fn generateSubChunksJob(_: *GenerateSubChunksJob) void {
+    pub fn generateSubChunksJob(_: *GenerateDemoSubChunksJob) void {
         const chunk_data = game.state.script.evalChunkFunc(&game.state.ui.chunk_buf) catch |err| {
             std.debug.print("Error evaluating chunk in eval chunks function: {}\n", .{err});
             return;
         };
         errdefer game.state.allocator.free(chunk_data);
+        var i: usize = 0;
+        while (i < chunk.chunkSize) : (i += 1) {
+            var bd: block.BlockData = block.BlockData.fromId(chunk_data[i]);
+            bd.setSettingsAmbient();
+            chunk_data[i] = bd.toId();
+        }
         var msg: buffer.buffer_message = buffer.new_message(.sub_chunks_gen);
         buffer.set_progress(&msg, true, 1);
         const pos: @Vector(4, f32) = .{ 0, 0, 0, 0 };

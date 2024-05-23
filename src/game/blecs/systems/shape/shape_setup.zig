@@ -101,18 +101,18 @@ const shaders = struct {
                 break :blk null;
             },
             .is_sub_chunks = e.is_sub_chunks,
-            .debug_normals = e.is_sub_chunks,
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch @panic("vertex shader gen fail");
     }
     fn genFragmentShader(e: *const extractions, mesh_data: *const gfx.mesh.meshData) [:0]const u8 {
+        const has_normals = mesh_data.normals != null;
         var has_texture = false;
         if (mesh_data.texcoords != null) {
             if (e.block_id != null) has_texture = true;
             if (e.has_demo_cube_texture) has_texture = true;
             if (e.has_texture_atlas) has_texture = true;
             if (e.has_mob_texture) has_texture = true;
-        }
+        } else if (e.has_texture_atlas and e.lighting_block_index != null) has_texture = true;
         var block_index: usize = 0;
         if (e.block_id) |bi| {
             block_index = game.state.ui.texture_atlas_block_index[@intCast(bi)];
@@ -122,12 +122,11 @@ const shaders = struct {
             .color = e.color,
             .has_texture_coords = mesh_data.texcoords != null,
             .has_texture = has_texture,
-            .has_normals = mesh_data.normals != null,
+            .has_normals = has_normals,
             .is_meshed = e.is_meshed,
             .has_block_data = e.has_texture_atlas,
             .outline_color = e.outline_color,
-            .lighting_block_index = e.lighting_block_index,
-            .debug_normals = e.is_sub_chunks,
+            .lighting_block_index = if (has_texture) e.lighting_block_index else null,
         };
         return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch @panic("frag shader gen fail");
     }
@@ -207,6 +206,7 @@ const extractions = struct {
         if (ecs.has_id(world, entity, ecs.id(components.block.SubChunks))) {
             if (e.debug) std.debug.print("extractBlock: is meshed\n", .{});
             e.is_sub_chunks = true;
+            e.is_meshed = true;
         }
     }
 
