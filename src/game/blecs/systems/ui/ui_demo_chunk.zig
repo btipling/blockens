@@ -154,12 +154,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     .h = 50,
                     .w = 250,
                 })) {
-                    game.state.ui.demo_screen_rotation_x = 0;
-                    game.state.ui.demo_screen_rotation_y = 0.341;
-                    game.state.ui.demo_screen_rotation_z = 0.938;
-                    game.state.ui.demo_screen_scale = 0.107;
-                    game.state.ui.demo_screen_translation = .{ -1.718, -1.631, -0.264, 0 };
-                    game.state.ui.demo_screen_pp_translation = .{ -0.650, 0.100, 0.000, 0 };
+                    game.state.ui.demo_screen_rotation_x = -0.307;
+                    game.state.ui.demo_screen_rotation_y = -2.471;
+                    game.state.ui.demo_screen_rotation_z = 0.333;
+                    game.state.ui.demo_screen_scale = 0.050;
+                    game.state.ui.demo_screen_translation = .{ -4.559, -1.631, -0.264, 0 };
+                    game.state.ui.demo_screen_pp_translation = .{ -0.650, -4.176, 0.090, 0 };
                     entities.screen.initDemoChunkCamera(false);
                 }
             }

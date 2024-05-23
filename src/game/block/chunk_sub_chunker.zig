@@ -37,16 +37,16 @@ pub fn getMeshData(
     var i: usize = 0;
     while (i < chunk.subchunk.subChunkSize) : (i += 1) {
         const vd = self.data[i];
-        const sub_pos = vd.scd.sub_pos;
+        const sub_index_pos = vd.scd.sub_index_pos;
         var ii: usize = 0;
         while (ii < vd.num_indices) : (ii += 1) {
             const index = vd.indices[ii];
             indices_buf[ii + offset] = index + offset + full_offset;
             const vd_pos: [3]f32 = vd.positions[ii];
             vertices_buf[ii + offset] = [3]f32{
-                vd_pos[0] + sub_pos[0],
-                vd_pos[1] + sub_pos[1],
-                vd_pos[2] + sub_pos[2],
+                vd_pos[0] + sub_index_pos[0],
+                vd_pos[1] + sub_index_pos[1],
+                vd_pos[2] + sub_index_pos[2],
             };
         }
         offset += @intCast(vd.num_indices);
@@ -93,12 +93,12 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
         var vd = self.data[i];
         if (vd.bd.block_id == 0) continue;
         x_pos: {
-            if (vd.scd.sub_index_pos[0] == chunk.subchunk.subChunkDim - 1) {
+            if (vd.scd.sub_index_pos[0] + 1 >= chunk.subchunk.subChunkDim) {
                 const n = vd.num_indices;
                 const e = vd.num_indices + 6;
                 const ob: usize = 6;
                 const oe: usize = 12;
-                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[ob..oe]);
+                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[n..e]);
                 @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
                 @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
                 vd.num_indices += 6;
@@ -111,7 +111,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                 const e = vd.num_indices + 6;
                 const ob: usize = 18;
                 const oe: usize = 24;
-                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[ob..oe]);
+                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[n..e]);
                 @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
                 @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
                 vd.num_indices += 6;
@@ -124,7 +124,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                 const e = vd.num_indices + 6;
                 const ob: usize = 30;
                 const oe: usize = 36;
-                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[ob..oe]);
+                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[n..e]);
                 @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
                 @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
                 vd.num_indices += 6;
@@ -137,7 +137,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                 const e = vd.num_indices + 6;
                 const ob: usize = 24;
                 const oe: usize = 30;
-                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[ob..oe]);
+                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[n..e]);
                 @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
                 @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
                 vd.num_indices += 6;
@@ -150,7 +150,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                 const e = vd.num_indices + 6;
                 const ob: usize = 0;
                 const oe: usize = 6;
-                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[ob..oe]);
+                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[n..e]);
                 @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
                 @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
                 vd.num_indices += 6;
@@ -163,7 +163,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                 const e = vd.num_indices + 6;
                 const ob: usize = 12;
                 const oe: usize = 18;
-                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[ob..oe]);
+                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[n..e]);
                 @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
                 @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
                 vd.num_indices += 6;

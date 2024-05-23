@@ -28,14 +28,6 @@ pub fn getMeshData(self: *sorter) []u32 {
     var indices_buf: [chunk.subchunk.subChunkSize * 36]u32 = undefined;
     var vertices_buf: [chunk.subchunk.subChunkSize * 36][3]f32 = undefined;
     const res = sc.chunker.getMeshData(&indices_buf, &vertices_buf, full_offset);
-    std.debug.print(
-        "idfk bro - \n   indices: {any}\n   vertices: {any}\n   new full offset: {d}\n\n",
-        .{
-            res.indices,
-            res.positions,
-            res.full_offset,
-        },
-    );
     var builder = game.state.allocator.create(
         gfx.buffer_data.AttributeBuilder,
     ) catch @panic("OOM");
