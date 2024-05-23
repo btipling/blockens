@@ -465,7 +465,7 @@ pub fn initSubchunks(reset: bool) void {
     ecs.add(world, sc_e, components.block.UseTextureAtlas);
     _ = ecs.set(world, sc_e, components.shape.Lighting, .{ .ssbo = gfx.constants.LightingBindingPoint });
     ecs.add(world, sc_e, components.shape.NeedsSetup);
-    // ecs.add(world, sc_e, components.Debug);
+    ecs.add(world, sc_e, components.Debug);
     return;
 }
 

@@ -59,7 +59,7 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         .has_mob_texture = e.has_mob_texture,
         .has_block_texture_atlas = e.has_texture_atlas,
         .is_multi_draw = e.is_multi_draw,
-        .has_attr_translation = e.is_multi_draw,
+        .has_attr_translation = e.is_multi_draw or e.is_sub_chunks,
         .is_sub_chunks = e.is_sub_chunks,
     };
     if (!e.is_multi_draw or !gfx.gl.Gl.hasMultiDrawShaders()) {
@@ -95,7 +95,7 @@ const shaders = struct {
             .is_multi_draw = e.is_multi_draw,
             .is_meshed = e.is_meshed,
             .has_block_data = e.has_texture_atlas,
-            .has_attr_translation = e.is_multi_draw,
+            .has_attr_translation = e.is_multi_draw or e.is_sub_chunks,
             .mesh_transforms = blk: {
                 if (e.mesh_transforms) |mt| break :blk mt.items;
                 break :blk null;

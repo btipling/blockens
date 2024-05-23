@@ -42,6 +42,25 @@ pub fn getMeshData(self: *sorter) []u32 {
         gfx.buffer_data.AttributeBuilder,
     ) catch @panic("OOM");
     std.debug.print("initing with {d} positions\n", .{res.positions.len});
+
+    const cp = sc.wp.getWorldLocation();
+    var loc: @Vector(4, f32) = undefined;
+    loc = .{
+        cp[0] * chunk.chunkDim,
+        cp[1] * chunk.chunkDim,
+        cp[2] * chunk.chunkDim,
+        0,
+    };
+    const aloc: @Vector(4, f32) = loc - @as(@Vector(4, f32), @splat(0.5));
+
+    const cfp: @Vector(4, f32) = sc.sub_pos;
+    const translation: @Vector(4, f32) = .{
+        cfp[0] + aloc[0],
+        cfp[1] + aloc[1],
+        cfp[2] + aloc[2],
+        cfp[3],
+    };
+
     builder.* = gfx.buffer_data.AttributeBuilder.init(
         @intCast(res.positions.len),
         0, // set in gfx_mesh
@@ -51,6 +70,7 @@ pub fn getMeshData(self: *sorter) []u32 {
     const pos_loc: u32 = builder.defineFloatAttributeValue(3);
     const nor_loc: u32 = builder.defineFloatAttributeValue(3);
     const block_data_loc: u32 = builder.defineFloatAttributeValue(4);
+    const attr_trans_loc: u32 = builder.defineFloatAttributeValue(4);
     builder.initBuffer();
 
     for (0..res.positions.len) |ii| {
@@ -71,6 +91,10 @@ pub fn getMeshData(self: *sorter) []u32 {
             const num_blocks: f32 = @floatFromInt(game.state.ui.texture_atlas_num_blocks);
             const _bd: [4]f32 = [_]f32{ block_index, num_blocks, ambient, lighting };
             builder.addFloatAtLocation(block_data_loc, &_bd, vertex_index);
+        }
+        {
+            const atr_data: [4]f32 = translation;
+            builder.addFloatAtLocation(attr_trans_loc, &atr_data, vertex_index);
         }
         builder.nextVertex();
     }

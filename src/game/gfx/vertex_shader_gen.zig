@@ -408,7 +408,7 @@ pub const VertexShaderGen = struct {
                 r.a(constants.UBOShaderDataName);
                 r.a("[1];\n");
                 r.a("    fragPos = position;\n");
-                r.a("    fragPos = vec3(fragPos.x + 0.5, fragPos.y + 0.5, fragPos.z + 0.5);");
+                r.a("    fragPos = vec3(fragPos.x + 0.5, fragPos.y + 0.5, fragPos.z + 0.5);\n");
                 if (r.cfg.has_block_data) {
                     r.a("    bl_block_index = block_data[0];\n");
                     r.a("    bl_num_blocks = block_data[1];\n");
