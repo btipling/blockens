@@ -6,6 +6,10 @@ normals: [36][3]f32,
 
 const chunkerSubChunker = @This();
 
+pub const ChunkerError = error{
+    NoMeshData,
+};
+
 pub fn init(
     chunk_data: []const u32,
     pos: chunk.subchunk.subPosition,
@@ -47,7 +51,7 @@ pub fn getMeshData(
     normals_buf: *[chunk.subchunk.subChunkSize * 36][3]f32,
     block_data_buf: *[chunk.subchunk.subChunkSize * 36]u32,
     full_offset: u32,
-) meshData {
+) !meshData {
     var offset: u32 = 0;
     var i: usize = 0;
     while (i < chunk.subchunk.subChunkSize) : (i += 1) {
@@ -68,6 +72,7 @@ pub fn getMeshData(
         }
         offset += @intCast(vd.num_indices);
     }
+    if (offset == 0) return ChunkerError.NoMeshData;
     return .{
         .indices = indices_buf[0..offset],
         .positions = vertices_buf[0..offset],

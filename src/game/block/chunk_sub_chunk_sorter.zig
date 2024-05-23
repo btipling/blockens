@@ -22,6 +22,8 @@ pub fn addSubChunk(self: *sorter, sc: *chunk.subchunk) void {
     self.all_sub_chunks.append(self.allocator, sc) catch @panic("OOM");
 }
 
+// getMeshData returns indices after building a ubo buffer. A thing that returns indices but has the side
+// effect of building a buffer is a bit weird.
 pub fn getMeshData(self: *sorter) []u32 {
     const sc: *chunk.subchunk = self.all_sub_chunks.items[0];
     const full_offset: u32 = 0;
@@ -35,7 +37,7 @@ pub fn getMeshData(self: *sorter) []u32 {
         &normals_buf,
         &block_data_buf,
         full_offset,
-    );
+    ) catch @panic("no mesh");
     var builder = game.state.allocator.create(
         gfx.buffer_data.AttributeBuilder,
     ) catch @panic("OOM");
