@@ -31,6 +31,7 @@ pub fn getMeshData(
     self: *chunkerSubChunker,
     indices_buf: *[chunk.subchunk.subChunkSize * 36]u32,
     vertices_buf: *[chunk.subchunk.subChunkSize * 36][3]f32,
+    normals_buf: *[chunk.subchunk.subChunkSize * 36][3]f32,
     full_offset: u32,
 ) meshData {
     var offset: u32 = 0;
@@ -48,12 +49,14 @@ pub fn getMeshData(
                 vd_pos[1] + sub_index_pos[1],
                 vd_pos[2] + sub_index_pos[2],
             };
+            normals_buf[ii + offset] = vd.normals[ii];
         }
         offset += @intCast(vd.num_indices);
     }
     return .{
         .indices = indices_buf[0..offset],
         .positions = vertices_buf[0..offset],
+        .normals = normals_buf[0..offset],
         .full_offset = full_offset + offset,
     };
 }

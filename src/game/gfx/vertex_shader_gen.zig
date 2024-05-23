@@ -13,6 +13,7 @@ pub const VertexShaderGen = struct {
         animation_block_index: ?u32,
         animation: ?*gfx.Animation,
         has_normals: bool = false,
+        debug_normals: bool = false,
         has_edges: bool = false,
         has_block_data: bool = false,
         has_attr_translation: bool = false,
@@ -124,6 +125,9 @@ pub const VertexShaderGen = struct {
             }
             if (r.cfg.has_normals) {
                 r.a("flat out vec3 fragNormal;\n");
+            }
+            if (r.cfg.debug_normals) {
+                r.a("out vec3 bl_debug_normal;\n");
             }
             if (r.cfg.has_edges) {
                 r.a("out vec2 bl_edge;\n");
@@ -414,6 +418,9 @@ pub const VertexShaderGen = struct {
             }
             if (r.cfg.has_normals) {
                 r.a("    fragNormal = normal;\n");
+            }
+            if (r.cfg.debug_normals) {
+                r.a("    bl_debug_normal = normal;\n");
             }
 
             r.a("}\n");

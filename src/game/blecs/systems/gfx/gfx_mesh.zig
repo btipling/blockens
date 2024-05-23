@@ -42,19 +42,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         std.debug.print("couldn't find render config for {d}\n", .{erc.id});
         return;
     };
-    var deinit_mesh = true;
-    if (ecs.get(world, entity, components.shape.Shape)) |s| {
-        const sh: *const components.shape.Shape = s;
-        switch (sh.shape_type) {
-            .meshed_voxel => {
-                deinit_mesh = false;
-            },
-            .sub_chunks => {
-                deinit_mesh = false;
-            },
-            else => {},
-        }
-    }
+
     const parent = ecs.get_parent(world, entity);
     const vertexShader: ?[:0]const u8 = er.vertexShader;
     const fragmentShader: ?[:0]const u8 = er.fragmentShader;
@@ -82,7 +70,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             if (fragmentShader) |f| game.state.allocator.free(f);
             _ = game.state.gfx.renderConfigs.remove(erc.id);
             ecs.delete(world, erc.id);
-            if (deinit_mesh) er.mesh_data.deinit();
+            er.mesh_data.deinit();
             game.state.allocator.destroy(er);
             return;
         }
@@ -293,7 +281,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     if (fragmentShader) |f| game.state.allocator.free(f);
     _ = game.state.gfx.renderConfigs.remove(erc.id);
     ecs.delete(world, erc.id);
-    if (deinit_mesh) er.mesh_data.deinit();
+    er.mesh_data.deinit();
     builder.deinit();
     game.state.allocator.destroy(er);
     if (config.use_tracy) ztracy.Message("gfx mesh system is done");

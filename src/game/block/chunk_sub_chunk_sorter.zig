@@ -27,7 +27,8 @@ pub fn getMeshData(self: *sorter) []u32 {
     const full_offset: u32 = 0;
     var indices_buf: [chunk.subchunk.subChunkSize * 36]u32 = undefined;
     var vertices_buf: [chunk.subchunk.subChunkSize * 36][3]f32 = undefined;
-    const res = sc.chunker.getMeshData(&indices_buf, &vertices_buf, full_offset);
+    var normals_buf: [chunk.subchunk.subChunkSize * 36][3]f32 = undefined;
+    const res = sc.chunker.getMeshData(&indices_buf, &vertices_buf, &normals_buf, full_offset);
     var builder = game.state.allocator.create(
         gfx.buffer_data.AttributeBuilder,
     ) catch @panic("OOM");
@@ -39,6 +40,7 @@ pub fn getMeshData(self: *sorter) []u32 {
     );
     // same order as defined in shader gen, just like gfx_mesh
     const pos_loc: u32 = builder.defineFloatAttributeValue(3);
+    const nor_loc: u32 = builder.defineFloatAttributeValue(3);
     builder.initBuffer();
 
     for (0..res.positions.len) |ii| {
@@ -46,6 +48,10 @@ pub fn getMeshData(self: *sorter) []u32 {
         {
             const p = res.positions[ii];
             builder.addFloatAtLocation(pos_loc, &p, vertex_index);
+        }
+        {
+            const n = res.normals[ii];
+            builder.addFloatAtLocation(nor_loc, &n, vertex_index);
         }
         builder.nextVertex();
     }

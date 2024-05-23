@@ -38,21 +38,11 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
     const mesh_data: gfx.mesh.meshData = switch (sh.shape_type) {
         .plane => gfx.mesh.plane(),
         .cube => gfx.mesh.cube(),
-        .meshed_voxel => blk: {
-            const data: *const components.block.BlockData = ecs.get(world, entity, components.block.BlockData) orelse @panic("nope");
-            var c: *chunk.Chunk = undefined;
-            if (data.is_settings) {
-                c = game.state.blocks.settings_chunks.get(data.chunk_world_position).?;
-            } else {
-                c = game.state.blocks.game_chunks.get(data.chunk_world_position).?;
-            }
-            break :blk .{};
-        },
-        .multidraw_voxel => gfx.mesh.cube(), // just to setup the positions
+        .multidraw_voxel => gfx.mesh.cube(),
+        .sub_chunks => gfx.mesh.subchunk(),
         .mob => gfx.mesh.mob(world, entity),
-        .bounding_box => gfx.mesh.bounding_box(e.mob_id), // just to setup the positions
+        .bounding_box => gfx.mesh.bounding_box(e.mob_id),
         .block_highlight => gfx.mesh.block_highlight(),
-        .sub_chunks => .{},
     };
 
     var erc: *gfx.ElementsRendererConfig = game.state.allocator.create(gfx.ElementsRendererConfig) catch @panic("nope");
@@ -111,6 +101,7 @@ const shaders = struct {
                 break :blk null;
             },
             .is_sub_chunks = e.is_sub_chunks,
+            .debug_normals = e.is_sub_chunks,
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch @panic("vertex shader gen fail");
     }
@@ -136,6 +127,7 @@ const shaders = struct {
             .has_block_data = e.has_texture_atlas,
             .outline_color = e.outline_color,
             .lighting_block_index = e.lighting_block_index,
+            .debug_normals = e.is_sub_chunks,
         };
         return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch @panic("frag shader gen fail");
     }
