@@ -31,7 +31,7 @@ fn handleCursor(xpos: f64, ypos: f64) void {
         camera = game.state.entities.sky_camera;
         var filter_desc: blecs.ecs.filter_desc_t = .{};
         filter_desc.terms[0] = .{ .id = blecs.ecs.id(blecs.components.screen.CurrentCamera) };
-        const filter = blecs.ecs.filter_init(world, &filter_desc) catch unreachable;
+        const filter = blecs.ecs.filter_init(world, &filter_desc) catch @panic("blecs error");
         var it = blecs.ecs.filter_iter(world, filter);
         outer: while (blecs.ecs.filter_next(&it)) {
             for (0..it.count()) |i| {

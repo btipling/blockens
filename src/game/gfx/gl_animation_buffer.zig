@@ -17,7 +17,7 @@ pub fn initAnimationShaderStorageBufferObject(
             .scale = d.scale,
             .rotation = d.rotation,
             .translation = d.translation,
-        }) catch unreachable;
+        }) catch @panic("OOM");
     }
     var ssbo: u32 = undefined;
     gl.genBuffers(1, &ssbo);

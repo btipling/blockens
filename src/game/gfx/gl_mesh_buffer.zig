@@ -10,7 +10,7 @@ pub fn initMeshShaderStorageBufferObject(
     var mdl = std.ArrayListUnmanaged(meshData){};
     defer mdl.deinit(allocator);
     for (data) |d| {
-        mdl.append(allocator, d) catch unreachable;
+        mdl.append(allocator, d) catch @panic("OOM");
     }
     var ssbo: u32 = undefined;
     gl.genBuffers(1, &ssbo);

@@ -55,7 +55,7 @@ pub const VertexShaderGen = struct {
         }
 
         fn a(r: *runner, line: []const u8) void {
-            r.buf.appendSlice(r.allocator, line) catch unreachable;
+            r.buf.appendSlice(r.allocator, line) catch @panic("OOM");
         }
 
         fn l(r: *runner, line: [:0]const u8) void {
