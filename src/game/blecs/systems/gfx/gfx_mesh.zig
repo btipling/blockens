@@ -109,7 +109,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             _c.attr_builder = null;
         }
     } else if (er.is_sub_chunks) {
-        if (game.state.ui.demo_sub_chunks_sorter.ebo != 0) @panic("TODO: sorter update existing ebo");
+        if (game.state.ui.demo_sub_chunks_sorter.ebo != 0) @panic("Should not mesh a previously meshed sorter");
         const inds = game.state.ui.demo_sub_chunks_sorter.getMeshData();
         defer game.state.allocator.free(inds);
         ebo = gfx.gl.Gl.initEBO(inds) catch @panic("nope");

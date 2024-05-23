@@ -36,6 +36,13 @@ pub const Gl = struct {
         return EBO;
     }
 
+    pub fn updateEBO(ebo: u32, indices: []const u32) void {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
+        const size = @as(isize, @intCast(indices.len * @sizeOf(u32)));
+        const indicesptr: *const anyopaque = indices.ptr;
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, size, indicesptr, gl.STATIC_DRAW);
+    }
+
     pub fn initVertexShader(vertexShaderSource: ?[:0]const u8) !u32 {
         const vs = vertexShaderSource orelse std.debug.panic("expected a vertex shader\n", .{});
         return initShader(vs, gl.VERTEX_SHADER);

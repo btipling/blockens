@@ -63,6 +63,7 @@ fn handle_sub_chunks_gen(msg: buffer.buffer_message) void {
     }
     game.state.blocks.generated_settings_chunks.put(scd.wp, scd.chunk_data) catch @panic("OOM");
     std.debug.print("generated sub chunks with data len: {d}\n", .{scd.chunk_data.len});
+    game.state.ui.resetDemoSorter();
     _ = game.state.jobs.meshSubChunk(scd.wp, .{ 0, 0, 0, 0 }, scd.chunk_data);
 }
 

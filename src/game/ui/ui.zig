@@ -229,6 +229,11 @@ pub fn TerrainGenDeselectScript(self: *UI, id: i32) void {
     self.swapScriptOptions(&self.terrain_gen_script_options_selected, &self.terrain_gen_script_options_available, id);
 }
 
+pub fn resetDemoSorter(self: *UI) void {
+    self.demo_sub_chunks_sorter.deinit();
+    self.demo_sub_chunks_sorter = chunk.subchunk.sorter.init(self.allocator);
+}
+
 const std = @import("std");
 const zgui = @import("zgui");
 const zm = @import("zmath");
