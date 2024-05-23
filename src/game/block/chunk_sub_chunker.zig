@@ -1,11 +1,23 @@
 pos: chunk.subchunk.subPosition,
 data: [chunk.subchunk.subChunkSize]subChunkVoxelData = undefined,
+positions: [36][3]f32,
+indices: [36]u32,
+normals: [36][3]f32,
 
 const chunkerSubChunker = @This();
 
-pub fn init(chunk_data: []const u32, pos: chunk.subchunk.subPosition) chunkerSubChunker {
+pub fn init(
+    chunk_data: []const u32,
+    pos: chunk.subchunk.subPosition,
+    positions: [36][3]f32,
+    indices: [36]u32,
+    normals: [36][3]f32,
+) chunkerSubChunker {
     var csc: chunkerSubChunker = .{
         .pos = pos,
+        .positions = positions,
+        .indices = indices,
+        .normals = normals,
     };
     csc.run(chunk_data);
     return csc;
@@ -101,9 +113,9 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                 const e = vd.num_indices + 6;
                 const ob: usize = 6;
                 const oe: usize = 12;
-                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[n..e]);
-                @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
-                @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
+                @memcpy(vd.indices[n..e], self.indices[n..e]);
+                @memcpy(vd.positions[n..e], self.positions[ob..oe]);
+                @memcpy(vd.normals[n..e], self.normals[ob..oe]);
                 vd.num_indices += 6;
                 break :x_pos;
             }
@@ -114,9 +126,9 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                 const e = vd.num_indices + 6;
                 const ob: usize = 18;
                 const oe: usize = 24;
-                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[n..e]);
-                @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
-                @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
+                @memcpy(vd.indices[n..e], self.indices[n..e]);
+                @memcpy(vd.positions[n..e], self.positions[ob..oe]);
+                @memcpy(vd.normals[n..e], self.normals[ob..oe]);
                 vd.num_indices += 6;
                 break :x_neg;
             }
@@ -127,9 +139,9 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                 const e = vd.num_indices + 6;
                 const ob: usize = 30;
                 const oe: usize = 36;
-                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[n..e]);
-                @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
-                @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
+                @memcpy(vd.indices[n..e], self.indices[n..e]);
+                @memcpy(vd.positions[n..e], self.positions[ob..oe]);
+                @memcpy(vd.normals[n..e], self.normals[ob..oe]);
                 vd.num_indices += 6;
                 break :y_pos;
             }
@@ -140,9 +152,9 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                 const e = vd.num_indices + 6;
                 const ob: usize = 24;
                 const oe: usize = 30;
-                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[n..e]);
-                @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
-                @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
+                @memcpy(vd.indices[n..e], self.indices[n..e]);
+                @memcpy(vd.positions[n..e], self.positions[ob..oe]);
+                @memcpy(vd.normals[n..e], self.normals[ob..oe]);
                 vd.num_indices += 6;
                 break :y_neg;
             }
@@ -153,9 +165,9 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                 const e = vd.num_indices + 6;
                 const ob: usize = 0;
                 const oe: usize = 6;
-                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[n..e]);
-                @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
-                @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
+                @memcpy(vd.indices[n..e], self.indices[n..e]);
+                @memcpy(vd.positions[n..e], self.positions[ob..oe]);
+                @memcpy(vd.normals[n..e], self.normals[ob..oe]);
                 vd.num_indices += 6;
                 break :z_pos;
             }
@@ -166,9 +178,9 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                 const e = vd.num_indices + 6;
                 const ob: usize = 12;
                 const oe: usize = 18;
-                @memcpy(vd.indices[n..e], gfx.mesh.cube_indices[n..e]);
-                @memcpy(vd.positions[n..e], gfx.mesh.cube_positions[ob..oe]);
-                @memcpy(vd.normals[n..e], gfx.mesh.cube_normals[ob..oe]);
+                @memcpy(vd.indices[n..e], self.indices[n..e]);
+                @memcpy(vd.positions[n..e], self.positions[ob..oe]);
+                @memcpy(vd.normals[n..e], self.normals[ob..oe]);
                 vd.num_indices += 6;
                 break :z_neg;
             }
@@ -178,6 +190,10 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
 }
 
 test run {
+    const positions: [36][3]f32 = undefined;
+    const indices: [36]u32 = undefined;
+    const normals: [36][3]f32 = undefined;
+
     const chunk_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
     defer std.testing.allocator.free(chunk_data);
     @memset(chunk_data, 0);
@@ -186,7 +202,13 @@ test run {
     var bd: block.BlockData = block.BlockData.fromId(chunk_data[scd.chunk_index]);
     bd.block_id = 3;
     chunk_data[scd.chunk_index] = bd.toId();
-    const t1 = init(chunk_data, scd.sub_pos);
+    const t1 = init(
+        chunk_data,
+        scd.sub_pos,
+        positions,
+        indices,
+        normals,
+    );
     try std.testing.expectEqual(chunk.subchunk.subChunkSize, t1.data.len);
 
     var tbd: block.BlockData = t1.data[scd.sub_chunk_index].bd;
@@ -197,7 +219,13 @@ test run {
     bd = block.BlockData.fromId(0);
     bd.block_id = 3;
     chunk_data[scd.chunk_index] = bd.toId();
-    const t2 = init(chunk_data, scd.sub_pos);
+    const t2 = init(
+        chunk_data,
+        scd.sub_pos,
+        positions,
+        indices,
+        normals,
+    );
     try std.testing.expectEqual(chunk.subchunk.subChunkSize, t2.data.len);
     tbd = t2.data[scd.sub_chunk_index].bd;
     try std.testing.expectEqual(3, tbd.block_id);
@@ -205,5 +233,4 @@ test run {
 
 const std = @import("std");
 const block = @import("block.zig");
-const gfx = @import("../gfx/gfx.zig");
 const chunk = block.chunk;

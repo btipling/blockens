@@ -20,7 +20,13 @@ pub const SubChunkMeshJob = struct {
     pub fn mesh(self: *SubChunkMeshJob) void {
         if (config.use_tracy) ztracy.Message("starting subchunk mesh");
         const chunk_data = self.chunk_data;
-        const chunker = chunk.subchunk.chunker.init(chunk_data, self.sub_pos);
+        const chunker = chunk.subchunk.chunker.init(
+            chunk_data,
+            self.sub_pos,
+            gfx.mesh.cube_positions,
+            gfx.mesh.cube_indices,
+            gfx.mesh.cube_normals,
+        );
         const sc = chunk.subchunk.init(
             game.state.allocator,
             self.wp,
