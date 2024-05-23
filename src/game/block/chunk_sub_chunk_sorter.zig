@@ -1,6 +1,6 @@
 index_offset: usize = 0,
 allocator: std.mem.Allocator,
-all_sub_chunks: std.ArrayListUnmanaged(*chunk.subchunk) = .{},
+all_sub_chunks: std.ArrayListUnmanaged(*chunk.sub_chunk) = .{},
 ebo: u32 = 0,
 builder: ?*gfx.buffer_data.AttributeBuilder = null,
 num_indices: usize = 0,
@@ -18,19 +18,19 @@ pub fn init(allocator: std.mem.Allocator) *sorter {
     return s;
 }
 
-pub fn addSubChunk(self: *sorter, sc: *chunk.subchunk) void {
+pub fn addSubChunk(self: *sorter, sc: *chunk.sub_chunk) void {
     self.all_sub_chunks.append(self.allocator, sc) catch @panic("OOM");
 }
 
 // getMeshData returns indices after building a ubo buffer. A thing that returns indices but has the side
 // effect of building a buffer is a bit weird.
 pub fn getMeshData(self: *sorter) []u32 {
-    const sc: *chunk.subchunk = self.all_sub_chunks.items[0];
+    const sc: *chunk.sub_chunk = self.all_sub_chunks.items[0];
     const full_offset: u32 = 0;
-    var indices_buf: [chunk.subchunk.subChunkSize * 36]u32 = undefined;
-    var vertices_buf: [chunk.subchunk.subChunkSize * 36][3]f32 = undefined;
-    var normals_buf: [chunk.subchunk.subChunkSize * 36][3]f32 = undefined;
-    var block_data_buf: [chunk.subchunk.subChunkSize * 36]u32 = undefined;
+    var indices_buf: [chunk.sub_chunk.subChunkSize * 36]u32 = undefined;
+    var vertices_buf: [chunk.sub_chunk.subChunkSize * 36][3]f32 = undefined;
+    var normals_buf: [chunk.sub_chunk.subChunkSize * 36][3]f32 = undefined;
+    var block_data_buf: [chunk.sub_chunk.subChunkSize * 36]u32 = undefined;
     const res = sc.chunker.getMeshData(
         &indices_buf,
         &vertices_buf,

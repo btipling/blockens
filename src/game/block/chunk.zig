@@ -274,4 +274,4 @@ pub const big = @import("chunk_big.zig");
 pub const column = @import("chunk_column.zig");
 pub const render = @import("chunk_render.zig");
 pub const descriptor = @import("chunk_terrain_descriptor.zig");
-pub const subchunk = @import("chunk_sub_chunk.zig");
+pub const sub_chunk = @import("chunk_sub_chunk.zig");

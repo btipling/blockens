@@ -2,7 +2,7 @@ const job_name = "SubChunkMeshJob";
 
 pub const SubChunkMeshJob = struct {
     wp: chunk.worldPosition,
-    sub_pos: chunk.subchunk.subPosition,
+    sub_pos: chunk.sub_chunk.subPosition,
     chunk_data: []const u32,
     pt: *buffer.ProgressTracker,
 
@@ -18,16 +18,16 @@ pub const SubChunkMeshJob = struct {
     }
 
     pub fn mesh(self: *SubChunkMeshJob) void {
-        if (config.use_tracy) ztracy.Message("starting subchunk mesh");
+        if (config.use_tracy) ztracy.Message("starting sub_chunk mesh");
         const chunk_data = self.chunk_data;
-        const chunker = chunk.subchunk.chunker.init(
+        const chunker = chunk.sub_chunk.chunker.init(
             chunk_data,
             self.sub_pos,
             gfx.mesh.cube_positions,
             gfx.mesh.cube_indices,
             gfx.mesh.cube_normals,
         );
-        const sc = chunk.subchunk.init(
+        const sc = chunk.sub_chunk.init(
             game.state.allocator,
             self.wp,
             self.sub_pos,
@@ -37,11 +37,11 @@ pub const SubChunkMeshJob = struct {
         if (config.use_tracy) ztracy.Message("done with sub chunk mesh job");
     }
 
-    fn finishJob(self: *SubChunkMeshJob, sc: *chunk.subchunk) void {
+    fn finishJob(self: *SubChunkMeshJob, sc: *chunk.sub_chunk) void {
         const msg: buffer.buffer_message = buffer.new_message(.sub_chunk_mesh);
         const bd: buffer.buffer_data = .{
             .sub_chunk_mesh = .{
-                .subchunk = sc,
+                .sub_chunk = sc,
             },
         };
         self.pt.completeOne(msg, bd);

@@ -43,7 +43,7 @@ pub const Jobs = struct {
     pub fn meshSubChunk(
         self: *Jobs,
         wp: chunk.worldPosition,
-        sub_pos: chunk.subchunk.subPosition,
+        sub_pos: chunk.sub_chunk.subPosition,
         chunk_data: []const u32,
     ) zjobs.JobId {
         const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");

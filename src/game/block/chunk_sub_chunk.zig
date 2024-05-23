@@ -43,6 +43,13 @@ pub const subPositionIndex = struct {
     sub_chunk_index: usize = 0,
 };
 
+pub fn subChunkPosToSubPositionData(pos: @Vector(4, f32)) usize {
+    const sip_x: usize = @intFromFloat(pos[0]);
+    const sip_y: usize = @intFromFloat(pos[1]);
+    const sip_z: usize = @intFromFloat(pos[2]);
+    return sip_x + sip_y * subChunkDim + sip_z * subChunkDim * subChunkDim;
+}
+
 pub fn chunkPosToSubPositionData(pos: @Vector(4, f32)) subPositionIndex {
     const sub_pos_x = @divFloor(pos[0], subChunkDim);
     const sub_pos_y = @divFloor(pos[1], subChunkDim);
@@ -52,10 +59,12 @@ pub fn chunkPosToSubPositionData(pos: @Vector(4, f32)) subPositionIndex {
     const sub_index_pos_y: f32 = @mod(pos[1], subChunkDim);
     const sub_index_pos_z: f32 = @mod(pos[2], subChunkDim);
 
-    const sip_x: usize = @intFromFloat(sub_index_pos_x);
-    const sip_y: usize = @intFromFloat(sub_index_pos_y);
-    const sip_z: usize = @intFromFloat(sub_index_pos_z);
-
+    const sc_pos: @Vector(4, f32) = .{
+        sub_index_pos_x,
+        sub_index_pos_y,
+        sub_index_pos_z,
+        0,
+    };
     return .{
         .chunk_pos = pos,
         .chunk_index = chunk.getIndexFromPositionV(pos),
@@ -65,13 +74,8 @@ pub fn chunkPosToSubPositionData(pos: @Vector(4, f32)) subPositionIndex {
             sub_pos_z,
             0,
         },
-        .sub_index_pos = .{
-            sub_index_pos_x,
-            sub_index_pos_y,
-            sub_index_pos_z,
-            0,
-        },
-        .sub_chunk_index = sip_x + sip_y * subChunkDim + sip_z * subChunkDim * subChunkDim,
+        .sub_index_pos = sc_pos,
+        .sub_chunk_index = subChunkPosToSubPositionData(sc_pos),
     };
 }
 

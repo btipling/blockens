@@ -312,8 +312,8 @@ pub fn cube() meshData {
     return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
 }
 
-// subchunk - signals what sort of attributes are available for subchunk without sending any. Excludes textures.
-pub fn subchunk() meshData {
+// sub_chunk - signals what sort of attributes are available for sub_chunk without sending any. Excludes textures.
+pub fn sub_chunk() meshData {
     const positions: [][3]f32 = game.state.allocator.alloc([3]f32, 1) catch @panic("OOM");
     const indices: []u32 = game.state.allocator.alloc(u32, 1) catch @panic("OOM");
     const normals: [][3]f32 = game.state.allocator.alloc([3]f32, 1) catch @panic("OOM");

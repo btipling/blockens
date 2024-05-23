@@ -69,7 +69,7 @@ pub const chunk_mesh_data = struct {
 };
 
 pub const sub_chunk_mesh_data = struct {
-    subchunk: *chunk.subchunk,
+    sub_chunk: *chunk.sub_chunk,
 };
 
 pub const lightings_data = struct {

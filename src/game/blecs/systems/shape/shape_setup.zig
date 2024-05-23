@@ -39,7 +39,7 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         .plane => gfx.mesh.plane(),
         .cube => gfx.mesh.cube(),
         .multidraw_voxel => gfx.mesh.cube(),
-        .sub_chunks => gfx.mesh.subchunk(),
+        .sub_chunks => gfx.mesh.sub_chunk(),
         .mob => gfx.mesh.mob(world, entity),
         .bounding_box => gfx.mesh.bounding_box(e.mob_id),
         .block_highlight => gfx.mesh.block_highlight(),

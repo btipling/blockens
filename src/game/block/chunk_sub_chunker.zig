@@ -1,5 +1,5 @@
-pos: chunk.subchunk.subPosition,
-data: [chunk.subchunk.subChunkSize]subChunkVoxelData = undefined,
+pos: chunk.sub_chunk.subPosition,
+data: [chunk.sub_chunk.subChunkSize]subChunkVoxelData = undefined,
 positions: [36][3]f32,
 indices: [36]u32,
 normals: [36][3]f32,
@@ -12,7 +12,7 @@ pub const ChunkerError = error{
 
 pub fn init(
     chunk_data: []const u32,
-    pos: chunk.subchunk.subPosition,
+    pos: chunk.sub_chunk.subPosition,
     positions: [36][3]f32,
     indices: [36]u32,
     normals: [36][3]f32,
@@ -28,7 +28,7 @@ pub fn init(
 }
 
 pub const subChunkVoxelData = struct {
-    scd: chunk.subchunk.subPositionIndex,
+    scd: chunk.sub_chunk.subPositionIndex,
     bd: block.BlockData,
     positions: [36][3]f32 = undefined,
     indices: [36]u32 = undefined,
@@ -46,15 +46,15 @@ pub const meshData = struct {
 
 pub fn getMeshData(
     self: *chunkerSubChunker,
-    indices_buf: *[chunk.subchunk.subChunkSize * 36]u32,
-    vertices_buf: *[chunk.subchunk.subChunkSize * 36][3]f32,
-    normals_buf: *[chunk.subchunk.subChunkSize * 36][3]f32,
-    block_data_buf: *[chunk.subchunk.subChunkSize * 36]u32,
+    indices_buf: *[chunk.sub_chunk.subChunkSize * 36]u32,
+    vertices_buf: *[chunk.sub_chunk.subChunkSize * 36][3]f32,
+    normals_buf: *[chunk.sub_chunk.subChunkSize * 36][3]f32,
+    block_data_buf: *[chunk.sub_chunk.subChunkSize * 36]u32,
     full_offset: u32,
 ) !meshData {
     var offset: u32 = 0;
     var i: usize = 0;
-    while (i < chunk.subchunk.subChunkSize) : (i += 1) {
+    while (i < chunk.sub_chunk.subChunkSize) : (i += 1) {
         const vd = self.data[i];
         const sub_index_pos = vd.scd.sub_index_pos;
         var ii: usize = 0;
@@ -89,13 +89,13 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
 
     var i: usize = 0;
     var x: usize = 0;
-    while (x < chunk.subchunk.subChunkDim) : (x += 1) {
+    while (x < chunk.sub_chunk.subChunkDim) : (x += 1) {
         const _x: f32 = @floatFromInt(x);
         var z: usize = 0;
-        while (z < chunk.subchunk.subChunkDim) : (z += 1) {
+        while (z < chunk.sub_chunk.subChunkDim) : (z += 1) {
             const _z: f32 = @floatFromInt(z);
             var y: usize = 0;
-            while (y < chunk.subchunk.subChunkDim) : (y += 1) {
+            while (y < chunk.sub_chunk.subChunkDim) : (y += 1) {
                 const _y: f32 = @floatFromInt(y);
                 const c_pos: @Vector(4, f32) = .{
                     _x + pos_x,
@@ -103,7 +103,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                     _z + pos_z,
                     0,
                 };
-                const scd = chunk.subchunk.chunkPosToSubPositionData(c_pos);
+                const scd = chunk.sub_chunk.chunkPosToSubPositionData(c_pos);
                 self.data[scd.sub_chunk_index] = .{
                     .scd = scd,
                     .bd = block.BlockData.fromId(chunk_data[scd.chunk_index]),
@@ -113,86 +113,134 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
         }
     }
     i = 0;
-    while (i < chunk.subchunk.subChunkSize) : (i += 1) {
+    while (i < chunk.sub_chunk.subChunkSize) : (i += 1) {
         var vd = self.data[i];
         if (vd.bd.block_id == 0) continue;
         x_pos: {
-            if (vd.scd.sub_index_pos[0] + 1 >= chunk.subchunk.subChunkDim) {
-                const n = vd.num_indices;
-                const e = vd.num_indices + 6;
-                const ob: usize = 6;
-                const oe: usize = 12;
-                @memcpy(vd.indices[n..e], self.indices[n..e]);
-                @memcpy(vd.positions[n..e], self.positions[ob..oe]);
-                @memcpy(vd.normals[n..e], self.normals[ob..oe]);
-                vd.num_indices += 6;
-                break :x_pos;
+            var add_surface = false;
+            if (vd.scd.sub_index_pos[0] + 1 >= chunk.sub_chunk.subChunkDim) {
+                add_surface = true;
+            } else {
+                var p = vd.scd.sub_index_pos;
+                p[0] += 1;
+                const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+                add_surface = self.data[sci].bd.block_id == 0;
             }
+            if (!add_surface) break :x_pos;
+
+            const n = vd.num_indices;
+            const e = vd.num_indices + 6;
+            const ob: usize = 6;
+            const oe: usize = 12;
+            @memcpy(vd.indices[n..e], self.indices[n..e]);
+            @memcpy(vd.positions[n..e], self.positions[ob..oe]);
+            @memcpy(vd.normals[n..e], self.normals[ob..oe]);
+            vd.num_indices += 6;
         }
         x_neg: {
+            var add_surface = false;
             if (vd.scd.sub_index_pos[0] == 0) {
-                const n = vd.num_indices;
-                const e = vd.num_indices + 6;
-                const ob: usize = 18;
-                const oe: usize = 24;
-                @memcpy(vd.indices[n..e], self.indices[n..e]);
-                @memcpy(vd.positions[n..e], self.positions[ob..oe]);
-                @memcpy(vd.normals[n..e], self.normals[ob..oe]);
-                vd.num_indices += 6;
-                break :x_neg;
+                add_surface = true;
+            } else {
+                var p = vd.scd.sub_index_pos;
+                p[0] -= 1;
+                const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+                add_surface = self.data[sci].bd.block_id == 0;
             }
+            if (!add_surface) break :x_neg;
+
+            const n = vd.num_indices;
+            const e = vd.num_indices + 6;
+            const ob: usize = 18;
+            const oe: usize = 24;
+            @memcpy(vd.indices[n..e], self.indices[n..e]);
+            @memcpy(vd.positions[n..e], self.positions[ob..oe]);
+            @memcpy(vd.normals[n..e], self.normals[ob..oe]);
+            vd.num_indices += 6;
         }
         y_pos: {
-            if (vd.scd.sub_index_pos[1] == chunk.subchunk.subChunkDim - 1) {
-                const n = vd.num_indices;
-                const e = vd.num_indices + 6;
-                const ob: usize = 30;
-                const oe: usize = 36;
-                @memcpy(vd.indices[n..e], self.indices[n..e]);
-                @memcpy(vd.positions[n..e], self.positions[ob..oe]);
-                @memcpy(vd.normals[n..e], self.normals[ob..oe]);
-                vd.num_indices += 6;
-                break :y_pos;
+            var add_surface = false;
+            if (vd.scd.sub_index_pos[1] == chunk.sub_chunk.subChunkDim - 1) {
+                add_surface = true;
+            } else {
+                var p = vd.scd.sub_index_pos;
+                p[1] += 1;
+                const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+                add_surface = self.data[sci].bd.block_id == 0;
             }
+            if (!add_surface) break :y_pos;
+
+            const n = vd.num_indices;
+            const e = vd.num_indices + 6;
+            const ob: usize = 30;
+            const oe: usize = 36;
+            @memcpy(vd.indices[n..e], self.indices[n..e]);
+            @memcpy(vd.positions[n..e], self.positions[ob..oe]);
+            @memcpy(vd.normals[n..e], self.normals[ob..oe]);
+            vd.num_indices += 6;
         }
         y_neg: {
+            var add_surface = false;
             if (vd.scd.sub_index_pos[1] == 0) {
-                const n = vd.num_indices;
-                const e = vd.num_indices + 6;
-                const ob: usize = 24;
-                const oe: usize = 30;
-                @memcpy(vd.indices[n..e], self.indices[n..e]);
-                @memcpy(vd.positions[n..e], self.positions[ob..oe]);
-                @memcpy(vd.normals[n..e], self.normals[ob..oe]);
-                vd.num_indices += 6;
-                break :y_neg;
+                add_surface = true;
+            } else {
+                var p = vd.scd.sub_index_pos;
+                p[1] -= 1;
+                const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+                add_surface = self.data[sci].bd.block_id == 0;
             }
+            if (!add_surface) break :y_neg;
+
+            const n = vd.num_indices;
+            const e = vd.num_indices + 6;
+            const ob: usize = 24;
+            const oe: usize = 30;
+            @memcpy(vd.indices[n..e], self.indices[n..e]);
+            @memcpy(vd.positions[n..e], self.positions[ob..oe]);
+            @memcpy(vd.normals[n..e], self.normals[ob..oe]);
+            vd.num_indices += 6;
         }
         z_pos: {
-            if (vd.scd.sub_index_pos[2] == chunk.subchunk.subChunkDim - 1) {
-                const n = vd.num_indices;
-                const e = vd.num_indices + 6;
-                const ob: usize = 0;
-                const oe: usize = 6;
-                @memcpy(vd.indices[n..e], self.indices[n..e]);
-                @memcpy(vd.positions[n..e], self.positions[ob..oe]);
-                @memcpy(vd.normals[n..e], self.normals[ob..oe]);
-                vd.num_indices += 6;
-                break :z_pos;
+            var add_surface = false;
+            if (vd.scd.sub_index_pos[2] == chunk.sub_chunk.subChunkDim - 1) {
+                add_surface = true;
+            } else {
+                var p = vd.scd.sub_index_pos;
+                p[2] += 1;
+                const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+                add_surface = self.data[sci].bd.block_id == 0;
             }
+            if (!add_surface) break :z_pos;
+
+            const n = vd.num_indices;
+            const e = vd.num_indices + 6;
+            const ob: usize = 0;
+            const oe: usize = 6;
+            @memcpy(vd.indices[n..e], self.indices[n..e]);
+            @memcpy(vd.positions[n..e], self.positions[ob..oe]);
+            @memcpy(vd.normals[n..e], self.normals[ob..oe]);
+            vd.num_indices += 6;
         }
         z_neg: {
+            var add_surface = false;
             if (vd.scd.sub_index_pos[2] == 0) {
-                const n = vd.num_indices;
-                const e = vd.num_indices + 6;
-                const ob: usize = 12;
-                const oe: usize = 18;
-                @memcpy(vd.indices[n..e], self.indices[n..e]);
-                @memcpy(vd.positions[n..e], self.positions[ob..oe]);
-                @memcpy(vd.normals[n..e], self.normals[ob..oe]);
-                vd.num_indices += 6;
-                break :z_neg;
+                add_surface = true;
+            } else {
+                var p = vd.scd.sub_index_pos;
+                p[2] -= 1;
+                const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+                add_surface = self.data[sci].bd.block_id == 0;
             }
+            if (!add_surface) break :z_neg;
+
+            const n = vd.num_indices;
+            const e = vd.num_indices + 6;
+            const ob: usize = 12;
+            const oe: usize = 18;
+            @memcpy(vd.indices[n..e], self.indices[n..e]);
+            @memcpy(vd.positions[n..e], self.positions[ob..oe]);
+            @memcpy(vd.normals[n..e], self.normals[ob..oe]);
+            vd.num_indices += 6;
         }
         self.data[i] = vd;
     }
@@ -207,7 +255,7 @@ test run {
     defer std.testing.allocator.free(chunk_data);
     @memset(chunk_data, 0);
     var pos: @Vector(4, f32) = .{ 1, 2, 3, 0 };
-    const scd = chunk.subchunk.chunkPosToSubPositionData(pos);
+    const scd = chunk.sub_chunk.chunkPosToSubPositionData(pos);
     var bd: block.BlockData = block.BlockData.fromId(chunk_data[scd.chunk_index]);
     bd.block_id = 3;
     chunk_data[scd.chunk_index] = bd.toId();
@@ -218,7 +266,7 @@ test run {
         indices,
         normals,
     );
-    try std.testing.expectEqual(chunk.subchunk.subChunkSize, t1.data.len);
+    try std.testing.expectEqual(chunk.sub_chunk.subChunkSize, t1.data.len);
 
     var tbd: block.BlockData = t1.data[scd.sub_chunk_index].bd;
     try std.testing.expectEqual(3, tbd.block_id);
@@ -235,7 +283,7 @@ test run {
         indices,
         normals,
     );
-    try std.testing.expectEqual(chunk.subchunk.subChunkSize, t2.data.len);
+    try std.testing.expectEqual(chunk.sub_chunk.subChunkSize, t2.data.len);
     tbd = t2.data[scd.sub_chunk_index].bd;
     try std.testing.expectEqual(3, tbd.block_id);
 }
