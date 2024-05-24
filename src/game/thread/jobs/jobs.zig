@@ -65,7 +65,7 @@ pub const Jobs = struct {
         while (it.next()) |kv| {
             const wp: chunk.worldPosition = kv.key_ptr.*;
             const c_cfg = kv.value_ptr.*;
-            return self.meshSubChunkForWP(is_terrain, is_settings, wp, c_cfg.chunkData, pt);
+            self.meshSubChunkForWP(is_terrain, is_settings, wp, c_cfg.chunkData, pt);
         }
         return;
     }

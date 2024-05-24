@@ -108,6 +108,7 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
     } else {
         scd.sub_chunk.deinit();
     }
+    game.state.ui.load_percentage_load_sub_chunks = pr.percent;
     if (!pr.done) return;
     std.debug.print("initing sub chunks\n", .{});
     game.state.jobs.buildSubChunks(scd.is_terrain, scd.is_settings);
@@ -127,6 +128,8 @@ fn handle_sub_chunks_build(msg: buffer.buffer_message) void {
         return;
     }
     blecs.entities.screen.initGameSubChunks();
+    screen_helpers.showGameScreen();
+    ui_helpers.loadCharacterInWorld();
 }
 
 fn handle_lighting(msg: buffer.buffer_message) void {

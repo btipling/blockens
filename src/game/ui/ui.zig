@@ -91,6 +91,7 @@ load_percentage_world_gen: f16 = 0,
 load_percentage_lighting_initial: f16 = 0,
 load_percentage_lighting_cross_chunk: f16 = 0,
 load_percentage_load_chunks: f16 = 0,
+load_percentage_load_sub_chunks: f16 = 0,
 
 gfx_wire_frames: bool = false,
 gfx_lock_cull_to_player_pos: bool = false,
