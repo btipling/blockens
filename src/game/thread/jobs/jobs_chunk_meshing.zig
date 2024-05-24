@@ -40,7 +40,7 @@ pub const ChunkMeshJob = struct {
         const num_elements: usize = keys.len;
         if (num_elements > 0) {
             var draws: [chunk.chunkSize]c_int = std.mem.zeroes([chunk.chunkSize]c_int);
-            var draw_offsets: [chunk.chunkSize]c_int = std.mem.zeroes([chunk.chunkSize]c_int);
+            var draw_offsets: [chunk.chunkSize]usize = std.mem.zeroes([chunk.chunkSize]usize);
             const cp = c.wp.vecFromWorldPosition();
             var loc: @Vector(4, f32) = undefined;
             loc = .{
@@ -95,7 +95,7 @@ pub const ChunkMeshJob = struct {
                     indices[index_offset + ii] = index_offset + index;
                 }
                 draws[current_element] = @intCast(mesh_data.indices.len);
-                draw_offsets[current_element] = @intCast(@sizeOf(c_uint) * index_offset);
+                draw_offsets[current_element] = @sizeOf(c_uint) * index_offset;
                 index_offset += @intCast(mesh_data.indices.len);
 
                 // Setup for writing attribute variables to gfx buffer
@@ -151,7 +151,7 @@ pub const ChunkMeshJob = struct {
                     if (draw_offsets[i] == 0) {
                         c_draws_offsets_gl[i] = null;
                     } else {
-                        c_draws_offsets_gl[i] = @as(*anyopaque, @ptrFromInt(@as(usize, @intCast(draw_offsets[i]))));
+                        c_draws_offsets_gl[i] = @as(*anyopaque, @ptrFromInt(draw_offsets[i]));
                     }
                 }
 

@@ -1,5 +1,7 @@
 pos: chunk.sub_chunk.subPosition,
 data: [chunk.sub_chunk.subChunkSize]subChunkVoxelData = undefined,
+total_indices_count: usize = 0,
+// these are used to generate vertices for each surface
 positions: [36][3]f32,
 indices: [36]u32,
 normals: [36][3]f32,
@@ -242,8 +244,10 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
             @memcpy(vd.normals[n..e], self.normals[ob..oe]);
             vd.num_indices += 6;
         }
+        self.total_indices_count += vd.num_indices;
         self.data[i] = vd;
     }
+    std.debug.print("sub chunk chunker ran and found {d} indicies\n", .{self.total_indices_count});
 }
 
 test run {

@@ -64,7 +64,7 @@ fn handle_sub_chunks_gen(msg: buffer.buffer_message) void {
     game.state.blocks.generated_settings_chunks.put(scd.wp, scd.chunk_data) catch @panic("OOM");
     std.debug.print("generated sub chunks with data len: {d}\n", .{scd.chunk_data.len});
     game.state.ui.resetDemoSorter();
-    _ = game.state.jobs.meshSubChunk(scd.wp, .{ 0, 0, 0, 0 }, scd.chunk_data);
+    _ = game.state.jobs.meshSubChunk(scd.wp, scd.chunk_data);
 }
 
 fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
@@ -109,14 +109,21 @@ fn handle_chunk_mesh(msg: buffer.buffer_message) void {
 }
 
 fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
-    if (!buffer.progress_report(msg).done) return;
+    const pr = buffer.progress_report(msg);
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
     const scd: buffer.sub_chunk_mesh_data = switch (bd) {
         buffer.buffer_data.sub_chunk_mesh => |d| d,
         else => return,
     };
-    std.debug.print("handled sub chunk mesh {}\n", .{scd});
+    std.debug.print("handled sub chunk mesh ({d}, {d}, {d}, {d})\n", .{
+        scd.sub_chunk.sub_pos[0],
+        scd.sub_chunk.sub_pos[1],
+        scd.sub_chunk.sub_pos[2],
+        scd.sub_chunk.sub_pos[3],
+    });
     game.state.ui.demo_sub_chunks_sorter.addSubChunk(scd.sub_chunk);
+    if (!pr.done) return;
+    std.debug.print("initing sub chunks\n", .{});
     blecs.entities.screen.initSubchunks(true);
 }
 

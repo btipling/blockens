@@ -43,26 +43,30 @@ pub const Jobs = struct {
     pub fn meshSubChunk(
         self: *Jobs,
         wp: chunk.worldPosition,
-        sub_pos: chunk.sub_chunk.subPosition,
         chunk_data: []const u32,
-    ) zjobs.JobId {
+    ) void {
         const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
         pt.* = .{
-            .num_started = 1,
+            .num_started = 2,
             .num_completed = 0,
         };
-        return self.jobs.schedule(
-            zjobs.JobId.none,
-            job_sub_chunk_meshing.SubChunkMeshJob{
-                .wp = wp,
-                .sub_pos = sub_pos,
-                .chunk_data = chunk_data,
-                .pt = pt,
-            },
-        ) catch |e| {
-            std.debug.print("error scheduling sub chunk mesh job: {}\n", .{e});
-            return zjobs.JobId.none;
-        };
+        var x: usize = 0;
+        while (x < 2) : (x += 1) {
+            const sub_pos: @Vector(4, f32) = .{ @floatFromInt(x), 0, 0, 0 };
+            _ = self.jobs.schedule(
+                zjobs.JobId.none,
+                job_sub_chunk_meshing.SubChunkMeshJob{
+                    .wp = wp,
+                    .sub_pos = sub_pos,
+                    .chunk_data = chunk_data,
+                    .pt = pt,
+                },
+            ) catch |e| {
+                std.debug.print("error scheduling sub chunk mesh job: {}\n", .{e});
+                return;
+            };
+        }
+        return;
     }
 
     pub fn generateDemoChunk(self: *Jobs) zjobs.JobId {
