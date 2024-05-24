@@ -86,6 +86,7 @@ pub const load_chunk_data = struct {
 
 pub const demo_descriptor_gen_data = struct {
     desc_root: *descriptor.root,
+    sub_chunks: bool,
     offset_x: i32,
     offset_z: i32,
 };
@@ -100,6 +101,7 @@ pub const demo_terrain_gen_data = struct {
     succeeded: bool,
     data: ?[]u32,
     position: @Vector(4, f32),
+    sub_chunks: bool,
 };
 
 pub const world_terrain_gen_data = struct {

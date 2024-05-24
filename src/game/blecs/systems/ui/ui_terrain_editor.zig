@@ -62,6 +62,7 @@ fn drawControls() !void {
             .h = btn_dms[1],
         })) {
             _ = game.state.jobs.generateDemoDescriptor(
+                game.state.ui.sub_chunks,
                 game.state.ui.terrain_gen_x_buf,
                 game.state.ui.terrain_gen_z_buf,
             );

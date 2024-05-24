@@ -172,6 +172,7 @@ fn handle_demo_descriptor_gen(msg: buffer.buffer_message) void {
 
     _ = game.state.jobs.generateDemoTerrain(
         dg_d.desc_root,
+        dg_d.sub_chunks,
         dg_d.offset_x,
         dg_d.offset_z,
     );

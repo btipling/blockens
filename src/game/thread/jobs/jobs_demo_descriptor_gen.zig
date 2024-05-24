@@ -1,4 +1,5 @@
 pub const DemoDescriptorGenJob = struct {
+    sub_chunks: bool,
     offset_x: i32,
     offset_z: i32,
     pub fn exec(self: *DemoDescriptorGenJob) void {
@@ -27,6 +28,7 @@ pub const DemoDescriptorGenJob = struct {
         const bd: buffer.buffer_data = .{
             .demo_descriptor_gen = .{
                 .desc_root = desc_root,
+                .sub_chunks = self.sub_chunks,
                 .offset_x = self.offset_x,
                 .offset_z = self.offset_z,
             },

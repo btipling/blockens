@@ -209,12 +209,14 @@ pub const Jobs = struct {
     // generateTerrain generates a 2^3 cube of chunks
     pub fn generateDemoDescriptor(
         self: *Jobs,
+        sub_chunks: bool,
         offset_x: i32,
         offset_z: i32,
     ) void {
         _ = self.jobs.schedule(
             zjobs.JobId.none,
             job_demo_descriptor_gen.DemoDescriptorGenJob{
+                .sub_chunks = sub_chunks,
                 .offset_x = offset_x,
                 .offset_z = offset_z,
             },
@@ -228,6 +230,7 @@ pub const Jobs = struct {
     pub fn generateDemoTerrain(
         self: *Jobs,
         desc_root: *descriptor.root,
+        sub_chunks: bool,
         offset_x: i32,
         offset_z: i32,
     ) void {
@@ -243,6 +246,7 @@ pub const Jobs = struct {
                 zjobs.JobId.none,
                 job_demo_terrain_gen.DemoTerrainGenJob{
                     .desc_root = desc_root,
+                    .sub_chunks = sub_chunks,
                     // job will generate terrain for x y z, but use i for actual rendered position
                     .position = .{
                         pos[0] + offset_x,
