@@ -64,6 +64,7 @@ pub const chunk_mesh_data = struct {
 
 pub const sub_chunk_mesh_data = struct {
     sub_chunk: *chunk.sub_chunk,
+    is_terrain: bool,
 };
 
 pub const lightings_data = struct {

@@ -449,10 +449,15 @@ pub fn initSubChunksCamera(reset: bool) void {
     );
 }
 
-pub fn initSubChunks(reset: bool) void {
+pub fn initSubChunks(reset: bool, is_terrain: bool) void {
     clearDemoObjects();
     const world = game.state.world;
     initSubChunksCamera(reset);
+    if (is_terrain) {
+        initDemoTerrainGenCamera(reset);
+    } else {
+        initSubChunksCamera(reset);
+    }
     const sc_e = helpers.new_child(world, settings_data);
     _ = ecs.set(world, sc_e, components.shape.Shape, .{ .shape_type = .sub_chunks });
     const cr_c = math.vecs.Vflx4.initBytes(0, 0, 255, 255);

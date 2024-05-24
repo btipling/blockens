@@ -65,7 +65,7 @@ fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
     game.state.blocks.generated_settings_chunks.put(chunk_data.wp, chunk_data.chunk_data) catch @panic("OOM");
     if (chunk_data.sub_chunks) {
         game.state.ui.resetDemoSorter();
-        game.state.jobs.meshSubChunk();
+        game.state.jobs.meshSubChunk(false);
         return;
     }
     blecs.entities.screen.initDemoChunk(true);
@@ -109,7 +109,7 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
     }
     if (!pr.done) return;
     std.debug.print("initing sub chunks\n", .{});
-    blecs.entities.screen.initSubChunks(true);
+    blecs.entities.screen.initSubChunks(true, scd.is_terrain);
 }
 
 fn handle_lighting(msg: buffer.buffer_message) void {
@@ -237,7 +237,7 @@ fn handle_demo_terrain_gen(msg: buffer.buffer_message) void {
     });
     if (tg_d.sub_chunks) {
         game.state.ui.resetDemoSorter();
-        game.state.jobs.meshSubChunk();
+        game.state.jobs.meshSubChunk(true);
         return;
     }
     blecs.entities.screen.initDemoTerrainGen(true);

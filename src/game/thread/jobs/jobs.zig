@@ -40,7 +40,7 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn meshSubChunk(self: *Jobs) void {
+    pub fn meshSubChunk(self: *Jobs, is_terrain: bool) void {
         const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
         const num_jobs = game.state.blocks.generated_settings_chunks.count() * 64;
         pt.* = .{
@@ -66,6 +66,7 @@ pub const Jobs = struct {
                         _ = self.jobs.schedule(
                             zjobs.JobId.none,
                             job_sub_chunk_meshing.SubChunkMeshJob{
+                                .is_terrain = is_terrain,
                                 .wp = wp,
                                 .sub_pos = sub_pos,
                                 .chunk_data = chunk_data,
