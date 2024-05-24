@@ -28,7 +28,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
                 .w = game.state.ui.imguiWidth(600),
-                .h = game.state.ui.imguiHeight(300),
+                .h = game.state.ui.imguiHeight(350),
             });
             if (zgui.begin("#TitleScreen", .{
                 .flags = zgui.WindowFlags.no_decoration,
@@ -61,6 +61,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     }
                 }
                 zgui.endDisabled();
+
+                centerNext(ww);
+                if (zgui.checkbox("use experimental sub chunks", .{ .v = &game.state.ui.sub_chunks })) {
+                    // toggles using sub chunks instead of big chunks.
+                }
 
                 centerNext(ww);
                 if (zgui.button("Create World", .{
