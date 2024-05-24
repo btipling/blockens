@@ -65,7 +65,7 @@ fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
     game.state.blocks.generated_settings_chunks.put(chunk_data.wp, chunk_data.chunk_data) catch @panic("OOM");
     if (chunk_data.sub_chunks) {
         game.state.ui.resetDemoSorter();
-        _ = game.state.jobs.meshSubChunk(chunk_data.wp, chunk_data.chunk_data);
+        _ = game.state.jobs.meshSubChunk();
     }
     blecs.entities.screen.initDemoChunk(true);
 }
@@ -233,6 +233,10 @@ fn handle_demo_terrain_gen(msg: buffer.buffer_message) void {
     std.debug.print("terrain generated {d}.\n", .{
         game.state.blocks.generated_settings_chunks.count(),
     });
+    if (tg_d.sub_chunks) {
+        game.state.ui.resetDemoSorter();
+        _ = game.state.jobs.meshSubChunk();
+    }
     blecs.entities.screen.initDemoTerrainGen(true);
     tg_d.desc_root.deinit();
 }

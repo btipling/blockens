@@ -40,40 +40,42 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn meshSubChunk(
-        self: *Jobs,
-        wp: chunk.worldPosition,
-        chunk_data: []const u32,
-    ) void {
+    pub fn meshSubChunk(self: *Jobs) void {
         const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
+        const num_jobs = game.state.blocks.generated_settings_chunks.count() * 64;
         pt.* = .{
-            .num_started = 64,
+            .num_started = num_jobs,
             .num_completed = 0,
         };
-        var x: usize = 0;
-        while (x < 4) : (x += 1) {
-            var z: usize = 0;
-            while (z < 4) : (z += 1) {
-                var y: usize = 0;
-                while (y < 4) : (y += 1) {
-                    const sub_pos: @Vector(4, f32) = .{
-                        @floatFromInt(x),
-                        @floatFromInt(y),
-                        @floatFromInt(z),
-                        0,
-                    };
-                    _ = self.jobs.schedule(
-                        zjobs.JobId.none,
-                        job_sub_chunk_meshing.SubChunkMeshJob{
-                            .wp = wp,
-                            .sub_pos = sub_pos,
-                            .chunk_data = chunk_data,
-                            .pt = pt,
-                        },
-                    ) catch |e| {
-                        std.debug.print("error scheduling sub chunk mesh job: {}\n", .{e});
-                        return;
-                    };
+        var it = game.state.blocks.generated_settings_chunks.iterator();
+        while (it.next()) |kv| {
+            const wp: chunk.worldPosition = kv.key_ptr.*;
+            const chunk_data = kv.value_ptr.*;
+            var x: usize = 0;
+            while (x < 4) : (x += 1) {
+                var z: usize = 0;
+                while (z < 4) : (z += 1) {
+                    var y: usize = 0;
+                    while (y < 4) : (y += 1) {
+                        const sub_pos: @Vector(4, f32) = .{
+                            @floatFromInt(x),
+                            @floatFromInt(y),
+                            @floatFromInt(z),
+                            0,
+                        };
+                        _ = self.jobs.schedule(
+                            zjobs.JobId.none,
+                            job_sub_chunk_meshing.SubChunkMeshJob{
+                                .wp = wp,
+                                .sub_pos = sub_pos,
+                                .chunk_data = chunk_data,
+                                .pt = pt,
+                            },
+                        ) catch |e| {
+                            std.debug.print("error scheduling sub chunk mesh job: {}\n", .{e});
+                            return;
+                        };
+                    }
                 }
             }
         }
