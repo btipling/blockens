@@ -464,6 +464,11 @@ pub fn initSubChunks(reset: bool) void {
     _ = ecs.set(world, sc_e, components.shape.Lighting, .{ .ssbo = gfx.constants.LightingBindingPoint });
     ecs.add(world, sc_e, components.shape.NeedsSetup);
     // ecs.add(world, sc_e, components.Debug);
+    const values = game.state.blocks.generated_settings_chunks.values();
+    for (values) |cd| {
+        game.state.allocator.free(cd);
+    }
+    game.state.blocks.generated_settings_chunks.clearRetainingCapacity();
     return;
 }
 
