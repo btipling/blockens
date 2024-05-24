@@ -530,6 +530,11 @@ pub fn initDemoChunk(reset: bool) void {
         chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 }),
         ecs.new_id(world),
     );
+    const values = game.state.blocks.generated_settings_chunks.values();
+    for (values) |cd| {
+        game.state.allocator.free(cd);
+    }
+    game.state.blocks.generated_settings_chunks.clearRetainingCapacity();
     return;
 }
 
