@@ -22,6 +22,7 @@ pub fn handle_incoming() !void {
             .chunk_gen => handle_demo_chunk_gen(msg),
             .chunk_mesh => handle_chunk_mesh(msg),
             .sub_chunk_mesh => handle_sub_chunks_mesh(msg),
+            .sub_chunk_build => handle_sub_chunks_build(msg),
             .lighting => handle_lighting(msg),
             .lighting_cross_chunk => handle_lighting_cross_chunk(msg),
             .load_chunk => handle_load_chunk(msg),
@@ -107,6 +108,18 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
     } else {
         scd.sub_chunk.deinit();
     }
+    if (!pr.done) return;
+    std.debug.print("initing sub chunks\n", .{});
+    game.state.jobs.buildSubChunks(scd.is_terrain);
+}
+
+fn handle_sub_chunks_build(msg: buffer.buffer_message) void {
+    const pr = buffer.progress_report(msg);
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const scd: buffer.sub_chunk_build_data = switch (bd) {
+        buffer.buffer_data.sub_chunk_build => |d| d,
+        else => return,
+    };
     if (!pr.done) return;
     std.debug.print("initing sub chunks\n", .{});
     blecs.entities.screen.initSubChunks(true, scd.is_terrain);

@@ -111,15 +111,15 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         }
     } else if (er.is_sub_chunks) {
         if (game.state.ui.demo_sub_chunks_sorter.ebo != 0) @panic("Should not mesh a previously meshed sorter");
-        const inds = game.state.ui.demo_sub_chunks_sorter.getMeshData();
+        const inds = game.state.ui.demo_sub_chunks_sorter.indices orelse @panic("nope");
+        game.state.ui.demo_sub_chunks_sorter.indices = null;
         defer game.state.allocator.free(inds);
         ebo = gfx.gl.Gl.initEBO(inds) catch @panic("nope");
         game.state.ui.demo_sub_chunks_sorter.ebo = ebo;
         builder = game.state.ui.demo_sub_chunks_sorter.builder orelse @panic("nope");
+        game.state.ui.demo_sub_chunks_sorter.builder = null;
         builder.vbo = vbo;
         builder.usage = gl.STATIC_DRAW;
-        game.state.ui.demo_sub_chunks_sorter.builder = null;
-        game.state.ui.demo_sub_chunks_sorter.sort(.{ 0, 0, 0, 0 });
     } else {
         ebo = gfx.gl.Gl.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
     }

@@ -3,7 +3,9 @@ allocator: std.mem.Allocator,
 all_sub_chunks: std.ArrayListUnmanaged(*chunk.sub_chunk) = .{},
 ebo: u32 = 0,
 builder: ?*gfx.buffer_data.AttributeBuilder = null,
+indices: ?[]u32 = null,
 num_indices: usize = 0,
+mutex: std.Thread.Mutex = .{},
 
 opaque_draws: std.ArrayListUnmanaged(c_int) = .{},
 opaque_draw_offsets: std.ArrayListUnmanaged(?*const anyopaque) = .{},
@@ -18,13 +20,27 @@ pub fn init(allocator: std.mem.Allocator) *sorter {
     return s;
 }
 
+pub fn deinit(self: *sorter) void {
+    for (self.all_sub_chunks.items) |sc| {
+        sc.deinit();
+    }
+    self.all_sub_chunks.deinit(self.allocator);
+    self.opaque_draws.deinit(self.allocator);
+    self.opaque_draw_offsets.deinit(self.allocator);
+    if (self.builder) |b| b.deinit();
+    if (self.indices) |i| self.allocator.free(i);
+    self.allocator.destroy(self);
+}
+
 pub fn addSubChunk(self: *sorter, sc: *chunk.sub_chunk) void {
+    self.mutex.lock();
+    defer self.mutex.unlock();
     self.all_sub_chunks.append(self.allocator, sc) catch @panic("OOM");
 }
 
-// getMeshData returns indices after building a ubo buffer. A thing that returns indices but has the side
-// effect of building a buffer is a bit weird.
-pub fn getMeshData(self: *sorter) []u32 {
+pub fn buildMeshData(self: *sorter) void {
+    self.mutex.lock();
+    defer self.mutex.unlock();
     var sci: usize = 0;
     self.num_indices = 0;
     while (sci < self.all_sub_chunks.items.len) : (sci += 1) {
@@ -121,18 +137,21 @@ pub fn getMeshData(self: *sorter) []u32 {
     self.builder = builder;
     std.debug.print("total indicies: {d}\n", .{self.num_indices});
     game.state.ui.gfx_triangle_count = @divFloor(self.num_indices, 3);
-    return inds.toOwnedSlice(self.allocator) catch @panic("OOM");
+    self.indices = inds.toOwnedSlice(self.allocator) catch @panic("OOM");
 }
 
 pub fn cullFrustum(self: *sorter, camera_position: @Vector(4, f32), view: zm.Mat, perspective: zm.Mat) void {
+    self.mutex.lock();
+    defer self.mutex.unlock();
     // TODO, culling
-    _ = self;
     _ = camera_position;
     _ = view;
     _ = perspective;
 }
 
 pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
+    self.mutex.lock();
+    defer self.mutex.unlock();
     _ = loc; // TODO: sort by loc
     self.opaque_draws.clearRetainingCapacity();
     self.opaque_draw_offsets.clearRetainingCapacity();
@@ -158,16 +177,6 @@ pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
         index_offset += @intCast(num_indices);
         i += 1;
     }
-}
-
-pub fn deinit(self: *sorter) void {
-    for (self.all_sub_chunks.items) |sc| {
-        sc.deinit();
-    }
-    self.all_sub_chunks.deinit(self.allocator);
-    self.opaque_draws.deinit(self.allocator);
-    self.opaque_draw_offsets.deinit(self.allocator);
-    self.allocator.destroy(self);
 }
 
 const std = @import("std");
