@@ -54,6 +54,9 @@ fn drawControls() !void {
         .{},
     )) {
         zgui.text("terrain generator controls", .{});
+        _ = zgui.checkbox("Small chunks", .{
+            .v = &game.state.ui.chunks_small,
+        });
         if (zgui.button("generate terrain", .{
             .w = btn_dms[0],
             .h = btn_dms[1],
