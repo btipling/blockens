@@ -67,6 +67,7 @@ fn gfxSortedMultiDraw(
         }
         sorter = game.state.ui.demo_sub_chunks_sorter;
     }
+    if (sorter.num_indices == 0) return;
     if (er.enable_depth_test) gl.enable(gl.DEPTH_TEST);
     gl.useProgram(er.program);
     if (er.texture != 0) {
@@ -76,7 +77,6 @@ fn gfxSortedMultiDraw(
     gl.bindVertexArray(er.vao);
 
     game.state.ui.gfx_meshes_drawn_counter += 0;
-
     const offsets = sorter.opaque_draw_offsets;
     const draws = sorter.opaque_draws;
     gl.multiDrawElements(

@@ -268,9 +268,6 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
 
     if (config.use_tracy) ztracy.Message("ready to draw");
     if (er.is_sub_chunks) std.debug.print("can draw sub chunks\n", .{});
-    if (ecs.has_id(world, entity, ecs.id(components.block.SubChunks))) {
-        std.debug.print("drawing sub chunks in gfx_mesh?\n", .{});
-    }
     ecs.add(world, entity, components.gfx.CanDraw);
     gl.finish();
 
