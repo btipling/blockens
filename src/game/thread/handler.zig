@@ -231,15 +231,16 @@ fn handle_demo_terrain_gen(msg: buffer.buffer_message) void {
     if (!tg_d.succeeded) return;
     game.state.blocks.generated_settings_chunks.put(wp, tg_d.data.?) catch @panic("OOM");
     if (!pr.done) return;
+    defer tg_d.desc_root.deinit();
     std.debug.print("terrain generated {d}.\n", .{
         game.state.blocks.generated_settings_chunks.count(),
     });
     if (tg_d.sub_chunks) {
         game.state.ui.resetDemoSorter();
         game.state.jobs.meshSubChunk();
+        return;
     }
     blecs.entities.screen.initDemoTerrainGen(true);
-    tg_d.desc_root.deinit();
 }
 
 fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entity_t {
