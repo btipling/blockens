@@ -175,74 +175,74 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
         x_pos: {
             if (surfaces[xp]) |bd| if (bd.block_id != 0) break :x_pos;
 
-            var vx_i: usize = 6; // x_pos goes 6 - 12 in cube mesh
+            const vx_i: usize = 6; // x_pos goes 6 - 12 in cube mesh
             const end = vx_i + 6;
-            while (vx_i < end) : (vx_i += 1) {
-                vd.indices[vd.num_indices] = self.indices[vd.num_indices];
-                vd.positions[vd.num_indices] = self.positions[vx_i];
-                vd.normals[vd.num_indices] = self.normals[vx_i];
-                vd.num_indices += 1;
-            }
+            const n = vd.num_indices;
+            const e = vd.num_indices + 6;
+            @memcpy(vd.indices[n..e], self.indices[n..e]);
+            @memcpy(vd.positions[n..e], self.positions[vx_i..end]);
+            @memcpy(vd.normals[n..e], self.normals[vx_i..end]);
+            vd.num_indices += 6;
         }
         x_neg: {
             if (surfaces[xn]) |bd| if (bd.block_id != 0) break :x_neg;
 
-            var vx_i: usize = 18; // x_neg goes 18 - 24 in cube mesh
+            const vx_i: usize = 18; // x_neg goes 18 - 24 in cube mesh
             const end = vx_i + 6;
-            while (vx_i < end) : (vx_i += 1) {
-                vd.indices[vd.num_indices] = self.indices[vd.num_indices];
-                vd.positions[vd.num_indices] = self.positions[vx_i];
-                vd.normals[vd.num_indices] = self.normals[vx_i];
-                vd.num_indices += 1;
-            }
+            const n = vd.num_indices;
+            const e = vd.num_indices + 6;
+            @memcpy(vd.indices[n..e], self.indices[n..e]);
+            @memcpy(vd.positions[n..e], self.positions[vx_i..end]);
+            @memcpy(vd.normals[n..e], self.normals[vx_i..end]);
+            vd.num_indices += 6;
         }
         y_pos: {
             if (surfaces[yp]) |bd| if (bd.block_id != 0) break :y_pos;
 
-            var vx_i: usize = 30; // y_pos goes 30 - 36 in cube mesh
+            const vx_i: usize = 30; // y_pos goes 30 - 36 in cube mesh
             const end = vx_i + 6;
-            while (vx_i < end) : (vx_i += 1) {
-                vd.indices[vd.num_indices] = self.indices[vd.num_indices];
-                vd.positions[vd.num_indices] = self.positions[vx_i];
-                vd.normals[vd.num_indices] = self.normals[vx_i];
-                vd.num_indices += 1;
-            }
+            const n = vd.num_indices;
+            const e = vd.num_indices + 6;
+            @memcpy(vd.indices[n..e], self.indices[n..e]);
+            @memcpy(vd.positions[n..e], self.positions[vx_i..end]);
+            @memcpy(vd.normals[n..e], self.normals[vx_i..end]);
+            vd.num_indices += 6;
         }
         y_neg: {
             if (surfaces[yn]) |bd| if (bd.block_id != 0) break :y_neg;
 
-            var vx_i: usize = 24; // y_neg goes 24 - 30 in cube mesh
+            const vx_i: usize = 24; // y_neg goes 24 - 30 in cube mesh
             const end = vx_i + 6;
-            while (vx_i < end) : (vx_i += 1) {
-                vd.indices[vd.num_indices] = self.indices[vd.num_indices];
-                vd.positions[vd.num_indices] = self.positions[vx_i];
-                vd.normals[vd.num_indices] = self.normals[vx_i];
-                vd.num_indices += 1;
-            }
+            const n = vd.num_indices;
+            const e = vd.num_indices + 6;
+            @memcpy(vd.indices[n..e], self.indices[n..e]);
+            @memcpy(vd.positions[n..e], self.positions[vx_i..end]);
+            @memcpy(vd.normals[n..e], self.normals[vx_i..end]);
+            vd.num_indices += 6;
         }
         z_pos: {
             if (surfaces[zp]) |bd| if (bd.block_id != 0) break :z_pos;
 
-            var vx_i: usize = 0; // z_pos goes 0 - 6 in cube mesh
+            const vx_i: usize = 0; // z_pos goes 0 - 6 in cube mesh
             const end = vx_i + 6;
-            while (vx_i < end) : (vx_i += 1) {
-                vd.indices[vd.num_indices] = self.indices[vd.num_indices];
-                vd.positions[vd.num_indices] = self.positions[vx_i];
-                vd.normals[vd.num_indices] = self.normals[vx_i];
-                vd.num_indices += 1;
-            }
+            const n = vd.num_indices;
+            const e = vd.num_indices + 6;
+            @memcpy(vd.indices[n..e], self.indices[n..e]);
+            @memcpy(vd.positions[n..e], self.positions[vx_i..end]);
+            @memcpy(vd.normals[n..e], self.normals[vx_i..end]);
+            vd.num_indices += 6;
         }
         z_neg: {
             if (surfaces[zn]) |bd| if (bd.block_id != 0) break :z_neg;
 
-            var vx_i: usize = 12; // z_neg goes 12 - 18 in cube mesh
+            const vx_i: usize = 12; // z_neg goes 12 - 18 in cube mesh
             const end = vx_i + 6;
-            while (vx_i < end) : (vx_i += 1) {
-                vd.indices[vd.num_indices] = self.indices[vd.num_indices];
-                vd.positions[vd.num_indices] = self.positions[vx_i];
-                vd.normals[vd.num_indices] = self.normals[vx_i];
-                vd.num_indices += 1;
-            }
+            const n = vd.num_indices;
+            const e = vd.num_indices + 6;
+            @memcpy(vd.indices[n..e], self.indices[n..e]);
+            @memcpy(vd.positions[n..e], self.positions[vx_i..end]);
+            @memcpy(vd.normals[n..e], self.normals[vx_i..end]);
+            vd.num_indices += 6;
         }
         self.total_indices_count += vd.num_indices;
         self.data[i] = vd;
