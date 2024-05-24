@@ -3,6 +3,7 @@ const job_name = "SubChunkBuilderJob";
 pub const SubChunkBuilderJob = struct {
     sorter: *chunk.sub_chunk.sorter,
     is_terrain: bool,
+    is_settings: bool,
 
     pub fn exec(self: *SubChunkBuilderJob) void {
         if (config.use_tracy) {
@@ -31,6 +32,7 @@ pub const SubChunkBuilderJob = struct {
             .sub_chunk_build = .{
                 .sorter = self.sorter,
                 .is_terrain = self.is_terrain,
+                .is_settings = self.is_settings,
             },
         };
         buffer.put_data(msg, bd) catch @panic("OOM");

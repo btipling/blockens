@@ -5,6 +5,7 @@ pub const SubChunkMeshJob = struct {
     sub_pos: chunk.sub_chunk.subPosition,
     chunk_data: []const u32,
     is_terrain: bool,
+    is_settings: bool,
     pt: *buffer.ProgressTracker,
 
     pub fn exec(self: *SubChunkMeshJob) void {
@@ -44,6 +45,7 @@ pub const SubChunkMeshJob = struct {
             .sub_chunk_mesh = .{
                 .sub_chunk = sc,
                 .is_terrain = self.is_terrain,
+                .is_settings = self.is_settings,
             },
         };
         self.pt.completeOne(msg, bd);

@@ -67,11 +67,13 @@ pub const chunk_mesh_data = struct {
 pub const sub_chunk_mesh_data = struct {
     sub_chunk: *chunk.sub_chunk,
     is_terrain: bool,
+    is_settings: bool,
 };
 
 pub const sub_chunk_build_data = struct {
     sorter: *chunk.sub_chunk.sorter,
     is_terrain: bool,
+    is_settings: bool,
 };
 
 pub const lightings_data = struct {

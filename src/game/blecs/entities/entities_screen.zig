@@ -449,7 +449,7 @@ pub fn initSubChunksCamera(reset: bool) void {
     );
 }
 
-pub fn initSubChunks(reset: bool, is_terrain: bool) void {
+pub fn initDemoSubChunks(reset: bool, is_terrain: bool) void {
     clearDemoObjects();
     const world = game.state.world;
     initSubChunksCamera(reset);
@@ -460,7 +460,7 @@ pub fn initSubChunks(reset: bool, is_terrain: bool) void {
     }
     const sc_e = helpers.new_child(world, settings_data);
     _ = ecs.set(world, sc_e, components.shape.Shape, .{ .shape_type = .sub_chunks });
-    const cr_c = math.vecs.Vflx4.initBytes(0, 0, 255, 255);
+    const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
     _ = ecs.set(world, sc_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
     _ = ecs.set(world, sc_e, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
     ecs.add(world, sc_e, components.block.SubChunks);
@@ -474,6 +474,21 @@ pub fn initSubChunks(reset: bool, is_terrain: bool) void {
         game.state.allocator.free(cd);
     }
     game.state.blocks.generated_settings_chunks.clearRetainingCapacity();
+    return;
+}
+
+pub fn initGameSubChunks() void {
+    const world = game.state.world;
+    const sc_e = helpers.new_child(world, game_data);
+    _ = ecs.set(world, sc_e, components.shape.Shape, .{ .shape_type = .sub_chunks });
+    const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
+    _ = ecs.set(world, sc_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
+    _ = ecs.set(world, sc_e, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
+    ecs.add(world, sc_e, components.block.SubChunks);
+    ecs.add(world, sc_e, components.gfx.SortedMultiDraw);
+    ecs.add(world, sc_e, components.block.UseTextureAtlas);
+    _ = ecs.set(world, sc_e, components.shape.Lighting, .{ .ssbo = gfx.constants.LightingBindingPoint });
+    ecs.add(world, sc_e, components.shape.NeedsSetup);
     return;
 }
 

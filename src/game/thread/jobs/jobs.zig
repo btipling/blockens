@@ -40,7 +40,7 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn meshSubChunk(self: *Jobs, is_terrain: bool) void {
+    pub fn meshSubChunk(self: *Jobs, is_terrain: bool, is_settings: bool) void {
         const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
         const num_jobs = game.state.blocks.generated_settings_chunks.count() * 64;
         pt.* = .{
@@ -67,6 +67,7 @@ pub const Jobs = struct {
                             zjobs.JobId.none,
                             job_sub_chunk_mesh.SubChunkMeshJob{
                                 .is_terrain = is_terrain,
+                                .is_settings = is_settings,
                                 .wp = wp,
                                 .sub_pos = sub_pos,
                                 .chunk_data = chunk_data,
@@ -83,12 +84,13 @@ pub const Jobs = struct {
         return;
     }
 
-    pub fn buildSubChunks(self: *Jobs, is_terrain: bool) void {
+    pub fn buildSubChunks(self: *Jobs, is_terrain: bool, is_settings: bool) void {
         _ = self.jobs.schedule(
             zjobs.JobId.none,
             job_sub_chunk_build.SubChunkBuilderJob{
                 .sorter = game.state.ui.demo_sub_chunks_sorter,
                 .is_terrain = is_terrain,
+                .is_settings = is_settings,
             },
         ) catch |e| {
             std.debug.print("error scheduling sub chunk mesh job: {}\n", .{e});
