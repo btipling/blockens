@@ -130,7 +130,10 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     zgui.text("[chunk pos:{d},{d},{d}]", .{ c_p[0], c_p[1], c_p[2] });
                     zgui.sameLine(.{});
                     var meshes_buf: [100:0]u8 = std.mem.zeroes([100:0]u8);
-                    ui.format.prettyUnsignedInt(@ptrCast(&meshes_buf), game.state.ui.gfx_meshes_drawn) catch @panic("too many meshes to count");
+                    ui.format.prettyUnsignedInt(
+                        @ptrCast(&meshes_buf),
+                        game.state.ui.gfx_meshes_drawn,
+                    ) catch @panic("too many meshes to count");
                     zgui.text("[meshes drawn: {s}]", .{std.mem.sliceTo(&meshes_buf, 0)});
                 }
             }

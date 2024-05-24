@@ -95,6 +95,7 @@ gfx_wire_frames: bool = false,
 gfx_lock_cull_to_player_pos: bool = false,
 gfx_meshes_drawn_counter: u64 = 0,
 gfx_meshes_drawn: u64 = 0,
+gfx_triangle_count: usize = 0,
 
 screen_size: [2]f32 = .{ 0, 0 },
 

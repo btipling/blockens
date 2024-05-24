@@ -264,6 +264,7 @@ pub fn clearDemoObjects() void {
     ecs.remove(world, game.state.entities.settings_camera, components.screen.WorldRotation);
     ecs.remove(world, game.state.entities.settings_camera, components.screen.WorldScale);
     ecs.remove(world, game.state.entities.settings_camera, components.screen.PostPerspective);
+    game.state.ui.gfx_triangle_count = 0;
 }
 
 pub fn initDemoCube() void {

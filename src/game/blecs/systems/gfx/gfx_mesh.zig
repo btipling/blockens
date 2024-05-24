@@ -98,6 +98,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
 
             if (config.use_tracy) ztracy.Message("adding indexes to EBO");
             const indices = _c.indices orelse std.debug.panic("expected indices from chunk\n", .{});
+            game.state.ui.gfx_triangle_count += @divFloor(indices.len, 3);
             ebo = gfx.gl.Gl.initEBO(indices) catch @panic("nope");
             game.state.allocator.free(indices);
             _c.indices = null;

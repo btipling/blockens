@@ -120,6 +120,7 @@ pub fn getMeshData(self: *sorter) []u32 {
     }
     self.builder = builder;
     std.debug.print("total indicies: {d}\n", .{self.num_indices});
+    game.state.ui.gfx_triangle_count = @divFloor(self.num_indices, 3);
     return inds.toOwnedSlice(self.allocator) catch @panic("OOM");
 }
 
