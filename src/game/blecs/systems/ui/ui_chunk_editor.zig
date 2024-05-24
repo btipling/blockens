@@ -74,7 +74,7 @@ fn drawControls() !void {
             toggleWireframe();
         }
         _ = zgui.checkbox("Small chunks", .{
-            .v = &game.state.ui.chunks_small,
+            .v = &game.state.ui.sub_chunks,
         });
         if (zgui.colorEdit3("##Script color", .{
             .col = &game.state.ui.chunk_script_color,
@@ -157,11 +157,7 @@ fn toggleWireframe() void {
 }
 
 fn evalChunkFunc() !void {
-    if (game.state.ui.chunks_small) {
-        _ = game.state.jobs.generateDemoSubChunks();
-        return;
-    }
-    _ = game.state.jobs.generateDemoChunk();
+    _ = game.state.jobs.generateDemoChunk(game.state.ui.sub_chunks);
 }
 
 fn floatFromChunkBuf(buf: []u8) f32 {

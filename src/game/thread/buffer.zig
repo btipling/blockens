@@ -10,7 +10,6 @@ pub const BufferErr = error{
 pub const buffer_message_type = enum(u8) {
     startup,
     chunk_gen,
-    sub_chunks_gen,
     chunk_mesh,
     sub_chunk_mesh,
     lighting,
@@ -26,7 +25,6 @@ pub const buffer_message_type = enum(u8) {
 pub const buffer_data = union(buffer_message_type) {
     startup: startup_data,
     chunk_gen: chunk_gen_data,
-    sub_chunks_gen: sub_chunks_gen_data,
     chunk_mesh: chunk_mesh_data,
     sub_chunk_mesh: sub_chunk_mesh_data,
     lighting: lightings_data,
@@ -54,11 +52,7 @@ pub const startup_data = struct {
 pub const chunk_gen_data = struct {
     wp: chunk.worldPosition,
     chunk_data: []u32,
-};
-
-pub const sub_chunks_gen_data = struct {
-    wp: chunk.worldPosition,
-    chunk_data: []u32,
+    sub_chunks: bool,
 };
 
 pub const chunk_mesh_data = struct {

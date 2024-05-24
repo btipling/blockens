@@ -39,7 +39,7 @@ display_settings_height: i32 = 0,
 
 chunk_name_buf: [script.maxLuaScriptNameSize]u8 = std.mem.zeroes([script.maxLuaScriptNameSize]u8),
 chunk_buf: [script.maxLuaScriptSize]u8 = std.mem.zeroes([script.maxLuaScriptSize]u8),
-chunks_small: bool = false,
+sub_chunks: bool = false,
 chunk_script_options: std.ArrayListUnmanaged(data.colorScriptOption) = undefined,
 chunk_loaded_script_id: i32 = 0,
 chunk_script_color: [3]f32 = std.mem.zeroes([3]f32),

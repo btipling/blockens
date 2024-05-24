@@ -1,4 +1,5 @@
 pub const GenerateDemoChunkJob = struct {
+    sub_chunks: bool,
     pub fn exec(self: *@This()) void {
         if (config.use_tracy) {
             const ztracy = @import("ztracy");
@@ -11,7 +12,7 @@ pub const GenerateDemoChunkJob = struct {
         }
     }
 
-    pub fn generateDemoChunkJob(_: *@This()) void {
+    pub fn generateDemoChunkJob(self: *@This()) void {
         var chunk_data = game.state.script.evalChunkFunc(&game.state.ui.chunk_buf) catch |err| {
             std.debug.print("Error evaluating chunk function: {}\n", .{err});
             return;
@@ -31,6 +32,7 @@ pub const GenerateDemoChunkJob = struct {
             .chunk_gen = .{
                 .wp = chunk.worldPosition.initFromPositionV(pos),
                 .chunk_data = chunk_data,
+                .sub_chunks = self.sub_chunks,
             },
         };
         buffer.put_data(msg, bd) catch @panic("OOM");

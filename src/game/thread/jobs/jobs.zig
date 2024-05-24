@@ -80,22 +80,14 @@ pub const Jobs = struct {
         return;
     }
 
-    pub fn generateDemoChunk(self: *Jobs) zjobs.JobId {
+    pub fn generateDemoChunk(self: *Jobs, sub_chunks: bool) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
-            job_demo_generate_chunk.GenerateDemoChunkJob{},
+            job_demo_generate_chunk.GenerateDemoChunkJob{
+                .sub_chunks = sub_chunks,
+            },
         ) catch |e| {
             std.debug.print("error scheduling demo chunk job: {}\n", .{e});
-            return zjobs.JobId.none;
-        };
-    }
-
-    pub fn generateDemoSubChunks(self: *Jobs) zjobs.JobId {
-        return self.jobs.schedule(
-            zjobs.JobId.none,
-            job_demo_generate_subchunks.GenerateDemoSubChunksJob{},
-        ) catch |e| {
-            std.debug.print("error scheduling gen  subchunks job: {}\n", .{e});
             return zjobs.JobId.none;
         };
     }
@@ -335,7 +327,6 @@ const job_sub_chunk_meshing = @import("jobs_sub_chunk_meshing.zig");
 const job_demo_generate_chunk = @import("jobs_demo_generate_chunk.zig");
 const job_demo_descriptor_gen = @import("jobs_demo_descriptor_gen.zig");
 const job_demo_terrain_gen = @import("jobs_demo_terrain_gen.zig");
-const job_demo_generate_subchunks = @import("jobs_demo_generate_subchunks.zig");
 const job_save_player = @import("jobs_save_player.zig");
 const job_save_chunk = @import("jobs_save_chunk.zig");
 const job_lighting = @import("jobs_lighting.zig");
