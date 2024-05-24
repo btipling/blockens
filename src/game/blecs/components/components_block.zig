@@ -1,5 +1,4 @@
 pub const Chunk = struct {
-    loc: @Vector(4, f32) = undefined,
     wp: chunk.worldPosition = undefined,
 };
 

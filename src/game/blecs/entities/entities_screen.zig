@@ -393,7 +393,7 @@ pub fn initDemoTextureAtlas() void {
     ecs.add(world, c_atlas, components.shape.NeedsSetup);
 }
 
-pub fn initSubchunksCamera(reset: bool) void {
+pub fn initSubChunksCamera(reset: bool) void {
     const world = game.state.world;
 
     if (reset) {
@@ -448,18 +448,15 @@ pub fn initSubchunksCamera(reset: bool) void {
     );
 }
 
-pub fn initSubchunks(reset: bool) void {
+pub fn initSubChunks(reset: bool) void {
     clearDemoObjects();
     const world = game.state.world;
-    initSubchunksCamera(reset);
+    initSubChunksCamera(reset);
     const sc_e = helpers.new_child(world, settings_data);
     _ = ecs.set(world, sc_e, components.shape.Shape, .{ .shape_type = .sub_chunks });
     const cr_c = math.vecs.Vflx4.initBytes(0, 0, 255, 255);
     _ = ecs.set(world, sc_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
     _ = ecs.set(world, sc_e, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
-    _ = ecs.set(game.state.world, sc_e, components.screen.WorldLocation, .{
-        .loc = @Vector(4, f32){ 30, 63, 30, 0 },
-    });
     ecs.add(world, sc_e, components.block.SubChunks);
     ecs.add(world, sc_e, components.gfx.SortedMultiDraw);
     ecs.add(world, sc_e, components.block.UseTextureAtlas);

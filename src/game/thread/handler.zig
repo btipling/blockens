@@ -122,7 +122,7 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
     }
     if (!pr.done) return;
     std.debug.print("initing sub chunks\n", .{});
-    blecs.entities.screen.initSubchunks(true);
+    blecs.entities.screen.initSubChunks(true);
 }
 
 fn handle_lighting(msg: buffer.buffer_message) void {
@@ -252,7 +252,6 @@ fn handle_demo_terrain_gen(msg: buffer.buffer_message) void {
 
 fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entity_t {
     const wp = c.wp;
-    const p = wp.vecFromWorldPosition();
     var chunk_entity: blecs.ecs.entity_t = 0;
     if (c.is_settings) {
         chunk_entity = helpers.new_child(world, blecs.entities.screen.settings_data);
@@ -266,19 +265,7 @@ fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entit
         blecs.entities.block.HasChunkRenderer,
         chunk_entity,
     );
-    var loc: @Vector(4, f32) = undefined;
-    if (c.is_settings) {
-        loc = .{ -32, 0, -32, 0 };
-    } else {
-        loc = .{
-            p[0] * chunk.chunkDim,
-            p[1] * chunk.chunkDim,
-            p[2] * chunk.chunkDim,
-            0,
-        };
-    }
     _ = blecs.ecs.set(world, chunk_entity, blecs.components.block.Chunk, .{
-        .loc = loc,
         .wp = wp,
     });
     blecs.ecs.add(world, chunk_entity, blecs.components.block.UseMultiDraw);
