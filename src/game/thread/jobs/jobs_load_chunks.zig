@@ -6,6 +6,7 @@ pub const LoadChunkJob = struct {
     x: i32,
     z: i32,
     start_game: bool,
+    sub_chunks: bool,
     pt: *buffer.ProgressTracker,
 
     pub fn exec(self: *@This()) void {
@@ -106,6 +107,7 @@ pub const LoadChunkJob = struct {
                 .cfg_b = cfg_b,
                 .exists = exists,
                 .start_game = self.start_game,
+                .sub_chunks = self.sub_chunks,
             },
         };
         self.pt.completeOne(msg, bd);

@@ -92,6 +92,7 @@ pub const load_chunk_data = struct {
     cfg_b: ui.chunkConfig,
     exists: bool,
     start_game: bool,
+    sub_chunks: bool,
 };
 
 pub const demo_descriptor_gen_data = struct {

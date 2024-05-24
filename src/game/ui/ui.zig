@@ -85,6 +85,7 @@ demo_atlas_translation: @Vector(4, f32) = @Vector(4, f32){ -0.976, -0.959, 0, 0 
 demo_atlas_rotation: f32 = 0.5,
 
 demo_sub_chunks_sorter: *chunk.sub_chunk.sorter,
+game_sub_chunks_sorter: *chunk.sub_chunk.sorter,
 
 load_percentage_world_gen: f16 = 0,
 load_percentage_lighting_initial: f16 = 0,
@@ -117,11 +118,13 @@ pub fn init(allocator: std.mem.Allocator) void {
         .terrain_gen_script_options_selected = std.ArrayListUnmanaged(data.colorScriptOption){},
         .world_managed_seed_terrain_scripts = std.ArrayListUnmanaged(data.colorScriptOption){},
         .demo_sub_chunks_sorter = chunk.sub_chunk.sorter.init(allocator),
+        .game_sub_chunks_sorter = chunk.sub_chunk.sorter.init(allocator),
     };
 }
 
 pub fn deinit() void {
     ui.demo_sub_chunks_sorter.deinit();
+    ui.game_sub_chunks_sorter.deinit();
     ui.texture_script_options.deinit(ui.allocator);
     ui.block_options.deinit(ui.allocator);
     ui.chunk_script_options.deinit(ui.allocator);
@@ -233,6 +236,10 @@ pub fn TerrainGenDeselectScript(self: *UI, id: i32) void {
 pub fn resetDemoSorter(self: *UI) void {
     self.demo_sub_chunks_sorter.deinit();
     self.demo_sub_chunks_sorter = chunk.sub_chunk.sorter.init(self.allocator);
+}
+pub fn resetGameSorter(self: *UI) void {
+    self.game_sub_chunks_sorter.deinit();
+    self.game_sub_chunks_sorter = chunk.sub_chunk.sorter.init(self.allocator);
 }
 
 const std = @import("std");

@@ -54,15 +54,18 @@ fn gfxSortedMultiDraw(
     if (!ecs.is_alive(world, entity)) return;
     if (ecs.has_id(world, entity, ecs.id(components.gfx.ManuallyHidden))) return;
     const parent = ecs.get_parent(world, entity);
+    var sorter: *chunk.sub_chunk.sorter = undefined;
     if (parent == screen.gameDataEntity) {
         if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Game))) {
             return;
         }
+        sorter = game.state.ui.game_sub_chunks_sorter;
     }
     if (parent == screen.settingDataEntity) {
         if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Settings))) {
             return;
         }
+        sorter = game.state.ui.demo_sub_chunks_sorter;
     }
     if (er.enable_depth_test) gl.enable(gl.DEPTH_TEST);
     gl.useProgram(er.program);
@@ -74,8 +77,8 @@ fn gfxSortedMultiDraw(
 
     game.state.ui.gfx_meshes_drawn_counter += 0;
 
-    const offsets = game.state.ui.demo_sub_chunks_sorter.opaque_draw_offsets;
-    const draws = game.state.ui.demo_sub_chunks_sorter.opaque_draws;
+    const offsets = sorter.opaque_draw_offsets;
+    const draws = sorter.opaque_draws;
     gl.multiDrawElements(
         gl.TRIANGLES,
         draws.items.ptr,
@@ -95,3 +98,5 @@ const tags = @import("../../tags.zig");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
 const gfx = @import("../../../gfx/gfx.zig");
+const block = @import("../../../block/block.zig");
+const chunk = block.chunk;

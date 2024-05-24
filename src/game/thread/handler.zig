@@ -124,7 +124,9 @@ fn handle_sub_chunks_build(msg: buffer.buffer_message) void {
     std.debug.print("initing sub chunks\n", .{});
     if (scd.is_settings) {
         blecs.entities.screen.initDemoSubChunks(true, scd.is_terrain);
+        return;
     }
+    blecs.entities.screen.initGameSubChunks();
 }
 
 fn handle_lighting(msg: buffer.buffer_message) void {
@@ -148,7 +150,7 @@ fn handle_lighting_cross_chunk(msg: buffer.buffer_message) void {
     };
     game.state.ui.load_percentage_lighting_cross_chunk = pr.percent;
     if (!pr.done) return;
-    _ = game.state.jobs.loadChunks(ld.world_id, true);
+    _ = game.state.jobs.loadChunks(ld.world_id, true, game.state.ui.sub_chunks);
 }
 
 fn handle_load_chunk(msg: buffer.buffer_message) void {
@@ -173,6 +175,11 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
     }
     if (!pr.done) return;
     if (!lcd.start_game) return;
+    if (lcd.sub_chunks) {
+        game.state.ui.resetGameSorter();
+        game.state.jobs.meshSubChunk(false, false);
+        return;
+    }
     ui_helpers.loadChunksInWorld();
     screen_helpers.showGameScreen();
     ui_helpers.loadCharacterInWorld();
@@ -251,6 +258,7 @@ fn handle_demo_terrain_gen(msg: buffer.buffer_message) void {
         game.state.blocks.generated_settings_chunks.count(),
     });
     if (tg_d.sub_chunks) {
+        blecs.entities.screen.clearDemoObjects();
         game.state.ui.resetDemoSorter();
         game.state.jobs.meshSubChunk(true, true);
         return;

@@ -110,14 +110,21 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             _c.attr_builder = null;
         }
     } else if (er.is_sub_chunks) {
-        if (game.state.ui.demo_sub_chunks_sorter.ebo != 0) @panic("Should not mesh a previously meshed sorter");
-        const inds = game.state.ui.demo_sub_chunks_sorter.indices orelse @panic("nope");
-        game.state.ui.demo_sub_chunks_sorter.indices = null;
+        var sorter: *chunk.sub_chunk.sorter = undefined;
+        if (parent == screen.gameDataEntity) {
+            sorter = game.state.ui.game_sub_chunks_sorter;
+        }
+        if (parent == screen.settingDataEntity) {
+            sorter = game.state.ui.demo_sub_chunks_sorter;
+        }
+        if (sorter.ebo != 0) @panic("Should not mesh a previously meshed sorter");
+        const inds = sorter.indices orelse @panic("nope");
+        sorter.indices = null;
         defer game.state.allocator.free(inds);
         ebo = gfx.gl.Gl.initEBO(inds) catch @panic("nope");
-        game.state.ui.demo_sub_chunks_sorter.ebo = ebo;
-        builder = game.state.ui.demo_sub_chunks_sorter.builder orelse @panic("nope");
-        game.state.ui.demo_sub_chunks_sorter.builder = null;
+        sorter.ebo = ebo;
+        builder = sorter.builder orelse @panic("nope");
+        sorter.builder = null;
         builder.vbo = vbo;
         builder.usage = gl.STATIC_DRAW;
     } else {
