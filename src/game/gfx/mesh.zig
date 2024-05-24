@@ -61,12 +61,12 @@ pub fn plane() meshData {
 // :: Cube
 pub const cube_positions: [36][3]f32 = .{
     // z pos
-    .{ -0.5, -0.5, 0.5 },
-    .{ 0.5, -0.5, 0.5 },
-    .{ 0.5, 0.5, 0.5 },
-    .{ -0.5, -0.5, 0.5 },
-    .{ 0.5, 0.5, 0.5 },
-    .{ -0.5, 0.5, 0.5 },
+    .{ -0.5, -0.5, 0.5 }, // y neg facing vertex on x neg
+    .{ 0.5, -0.5, 0.5 }, // y neg facing vertex on x pos
+    .{ 0.5, 0.5, 0.5 }, // x pos facing vertex on y pos
+    .{ -0.5, -0.5, 0.5 }, // x neg facing vertex on y neg
+    .{ 0.5, 0.5, 0.5 }, // x pos facing vertex on y pos
+    .{ -0.5, 0.5, 0.5 }, // x neg facing vertex on y pos
     // x pos
     .{ 0.5, -0.5, 0.5 },
     .{ 0.5, -0.5, -0.5 },
