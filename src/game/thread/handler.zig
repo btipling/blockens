@@ -115,13 +115,11 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
         buffer.buffer_data.sub_chunk_mesh => |d| d,
         else => return,
     };
-    std.debug.print("handled sub chunk mesh ({d}, {d}, {d}, {d})\n", .{
-        scd.sub_chunk.sub_pos[0],
-        scd.sub_chunk.sub_pos[1],
-        scd.sub_chunk.sub_pos[2],
-        scd.sub_chunk.sub_pos[3],
-    });
-    game.state.ui.demo_sub_chunks_sorter.addSubChunk(scd.sub_chunk);
+    if (scd.sub_chunk.chunker.total_indices_count > 0) {
+        game.state.ui.demo_sub_chunks_sorter.addSubChunk(scd.sub_chunk);
+    } else {
+        scd.sub_chunk.deinit();
+    }
     if (!pr.done) return;
     std.debug.print("initing sub chunks\n", .{});
     blecs.entities.screen.initSubchunks(true);

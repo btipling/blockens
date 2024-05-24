@@ -19,7 +19,6 @@ pub fn init(allocator: std.mem.Allocator) *sorter {
 }
 
 pub fn addSubChunk(self: *sorter, sc: *chunk.sub_chunk) void {
-    std.debug.print("added sub chunk to sorter\n", .{});
     self.all_sub_chunks.append(self.allocator, sc) catch @panic("OOM");
 }
 
@@ -29,11 +28,8 @@ pub fn getMeshData(self: *sorter) []u32 {
     var sci: usize = 0;
     self.num_indices = 0;
     while (sci < self.all_sub_chunks.items.len) : (sci += 1) {
-        const sc: *chunk.sub_chunk = self.all_sub_chunks.items[0];
+        const sc: *chunk.sub_chunk = self.all_sub_chunks.items[sci];
         self.num_indices += sc.chunker.total_indices_count;
-        std.debug.print("num indicies: {d}\n", .{
-            sc.chunker.total_indices_count,
-        });
     }
 
     var inds = std.ArrayListUnmanaged(u32).initCapacity(
@@ -63,6 +59,7 @@ pub fn getMeshData(self: *sorter) []u32 {
     var vertex_offset: usize = 0;
     while (sci < self.all_sub_chunks.items.len) : (sci += 1) {
         const sc: *chunk.sub_chunk = self.all_sub_chunks.items[sci];
+        if (sc.chunker.total_indices_count == 0) continue;
         const cp = sc.wp.getWorldLocation();
         var loc: @Vector(4, f32) = undefined;
         loc = .{
@@ -118,8 +115,6 @@ pub fn getMeshData(self: *sorter) []u32 {
             builder.nextVertex();
         }
 
-        const count: usize = res.indices.len;
-        std.debug.print("adding indicies with count: {d}\n", .{count});
         inds.appendSliceAssumeCapacity(res.indices);
         vertex_offset += sc.chunker.total_indices_count;
     }
@@ -144,11 +139,13 @@ pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
     const count = self.all_sub_chunks.items.len;
     var index_offset: usize = 0;
     var sci: usize = 0;
+    var i: usize = 0;
     while (sci < count) : (sci += 1) {
         const sc: *chunk.sub_chunk = self.all_sub_chunks.items[sci];
         const num_indices = sc.chunker.total_indices_count;
+        if (num_indices == 0) continue;
         self.opaque_draws.append(self.allocator, @intCast(num_indices)) catch @panic("OOM");
-        if (sci == 0) {
+        if (i == 0) {
             self.opaque_draw_offsets.append(self.allocator, null) catch @panic("OOM");
         } else {
             const offset: usize = (@sizeOf(c_uint) * index_offset);
@@ -158,6 +155,7 @@ pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
             ) catch @panic("OOM");
         }
         index_offset += @intCast(num_indices);
+        i += 1;
     }
 }
 

@@ -247,7 +247,6 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
         self.total_indices_count += vd.num_indices;
         self.data[i] = vd;
     }
-    std.debug.print("sub chunk chunker ran and found {d} indicies\n", .{self.total_indices_count});
 }
 
 test run {
