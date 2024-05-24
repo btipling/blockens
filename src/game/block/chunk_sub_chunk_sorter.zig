@@ -63,9 +63,9 @@ pub fn getMeshData(self: *sorter) []u32 {
         const cp = sc.wp.getWorldLocation();
         var loc: @Vector(4, f32) = undefined;
         loc = .{
-            cp[0] * chunk.chunkDim,
-            cp[1] * chunk.chunkDim,
-            cp[2] * chunk.chunkDim,
+            cp[0], // * chunk.chunkDim,
+            cp[1], // * chunk.chunkDim,
+            cp[2], // * chunk.chunkDim,
             0,
         };
         const aloc: @Vector(4, f32) = loc - @as(@Vector(4, f32), @splat(0.5));
