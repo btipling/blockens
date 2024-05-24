@@ -117,6 +117,12 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
     i = 0;
 
     var surfaces: [6]?block.BlockData = undefined;
+    const xp: usize = 0;
+    const xn: usize = 1;
+    const yp: usize = 2;
+    const yn: usize = 3;
+    const zp: usize = 4;
+    const zn: usize = 5;
 
     while (i < chunk.sub_chunk.subChunkSize) : (i += 1) {
         var vd = self.data[i];
@@ -124,50 +130,50 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
 
         // get blocks facing each surface:
         // x_pos
-        if (vd.scd.sub_index_pos[0] + 1 >= chunk.sub_chunk.subChunkDim) surfaces[0] = null else {
+        if (vd.scd.sub_index_pos[0] + 1 >= chunk.sub_chunk.subChunkDim) surfaces[xp] = null else {
             var p = vd.scd.sub_index_pos;
             p[0] += 1;
             const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-            surfaces[0] = self.data[sci].bd;
+            surfaces[xp] = self.data[sci].bd;
         }
         // x_neg
-        if (vd.scd.sub_index_pos[0] == 0) surfaces[1] = null else {
+        if (vd.scd.sub_index_pos[0] == 0) surfaces[xn] = null else {
             var p = vd.scd.sub_index_pos;
             p[0] -= 1;
             const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-            surfaces[1] = self.data[sci].bd;
+            surfaces[xn] = self.data[sci].bd;
         }
         // y_pos
-        if (vd.scd.sub_index_pos[1] + 1 >= chunk.sub_chunk.subChunkDim) surfaces[2] = null else {
+        if (vd.scd.sub_index_pos[1] + 1 >= chunk.sub_chunk.subChunkDim) surfaces[yp] = null else {
             var p = vd.scd.sub_index_pos;
             p[1] += 1;
             const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-            surfaces[2] = self.data[sci].bd;
+            surfaces[yp] = self.data[sci].bd;
         }
         // y_neg
-        if (vd.scd.sub_index_pos[1] == 0) surfaces[3] = null else {
+        if (vd.scd.sub_index_pos[1] == 0) surfaces[yn] = null else {
             var p = vd.scd.sub_index_pos;
             p[1] -= 1;
             const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-            surfaces[3] = self.data[sci].bd;
+            surfaces[yn] = self.data[sci].bd;
         }
         // z_pos
-        if (vd.scd.sub_index_pos[2] + 1 >= chunk.sub_chunk.subChunkDim) surfaces[4] = null else {
+        if (vd.scd.sub_index_pos[2] + 1 >= chunk.sub_chunk.subChunkDim) surfaces[zp] = null else {
             var p = vd.scd.sub_index_pos;
             p[2] += 1;
             const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-            surfaces[4] = self.data[sci].bd;
+            surfaces[zp] = self.data[sci].bd;
         }
         // z_neg
-        if (vd.scd.sub_index_pos[2] == 0) surfaces[5] = null else {
+        if (vd.scd.sub_index_pos[2] == 0) surfaces[zn] = null else {
             var p = vd.scd.sub_index_pos;
             p[2] -= 1;
             const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-            surfaces[5] = self.data[sci].bd;
+            surfaces[zn] = self.data[sci].bd;
         }
 
         x_pos: {
-            if (surfaces[0]) |bd| if (bd.block_id != 0) break :x_pos;
+            if (surfaces[xp]) |bd| if (bd.block_id != 0) break :x_pos;
 
             const n = vd.num_indices;
             const e = vd.num_indices + 6;
@@ -179,7 +185,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
             vd.num_indices += 6;
         }
         x_neg: {
-            if (surfaces[1]) |bd| if (bd.block_id != 0) break :x_neg;
+            if (surfaces[xn]) |bd| if (bd.block_id != 0) break :x_neg;
 
             const n = vd.num_indices;
             const e = vd.num_indices + 6;
@@ -191,7 +197,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
             vd.num_indices += 6;
         }
         y_pos: {
-            if (surfaces[2]) |bd| if (bd.block_id != 0) break :y_pos;
+            if (surfaces[yp]) |bd| if (bd.block_id != 0) break :y_pos;
 
             const n = vd.num_indices;
             const e = vd.num_indices + 6;
@@ -203,7 +209,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
             vd.num_indices += 6;
         }
         y_neg: {
-            if (surfaces[3]) |bd| if (bd.block_id != 0) break :y_neg;
+            if (surfaces[yn]) |bd| if (bd.block_id != 0) break :y_neg;
 
             const n = vd.num_indices;
             const e = vd.num_indices + 6;
@@ -215,7 +221,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
             vd.num_indices += 6;
         }
         z_pos: {
-            if (surfaces[4]) |bd| if (bd.block_id != 0) break :z_pos;
+            if (surfaces[zp]) |bd| if (bd.block_id != 0) break :z_pos;
 
             const n = vd.num_indices;
             const e = vd.num_indices + 6;
@@ -227,7 +233,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
             vd.num_indices += 6;
         }
         z_neg: {
-            if (surfaces[5]) |bd| if (bd.block_id != 0) break :z_neg;
+            if (surfaces[zn]) |bd| if (bd.block_id != 0) break :z_neg;
 
             const n = vd.num_indices;
             const e = vd.num_indices + 6;
