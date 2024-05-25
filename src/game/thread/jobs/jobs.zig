@@ -41,6 +41,7 @@ pub const Jobs = struct {
     }
 
     pub fn meshSubChunk(self: *Jobs, is_terrain: bool, is_settings: bool) void {
+        std.debug.print("meshing sub chunks begin\n", .{});
         const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
         if (is_settings) {
             const num_jobs = game.state.blocks.generated_settings_chunks.count() * 64;
@@ -67,6 +68,7 @@ pub const Jobs = struct {
             const c_cfg = kv.value_ptr.*;
             self.meshSubChunkForWP(is_terrain, is_settings, wp, c_cfg.chunkData, pt);
         }
+        std.debug.print("meshing sub chunks end\n", .{});
         return;
     }
 
