@@ -1,5 +1,7 @@
 pos: chunk.sub_chunk.subPosition,
 data: [chunk.sub_chunk.subChunkSize]subChunkVoxelData = undefined,
+meshes: [chunk.sub_chunk.subChunkSize]subChunkMeshes = undefined,
+num_meshes: usize = 0,
 total_indices_count: usize = 0,
 // these are used to generate vertices for each surface
 positions: [36][3]f32,
@@ -18,7 +20,7 @@ caching_meshed: bool = true,
 current_scale: @Vector(4, f32) = .{ 1, 1, 1, 0 },
 to_be_meshed: [min_voxels_in_mesh]usize = [_]usize{0} ** min_voxels_in_mesh,
 meshed: [chunk.sub_chunk.subChunkSize]bool = [_]bool{false} ** chunk.sub_chunk.subChunkSize,
-meshes: std.AutoHashMapUnmanaged(usize, @Vector(4, f32)) = .{},
+mesh_map: std.AutoHashMapUnmanaged(usize, @Vector(4, f32)) = .{},
 
 const chunkerSubChunker = @This();
 
@@ -26,6 +28,27 @@ const min_voxels_in_mesh = 1;
 
 pub const ChunkerError = error{
     NoMeshData,
+};
+
+pub const subChunkMeshes = struct {
+    sub_pos: @Vector(4, f32),
+    bd_id: u32,
+    positions: [36][3]f32 = undefined,
+    indices: [36]u32 = undefined,
+    normals: [36][3]f32 = undefined,
+};
+
+pub const subChunkVoxelData = struct {
+    scd: chunk.sub_chunk.subPositionIndex,
+    bd: block.BlockData,
+};
+
+pub const meshData = struct {
+    indices: []u32,
+    positions: [][3]f32,
+    normals: [][3]f32,
+    block_data: []u32,
+    full_offset: u32 = 0,
 };
 
 pub fn init(
@@ -50,23 +73,6 @@ pub fn init(
     return csc;
 }
 
-pub const subChunkVoxelData = struct {
-    scd: chunk.sub_chunk.subPositionIndex,
-    bd: block.BlockData,
-    positions: [36][3]f32 = undefined,
-    indices: [36]u32 = undefined,
-    normals: [36][3]f32 = undefined,
-    num_indices: usize = 0,
-};
-
-pub const meshData = struct {
-    indices: []u32,
-    positions: [][3]f32,
-    normals: [][3]f32,
-    block_data: []u32,
-    full_offset: u32 = 0,
-};
-
 pub fn getMeshData(
     self: *chunkerSubChunker,
     indices_buf: *[chunk.sub_chunk.subChunkSize * 36]u32,
@@ -77,23 +83,23 @@ pub fn getMeshData(
 ) !meshData {
     var offset: u32 = 0;
     var i: usize = 0;
-    while (i < chunk.sub_chunk.subChunkSize) : (i += 1) {
-        const vd = self.data[i];
-        const sub_index_pos = vd.scd.sub_index_pos;
+    while (i < self.num_meshes) : (i += 1) {
+        const mesh = self.meshes[i];
+        const sub_index_pos = mesh.sub_pos;
         var ii: usize = 0;
-        while (ii < vd.num_indices) : (ii += 1) {
-            const index = vd.indices[ii];
+        while (ii < mesh.indices.len) : (ii += 1) {
+            const index = mesh.indices[ii];
             indices_buf[ii + offset] = index + offset + full_offset;
-            const vd_pos: [3]f32 = vd.positions[ii];
+            const vd_pos: [3]f32 = mesh.positions[ii];
             vertices_buf[ii + offset] = [3]f32{
                 vd_pos[0] + sub_index_pos[0],
                 vd_pos[1] + sub_index_pos[1],
                 vd_pos[2] + sub_index_pos[2],
             };
-            normals_buf[ii + offset] = vd.normals[ii];
-            block_data_buf[ii + offset] = vd.bd.toId();
+            normals_buf[ii + offset] = mesh.normals[ii];
+            block_data_buf[ii + offset] = mesh.bd_id;
         }
-        offset += @intCast(vd.num_indices);
+        offset += @intCast(mesh.indices.len);
     }
     if (offset == 0) return ChunkerError.NoMeshData;
     return .{
@@ -290,7 +296,7 @@ fn updateMeshed(self: *chunkerSubChunker, i: usize) void {
 }
 
 fn updateQuads(self: *chunkerSubChunker) void {
-    self.meshes.put(self.allocator, self.current_voxel, self.current_scale) catch @panic("OOM");
+    self.mesh_map.put(self.allocator, self.current_voxel, self.current_scale) catch @panic("OOM");
     self.to_be_meshed = [_]usize{0} ** min_voxels_in_mesh;
     self.num_voxels_in_mesh = 0;
     self.initScale();
@@ -467,7 +473,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
         return;
     }
     self.meshed[i] = true;
-    self.meshes.put(self.allocator, i, .{ 1, 1, 1, 1 }) catch @panic("OOM");
+    self.mesh_map.put(self.allocator, i, .{ 1, 1, 1, 1 }) catch @panic("OOM");
 }
 
 test run {
