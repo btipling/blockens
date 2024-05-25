@@ -1,6 +1,6 @@
 pos: chunk.sub_chunk.subPosition,
 data: [chunk.sub_chunk.subChunkSize]subChunkVoxelData = undefined,
-meshes: [chunk.sub_chunk.subChunkSize]subChunkMeshes = undefined,
+meshes: [chunk.sub_chunk.subChunkSize]shubChunkMesh = undefined,
 num_meshes: usize = 0,
 total_indices_count: usize = 0,
 // these are used to generate vertices for each surface
@@ -30,8 +30,8 @@ pub const ChunkerError = error{
     NoMeshData,
 };
 
-pub const subChunkMeshes = struct {
-    sub_pos: @Vector(4, f32),
+pub const shubChunkMesh = struct {
+    sub_index_pos: @Vector(4, f32),
     bd_id: u32,
     positions: [36][3]f32 = undefined,
     indices: [36]u32 = undefined,
@@ -85,16 +85,16 @@ pub fn getMeshData(
     var i: usize = 0;
     while (i < self.num_meshes) : (i += 1) {
         const mesh = self.meshes[i];
-        const sub_index_pos = mesh.sub_pos;
+        const sub_index_pos = mesh.sub_index_pos;
         var ii: usize = 0;
         while (ii < mesh.indices.len) : (ii += 1) {
             const index = mesh.indices[ii];
             indices_buf[ii + offset] = index + offset + full_offset;
-            const vd_pos: [3]f32 = mesh.positions[ii];
+            const mesh_pos: [3]f32 = mesh.positions[ii];
             vertices_buf[ii + offset] = [3]f32{
-                vd_pos[0] + sub_index_pos[0],
-                vd_pos[1] + sub_index_pos[1],
-                vd_pos[2] + sub_index_pos[2],
+                mesh_pos[0] + sub_index_pos[0],
+                mesh_pos[1] + sub_index_pos[1],
+                mesh_pos[2] + sub_index_pos[2],
             };
             normals_buf[ii + offset] = mesh.normals[ii];
             block_data_buf[ii + offset] = mesh.bd_id;
@@ -102,6 +102,7 @@ pub fn getMeshData(
         offset += @intCast(mesh.indices.len);
     }
     if (offset == 0) return ChunkerError.NoMeshData;
+    std.debug.print("final offset: {d}\n", .{offset});
     return .{
         .indices = indices_buf[0..offset],
         .positions = vertices_buf[0..offset],
@@ -143,8 +144,39 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
     }
 
     self.findQuads() catch @panic("nope");
+    var it = self.mesh_map.iterator();
+    while (it.next()) |e| {
+        const sci = e.key_ptr.*;
+        const scale = e.value_ptr.*;
+        const vd = self.data[sci];
+        var sm: shubChunkMesh = .{
+            .sub_index_pos = vd.scd.sub_index_pos,
+            .bd_id = vd.bd.toId(),
+        };
+        @memcpy(sm.indices[0..], self.indices[0..]);
+        @memcpy(sm.positions[0..], self.positions[0..]);
+        @memcpy(sm.normals[0..], self.normals[0..]);
+        var pi: usize = 0;
+        while (pi < sm.positions.len) : (pi += 1) {
+            if (sm.positions[pi][0] > 0) {
+                sm.positions[pi][0] = sm.positions[pi][0] + (scale[0] - 1);
+            }
+            if (sm.positions[pi][1] > 0) {
+                sm.positions[pi][1] = sm.positions[pi][1] + (scale[1] - 1);
+            }
+            if (sm.positions[pi][2] > 0) {
+                sm.positions[pi][2] = sm.positions[pi][2] + (scale[2] - 1);
+            }
+        }
+        self.meshes[self.num_meshes] = sm;
+        self.num_meshes += 1;
+    }
 
-    // i = 0;
+    i = 0;
+    self.total_indices_count = 0;
+    while (i < self.num_meshes) : (i += 1) {
+        self.total_indices_count += self.meshes[i].indices.len;
+    }
 
     // var surfaces: [6]?subChunkVoxelData = undefined;
     // const xp: usize = 0;
@@ -327,6 +359,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
             }
             op = self.data[i].scd.sub_index_pos;
             p = op;
+            if (p[1] >= chunk.sub_chunk.subChunkDim) @breakpoint();
             if (p[0] + 1 < chunk.sub_chunk.subChunkDim) {
                 p[0] += 1;
                 break;
@@ -384,6 +417,9 @@ fn findQuads(self: *chunkerSubChunker) !void {
                 if (p[2] >= chunk.sub_chunk.subChunkDim) {
                     p[2] = op[2];
                     p[1] += 1;
+                    if (p[1] >= chunk.sub_chunk.subChunkDim) {
+                        break :inner;
+                    }
                     num_dims_travelled += 1;
                     continue :inner;
                 }

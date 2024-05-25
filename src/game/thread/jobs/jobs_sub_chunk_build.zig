@@ -20,6 +20,7 @@ pub const SubChunkBuilderJob = struct {
         if (config.use_tracy) ztracy.Message("starting sub_chunk build");
         self.sorter.buildMeshData();
         self.sorter.sort(.{ 0, 0, 0, 0 });
+        std.debug.print("sorter stuff: {d}\n", .{self.sorter.num_indices});
         self.finishJob();
         if (config.use_tracy) ztracy.Message("done with sub chunk build job");
     }
