@@ -1,9 +1,3 @@
-const std = @import("std");
-const zmesh = @import("zmesh");
-const game = @import("../game.zig");
-const game_mob = @import("../mob.zig");
-const blecs = @import("../blecs/blecs.zig");
-
 pub const meshData = struct {
     positions: [][3]f32 = undefined,
     indices: []u32 = undefined,
@@ -65,44 +59,43 @@ pub fn plane() meshData {
 }
 
 // :: Cube
-const cube_positions: [36][3]f32 = .{
-    // front
-    .{ -0.5, -0.5, 0.5 },
-    .{ 0.5, -0.5, 0.5 },
-    .{ 0.5, 0.5, 0.5 },
-    .{ -0.5, -0.5, 0.5 },
-    .{ 0.5, 0.5, 0.5 },
-    .{ -0.5, 0.5, 0.5 },
-
-    // right
+pub const cube_positions: [36][3]f32 = .{
+    // z pos
+    .{ -0.5, -0.5, 0.5 }, // y neg facing vertex on x neg
+    .{ 0.5, -0.5, 0.5 }, // y neg facing vertex on x pos
+    .{ 0.5, 0.5, 0.5 }, // x pos facing vertex on y pos
+    .{ -0.5, -0.5, 0.5 }, // x neg facing vertex on y neg
+    .{ 0.5, 0.5, 0.5 }, // x pos facing vertex on y pos
+    .{ -0.5, 0.5, 0.5 }, // x neg facing vertex on y pos
+    // x pos
     .{ 0.5, -0.5, 0.5 },
     .{ 0.5, -0.5, -0.5 },
     .{ 0.5, 0.5, -0.5 },
     .{ 0.5, -0.5, 0.5 },
     .{ 0.5, 0.5, -0.5 },
     .{ 0.5, 0.5, 0.5 },
-    // back
+    // z neg
     .{ 0.5, -0.5, -0.5 },
     .{ -0.5, -0.5, -0.5 },
     .{ -0.5, 0.5, -0.5 },
     .{ 0.5, -0.5, -0.5 },
     .{ -0.5, 0.5, -0.5 },
     .{ 0.5, 0.5, -0.5 },
-    // left
+    // x neg
     .{ -0.5, -0.5, -0.5 },
     .{ -0.5, -0.5, 0.5 },
     .{ -0.5, 0.5, 0.5 },
     .{ -0.5, -0.5, -0.5 },
     .{ -0.5, 0.5, 0.5 },
     .{ -0.5, 0.5, -0.5 },
-    // bottom
+    // y neg
     .{ -0.5, -0.5, -0.5 },
     .{ 0.5, -0.5, -0.5 },
     .{ 0.5, -0.5, 0.5 },
     .{ -0.5, -0.5, -0.5 },
     .{ 0.5, -0.5, 0.5 },
     .{ -0.5, -0.5, 0.5 },
-    // top
+    // y pos
     .{ -0.5, 0.5, 0.5 },
     .{ 0.5, 0.5, 0.5 },
     .{ 0.5, 0.5, -0.5 },
@@ -111,52 +104,52 @@ const cube_positions: [36][3]f32 = .{
     .{ -0.5, 0.5, -0.5 },
 };
 
-const cube_indices: [36]u32 = .{
-    0, 1, 2, 3, 4, 5, // front
-    6, 7, 8, 9, 10, 11, // right
-    12, 13, 14, 15, 16, 17, // back
-    18, 19, 20, 21, 22, 23, // left
-    24, 25, 26, 27, 28, 29, // bottom
-    30, 31, 32, 33, 34, 35, // top
+pub const cube_indices: [36]u32 = .{
+    0, 1, 2, 3, 4, 5, // z pos
+    6, 7, 8, 9, 10, 11, // x pos
+    12, 13, 14, 15, 16, 17, // z neg
+    18, 19, 20, 21, 22, 23, // x neg
+    24, 25, 26, 27, 28, 29, // y neg
+    30, 31, 32, 33, 34, 35, // y pos
 };
 
 const cube_texcoords: [36][2]f32 = .{
-    // front
+    // z pos
     .{ 0, 0.666 },
     .{ 1, 0.666 },
     .{ 1, 0.333 },
     .{ 0, 0.666 },
     .{ 1, 0.333 },
     .{ 0, 0.333 },
-    // right
+    // x pos
     .{ 0, 0.666 },
     .{ 1, 0.666 },
     .{ 1, 0.333 },
     .{ 0, 0.666 },
     .{ 1, 0.333 },
     .{ 0, 0.333 },
-    // back
+    // z neg
     .{ 0, 0.666 },
     .{ 1, 0.666 },
     .{ 1, 0.333 },
     .{ 0, 0.666 },
     .{ 1, 0.333 },
     .{ 0, 0.333 },
-    // left
+    // x neg
     .{ 0, 0.666 },
     .{ 1, 0.666 },
     .{ 1, 0.333 },
     .{ 0, 0.666 },
     .{ 1, 0.333 },
     .{ 0, 0.333 },
-    // bottom
+    // y neg
     .{ 0, 0.666 },
     .{ 1, 0.666 },
     .{ 1, 1 },
     .{ 0, 0.666 },
     .{ 1, 1 },
     .{ 0, 1 },
-    // top
+    // y pos
     .{ 0, 0 },
     .{ 1, 0 },
     .{ 1, 0.333 },
@@ -166,42 +159,42 @@ const cube_texcoords: [36][2]f32 = .{
 };
 
 const edges: [36][2]f32 = .{
-    // front
+    // z pos
     .{ 0, 1 },
     .{ 1, 1 },
     .{ 1, 0 },
     .{ 0, 1 },
     .{ 1, 0 },
     .{ 0, 0 },
-    // right
+    // x pos
     .{ 0, 1 },
     .{ 1, 1 },
     .{ 1, 0 },
     .{ 0, 1 },
     .{ 1, 0 },
     .{ 0, 0 },
-    // back
+    // z neg
     .{ 0, 1 },
     .{ 1, 1 },
     .{ 1, 0 },
     .{ 0, 1 },
     .{ 1, 0 },
     .{ 0, 0 },
-    // left
+    // x neg
     .{ 0, 1 },
     .{ 1, 1 },
     .{ 1, 0 },
     .{ 0, 1 },
     .{ 1, 0 },
     .{ 0, 0 },
-    // bottom
+    // y neg
     .{ 0, 0 },
     .{ 1, 0 },
     .{ 1, 1 },
     .{ 0, 0 },
     .{ 1, 1 },
     .{ 0, 1 },
-    // top
+    // y pos
     .{ 0, 0 },
     .{ 1, 0 },
     .{ 1, 1 },
@@ -216,36 +209,36 @@ const barycentric_coordinates: [3][3]f32 = .{
     .{ 0.0, 0.0, 1.0 },
 };
 
-const cube_normals: [36][3]f32 = .{
-    // front
+pub const cube_normals: [36][3]f32 = .{
+    // z pos
     .{ 0, 0, 1 },
     .{ 0, 0, 1 },
     .{ 0, 0, 1 },
     .{ 0, 0, 1 },
     .{ 0, 0, 1 },
     .{ 0, 0, 1 },
-    // right
+    // x pos
     .{ 1, 0, 0 },
     .{ 1, 0, 0 },
     .{ 1, 0, 0 },
     .{ 1, 0, 0 },
     .{ 1, 0, 0 },
     .{ 1, 0, 0 },
-    // backl
+    // z neg
     .{ 0, 0, -1 },
     .{ 0, 0, -1 },
     .{ 0, 0, -1 },
     .{ 0, 0, -1 },
     .{ 0, 0, -1 },
     .{ 0, 0, -1 },
-    // left
+    // x neg
     .{ -1, 0, 0 },
     .{ -1, 0, 0 },
     .{ -1, 0, 0 },
     .{ -1, 0, 0 },
     .{ -1, 0, 0 },
     .{ -1, 0, 0 },
-    // bottom
+    // y neg
     .{ 0, -1, 0 },
     .{ 0, -1, 0 },
     .{ 0, -1, 0 },
@@ -298,7 +291,7 @@ const bounding_box_positions: [36][3]f32 = .{
     .{ 0, 0, 0 },
     .{ 1, 0, 1 },
     .{ 0, 0, 1 },
-    // top
+    // y pos
     .{ 0, 1, 1 },
     .{ 1, 1, 1 },
     .{ 1, 1, 0 },
@@ -317,6 +310,14 @@ pub fn cube() meshData {
     const normals: [][3]f32 = game.state.allocator.alloc([3]f32, cube_normals.len) catch @panic("OOM");
     @memcpy(normals, &cube_normals);
     return .{ .positions = positions, .indices = indices, .texcoords = texcoords, .normals = normals };
+}
+
+// sub_chunk - signals what sort of attributes are available for sub_chunk without sending any. Excludes textures.
+pub fn sub_chunk() meshData {
+    const positions: [][3]f32 = game.state.allocator.alloc([3]f32, 1) catch @panic("OOM");
+    const indices: []u32 = game.state.allocator.alloc(u32, 1) catch @panic("OOM");
+    const normals: [][3]f32 = game.state.allocator.alloc([3]f32, 1) catch @panic("OOM");
+    return .{ .positions = positions, .indices = indices, .normals = normals };
 }
 
 pub var voxel_mesh_creator: VoxelMeshCreator = undefined;
@@ -478,3 +479,9 @@ pub fn block_highlight() meshData {
     @memcpy(bc, &barycentric_coordinates);
     return .{ .positions = positions, .indices = indices, .edges = e, .barycentric = bc };
 }
+
+const std = @import("std");
+const zmesh = @import("zmesh");
+const game = @import("../game.zig");
+const game_mob = @import("../mob.zig");
+const blecs = @import("../blecs/blecs.zig");

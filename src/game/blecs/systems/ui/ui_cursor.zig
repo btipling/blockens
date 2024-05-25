@@ -43,7 +43,6 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
 
 const std = @import("std");
 const ecs = @import("zflecs");
-const zgui = @import("zgui");
 const glfw = @import("zglfw");
 const ztracy = @import("ztracy");
 const config = @import("config");

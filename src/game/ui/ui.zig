@@ -1,7 +1,7 @@
 pub const max_world_name = 20;
 
-const robotoMonoFont = @embedFile("assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
-const proggyCleanFont = @embedFile("assets/fonts/ProggyClean/ProggyClean.ttf");
+const robotoMonoFont = @embedFile("../assets/fonts/Roboto_Mono/RobotoMono-Regular.ttf");
+const proggyCleanFont = @embedFile("../assets/fonts/ProggyClean/ProggyClean.ttf");
 
 pub const chunkConfig = struct {
     id: i32 = 0, // from sqlite
@@ -9,8 +9,8 @@ pub const chunkConfig = struct {
     chunkData: []u32 = undefined,
 };
 
-gameFont: zgui.Font = undefined,
-codeFont: zgui.Font = undefined,
+game_font: zgui.Font = undefined,
+code_font: zgui.Font = undefined,
 
 allocator: std.mem.Allocator,
 
@@ -29,6 +29,7 @@ block_update_name_buf: [data.maxBlockSizeName]u8 = std.mem.zeroes([data.maxBlock
 block_emits_light: bool = false,
 block_transparent: bool = false,
 block_loaded_block_id: u8 = 0,
+block_picking_distance: f32 = 20,
 
 display_settings_fullscreen: bool = false,
 display_settings_maximized: bool = true,
@@ -38,9 +39,7 @@ display_settings_height: i32 = 0,
 
 chunk_name_buf: [script.maxLuaScriptNameSize]u8 = std.mem.zeroes([script.maxLuaScriptNameSize]u8),
 chunk_buf: [script.maxLuaScriptSize]u8 = std.mem.zeroes([script.maxLuaScriptSize]u8),
-chunk_x_buf: [5]u8 = std.mem.zeroes([5]u8),
-chunk_y_buf: [5]u8 = std.mem.zeroes([5]u8),
-chunk_z_buf: [5]u8 = std.mem.zeroes([5]u8),
+sub_chunks: bool = false,
 chunk_script_options: std.ArrayListUnmanaged(data.colorScriptOption) = undefined,
 chunk_loaded_script_id: i32 = 0,
 chunk_script_color: [3]f32 = std.mem.zeroes([3]f32),
@@ -85,10 +84,20 @@ demo_atlas_scale: @Vector(4, f32) = @Vector(4, f32){ 0.100, 1.940, 1, 0 },
 demo_atlas_translation: @Vector(4, f32) = @Vector(4, f32){ -0.976, -0.959, 0, 0 },
 demo_atlas_rotation: f32 = 0.5,
 
+demo_sub_chunks_sorter: *chunk.sub_chunk.sorter,
+game_sub_chunks_sorter: *chunk.sub_chunk.sorter,
+
 load_percentage_world_gen: f16 = 0,
 load_percentage_lighting_initial: f16 = 0,
 load_percentage_lighting_cross_chunk: f16 = 0,
 load_percentage_load_chunks: f16 = 0,
+load_percentage_load_sub_chunks: f16 = 0,
+
+gfx_wire_frames: bool = false,
+gfx_lock_cull_to_player_pos: bool = false,
+gfx_meshes_drawn_counter: u64 = 0,
+gfx_meshes_drawn: u64 = 0,
+gfx_triangle_count: usize = 0,
 
 screen_size: [2]f32 = .{ 0, 0 },
 
@@ -109,10 +118,14 @@ pub fn init(allocator: std.mem.Allocator) void {
         .terrain_gen_script_options_available = std.ArrayListUnmanaged(data.colorScriptOption){},
         .terrain_gen_script_options_selected = std.ArrayListUnmanaged(data.colorScriptOption){},
         .world_managed_seed_terrain_scripts = std.ArrayListUnmanaged(data.colorScriptOption){},
+        .demo_sub_chunks_sorter = chunk.sub_chunk.sorter.init(allocator),
+        .game_sub_chunks_sorter = chunk.sub_chunk.sorter.init(allocator),
     };
 }
 
 pub fn deinit() void {
+    ui.demo_sub_chunks_sorter.deinit();
+    ui.game_sub_chunks_sorter.deinit();
     ui.texture_script_options.deinit(ui.allocator);
     ui.block_options.deinit(ui.allocator);
     ui.chunk_script_options.deinit(ui.allocator);
@@ -143,19 +156,19 @@ pub fn setScreenSize(self: *UI, window: *glfw.Window) void {
     const base_proggy_clean_font_size: f32 = 14;
     const base_roboto_font_size: f32 = 18;
 
-    self.gameFont = zgui.io.addFontFromMemory(
+    self.game_font = zgui.io.addFontFromMemory(
         proggyCleanFont,
         std.math.floor(
             base_proggy_clean_font_size * (self.screen_size[1] / reference_height),
         ),
     );
-    self.codeFont = zgui.io.addFontFromMemory(
+    self.code_font = zgui.io.addFontFromMemory(
         robotoMonoFont,
         std.math.floor(
             base_roboto_font_size * (self.screen_size[1] / reference_height),
         ),
     );
-    zgui.io.setDefaultFont(self.gameFont);
+    zgui.io.setDefaultFont(self.game_font);
 }
 
 pub fn imguiWidth(self: *UI, w: f32) f32 {
@@ -221,12 +234,23 @@ pub fn TerrainGenDeselectScript(self: *UI, id: i32) void {
     self.swapScriptOptions(&self.terrain_gen_script_options_selected, &self.terrain_gen_script_options_available, id);
 }
 
+pub fn resetDemoSorter(self: *UI) void {
+    self.demo_sub_chunks_sorter.deinit();
+    self.demo_sub_chunks_sorter = chunk.sub_chunk.sorter.init(self.allocator);
+}
+pub fn resetGameSorter(self: *UI) void {
+    self.game_sub_chunks_sorter.deinit();
+    self.game_sub_chunks_sorter = chunk.sub_chunk.sorter.init(self.allocator);
+}
+
 const std = @import("std");
 const zgui = @import("zgui");
 const zm = @import("zmath");
 const glfw = @import("zglfw");
-const data = @import("data/data.zig");
-const script = @import("script/script.zig");
-const blecs = @import("blecs/blecs.zig");
-const block = @import("block/block.zig");
+const data = @import("../data/data.zig");
+const script = @import("../script/script.zig");
+const blecs = @import("../blecs/blecs.zig");
+const block = @import("../block/block.zig");
 const chunk = block.chunk;
+
+pub const format = @import("ui_format.zig");

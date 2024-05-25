@@ -264,6 +264,7 @@ pub fn clearDemoObjects() void {
     ecs.remove(world, game.state.entities.settings_camera, components.screen.WorldRotation);
     ecs.remove(world, game.state.entities.settings_camera, components.screen.WorldScale);
     ecs.remove(world, game.state.entities.settings_camera, components.screen.PostPerspective);
+    game.state.ui.gfx_triangle_count = 0;
 }
 
 pub fn initDemoCube() void {
@@ -393,6 +394,104 @@ pub fn initDemoTextureAtlas() void {
     ecs.add(world, c_atlas, components.shape.NeedsSetup);
 }
 
+pub fn initSubChunksCamera(reset: bool) void {
+    const world = game.state.world;
+
+    if (reset) {
+        game.state.ui.demo_screen_translation = .{
+            4.902,
+            -0.516,
+            -0.676,
+            0,
+        };
+        game.state.ui.demo_screen_pp_translation = .{
+            -0.650,
+            0.100,
+            0,
+            0,
+        };
+        game.state.ui.demo_screen_scale = 0.042;
+        game.state.ui.demo_screen_rotation_x = -0.307;
+        game.state.ui.demo_screen_rotation_y = 0.740;
+        game.state.ui.demo_screen_rotation_z = 0.333;
+    }
+
+    // Demo chunks also needs a camera adjustment to keep perspective centered on it
+    const camera = game.state.entities.settings_camera;
+    _ = ecs.set(world, camera, components.screen.PostPerspective, .{
+        .translation = game.state.ui.demo_screen_pp_translation,
+    });
+
+    const chunk_scale = game.state.ui.demo_screen_scale;
+    _ = ecs.set(
+        world,
+        camera,
+        components.screen.WorldScale,
+        .{ .scale = @Vector(4, f32){ chunk_scale, chunk_scale, chunk_scale, 0 } },
+    );
+
+    const chunk_rot = zm.quatFromRollPitchYaw(
+        game.state.ui.demo_screen_rotation_x,
+        game.state.ui.demo_screen_rotation_y,
+        game.state.ui.demo_screen_rotation_z,
+    );
+    _ = ecs.set(
+        game.state.world,
+        camera,
+        components.screen.WorldRotation,
+        .{ .rotation = chunk_rot },
+    );
+    _ = ecs.set(
+        world,
+        camera,
+        components.screen.WorldTranslation,
+        .{ .translation = game.state.ui.demo_screen_translation },
+    );
+}
+
+pub fn initDemoSubChunks(reset: bool, is_terrain: bool) void {
+    clearDemoObjects();
+    const world = game.state.world;
+    initSubChunksCamera(reset);
+    if (is_terrain) {
+        initDemoTerrainGenCamera(reset);
+    } else {
+        initSubChunksCamera(reset);
+    }
+    const sc_e = helpers.new_child(world, settings_data);
+    _ = ecs.set(world, sc_e, components.shape.Shape, .{ .shape_type = .sub_chunks });
+    const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
+    _ = ecs.set(world, sc_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
+    _ = ecs.set(world, sc_e, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
+    ecs.add(world, sc_e, components.block.SubChunks);
+    ecs.add(world, sc_e, components.gfx.SortedMultiDraw);
+    ecs.add(world, sc_e, components.block.UseTextureAtlas);
+    _ = ecs.set(world, sc_e, components.shape.Lighting, .{ .ssbo = gfx.constants.LightingBindingPoint });
+    ecs.add(world, sc_e, components.shape.NeedsSetup);
+    // ecs.add(world, sc_e, components.Debug);
+    const values = game.state.blocks.generated_settings_chunks.values();
+    for (values) |cd| {
+        game.state.allocator.free(cd);
+    }
+    game.state.blocks.generated_settings_chunks.clearRetainingCapacity();
+    return;
+}
+
+pub fn initGameSubChunks() void {
+    const world = game.state.world;
+    const sc_e = helpers.new_child(world, game_data);
+    _ = ecs.set(world, sc_e, components.shape.Shape, .{ .shape_type = .sub_chunks });
+    const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
+    _ = ecs.set(world, sc_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
+    _ = ecs.set(world, sc_e, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
+    ecs.add(world, sc_e, components.block.SubChunks);
+    ecs.add(world, sc_e, components.gfx.SortedMultiDraw);
+    ecs.add(world, sc_e, components.block.UseTextureAtlas);
+    _ = ecs.set(world, sc_e, components.shape.Lighting, .{ .ssbo = gfx.constants.LightingBindingPoint });
+    ecs.add(world, sc_e, components.shape.NeedsSetup);
+    return;
+}
+
 pub fn initDemoChunkCamera(reset: bool) void {
     const world = game.state.world;
 
@@ -456,6 +555,11 @@ pub fn initDemoChunk(reset: bool) void {
         chunk.worldPosition.initFromPositionV(.{ 0, 0, 0, 0 }),
         ecs.new_id(world),
     );
+    const values = game.state.blocks.generated_settings_chunks.values();
+    for (values) |cd| {
+        game.state.allocator.free(cd);
+    }
+    game.state.blocks.generated_settings_chunks.clearRetainingCapacity();
     return;
 }
 

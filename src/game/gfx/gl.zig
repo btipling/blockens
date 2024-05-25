@@ -1,11 +1,3 @@
-const std = @import("std");
-const zm = @import("zmath");
-const gl = @import("zopengl").bindings;
-const zstbi = @import("zstbi");
-const gfx = @import("gfx.zig");
-const game = @import("../game.zig");
-const buffer_data = @import("buffer_data.zig");
-
 pub var atlas_texture: ?u32 = null;
 
 pub const GlErr = error{
@@ -42,6 +34,13 @@ pub const Gl = struct {
         const indicesptr: *const anyopaque = indices.ptr;
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, size, indicesptr, gl.STATIC_DRAW);
         return EBO;
+    }
+
+    pub fn updateEBO(ebo: u32, indices: []const u32) void {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
+        const size = @as(isize, @intCast(indices.len * @sizeOf(u32)));
+        const indicesptr: *const anyopaque = indices.ptr;
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, size, indicesptr, gl.STATIC_DRAW);
     }
 
     pub fn initVertexShader(vertexShaderSource: ?[:0]const u8) !u32 {
@@ -184,85 +183,6 @@ pub const Gl = struct {
         gl.bindBuffer(gl.UNIFORM_BUFFER, 0);
     }
 
-    const animationKeyFrame = struct {
-        data: [4]f32,
-        scale: [4]f32,
-        rotation: [4]f32,
-        translation: [4]f32,
-    };
-
-    pub fn initAnimationShaderStorageBufferObject(
-        block_binding_point: u32,
-        data: []gfx.Animation.AnimationKeyFrame,
-    ) u32 {
-        var ar = std.ArrayListUnmanaged(animationKeyFrame){};
-        defer ar.deinit(game.state.allocator);
-        for (data) |d| {
-            ar.append(game.state.allocator, animationKeyFrame{
-                .data = [4]f32{ d.frame, 0, 0, 0 },
-                .scale = d.scale,
-                .rotation = d.rotation,
-                .translation = d.translation,
-            }) catch unreachable;
-        }
-        var ssbo: u32 = undefined;
-        gl.genBuffers(1, &ssbo);
-        gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
-
-        const data_ptr: *const anyopaque = ar.items.ptr;
-        const struct_size = @sizeOf(animationKeyFrame);
-        const size = @as(isize, @intCast(ar.items.len * struct_size));
-        gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, data_ptr, gl.DYNAMIC_DRAW);
-        gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, block_binding_point, ssbo);
-        gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, 0);
-        return ssbo;
-    }
-
-    pub fn resizeAnimationShaderStorageBufferObject(ssbo: u32, num_frames: usize) void {
-        var ar = std.ArrayListUnmanaged(animationKeyFrame){};
-        defer ar.deinit(game.state.allocator);
-        var i: usize = 0;
-        while (i < num_frames) : (i += 1) {
-            ar.append(game.state.allocator, .{
-                .data = std.mem.zeroes([4]f32),
-                .scale = std.mem.zeroes([4]f32),
-                .rotation = std.mem.zeroes([4]f32),
-                .translation = std.mem.zeroes([4]f32),
-            }) catch @panic("OOM");
-        }
-        const data_ptr: *const anyopaque = ar.items.ptr;
-
-        const struct_size = @sizeOf(animationKeyFrame);
-        const size: isize = @intCast(ar.items.len * struct_size);
-        gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
-        gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, data_ptr, gl.DYNAMIC_DRAW);
-    }
-
-    pub fn addAnimationShaderStorageBufferData(
-        ssbo: u32,
-        offset: usize,
-        data: []gfx.Animation.AnimationKeyFrame,
-    ) void {
-        var ar = std.ArrayListUnmanaged(animationKeyFrame){};
-        defer ar.deinit(game.state.allocator);
-        for (data) |d| {
-            ar.append(game.state.allocator, animationKeyFrame{
-                .data = [4]f32{ d.frame, 0, 0, 0 },
-                .scale = d.scale,
-                .rotation = d.rotation,
-                .translation = d.translation,
-            }) catch @panic("OOM");
-        }
-        gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
-
-        const data_ptr: *const anyopaque = ar.items.ptr;
-
-        const struct_size = @sizeOf(animationKeyFrame);
-        const size: isize = @intCast(ar.items.len * struct_size);
-        const buffer_offset: isize = @intCast(offset * struct_size);
-        gl.bufferSubData(gl.SHADER_STORAGE_BUFFER, buffer_offset, size, data_ptr);
-    }
-
     pub fn initTextureFromColors(texture_data: []const u32) u32 {
         var texture: u32 = undefined;
         gl.genTextures(1, &texture);
@@ -350,42 +270,16 @@ pub const Gl = struct {
         instance_builder.write();
         return instance_vbo;
     }
-
-    const lightingData = struct {
-        ambient: [4]f32,
-    };
-
-    pub fn initLightingShaderStorageBufferObject(
-        block_binding_point: u32,
-    ) u32 {
-        const ld: lightingData = .{
-            .ambient = .{ 1, 1, 1, 1 },
-        };
-        var ssbo: u32 = undefined;
-        gl.genBuffers(1, &ssbo);
-        gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
-
-        const struct_size = @sizeOf(lightingData);
-        const size = @as(isize, @intCast(struct_size));
-        gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, &ld, gl.DYNAMIC_DRAW);
-        gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, block_binding_point, ssbo);
-        gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, 0);
-        return ssbo;
-    }
-
-    pub fn updateLightingShaderStorageBufferObject(
-        ssbo: u32,
-        offset: usize,
-        data: @Vector(4, f32),
-    ) void {
-        const ld: lightingData = .{
-            .ambient = data,
-        };
-        gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
-
-        const struct_size = @sizeOf(lightingData);
-        const size: isize = @intCast(struct_size);
-        const buffer_offset: isize = @intCast(offset * struct_size);
-        gl.bufferSubData(gl.SHADER_STORAGE_BUFFER, buffer_offset, size, &ld);
-    }
 };
+
+const std = @import("std");
+const zm = @import("zmath");
+const gl = @import("zopengl").bindings;
+const zstbi = @import("zstbi");
+const gfx = @import("gfx.zig");
+const game = @import("../game.zig");
+const buffer_data = @import("buffer_data.zig");
+
+pub const animation_buffer = @import("gl_animation_buffer.zig");
+pub const lighting_buffer = @import("gl_lighting_buffer.zig");
+pub const mesh_buffer = @import("gl_mesh_buffer.zig");

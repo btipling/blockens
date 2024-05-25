@@ -42,7 +42,7 @@ pub const MobMesh = struct {
         texture: ?[]u8,
         animations: ?std.ArrayList(MobAnimation),
     ) *MobMesh {
-        var m: *MobMesh = allocator.create(MobMesh) catch unreachable;
+        var m: *MobMesh = allocator.create(MobMesh) catch @panic("OOM");
         _ = &m;
         m.* = .{
             .indices = std.ArrayList(u32).init(allocator),
@@ -84,12 +84,12 @@ pub const Mob = struct {
     cameras: ?std.ArrayList(MobCamera) = null,
     allocator: std.mem.Allocator,
     pub fn init(allocator: std.mem.Allocator, id: i32, num_meshes: usize) *Mob {
-        var m: *Mob = allocator.create(Mob) catch unreachable;
+        var m: *Mob = allocator.create(Mob) catch @panic("OOM");
         _ = &m;
         var meshes = std.ArrayList(*MobMesh).initCapacity(
             allocator,
             num_meshes,
-        ) catch unreachable;
+        ) catch @panic("OOM");
         meshes.expandToCapacity();
         m.* = .{
             .id = id,
@@ -113,11 +113,11 @@ pub const Mob = struct {
     fn loadBoundingBox(self: *Mob) void {
         var data: gfx.mesh.meshData = gfx.mesh.bounding_box(self.id);
         defer data.deinit();
-        const positions: [][3]f32 = game.state.allocator.alloc([3]f32, data.positions.len) catch unreachable;
+        const positions: [][3]f32 = game.state.allocator.alloc([3]f32, data.positions.len) catch @panic("OOM");
         @memcpy(positions, data.positions);
         self.bounding_box = positions;
         const num_unique_vertices_in_cuboid = 8;
-        const unique_positions: [][3]f32 = game.state.allocator.alloc([3]f32, num_unique_vertices_in_cuboid) catch unreachable;
+        const unique_positions: [][3]f32 = game.state.allocator.alloc([3]f32, num_unique_vertices_in_cuboid) catch @panic("OOM");
         // just get unique bounds based on how they're defined in gfx/mesh.zig
         // zig fmt: off
         unique_positions[0] = data.positions[13]; // .{ 0, 0, 0 }

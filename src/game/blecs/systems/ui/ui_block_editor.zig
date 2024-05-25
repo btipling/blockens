@@ -241,7 +241,7 @@ fn drawBlockEditor() !void {
             try updateBlock();
         }
         zgui.popStyleVar(.{ .count = 1 });
-        zgui.pushFont(game.state.ui.codeFont);
+        zgui.pushFont(game.state.ui.code_font);
         zgui.pushItemWidth(game.state.ui.imguiWidth(200));
         _ = zgui.inputTextWithHint("Name", .{
             .buf = game.state.ui.block_create_name_buf[0..],
@@ -353,7 +353,7 @@ fn drawCreateForm() !void {
             try saveBlock();
         }
         zgui.popStyleVar(.{ .count = 1 });
-        zgui.pushFont(game.state.ui.codeFont);
+        zgui.pushFont(game.state.ui.code_font);
         zgui.pushItemWidth(game.state.ui.imguiWidth(200));
         _ = zgui.inputTextWithHint("Name", .{
             .buf = game.state.ui.block_create_name_buf[0..],

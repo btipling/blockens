@@ -124,7 +124,7 @@ pub const Data = struct {
             const cd: u32 = a << 24 | b << 16 | c << 8 | d;
             chunk[i] = @bitCast(cd);
         }
-        const rv: []u32 = self.allocator.alloc(u32, chunk.len) catch unreachable;
+        const rv: []u32 = self.allocator.alloc(u32, chunk.len) catch @panic("OOM");
         @memcpy(rv, &chunk);
         return rv;
     }

@@ -3,11 +3,11 @@ pub const Shape = struct {
     pub const ShapeType = enum {
         plane,
         cube,
-        meshed_voxel,
         multidraw_voxel,
         mob,
         bounding_box,
         block_highlight,
+        sub_chunks,
     };
 };
 

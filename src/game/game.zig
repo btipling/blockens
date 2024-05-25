@@ -296,4 +296,4 @@ const game_state = @import("state.zig");
 const blecs = @import("blecs/blecs.zig");
 const input = @import("input/input.zig");
 const thread = @import("thread/thread.zig");
-const ui = @import("ui.zig");
+const ui = @import("ui/ui.zig");

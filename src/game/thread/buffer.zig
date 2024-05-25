@@ -11,6 +11,8 @@ pub const buffer_message_type = enum(u8) {
     startup,
     chunk_gen,
     chunk_mesh,
+    sub_chunk_mesh,
+    sub_chunk_build,
     lighting,
     lighting_cross_chunk,
     load_chunk,
@@ -25,6 +27,8 @@ pub const buffer_data = union(buffer_message_type) {
     startup: startup_data,
     chunk_gen: chunk_gen_data,
     chunk_mesh: chunk_mesh_data,
+    sub_chunk_mesh: sub_chunk_mesh_data,
+    sub_chunk_build: sub_chunk_build_data,
     lighting: lightings_data,
     lighting_cross_chunk: lightings_data,
     load_chunk: load_chunk_data,
@@ -50,6 +54,7 @@ pub const startup_data = struct {
 pub const chunk_gen_data = struct {
     wp: chunk.worldPosition,
     chunk_data: []u32,
+    sub_chunks: bool,
 };
 
 pub const chunk_mesh_data = struct {
@@ -57,6 +62,18 @@ pub const chunk_mesh_data = struct {
     entity: ?blecs.ecs.entity_t = null,
     empty: bool = false,
     chunk: *chunk.Chunk,
+};
+
+pub const sub_chunk_mesh_data = struct {
+    sub_chunk: *chunk.sub_chunk,
+    is_terrain: bool,
+    is_settings: bool,
+};
+
+pub const sub_chunk_build_data = struct {
+    sorter: *chunk.sub_chunk.sorter,
+    is_terrain: bool,
+    is_settings: bool,
 };
 
 pub const lightings_data = struct {
@@ -75,10 +92,12 @@ pub const load_chunk_data = struct {
     cfg_b: ui.chunkConfig,
     exists: bool,
     start_game: bool,
+    sub_chunks: bool,
 };
 
 pub const demo_descriptor_gen_data = struct {
     desc_root: *descriptor.root,
+    sub_chunks: bool,
     offset_x: i32,
     offset_z: i32,
 };
@@ -93,6 +112,7 @@ pub const demo_terrain_gen_data = struct {
     succeeded: bool,
     data: ?[]u32,
     position: @Vector(4, f32),
+    sub_chunks: bool,
 };
 
 pub const world_terrain_gen_data = struct {
@@ -268,7 +288,7 @@ pub fn is_demo_chunk(msg: buffer_message) !bool {
 
 const std = @import("std");
 const state = @import("../state.zig");
-const ui = @import("../ui.zig");
+const ui = @import("../ui/ui.zig");
 const blecs = @import("../blecs/blecs.zig");
 const block = @import("../block/block.zig");
 const chunk = block.chunk;

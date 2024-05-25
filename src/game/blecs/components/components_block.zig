@@ -1,5 +1,4 @@
 pub const Chunk = struct {
-    loc: @Vector(4, f32) = undefined,
     wp: chunk.worldPosition = undefined,
 };
 
@@ -24,6 +23,7 @@ pub const NeedsMeshRendering = struct {};
 pub const NeedsInstanceRendering = struct {};
 pub const UseMultiDraw = struct {};
 pub const UseTextureAtlas = struct {};
+pub const SubChunks = struct {};
 
 pub fn init() void {
     const world = game.state.world;
@@ -38,6 +38,7 @@ pub fn init() void {
     ecs.TAG(world, NeedsInstanceRendering);
     ecs.TAG(world, UseMultiDraw);
     ecs.TAG(world, UseTextureAtlas);
+    ecs.TAG(world, SubChunks);
 }
 
 const std = @import("std");

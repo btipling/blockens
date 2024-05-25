@@ -1,8 +1,3 @@
-const std = @import("std");
-const glfw = @import("zglfw");
-const zgui = @import("zgui");
-const game = @import("../game.zig");
-
 const key_press_sensitivity_ms: i64 = 250;
 
 pub fn pressedKey(key: glfw.Key) bool {
@@ -31,3 +26,8 @@ pub fn pressedKeys(keys: []const glfw.Key, hold: bool) bool {
     game.state.input.last_key = now;
     return true;
 }
+
+const std = @import("std");
+const glfw = @import("zglfw");
+const zgui = @import("zgui");
+const game = @import("../game.zig");

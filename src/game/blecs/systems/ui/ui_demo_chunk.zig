@@ -44,6 +44,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             if (zgui.begin("Demo Chunk", .{
                 .flags = .{},
             })) {
+                var triangles_buf: [100:0]u8 = std.mem.zeroes([100:0]u8);
+                ui.format.prettyUnsignedInt(
+                    @ptrCast(&triangles_buf),
+                    game.state.ui.gfx_triangle_count,
+                ) catch @panic("too many meshes to count");
+                zgui.text("triangles drawn: {s}", .{std.mem.sliceTo(&triangles_buf, 0)});
                 if (zgui.inputFloat4("translation input", .{
                     .v = &game.state.ui.demo_screen_translation,
                 })) {
@@ -128,11 +134,11 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         .translation = game.state.ui.demo_screen_translation,
                         .pp_translation = game.state.ui.demo_screen_pp_translation,
                     };
-                    game.state.ui.demo_screen_rotation_x = 0;
-                    game.state.ui.demo_screen_rotation_y = pre_max.rotation_y;
-                    game.state.ui.demo_screen_rotation_z = 1.085;
-                    game.state.ui.demo_screen_scale = 0.107;
-                    game.state.ui.demo_screen_translation = .{ 4.449, -1.631, -0.264, 0 };
+                    game.state.ui.demo_screen_rotation_x = 0.374;
+                    game.state.ui.demo_screen_rotation_y = -0.651;
+                    game.state.ui.demo_screen_rotation_z = 0.374;
+                    game.state.ui.demo_screen_scale = 0.039;
+                    game.state.ui.demo_screen_translation = .{ -0.753, -0.351, -5.6794, 0 };
                     game.state.ui.demo_screen_pp_translation = .{ 0, 0, 0, 0 };
                     entities.screen.initDemoChunkCamera(false);
                 }
@@ -154,12 +160,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     .h = 50,
                     .w = 250,
                 })) {
-                    game.state.ui.demo_screen_rotation_x = 0;
-                    game.state.ui.demo_screen_rotation_y = 0.341;
-                    game.state.ui.demo_screen_rotation_z = 0.938;
-                    game.state.ui.demo_screen_scale = 0.107;
-                    game.state.ui.demo_screen_translation = .{ -1.718, -1.631, -0.264, 0 };
-                    game.state.ui.demo_screen_pp_translation = .{ -0.650, 0.100, 0.000, 0 };
+                    game.state.ui.demo_screen_rotation_x = 0.374;
+                    game.state.ui.demo_screen_rotation_y = -0.651;
+                    game.state.ui.demo_screen_rotation_z = 0.374;
+                    game.state.ui.demo_screen_scale = 0.035;
+                    game.state.ui.demo_screen_translation = .{ -4.672, -0.754, -1.256, 0 };
+                    game.state.ui.demo_screen_pp_translation = .{ 0, 0, 0, 0 };
                     entities.screen.initDemoChunkCamera(false);
                 }
             }
@@ -176,5 +182,6 @@ const ztracy = @import("ztracy");
 const config = @import("config");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
+const ui = @import("../../../ui/ui.zig");
 const entities = @import("../../entities/entities.zig");
 const screen_helpers = @import("../screen_helpers.zig");

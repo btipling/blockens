@@ -38,19 +38,10 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
     const mesh_data: gfx.mesh.meshData = switch (sh.shape_type) {
         .plane => gfx.mesh.plane(),
         .cube => gfx.mesh.cube(),
-        .meshed_voxel => blk: {
-            const data: *const components.block.BlockData = ecs.get(world, entity, components.block.BlockData) orelse @panic("nope");
-            var c: *chunk.Chunk = undefined;
-            if (data.is_settings) {
-                c = game.state.blocks.settings_chunks.get(data.chunk_world_position).?;
-            } else {
-                c = game.state.blocks.game_chunks.get(data.chunk_world_position).?;
-            }
-            break :blk .{};
-        },
-        .multidraw_voxel => gfx.mesh.cube(), // just to setup the positions
+        .multidraw_voxel => gfx.mesh.cube(),
+        .sub_chunks => gfx.mesh.sub_chunk(),
         .mob => gfx.mesh.mob(world, entity),
-        .bounding_box => gfx.mesh.bounding_box(e.mob_id), // just to setup the positions
+        .bounding_box => gfx.mesh.bounding_box(e.mob_id),
         .block_highlight => gfx.mesh.block_highlight(),
     };
 
@@ -68,7 +59,8 @@ fn shapeSetup(world: *ecs.world_t, entity: ecs.entity_t, sh: components.shape.Sh
         .has_mob_texture = e.has_mob_texture,
         .has_block_texture_atlas = e.has_texture_atlas,
         .is_multi_draw = e.is_multi_draw,
-        .has_attr_translation = e.is_multi_draw,
+        .has_attr_translation = e.is_multi_draw or e.is_sub_chunks,
+        .is_sub_chunks = e.is_sub_chunks,
     };
     if (!e.is_multi_draw or !gfx.gl.Gl.hasMultiDrawShaders()) {
         erc.vertexShader = shaders.genVertexShader(&e, &mesh_data);
@@ -103,22 +95,24 @@ const shaders = struct {
             .is_multi_draw = e.is_multi_draw,
             .is_meshed = e.is_meshed,
             .has_block_data = e.has_texture_atlas,
-            .has_attr_translation = e.is_multi_draw,
+            .has_attr_translation = e.is_multi_draw or e.is_sub_chunks,
             .mesh_transforms = blk: {
                 if (e.mesh_transforms) |mt| break :blk mt.items;
                 break :blk null;
             },
+            .is_sub_chunks = e.is_sub_chunks,
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch @panic("vertex shader gen fail");
     }
     fn genFragmentShader(e: *const extractions, mesh_data: *const gfx.mesh.meshData) [:0]const u8 {
+        const has_normals = mesh_data.normals != null;
         var has_texture = false;
         if (mesh_data.texcoords != null) {
             if (e.block_id != null) has_texture = true;
             if (e.has_demo_cube_texture) has_texture = true;
             if (e.has_texture_atlas) has_texture = true;
             if (e.has_mob_texture) has_texture = true;
-        }
+        } else if (e.has_texture_atlas and e.lighting_block_index != null) has_texture = true;
         var block_index: usize = 0;
         if (e.block_id) |bi| {
             block_index = game.state.ui.texture_atlas_block_index[@intCast(bi)];
@@ -128,11 +122,11 @@ const shaders = struct {
             .color = e.color,
             .has_texture_coords = mesh_data.texcoords != null,
             .has_texture = has_texture,
-            .has_normals = mesh_data.normals != null,
+            .has_normals = has_normals,
             .is_meshed = e.is_meshed,
             .has_block_data = e.has_texture_atlas,
             .outline_color = e.outline_color,
-            .lighting_block_index = e.lighting_block_index,
+            .lighting_block_index = if (has_texture) e.lighting_block_index else null,
         };
         return gfx.shadergen.fragment.FragmentShaderGen.genFragmentShader(f_cfg) catch @panic("frag shader gen fail");
     }
@@ -161,6 +155,7 @@ const extractions = struct {
     mesh_transforms: ?std.ArrayList(gfx.shadergen.vertex.MeshTransforms) = null,
     is_multi_draw: bool = false,
     mob_id: i32 = 0,
+    is_sub_chunks: bool = false,
 
     fn deinit(self: *extractions) void {
         if (self.mesh_transforms) |mt| mt.deinit();
@@ -204,6 +199,14 @@ const extractions = struct {
                 if (e.debug) std.debug.print("extractBlock: is meshed\n", .{});
                 e.is_meshed = true;
             }
+        }
+    }
+
+    fn extractSubChunks(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
+        if (ecs.has_id(world, entity, ecs.id(components.block.SubChunks))) {
+            if (e.debug) std.debug.print("extractBlock: is meshed\n", .{});
+            e.is_sub_chunks = true;
+            e.is_meshed = true;
         }
     }
 
@@ -287,7 +290,7 @@ const extractions = struct {
             .animation_id = akr.animation_id,
             .keyframes = ar.toOwnedSlice(game.state.allocator) catch @panic("OOM"),
         };
-        game.state.gfx.animation_data.add(akr, animation);
+        game.state.gfx.addAnimation(akr, animation);
         e.animation = animation;
     }
 
@@ -339,7 +342,7 @@ const extractions = struct {
                     .animation_id = akr.animation_id,
                     .keyframes = ar.toOwnedSlice(game.state.allocator) catch @panic("OOM"),
                 };
-                game.state.gfx.animation_data.add(akr, animation);
+                game.state.gfx.addAnimation(akr, animation);
                 e.animation = animation;
             }
         }
@@ -397,6 +400,7 @@ const extractions = struct {
         extractBoundingBox(&e, world, entity);
         extractOutline(&e, world, entity);
         extractLighting(&e, world, entity);
+        extractSubChunks(&e, world, entity);
         return e;
     }
 };

@@ -13,6 +13,7 @@ pub const VertexShaderGen = struct {
         animation_block_index: ?u32,
         animation: ?*gfx.Animation,
         has_normals: bool = false,
+        debug_normals: bool = false,
         has_edges: bool = false,
         has_block_data: bool = false,
         has_attr_translation: bool = false,
@@ -22,6 +23,7 @@ pub const VertexShaderGen = struct {
         is_multi_draw: bool = false,
         is_meshed: bool = false,
         mesh_transforms: ?[]MeshTransforms,
+        is_sub_chunks: bool = false,
     };
 
     // genVertexShader - call ower owns the returned slice and must free it
@@ -53,7 +55,7 @@ pub const VertexShaderGen = struct {
         }
 
         fn a(r: *runner, line: []const u8) void {
-            r.buf.appendSlice(r.allocator, line) catch unreachable;
+            r.buf.appendSlice(r.allocator, line) catch @panic("OOM");
         }
 
         fn l(r: *runner, line: [:0]const u8) void {
@@ -68,6 +70,7 @@ pub const VertexShaderGen = struct {
             try r.gen_uniforms();
             try r.gen_ubo();
             try r.gen_animation_block();
+            try r.gen_sub_chunk_block();
             try r.gen_math();
             try r.gen_animation_functions();
             try r.gen_main();
@@ -77,7 +80,8 @@ pub const VertexShaderGen = struct {
         }
 
         fn gen_attribute_vars(r: *runner) !void {
-            var line = try shader_helpers.attribute_location(r.location, "position", .vec3);
+            var line: [250:0]u8 = undefined;
+            line = try shader_helpers.attribute_location(r.location, "position", .vec3);
             r.l(&line);
             r.location += 1;
             if (r.cfg.has_texture_coords) {
@@ -121,6 +125,9 @@ pub const VertexShaderGen = struct {
             }
             if (r.cfg.has_normals) {
                 r.a("flat out vec3 fragNormal;\n");
+            }
+            if (r.cfg.debug_normals) {
+                r.a("out vec3 bl_debug_normal;\n");
             }
             if (r.cfg.has_edges) {
                 r.a("out vec2 bl_edge;\n");
@@ -194,6 +201,22 @@ pub const VertexShaderGen = struct {
                 r.a("    key_frame frames[];\n");
                 r.a("};\n\n");
             }
+        }
+
+        fn gen_sub_chunk_block(r: *runner) !void {
+            if (true) return;
+            r.a("struct bl_mesh_data {\n");
+            r.a("    vec4 bl_mesh_data_pos;\n");
+            r.a("};\n\n");
+            r.a("\n");
+            const line = try shader_helpers.ssbo_binding(
+                constants.MeshDataBindingPoint,
+                constants.SubChunksBlockName,
+            );
+            r.l(&line);
+            r.a("{\n");
+            r.a("    bl_mesh_data bl_meshes[];\n");
+            r.a("};\n\n");
         }
 
         fn gen_mesh_transforms_decls(r: *runner) !void {
@@ -385,7 +408,7 @@ pub const VertexShaderGen = struct {
                 r.a(constants.UBOShaderDataName);
                 r.a("[1];\n");
                 r.a("    fragPos = position;\n");
-                r.a("    fragPos = vec3(fragPos.x + 0.5, fragPos.y + 0.5, fragPos.z + 0.5);");
+                r.a("    fragPos = vec3(fragPos.x + 0.5, fragPos.y + 0.5, fragPos.z + 0.5);\n");
                 if (r.cfg.has_block_data) {
                     r.a("    bl_block_index = block_data[0];\n");
                     r.a("    bl_num_blocks = block_data[1];\n");
@@ -395,6 +418,9 @@ pub const VertexShaderGen = struct {
             }
             if (r.cfg.has_normals) {
                 r.a("    fragNormal = normal;\n");
+            }
+            if (r.cfg.debug_normals) {
+                r.a("    bl_debug_normal = normal;\n");
             }
 
             r.a("}\n");

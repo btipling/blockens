@@ -54,11 +54,15 @@ fn drawControls() !void {
         .{},
     )) {
         zgui.text("terrain generator controls", .{});
+        _ = zgui.checkbox("Small chunks", .{
+            .v = &game.state.ui.sub_chunks,
+        });
         if (zgui.button("generate terrain", .{
             .w = btn_dms[0],
             .h = btn_dms[1],
         })) {
             _ = game.state.jobs.generateDemoDescriptor(
+                game.state.ui.sub_chunks,
                 game.state.ui.terrain_gen_x_buf,
                 game.state.ui.terrain_gen_z_buf,
             );
@@ -86,7 +90,7 @@ fn drawControls() !void {
                 .picker_hue_bar = true,
             },
         })) {}
-        zgui.pushFont(game.state.ui.codeFont);
+        zgui.pushFont(game.state.ui.code_font);
         zgui.pushItemWidth(game.state.ui.imguiWidth(250));
         _ = zgui.inputTextWithHint("##script name", .{
             .buf = game.state.ui.terrain_gen_name_buf[0..],
@@ -139,7 +143,7 @@ fn drawInput() !void {
             .border = true,
         },
     )) {
-        zgui.pushFont(game.state.ui.codeFont);
+        zgui.pushFont(game.state.ui.code_font);
         _ = zgui.inputTextMultiline("##terrain_gen_input", .{
             .buf = game.state.ui.terrain_gen_buf[0..],
             .w = game.state.ui.imguiWidth(884),

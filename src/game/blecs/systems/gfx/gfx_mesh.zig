@@ -42,16 +42,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         std.debug.print("couldn't find render config for {d}\n", .{erc.id});
         return;
     };
-    var deinit_mesh = true;
-    if (ecs.get(world, entity, components.shape.Shape)) |s| {
-        const sh: *const components.shape.Shape = s;
-        switch (sh.shape_type) {
-            .meshed_voxel => {
-                deinit_mesh = false;
-            },
-            else => {},
-        }
-    }
+
     const parent = ecs.get_parent(world, entity);
     const vertexShader: ?[:0]const u8 = er.vertexShader;
     const fragmentShader: ?[:0]const u8 = er.fragmentShader;
@@ -79,7 +70,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             if (fragmentShader) |f| game.state.allocator.free(f);
             _ = game.state.gfx.renderConfigs.remove(erc.id);
             ecs.delete(world, erc.id);
-            if (deinit_mesh) er.mesh_data.deinit();
+            er.mesh_data.deinit();
             game.state.allocator.destroy(er);
             return;
         }
@@ -107,6 +98,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
 
             if (config.use_tracy) ztracy.Message("adding indexes to EBO");
             const indices = _c.indices orelse std.debug.panic("expected indices from chunk\n", .{});
+            game.state.ui.gfx_triangle_count += @divFloor(indices.len, 3);
             ebo = gfx.gl.Gl.initEBO(indices) catch @panic("nope");
             game.state.allocator.free(indices);
             _c.indices = null;
@@ -117,11 +109,29 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             builder.usage = gl.STATIC_DRAW;
             _c.attr_builder = null;
         }
+    } else if (er.is_sub_chunks) {
+        var sorter: *chunk.sub_chunk.sorter = undefined;
+        if (parent == screen.gameDataEntity) {
+            sorter = game.state.ui.game_sub_chunks_sorter;
+        }
+        if (parent == screen.settingDataEntity) {
+            sorter = game.state.ui.demo_sub_chunks_sorter;
+        }
+        if (sorter.ebo != 0) @panic("Should not mesh a previously meshed sorter");
+        const inds = sorter.indices orelse @panic("nope");
+        sorter.indices = null;
+        defer game.state.allocator.free(inds);
+        ebo = gfx.gl.Gl.initEBO(inds) catch @panic("nope");
+        sorter.ebo = ebo;
+        builder = sorter.builder orelse @panic("nope");
+        sorter.builder = null;
+        builder.vbo = vbo;
+        builder.usage = gl.STATIC_DRAW;
     } else {
         ebo = gfx.gl.Gl.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
     }
 
-    if (!er.is_multi_draw) {
+    if (!er.is_multi_draw and !er.is_sub_chunks) {
         if (config.use_tracy) ztracy.Message("building non-multidraw shader attribute variables");
         builder = game.state.allocator.create(
             gfx.buffer_data.AttributeBuilder,
@@ -257,26 +267,28 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     }
 
     if (config.use_tracy) ztracy.Message("ready to draw");
+    if (er.is_sub_chunks) std.debug.print("can draw sub chunks\n", .{});
     ecs.add(world, entity, components.gfx.CanDraw);
     gl.finish();
 
     if (config.use_tracy) ztracy.Message("cleaning up memory");
     ecs.remove(world, entity, components.gfx.ElementsRendererConfig);
+    const num_indices: usize = if (er.is_sub_chunks) gfx.mesh.cube_indices.len else er.mesh_data.indices.len;
     _ = ecs.set(world, entity, components.gfx.ElementsRenderer, .{
         .program = program,
         .vao = vao,
         .vbo = vbo,
         .ebo = ebo,
         .texture = texture,
-        .numIndices = @intCast(er.mesh_data.indices.len),
+        .num_indices = @intCast(num_indices),
     });
     if (vertexShader) |v| game.state.allocator.free(v);
     if (fragmentShader) |f| game.state.allocator.free(f);
     _ = game.state.gfx.renderConfigs.remove(erc.id);
     ecs.delete(world, erc.id);
-    if (deinit_mesh) er.mesh_data.deinit();
-    game.state.allocator.destroy(er);
+    er.mesh_data.deinit();
     builder.deinit();
+    game.state.allocator.destroy(er);
     if (config.use_tracy) ztracy.Message("gfx mesh system is done");
 }
 

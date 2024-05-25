@@ -4,6 +4,7 @@ pub const FragmentShaderGen = struct {
         has_texture: bool = false,
         has_texture_coords: bool = false,
         has_normals: bool = false,
+        debug_normals: bool = false,
         color: ?@Vector(4, f32) = null,
         outline_color: ?@Vector(4, f32) = null,
         is_meshed: bool = false,
@@ -39,7 +40,7 @@ pub const FragmentShaderGen = struct {
         }
 
         fn a(r: *runner, line: []const u8) void {
-            r.buf.appendSlice(r.allocator, line) catch unreachable;
+            r.buf.appendSlice(r.allocator, line) catch @panic("OOM");
         }
 
         fn l(r: *runner, line: [:0]const u8) void {
@@ -58,6 +59,9 @@ pub const FragmentShaderGen = struct {
             }
             if (r.cfg.has_normals) {
                 r.a("\nflat in vec3 fragNormal;\n");
+            }
+            if (r.cfg.debug_normals) {
+                r.a("\nin vec3 bl_debug_normal;\n");
             }
             if (r.cfg.outline_color != null) {
                 r.a("\nin vec2 bl_edge;\n");
@@ -117,6 +121,9 @@ pub const FragmentShaderGen = struct {
                 r.a("   } else {\n");
                 r.a("       Color = min(Color * bl_amb_frag, vec4(1.0));\n");
                 r.a("   }\n");
+            }
+            if (r.cfg.debug_normals) {
+                r.a("       Color = vec4((bl_debug_normal.xyz * 0.5 + 0.5), 1.0);\n");
             }
             r.a("    if (Color.a < 0.5) {\n");
             r.a("        discard;\n");

@@ -1,7 +1,3 @@
-const std = @import("std");
-const gl = @import("zopengl").bindings;
-const game = @import("../game.zig");
-
 pub const AttributeBuilder = struct {
     vbo: u32 = 0,
     stride: gl.Sizei = 0, // The size of each vertexes attribute variable bufferXS
@@ -89,7 +85,7 @@ pub const AttributeBuilder = struct {
         };
         self.last_location += 1;
         self.stride += @as(gl.Sizei, @intCast(av.size)) * @as(gl.Sizei, @intCast(sizeFromType(av.type)));
-        self.attr_vars.append(game.state.allocator, av) catch unreachable;
+        self.attr_vars.append(game.state.allocator, av) catch @panic("OOM");
         if (self.debug) std.debug.print("defined float attribute value: \n", .{});
         if (self.debug) std.debug.print("   - size: {d} \n", .{av.size});
         if (self.debug) std.debug.print("   - offset: {d} \n", .{av.offset});
@@ -116,7 +112,7 @@ pub const AttributeBuilder = struct {
         };
         self.last_location += 1;
         self.stride += @as(gl.Sizei, @intCast(av.size)) * @as(gl.Sizei, @intCast(sizeFromType(av.type)));
-        self.attr_vars.append(game.state.allocator, av) catch unreachable;
+        self.attr_vars.append(game.state.allocator, av) catch @panic("OOM");
         if (self.debug) std.debug.print("defined float attribute value: \n", .{});
         if (self.debug) std.debug.print("   - size: {d} \n", .{av.size});
         if (self.debug) std.debug.print("   - offset: {d} \n", .{av.offset});
@@ -131,7 +127,7 @@ pub const AttributeBuilder = struct {
             self.num_vertices,
             s,
         });
-        self.buffer = game.state.allocator.alloc(u8, s) catch unreachable;
+        self.buffer = game.state.allocator.alloc(u8, s) catch @panic("OOM");
     }
 
     pub fn nextVertex(self: *AttributeBuilder) void {
@@ -207,3 +203,7 @@ pub const AttributeBuilder = struct {
         gl.bindBuffer(gl.ARRAY_BUFFER, 0);
     }
 };
+
+const std = @import("std");
+const gl = @import("zopengl").bindings;
+const game = @import("../game.zig");

@@ -1,5 +1,6 @@
 pub const DemoTerrainGenJob = struct {
     desc_root: *descriptor.root,
+    sub_chunks: bool,
     position: @Vector(4, i32),
     pt: *buffer.ProgressTracker,
     pub fn exec(self: *DemoTerrainGenJob) void {
@@ -35,6 +36,7 @@ pub const DemoTerrainGenJob = struct {
                 .data = data,
                 .position = chunk_position,
                 .desc_root = self.desc_root,
+                .sub_chunks = self.sub_chunks,
             },
         };
         self.pt.completeOne(msg, bd);

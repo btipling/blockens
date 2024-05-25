@@ -13,8 +13,8 @@ pub const ElementsRenderer = struct {
     vbo: u32 = 0,
     ebo: u32 = 0,
     texture: u32 = 0,
-    numIndices: gl.Int = 0,
-    enableDepthTest: bool = true,
+    num_indices: gl.Int = 0,
+    enable_depth_test: bool = true,
 };
 
 pub const AnimationMesh = struct {
@@ -33,6 +33,7 @@ pub const HasPreviousRenderer = struct {
 };
 
 pub const CanDraw = struct {};
+pub const SortedMultiDraw = struct {};
 pub const ManuallyHidden = struct {};
 pub const NeedsUniformUpdate = struct {};
 pub const NeedsDeletion = struct {};
@@ -49,6 +50,7 @@ pub fn init() void {
     ecs.COMPONENT(world, AnimationKeyFrame);
     ecs.COMPONENT(world, HasPreviousRenderer);
     ecs.TAG(world, CanDraw);
+    ecs.TAG(world, SortedMultiDraw);
     ecs.TAG(world, ManuallyHidden);
     ecs.TAG(world, NeedsUniformUpdate);
     ecs.TAG(world, NeedsDeletion);

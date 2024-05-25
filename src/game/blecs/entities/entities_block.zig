@@ -25,12 +25,12 @@ pub fn deinitBlocks() void {
 pub fn initBlock(block_id: u8) void {
     const legacy_block_id: i32 = @intCast(block_id);
     var block_data: data.block = .{};
-    game.state.db.loadBlock(legacy_block_id, &block_data) catch unreachable;
+    game.state.db.loadBlock(legacy_block_id, &block_data) catch @panic("db error");
     // Each block for the game gets an instances references to draw instanced versions of the block type in the world.
     // those are for blocks that weren't meshed, to avoid extra draw calls.
     // The settings views block instances aren't stored this way as they are view only and are cleared on every
     // render of the settings page.
-    const b: *block.Block = game.state.allocator.create(block.Block) catch unreachable;
+    const b: *block.Block = game.state.allocator.create(block.Block) catch @panic("OOM");
     b.* = .{
         .id = block_id,
         .data = block_data,
@@ -39,7 +39,7 @@ pub fn initBlock(block_id: u8) void {
         game.state.allocator.free(_b.data.texture);
         game.state.allocator.destroy(_b);
     }
-    game.state.blocks.blocks.put(block_id, b) catch unreachable;
+    game.state.blocks.blocks.put(block_id, b) catch @panic("OOM");
     loadTextureAtlas();
 }
 
@@ -58,13 +58,13 @@ pub fn loadTextureAtlas() void {
     var i: usize = 0;
     while (it.next()) |_b| {
         const b = _b.*;
-        ta.appendSlice(b.data.texture) catch unreachable;
+        ta.appendSlice(b.data.texture) catch @panic("OOM");
         game.state.ui.texture_atlas_block_index[@intCast(b.id)] = i;
         i += 1;
     }
     game.state.ui.texture_atlas_num_blocks = i;
     if (game.state.ui.texture_atlas_rgba_data) |d| game.state.allocator.free(d);
-    game.state.ui.texture_atlas_rgba_data = ta.toOwnedSlice() catch unreachable;
+    game.state.ui.texture_atlas_rgba_data = ta.toOwnedSlice() catch @panic("OOM");
 }
 
 const std = @import("std");

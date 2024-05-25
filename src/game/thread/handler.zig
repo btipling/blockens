@@ -19,8 +19,10 @@ pub fn handle_incoming() !void {
         const mt: buffer.buffer_message_type = @enumFromInt(msg.type);
         switch (mt) {
             .startup => try handle_startup(msg),
-            .chunk_gen => try handle_chunk_gen(msg),
+            .chunk_gen => handle_demo_chunk_gen(msg),
             .chunk_mesh => handle_chunk_mesh(msg),
+            .sub_chunk_mesh => handle_sub_chunks_mesh(msg),
+            .sub_chunk_build => handle_sub_chunks_build(msg),
             .lighting => handle_lighting(msg),
             .lighting_cross_chunk => handle_lighting_cross_chunk(msg),
             .load_chunk => handle_load_chunk(msg),
@@ -48,43 +50,25 @@ fn handle_startup(msg: buffer.buffer_message) !void {
     blecs.entities.block.init();
 }
 
-fn handle_chunk_gen(msg: buffer.buffer_message) !void {
-    if (!buffer.progress_report(msg).done) return;
-    if (try buffer.is_demo_chunk(msg)) return handle_demo_chunk_gen(msg);
-    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    var cleared_data = false;
-    const chunk_data: buffer.chunk_gen_data = switch (bd) {
-        buffer.buffer_data.chunk_gen => |d| d,
-        else => return,
-    };
-    errdefer if (!cleared_data) game.state.allocator.free(chunk_data.chunk_data);
-    var ch_cfg = game.state.ui.world_chunk_table_data.get(chunk_data.wp) orelse {
-        std.debug.panic("handled chunk gen for non existent chunk in chunk table\n", .{});
-    };
-    ch_cfg.chunkData = chunk_data.chunk_data;
-    if (game.state.ui.world_chunk_table_data.get(chunk_data.wp)) |cd| {
-        game.state.allocator.free(cd.chunkData);
-        cleared_data = true;
-    }
-    game.state.ui.world_chunk_table_data.put(game.state.ui.allocator, chunk_data.wp, ch_cfg) catch @panic("OOM");
-}
-
 fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
     if (!buffer.progress_report(msg).done) return;
     const is_demo: bool = buffer.is_demo_chunk(msg) catch return;
     if (!is_demo) return;
-    var cleared_data = false;
     const c_data: buffer.buffer_data = buffer.get_data(msg) orelse return;
     const chunk_data: buffer.chunk_gen_data = switch (c_data) {
         buffer.buffer_data.chunk_gen => |d| d,
         else => return,
     };
-    errdefer if (!cleared_data) game.state.allocator.free(chunk_data.chunk_data);
+    errdefer game.state.allocator.free(chunk_data.chunk_data);
     if (game.state.blocks.generated_settings_chunks.get(chunk_data.wp)) |data| {
         game.state.allocator.free(data);
-        cleared_data = true;
     }
     game.state.blocks.generated_settings_chunks.put(chunk_data.wp, chunk_data.chunk_data) catch @panic("OOM");
+    if (chunk_data.sub_chunks) {
+        game.state.ui.resetDemoSorter();
+        game.state.jobs.meshSubChunk(false, true);
+        return;
+    }
     blecs.entities.screen.initDemoChunk(true);
 }
 
@@ -112,6 +96,48 @@ fn handle_chunk_mesh(msg: buffer.buffer_message) void {
     blecs.ecs.add(world, entity, blecs.components.block.NeedsMeshRendering);
 }
 
+fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
+    const pr = buffer.progress_report(msg);
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const scd: buffer.sub_chunk_mesh_data = switch (bd) {
+        buffer.buffer_data.sub_chunk_mesh => |d| d,
+        else => return,
+    };
+    if (scd.sub_chunk.chunker.total_indices_count > 0) {
+        var sorter: *chunk.sub_chunk.sorter = undefined;
+        if (scd.is_settings) {
+            sorter = game.state.ui.demo_sub_chunks_sorter;
+        } else {
+            sorter = game.state.ui.game_sub_chunks_sorter;
+        }
+        sorter.addSubChunk(scd.sub_chunk);
+    } else {
+        scd.sub_chunk.deinit();
+    }
+    game.state.ui.load_percentage_load_sub_chunks = pr.percent;
+    if (!pr.done) return;
+    std.debug.print("initing sub chunks\n", .{});
+    game.state.jobs.buildSubChunks(scd.is_terrain, scd.is_settings);
+}
+
+fn handle_sub_chunks_build(msg: buffer.buffer_message) void {
+    const pr = buffer.progress_report(msg);
+    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
+    const scd: buffer.sub_chunk_build_data = switch (bd) {
+        buffer.buffer_data.sub_chunk_build => |d| d,
+        else => return,
+    };
+    if (!pr.done) return;
+    std.debug.print("initing sub chunks\n", .{});
+    if (scd.is_settings) {
+        blecs.entities.screen.initDemoSubChunks(true, scd.is_terrain);
+        return;
+    }
+    blecs.entities.screen.initGameSubChunks();
+    screen_helpers.showGameScreen();
+    ui_helpers.loadCharacterInWorld();
+}
+
 fn handle_lighting(msg: buffer.buffer_message) void {
     const pr = buffer.progress_report(msg);
     const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
@@ -133,7 +159,7 @@ fn handle_lighting_cross_chunk(msg: buffer.buffer_message) void {
     };
     game.state.ui.load_percentage_lighting_cross_chunk = pr.percent;
     if (!pr.done) return;
-    _ = game.state.jobs.loadChunks(ld.world_id, true);
+    _ = game.state.jobs.loadChunks(ld.world_id, true, game.state.ui.sub_chunks);
 }
 
 fn handle_load_chunk(msg: buffer.buffer_message) void {
@@ -158,6 +184,11 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
     }
     if (!pr.done) return;
     if (!lcd.start_game) return;
+    if (lcd.sub_chunks) {
+        game.state.ui.resetGameSorter();
+        game.state.jobs.meshSubChunk(false, false);
+        return;
+    }
     ui_helpers.loadChunksInWorld();
     screen_helpers.showGameScreen();
     ui_helpers.loadCharacterInWorld();
@@ -173,6 +204,7 @@ fn handle_demo_descriptor_gen(msg: buffer.buffer_message) void {
 
     _ = game.state.jobs.generateDemoTerrain(
         dg_d.desc_root,
+        dg_d.sub_chunks,
         dg_d.offset_x,
         dg_d.offset_z,
     );
@@ -230,16 +262,21 @@ fn handle_demo_terrain_gen(msg: buffer.buffer_message) void {
     if (!tg_d.succeeded) return;
     game.state.blocks.generated_settings_chunks.put(wp, tg_d.data.?) catch @panic("OOM");
     if (!pr.done) return;
+    defer tg_d.desc_root.deinit();
     std.debug.print("terrain generated {d}.\n", .{
         game.state.blocks.generated_settings_chunks.count(),
     });
+    if (tg_d.sub_chunks) {
+        blecs.entities.screen.clearDemoObjects();
+        game.state.ui.resetDemoSorter();
+        game.state.jobs.meshSubChunk(true, true);
+        return;
+    }
     blecs.entities.screen.initDemoTerrainGen(true);
-    tg_d.desc_root.deinit();
 }
 
 fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entity_t {
     const wp = c.wp;
-    const p = wp.vecFromWorldPosition();
     var chunk_entity: blecs.ecs.entity_t = 0;
     if (c.is_settings) {
         chunk_entity = helpers.new_child(world, blecs.entities.screen.settings_data);
@@ -253,19 +290,7 @@ fn init_chunk_entity(world: *blecs.ecs.world_t, c: *chunk.Chunk) blecs.ecs.entit
         blecs.entities.block.HasChunkRenderer,
         chunk_entity,
     );
-    var loc: @Vector(4, f32) = undefined;
-    if (c.is_settings) {
-        loc = .{ -32, 0, -32, 0 };
-    } else {
-        loc = .{
-            p[0] * chunk.chunkDim,
-            p[1] * chunk.chunkDim,
-            p[2] * chunk.chunkDim,
-            0,
-        };
-    }
     _ = blecs.ecs.set(world, chunk_entity, blecs.components.block.Chunk, .{
-        .loc = loc,
         .wp = wp,
     });
     blecs.ecs.add(world, chunk_entity, blecs.components.block.UseMultiDraw);

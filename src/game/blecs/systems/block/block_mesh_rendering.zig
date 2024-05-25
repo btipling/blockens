@@ -47,12 +47,12 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 ecs.remove(world, entity, components.gfx.ElementsRenderer);
             }
             ecs.remove(world, entity, components.block.NeedsMeshRendering);
-            render_multidraw(world, entity, c[i].loc, c[i].wp);
+            render_multidraw(world, entity, c[i].wp);
         }
     }
 }
 
-fn render_multidraw(world: *ecs.world_t, entity: ecs.entity_t, _: @Vector(4, f32), wp: chunk.worldPosition) void {
+fn render_multidraw(world: *ecs.world_t, entity: ecs.entity_t, wp: chunk.worldPosition) void {
     var c: *chunk.Chunk = undefined;
     const parent: ecs.entity_t = ecs.get_parent(world, entity);
     if (parent == entities.screen.game_data) {

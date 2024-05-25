@@ -28,7 +28,7 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
             zgui.setNextWindowPos(.{ .x = xPos, .y = yPos, .cond = .always });
             zgui.setNextWindowSize(.{
                 .w = game.state.ui.imguiWidth(600),
-                .h = game.state.ui.imguiHeight(300),
+                .h = game.state.ui.imguiHeight(350),
             });
             if (zgui.begin("#TitleScreen", .{
                 .flags = zgui.WindowFlags.no_decoration,
@@ -55,12 +55,21 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                     const loadedGame = game.state.ui.world_chunk_table_data.count() > 0;
                     if (!loadedGame or game.state.ui.world_loaded_id == 0) {
                         screen_helpers.showLoadingScreen();
-                        _ = game.state.jobs.loadChunks(game.state.ui.world_loaded_id, true);
+                        _ = game.state.jobs.loadChunks(
+                            game.state.ui.world_loaded_id,
+                            true,
+                            game.state.ui.sub_chunks,
+                        );
                     } else {
                         screen_helpers.showGameScreen();
                     }
                 }
                 zgui.endDisabled();
+
+                centerNext(ww);
+                if (zgui.checkbox("use experimental sub chunks", .{ .v = &game.state.ui.sub_chunks })) {
+                    // toggles using sub chunks instead of big chunks.
+                }
 
                 centerNext(ww);
                 if (zgui.button("Create World", .{
@@ -112,6 +121,6 @@ const ztracy = @import("ztracy");
 const config = @import("config");
 const components = @import("../../components/components.zig");
 const game = @import("../../../game.zig");
-const ui = @import("../../../ui.zig");
+const ui = @import("../../../ui/ui.zig");
 const screen_helpers = @import("../screen_helpers.zig");
 const helpers = @import("ui_helpers.zig");

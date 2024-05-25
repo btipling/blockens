@@ -206,7 +206,7 @@ pub const LightingCrossChunkJob = struct {
                 @intFromFloat(zp_p[0]),
                 @intFromFloat(zp_p[2]),
                 false,
-            ) catch unreachable;
+            ) catch @panic("error");
             defer game.state.allocator.free(zp_top_chunk);
             defer game.state.allocator.free(zp_bottom_chunk);
             // compare planes 63 z of c and 0 z of zp_c
@@ -247,7 +247,7 @@ pub const LightingCrossChunkJob = struct {
                 @intFromFloat(zn_p[0]),
                 @intFromFloat(zn_p[2]),
                 false,
-            ) catch unreachable;
+            ) catch @panic("error");
             defer game.state.allocator.free(zn_top_chunk);
             defer game.state.allocator.free(zn_bottom_chunk);
             // compare planes 0 z of c and 63 z of b_c
@@ -288,7 +288,7 @@ pub const LightingCrossChunkJob = struct {
                 @intFromFloat(xp_p[0]),
                 @intFromFloat(xp_p[2]),
                 false,
-            ) catch unreachable;
+            ) catch @panic("error");
             defer game.state.allocator.free(xp_top_chunk);
             defer game.state.allocator.free(xp_bottom_chunk);
             // compare planes 63 x of c and 0 x of xp_c
@@ -329,7 +329,7 @@ pub const LightingCrossChunkJob = struct {
                 @intFromFloat(xn_p[0]),
                 @intFromFloat(xn_p[2]),
                 false,
-            ) catch unreachable;
+            ) catch @panic("error");
             defer game.state.allocator.free(xn_top_chunk);
             defer game.state.allocator.free(xn_bottom_chunk);
             // compare planes 0 x of c and 63 x of r_c

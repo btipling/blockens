@@ -40,27 +40,107 @@ pub const Jobs = struct {
         };
     }
 
-    pub fn generateDemoChunk(self: *Jobs) zjobs.JobId {
-        return self.jobs.schedule(
-            zjobs.JobId.none,
-            generate_demo_chunk.GenerateDemoChunkJob{},
-        ) catch |e| {
-            std.debug.print("error scheduling demo chunk job: {}\n", .{e});
-            return zjobs.JobId.none;
+    pub fn meshSubChunk(self: *Jobs, is_terrain: bool, is_settings: bool) void {
+        std.debug.print("meshing sub chunks begin\n", .{});
+        const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
+        if (is_settings) {
+            const num_jobs = game.state.blocks.generated_settings_chunks.count() * 64;
+            pt.* = .{
+                .num_started = num_jobs,
+                .num_completed = 0,
+            };
+            var it = game.state.blocks.generated_settings_chunks.iterator();
+            while (it.next()) |kv| {
+                const wp: chunk.worldPosition = kv.key_ptr.*;
+                const chunk_data = kv.value_ptr.*;
+                self.meshSubChunkForWP(is_terrain, is_settings, wp, chunk_data, pt);
+            }
+            return;
+        }
+        const num_jobs = game.state.ui.world_chunk_table_data.count() * 64;
+        pt.* = .{
+            .num_started = num_jobs,
+            .num_completed = 0,
         };
+        var it = game.state.ui.world_chunk_table_data.iterator();
+        while (it.next()) |kv| {
+            const wp: chunk.worldPosition = kv.key_ptr.*;
+            const c_cfg = kv.value_ptr.*;
+            self.meshSubChunkForWP(is_terrain, is_settings, wp, c_cfg.chunkData, pt);
+        }
+        std.debug.print("meshing sub chunks end\n", .{});
+        return;
     }
 
-    pub fn generateWorldChunk(self: *Jobs, wp: chunk.worldPosition, script: []u8) zjobs.JobId {
-        const s = game.state.allocator.alloc(u8, script.len) catch unreachable;
-        @memcpy(s, script);
-        return self.jobs.schedule(
+    fn meshSubChunkForWP(
+        self: *Jobs,
+        is_terrain: bool,
+        is_settings: bool,
+        wp: chunk.worldPosition,
+        chunk_data: []u32,
+        pt: *buffer.ProgressTracker,
+    ) void {
+        var x: usize = 0;
+        while (x < 4) : (x += 1) {
+            var z: usize = 0;
+            while (z < 4) : (z += 1) {
+                var y: usize = 0;
+                while (y < 4) : (y += 1) {
+                    const sub_pos: @Vector(4, f32) = .{
+                        @floatFromInt(x),
+                        @floatFromInt(y),
+                        @floatFromInt(z),
+                        0,
+                    };
+                    _ = self.jobs.schedule(
+                        zjobs.JobId.none,
+                        job_sub_chunk_mesh.SubChunkMeshJob{
+                            .is_terrain = is_terrain,
+                            .is_settings = is_settings,
+                            .wp = wp,
+                            .sub_pos = sub_pos,
+                            .chunk_data = chunk_data,
+                            .pt = pt,
+                        },
+                    ) catch |e| {
+                        std.debug.print("error scheduling sub chunk mesh job: {}\n", .{e});
+                        return;
+                    };
+                }
+            }
+        }
+        return;
+    }
+
+    pub fn buildSubChunks(self: *Jobs, is_terrain: bool, is_settings: bool) void {
+        var sorter: *chunk.sub_chunk.sorter = undefined;
+        if (is_settings) {
+            sorter = game.state.ui.demo_sub_chunks_sorter;
+        } else {
+            sorter = game.state.ui.game_sub_chunks_sorter;
+        }
+        _ = self.jobs.schedule(
             zjobs.JobId.none,
-            generate_world_chunk.GenerateWorldChunkJob{
-                .wp = wp,
-                .script = s,
+            job_sub_chunk_build.SubChunkBuilderJob{
+                .sorter = sorter,
+                .is_terrain = is_terrain,
+                .is_settings = is_settings,
             },
         ) catch |e| {
-            std.debug.print("error scheduling gen world chunk job: {}\n", .{e});
+            std.debug.print("error scheduling sub chunk mesh job: {}\n", .{e});
+            return;
+        };
+        return;
+    }
+
+    pub fn generateDemoChunk(self: *Jobs, sub_chunks: bool) zjobs.JobId {
+        return self.jobs.schedule(
+            zjobs.JobId.none,
+            job_demo_generate_chunk.GenerateDemoChunkJob{
+                .sub_chunks = sub_chunks,
+            },
+        ) catch |e| {
+            std.debug.print("error scheduling demo chunk job: {}\n", .{e});
             return zjobs.JobId.none;
         };
     }
@@ -152,7 +232,7 @@ pub const Jobs = struct {
         }
     }
 
-    pub fn loadChunks(self: *Jobs, world_id: i32, start_game: bool) void {
+    pub fn loadChunks(self: *Jobs, world_id: i32, start_game: bool, sub_chunks: bool) void {
         const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
         pt.* = .{
             .num_started = game_config.worldChunkDims * game_config.worldChunkDims,
@@ -169,6 +249,7 @@ pub const Jobs = struct {
                         .x = x,
                         .z = z,
                         .start_game = start_game,
+                        .sub_chunks = sub_chunks,
                         .pt = pt,
                     },
                 ) catch |e| {
@@ -182,12 +263,14 @@ pub const Jobs = struct {
     // generateTerrain generates a 2^3 cube of chunks
     pub fn generateDemoDescriptor(
         self: *Jobs,
+        sub_chunks: bool,
         offset_x: i32,
         offset_z: i32,
     ) void {
         _ = self.jobs.schedule(
             zjobs.JobId.none,
             job_demo_descriptor_gen.DemoDescriptorGenJob{
+                .sub_chunks = sub_chunks,
                 .offset_x = offset_x,
                 .offset_z = offset_z,
             },
@@ -201,6 +284,7 @@ pub const Jobs = struct {
     pub fn generateDemoTerrain(
         self: *Jobs,
         desc_root: *descriptor.root,
+        sub_chunks: bool,
         offset_x: i32,
         offset_z: i32,
     ) void {
@@ -216,6 +300,7 @@ pub const Jobs = struct {
                 zjobs.JobId.none,
                 job_demo_terrain_gen.DemoTerrainGenJob{
                     .desc_root = desc_root,
+                    .sub_chunks = sub_chunks,
                     // job will generate terrain for x y z, but use i for actual rendered position
                     .position = .{
                         pos[0] + offset_x,
@@ -296,15 +381,16 @@ const game = @import("../../game.zig");
 const state = @import("../../state.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const job_chunk_meshing = @import("jobs_chunk_meshing.zig");
-const generate_demo_chunk = @import("jobs_generate_demo_chunk.zig");
-const generate_world_chunk = @import("jobs_generate_world_chunk.zig");
+const job_sub_chunk_mesh = @import("jobs_sub_chunk_mesh.zig");
+const job_sub_chunk_build = @import("jobs_sub_chunk_build.zig");
+const job_demo_generate_chunk = @import("jobs_demo_generate_chunk.zig");
+const job_demo_descriptor_gen = @import("jobs_demo_descriptor_gen.zig");
+const job_demo_terrain_gen = @import("jobs_demo_terrain_gen.zig");
 const job_save_player = @import("jobs_save_player.zig");
 const job_save_chunk = @import("jobs_save_chunk.zig");
 const job_lighting = @import("jobs_lighting.zig");
 const job_lighting_cross_chunk = @import("jobs_lighting_cross_chunk.zig");
 const job_load_chunk = @import("jobs_load_chunks.zig");
-const job_demo_descriptor_gen = @import("jobs_demo_descriptor_gen.zig");
-const job_demo_terrain_gen = @import("jobs_demo_terrain_gen.zig");
 const job_world_descriptor_gen = @import("jobs_world_descriptor_gen.zig");
 const job_world_terrain_gen = @import("jobs_world_terrain_gen.zig");
 const job_find_player_pos = @import("jobs_find_player_position.zig");

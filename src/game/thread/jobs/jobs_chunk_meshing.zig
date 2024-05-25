@@ -40,7 +40,7 @@ pub const ChunkMeshJob = struct {
         const num_elements: usize = keys.len;
         if (num_elements > 0) {
             var draws: [chunk.chunkSize]c_int = std.mem.zeroes([chunk.chunkSize]c_int);
-            var draw_offsets: [chunk.chunkSize]c_int = std.mem.zeroes([chunk.chunkSize]c_int);
+            var draw_offsets: [chunk.chunkSize]usize = std.mem.zeroes([chunk.chunkSize]usize);
             const cp = c.wp.vecFromWorldPosition();
             var loc: @Vector(4, f32) = undefined;
             loc = .{
@@ -95,7 +95,7 @@ pub const ChunkMeshJob = struct {
                     indices[index_offset + ii] = index_offset + index;
                 }
                 draws[current_element] = @intCast(mesh_data.indices.len);
-                draw_offsets[current_element] = @intCast(@sizeOf(c_uint) * index_offset);
+                draw_offsets[current_element] = @sizeOf(c_uint) * index_offset;
                 index_offset += @intCast(mesh_data.indices.len);
 
                 // Setup for writing attribute variables to gfx buffer
@@ -144,21 +144,16 @@ pub const ChunkMeshJob = struct {
 
             // The draws are attached to the chunk and used for drawing calls
             {
-                var draw_offsets_gl: [chunk.chunkSize]?*const anyopaque = undefined; // I don't know how to zero this.
-
                 const c_draws = game.state.allocator.alloc(c_int, current_element) catch @panic("OOM");
                 @memcpy(c_draws, draws[0..current_element]);
-                const c_draws_offsets = game.state.allocator.alloc(c_int, current_element) catch @panic("OOM");
-                @memcpy(c_draws_offsets, draw_offsets[0..current_element]);
+                const c_draws_offsets_gl = game.state.allocator.alloc(?*const anyopaque, current_element) catch @panic("OOM");
                 for (0..current_element) |i| {
-                    if (c_draws_offsets[i] == 0) {
-                        draw_offsets_gl[i] = null;
+                    if (draw_offsets[i] == 0) {
+                        c_draws_offsets_gl[i] = null;
                     } else {
-                        draw_offsets_gl[i] = @as(*anyopaque, @ptrFromInt(@as(usize, @intCast(c_draws_offsets[i]))));
+                        c_draws_offsets_gl[i] = @as(*anyopaque, @ptrFromInt(draw_offsets[i]));
                     }
                 }
-                const c_draws_offsets_gl = game.state.allocator.alloc(?*const anyopaque, current_element) catch @panic("OOM");
-                @memcpy(c_draws_offsets_gl, draw_offsets_gl[0..current_element]);
 
                 // Attach buffer builder and indicies on chunk to pass on to gfx_mesh, which will clean it up.
                 c.mutex.lock();
@@ -168,7 +163,6 @@ pub const ChunkMeshJob = struct {
                 if (c.indices) |i| game.state.allocator.free(i);
                 c.indices = indices;
                 c.draws = c_draws;
-                c.draw_offsets = c_draws_offsets;
                 c.draw_offsets_gl = c_draws_offsets_gl;
             }
         }
