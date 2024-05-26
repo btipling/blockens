@@ -390,11 +390,17 @@ pub const data_pkg = struct {
     normals: [3]u2 = undefined,
 };
 
-fn dataToUint(d: data_pkg) u32 {
+pub fn dataToUint(d: data_pkg) u32 {
     var i: u32 = 0;
+    const n1: u32 = @intCast(d.normals[0]);
+    const n2: u32 = @intCast(d.normals[1]);
+    const n3: u32 = @intCast(d.normals[2]);
     const x: u32 = @intCast(d.positions[0]);
     const y: u32 = @intCast(d.positions[1]);
     const z: u32 = @intCast(d.positions[2]);
+    i |= (n1 << 16);
+    i |= (n2 << 14);
+    i |= (n3 << 12);
     i |= (x << 8);
     i |= (y << 4);
     i |= z;
@@ -402,28 +408,51 @@ fn dataToUint(d: data_pkg) u32 {
 }
 
 fn uintToData(i: u32) data_pkg {
-    const x: u32 = i >> 8;
+    const n1: u32 = i >> 16 & 3;
+    const n2: u32 = i >> 14 & 3;
+    const n3: u32 = i >> 12 & 3;
+    const x: u32 = (i >> 8) & 15;
     const y: u32 = (i >> 4) & 15;
     const z: u32 = i & 15;
     return .{
         .positions = .{ @intCast(x), @intCast(y), @intCast(z) },
+        .normals = .{ @intCast(n1), @intCast(n2), @intCast(n3) },
     };
 }
 
 test dataToUint {
     const test_cases = [_]data_pkg{
-        .{ .positions = .{ 0, 0, 0 } },
-        .{ .positions = .{ 1, 1, 1 } },
-        .{ .positions = .{ 15, 15, 15 } },
-        .{ .positions = .{ 1, 2, 3 } },
-        .{ .positions = .{ 15, 14, 13 } },
-        .{ .positions = .{ 15, 10, 5 } },
+        .{
+            .positions = .{ 0, 0, 0 },
+            .normals = .{ 0, 0, 0 },
+        },
+        .{
+            .positions = .{ 1, 1, 1 },
+            .normals = .{ 1, 1, 1 },
+        },
+        .{
+            .positions = .{ 15, 15, 15 },
+            .normals = .{ 2, 2, 2 },
+        },
+        .{
+            .positions = .{ 1, 2, 3 },
+            .normals = .{ 0, 1, 2 },
+        },
+        .{
+            .positions = .{ 15, 14, 13 },
+            .normals = .{ 2, 1, 0 },
+        },
+        .{
+            .positions = .{ 15, 10, 5 },
+            .normals = .{ 0, 0, 0 },
+        },
     };
     for (test_cases, 0..) |tc, i| {
         errdefer std.debug.print("failed test with test case {any} at index {d}\n", .{ tc, i });
         const id = dataToUint(tc);
         const rs = uintToData(id);
         try std.testing.expectEqual(tc.positions, rs.positions);
+        try std.testing.expectEqual(tc.normals, rs.normals);
     }
 }
 
