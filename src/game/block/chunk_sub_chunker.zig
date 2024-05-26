@@ -385,6 +385,48 @@ fn findQuads(self: *chunkerSubChunker) !void {
     self.mesh_map.put(self.allocator, i, .{ 1, 1, 1, 1 }) catch @panic("OOM");
 }
 
+pub const data_pkg = struct {
+    positions: [3]u4,
+    normals: [3]u2 = undefined,
+};
+
+fn dataToUint(d: data_pkg) u32 {
+    var i: u32 = 0;
+    const x: u32 = @intCast(d.positions[0]);
+    const y: u32 = @intCast(d.positions[1]);
+    const z: u32 = @intCast(d.positions[2]);
+    i |= (x << 8);
+    i |= (y << 4);
+    i |= z;
+    return i;
+}
+
+fn uintToData(i: u32) data_pkg {
+    const x: u32 = i >> 8;
+    const y: u32 = (i >> 4) & 15;
+    const z: u32 = i & 15;
+    return .{
+        .positions = .{ @intCast(x), @intCast(y), @intCast(z) },
+    };
+}
+
+test dataToUint {
+    const test_cases = [_]data_pkg{
+        .{ .positions = .{ 0, 0, 0 } },
+        .{ .positions = .{ 1, 1, 1 } },
+        .{ .positions = .{ 15, 15, 15 } },
+        .{ .positions = .{ 1, 2, 3 } },
+        .{ .positions = .{ 15, 14, 13 } },
+        .{ .positions = .{ 15, 10, 5 } },
+    };
+    for (test_cases, 0..) |tc, i| {
+        errdefer std.debug.print("failed test with test case {any} at index {d}\n", .{ tc, i });
+        const id = dataToUint(tc);
+        const rs = uintToData(id);
+        try std.testing.expectEqual(tc.positions, rs.positions);
+    }
+}
+
 test run {
     const positions: [36][3]u4 = undefined;
     const indices: [36]u32 = undefined;
