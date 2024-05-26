@@ -123,6 +123,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         defer game.state.allocator.free(inds);
         ebo = gfx.gl.Gl.initEBO(inds) catch @panic("nope");
         game.state.ui.gfx_triangle_count = @divFloor(inds.len, 3);
+        game.state.ui.gfx_meshes_drawn = sorter.all_sub_chunks.items.len;
         sorter.ebo = ebo;
         builder = sorter.builder orelse @panic("nope");
         sorter.builder = null;

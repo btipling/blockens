@@ -45,6 +45,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 zgui.text("Lighting cross chunk: {d:.2}%", .{game.state.ui.load_percentage_lighting_cross_chunk * 100});
                 zgui.text("Loading chunks: {d:.2}%", .{game.state.ui.load_percentage_load_chunks * 100});
                 zgui.text("Loading sub chunks: {d:.2}%", .{game.state.ui.load_percentage_load_sub_chunks * 100});
+                if (game.state.ui.load_percentage_load_sub_chunks >= 100) {
+                    zgui.text("Finishing up..", .{});
+                }
             }
             zgui.end();
         }

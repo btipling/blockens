@@ -135,6 +135,13 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                         game.state.ui.gfx_meshes_drawn,
                     ) catch @panic("too many meshes to count");
                     zgui.text("[meshes drawn: {s}]", .{std.mem.sliceTo(&meshes_buf, 0)});
+                    zgui.sameLine(.{});
+                    var triangles_buf: [100:0]u8 = std.mem.zeroes([100:0]u8);
+                    ui.format.prettyUnsignedInt(
+                        @ptrCast(&triangles_buf),
+                        game.state.ui.gfx_triangle_count,
+                    ) catch @panic("too many meshes to count");
+                    zgui.text("[triangles drawn: {s}]", .{std.mem.sliceTo(&triangles_buf, 0)});
                 }
             }
             zgui.end();
