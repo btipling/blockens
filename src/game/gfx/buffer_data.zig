@@ -113,7 +113,7 @@ pub const AttributeBuilder = struct {
         self.last_location += 1;
         self.stride += @as(gl.Sizei, @intCast(av.size)) * @as(gl.Sizei, @intCast(sizeFromType(av.type)));
         self.attr_vars.append(game.state.allocator, av) catch @panic("OOM");
-        if (self.debug) std.debug.print("defined float attribute value: \n", .{});
+        if (self.debug) std.debug.print("defined uint attribute value: \n", .{});
         if (self.debug) std.debug.print("   - size: {d} \n", .{av.size});
         if (self.debug) std.debug.print("   - offset: {d} \n", .{av.offset});
         if (self.debug) std.debug.print("   - location: {d} \n\n", .{av.location});
@@ -171,6 +171,40 @@ pub const AttributeBuilder = struct {
         }
     }
 
+    pub fn addUintAtLocation(
+        self: *AttributeBuilder,
+        location: u32,
+        data: []const u32,
+        vertex_index: usize,
+    ) void {
+        const av = self.attr_vars.items[location - self.starting_location];
+        const dataptr: []const u8 = std.mem.sliceAsBytes(data);
+        if (self.debug) {
+            std.debug.print("dataptr len: {d}\n", .{dataptr.len});
+            for (dataptr) |b| {
+                std.debug.print("{d} ", .{b});
+            }
+            std.debug.print("\n", .{});
+        }
+        const stride: usize = @intCast(self.stride);
+        const start = stride * vertex_index + av.offset;
+        if (self.debug) {
+            std.debug.print("addUintAtLocation - loc: {d}, vertex: {d} av.offset: {d} \n", .{
+                location,
+                vertex_index,
+                av.offset,
+            });
+            for (0..dataptr.len) |i| {
+                const buf_i = start + i;
+                if (self.debug) std.debug.print(" {d} ,", .{buf_i});
+                self.buffer[buf_i] = dataptr[i];
+            }
+            std.debug.print("\n", .{});
+        } else {
+            for (0..dataptr.len) |i| self.buffer[start + i] = dataptr[i];
+        }
+    }
+
     pub fn write(self: *AttributeBuilder) void {
         gl.bindBuffer(gl.ARRAY_BUFFER, self.vbo);
 
@@ -194,7 +228,10 @@ pub const AttributeBuilder = struct {
                 s,
                 self.stride,
             });
-            gl.vertexAttribPointer(av.location, av.size, av.type, av.normalized, self.stride, pointer);
+            switch (av.type) {
+                gl.UNSIGNED_INT => gl.vertexAttribIPointer(av.location, av.size, av.type, self.stride, pointer),
+                else => gl.vertexAttribPointer(av.location, av.size, av.type, av.normalized, self.stride, pointer),
+            }
             gl.enableVertexAttribArray(av.location);
             if (av.divisor) {
                 gl.vertexAttribDivisor(av.location, 1);

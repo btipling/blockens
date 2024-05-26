@@ -81,11 +81,10 @@ fn build(self: *sorter) void {
         0,
     );
     // same order as defined in shader gen, just like gfx_mesh
-    const pos_loc: u32 = builder.defineFloatAttributeValue(3);
-    const nor_loc: u32 = builder.defineFloatAttributeValue(3);
-    const block_data_loc: u32 = builder.defineFloatAttributeValue(4);
+    const data_loc: u32 = builder.defineUintAttributeValue(4);
     const attr_trans_loc: u32 = builder.defineFloatAttributeValue(4);
     builder.initBuffer();
+    // builder.debug = true;
     sci = 0;
     var vertex_offset: usize = 0;
     while (sci < self.all_sub_chunks.items.len) : (sci += 1) {
@@ -99,7 +98,7 @@ fn build(self: *sorter) void {
             cp[2],
             0,
         };
-        const aloc: @Vector(4, f32) = loc + @as(@Vector(4, f32), @splat(0.5));
+        const aloc: @Vector(4, f32) = loc - @as(@Vector(4, f32), @splat(0.5));
 
         const cfp: @Vector(4, f32) = sc.sub_pos;
         const translation: @Vector(4, f32) = .{
@@ -109,12 +108,12 @@ fn build(self: *sorter) void {
             cfp[3],
         };
         var indices_buf: [chunk.sub_chunk.subChunkSize * 36]u32 = undefined;
-        var vertices_buf: [chunk.sub_chunk.subChunkSize * 36][3]f32 = undefined;
-        var normals_buf: [chunk.sub_chunk.subChunkSize * 36][3]f32 = undefined;
+        var positions_buf: [chunk.sub_chunk.subChunkSize * 36][3]u5 = undefined;
+        var normals_buf: [chunk.sub_chunk.subChunkSize * 36][3]u2 = undefined;
         var block_data_buf: [chunk.sub_chunk.subChunkSize * 36]u32 = undefined;
         const res = sc.chunker.getMeshData(
             &indices_buf,
-            &vertices_buf,
+            &positions_buf,
             &normals_buf,
             &block_data_buf,
             full_offset,
@@ -124,21 +123,15 @@ fn build(self: *sorter) void {
         for (0..res.positions.len) |ii| {
             const vertex_index: usize = ii + vertex_offset;
             {
-                const p = res.positions[ii];
-                builder.addFloatAtLocation(pos_loc, &p, vertex_index);
-            }
-            {
-                const n = res.normals[ii];
-                builder.addFloatAtLocation(nor_loc, &n, vertex_index);
-            }
-            {
+                const dp = chunk.sub_chunk.chunker.dataToUint(.{
+                    .positions = res.positions[ii],
+                    .normals = res.normals[ii],
+                });
                 const bd: block.BlockData = block.BlockData.fromId(res.block_data[ii]);
-                const ambient: f32 = @bitCast(@as(u32, @intCast(bd.ambient)));
-                const lighting: f32 = @bitCast(@as(u32, @intCast(bd.lighting)));
-                const block_index: f32 = @floatFromInt(game.state.ui.texture_atlas_block_index[@intCast(bd.block_id)]);
-                const num_blocks: f32 = @floatFromInt(game.state.ui.texture_atlas_num_blocks);
-                const _bd: [4]f32 = [_]f32{ block_index, num_blocks, ambient, lighting };
-                builder.addFloatAtLocation(block_data_loc, &_bd, vertex_index);
+                const block_index: u32 = @intCast(game.state.ui.texture_atlas_block_index[@intCast(bd.block_id)]);
+                const num_blocks: u32 = @intCast(game.state.ui.texture_atlas_num_blocks);
+                const d: [4]u32 = .{ dp, res.block_data[ii], block_index, num_blocks };
+                builder.addUintAtLocation(data_loc, &d, vertex_index);
             }
             {
                 const atr_data: [4]f32 = translation;

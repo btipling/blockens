@@ -468,7 +468,7 @@ pub fn initDemoSubChunks(reset: bool, is_terrain: bool) void {
     ecs.add(world, sc_e, components.block.UseTextureAtlas);
     _ = ecs.set(world, sc_e, components.shape.Lighting, .{ .ssbo = gfx.constants.LightingBindingPoint });
     ecs.add(world, sc_e, components.shape.NeedsSetup);
-    // ecs.add(world, sc_e, components.Debug);
+    ecs.add(world, sc_e, components.Debug);
     const values = game.state.blocks.generated_settings_chunks.values();
     for (values) |cd| {
         game.state.allocator.free(cd);
