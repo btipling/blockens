@@ -39,6 +39,7 @@ pub const shubChunkMesh = struct {
 };
 
 pub const subChunkVoxelData = struct {
+    bd_id: u32,
     scd: chunk.sub_chunk.subPositionIndex,
     bd: block.BlockData,
 };
@@ -102,7 +103,6 @@ pub fn getMeshData(
         offset += @intCast(mesh.indices.len);
     }
     if (offset == 0) return ChunkerError.NoMeshData;
-    std.debug.print("final offset: {d}\n", .{offset});
     return .{
         .indices = indices_buf[0..offset],
         .positions = vertices_buf[0..offset],
@@ -136,6 +136,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
                 const scd = chunk.sub_chunk.chunkPosToSubPositionData(c_pos);
                 self.data[scd.sub_chunk_index] = .{
                     .scd = scd,
+                    .bd_id = chunk_data[scd.chunk_index],
                     .bd = block.BlockData.fromId(chunk_data[scd.chunk_index]),
                 };
                 i += 1;
@@ -391,7 +392,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
         inner: while (true) {
             if (num_dims_travelled == 1) {
                 const ii = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-                if (vd.bd.block_id != self.data[ii].bd.block_id or self.meshed[ii]) {
+                if (vd.bd_id != self.data[ii].bd_id or self.meshed[ii]) {
                     num_dims_travelled += 1;
                     p[0] = op[0];
                     p[2] += 1;
@@ -425,7 +426,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
                 }
                 const ii = chunk.sub_chunk.subChunkPosToSubPositionData(p);
                 // doing y here, only add if all x along the y are the same
-                if (vd.bd.block_id != self.data[ii].bd.block_id or self.meshed[ii]) {
+                if (vd.bd_id != self.data[ii].bd_id or self.meshed[ii]) {
                     p[0] = op[0];
                     p[2] = op[2];
                     p[1] += 1;
@@ -458,7 +459,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
                 p[0] = op[0];
             } else {
                 const ii = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-                if (vd.bd.block_id != self.data[ii].bd.block_id) {
+                if (vd.bd_id != self.data[ii].bd_id) {
                     break :inner;
                 }
                 if (self.meshed[ii]) {
