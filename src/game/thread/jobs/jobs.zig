@@ -44,7 +44,7 @@ pub const Jobs = struct {
         std.debug.print("meshing sub chunks begin\n", .{});
         const pt: *buffer.ProgressTracker = game.state.allocator.create(buffer.ProgressTracker) catch @panic("OOM");
         if (is_settings) {
-            const num_jobs = game.state.blocks.generated_settings_chunks.count() * 64;
+            const num_jobs = game.state.blocks.generated_settings_chunks.count();
             pt.* = .{
                 .num_started = num_jobs,
                 .num_completed = 0,
@@ -57,7 +57,7 @@ pub const Jobs = struct {
             }
             return;
         }
-        const num_jobs = game.state.ui.world_chunk_table_data.count() * 64;
+        const num_jobs = game.state.ui.world_chunk_table_data.count();
         pt.* = .{
             .num_started = num_jobs,
             .num_completed = 0,
@@ -80,35 +80,19 @@ pub const Jobs = struct {
         chunk_data: []u32,
         pt: *buffer.ProgressTracker,
     ) void {
-        var x: usize = 0;
-        while (x < 4) : (x += 1) {
-            var z: usize = 0;
-            while (z < 4) : (z += 1) {
-                var y: usize = 0;
-                while (y < 4) : (y += 1) {
-                    const sub_pos: @Vector(4, f32) = .{
-                        @floatFromInt(x),
-                        @floatFromInt(y),
-                        @floatFromInt(z),
-                        0,
-                    };
-                    _ = self.jobs.schedule(
-                        zjobs.JobId.none,
-                        job_sub_chunk_mesh.SubChunkMeshJob{
-                            .is_terrain = is_terrain,
-                            .is_settings = is_settings,
-                            .wp = wp,
-                            .sub_pos = sub_pos,
-                            .chunk_data = chunk_data,
-                            .pt = pt,
-                        },
-                    ) catch |e| {
-                        std.debug.print("error scheduling sub chunk mesh job: {}\n", .{e});
-                        return;
-                    };
-                }
-            }
-        }
+        _ = self.jobs.schedule(
+            zjobs.JobId.none,
+            job_sub_chunk_mesh.SubChunkMeshJob{
+                .is_terrain = is_terrain,
+                .is_settings = is_settings,
+                .wp = wp,
+                .chunk_data = chunk_data,
+                .pt = pt,
+            },
+        ) catch |e| {
+            std.debug.print("error scheduling sub chunk mesh job: {}\n", .{e});
+            return;
+        };
         return;
     }
 

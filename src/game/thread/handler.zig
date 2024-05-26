@@ -103,16 +103,18 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
         buffer.buffer_data.sub_chunk_mesh => |d| d,
         else => return,
     };
-    if (scd.sub_chunk.chunker.total_indices_count > 0) {
-        var sorter: *chunk.sub_chunk.sorter = undefined;
-        if (scd.is_settings) {
-            sorter = game.state.ui.demo_sub_chunks_sorter;
-        } else {
-            sorter = game.state.ui.game_sub_chunks_sorter;
-        }
-        sorter.addSubChunk(scd.sub_chunk);
+    var sorter: *chunk.sub_chunk.sorter = undefined;
+    if (scd.is_settings) {
+        sorter = game.state.ui.demo_sub_chunks_sorter;
     } else {
-        scd.sub_chunk.deinit();
+        sorter = game.state.ui.game_sub_chunks_sorter;
+    }
+    for (scd.sub_chunks) |sc| {
+        if (sc.chunker.total_indices_count > 0) {
+            sorter.addSubChunk(sc);
+        } else {
+            sc.deinit();
+        }
     }
     game.state.ui.load_percentage_load_sub_chunks = pr.percent;
     if (!pr.done) return;
