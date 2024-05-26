@@ -213,7 +213,7 @@ fn initScale(self: *chunkerSubChunker) void {
 }
 
 fn findQuads(self: *chunkerSubChunker) !void {
-    var op: @Vector(4, u4) = .{ 0, 0, 0, 0 };
+    var op: @Vector(4, u8) = .{ 0, 0, 0, 0 };
     var p = op;
     p[0] += 1;
     var i: usize = 0;
@@ -257,13 +257,13 @@ fn findQuads(self: *chunkerSubChunker) !void {
             continue :outer;
         }
         self.current_voxel = i;
-        var endX: u4 = op[0];
-        var endZ: u4 = op[2];
-        var numXAdded: u4 = 0;
-        var numZAdded: u4 = 0;
+        var endX: u8 = op[0];
+        var endZ: u8 = op[2];
+        var numXAdded: u8 = 0;
+        var numZAdded: u8 = 0;
         inner: while (true) {
             if (num_dims_travelled == 1) {
-                const ii = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+                const ii = chunk.sub_chunk.subChunkPosToSubPositionData(.{ @intCast(p[0]), @intCast(p[1]), @intCast(p[2]), 0 });
                 if (vd.bd_id != self.data[ii].bd_id or self.meshed[ii]) {
                     num_dims_travelled += 1;
                     p[0] = op[0];
@@ -277,7 +277,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
                 }
                 self.updateMeshed(ii);
                 endX = p[0];
-                self.current_scale[0] = endX - op[0] + 1;
+                self.current_scale[0] = @intCast(endX - op[0] + 1);
                 p[0] += 1;
                 if (p[0] >= chunk.sub_chunk.subChunkDim) {
                     num_dims_travelled += 1;
@@ -296,7 +296,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
                     num_dims_travelled += 1;
                     continue :inner;
                 }
-                const ii = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+                const ii = chunk.sub_chunk.subChunkPosToSubPositionData(.{ @intCast(p[0]), @intCast(p[1]), @intCast(p[2]), 0 });
                 // doing y here, only add if all x along the y are the same
                 if (vd.bd_id != self.data[ii].bd_id or self.meshed[ii]) {
                     p[0] = op[0];
@@ -319,18 +319,18 @@ fn findQuads(self: *chunkerSubChunker) !void {
                 const _beg = @as(usize, @intCast(op[0]));
                 const _end = @as(usize, @intCast(endX)) + 1;
                 for (_beg.._end) |xToAdd| {
-                    const _xToAdd: u4 = @intCast(xToAdd);
-                    const np: @Vector(4, u4) = .{ _xToAdd, p[1], p[2], 0 };
-                    const iii = chunk.sub_chunk.subChunkPosToSubPositionData(np);
+                    const _xToAdd: u8 = @intCast(xToAdd);
+                    const np: @Vector(4, u8) = .{ _xToAdd, p[1], p[2], 0 };
+                    const iii = chunk.sub_chunk.subChunkPosToSubPositionData(.{ @intCast(np[0]), @intCast(np[1]), @intCast(np[2]), 0 });
                     if (self.data[iii].bd.block_id != 0) self.updateMeshed(iii);
                 }
                 numZAdded += 1;
                 endZ = p[2];
-                self.current_scale[2] = endZ - op[2] + 1;
+                self.current_scale[2] = @intCast(endZ - op[2] + 1);
                 p[2] += 1;
                 p[0] = op[0];
             } else {
-                const ii = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+                const ii = chunk.sub_chunk.subChunkPosToSubPositionData(.{ @intCast(p[0]), @intCast(p[1]), @intCast(p[2]), 0 });
                 if (vd.bd_id != self.data[ii].bd_id) {
                     break :inner;
                 }
@@ -350,17 +350,17 @@ fn findQuads(self: *chunkerSubChunker) !void {
                 const _begX = @as(usize, @intCast(op[0]));
                 const _endX = @as(usize, @intCast(endX)) + 1;
                 for (_begX.._endX) |xToAdd| {
-                    const _xToAdd: u4 = @intCast(xToAdd);
+                    const _xToAdd: u8 = @intCast(xToAdd);
                     const _begZ = @as(usize, @intCast(op[2]));
                     const _endZ = @as(usize, @intCast(endZ)) + 1;
                     for (_begZ.._endZ) |zToAdd| {
-                        const _zToAdd: u4 = @intCast(zToAdd);
-                        const iii = chunk.sub_chunk.subChunkPosToSubPositionData(.{ _xToAdd, p[1], _zToAdd, 0 });
+                        const _zToAdd: u8 = @intCast(zToAdd);
+                        const iii = chunk.sub_chunk.subChunkPosToSubPositionData(.{ @intCast(_xToAdd), @intCast(p[1]), @intCast(_zToAdd), 0 });
                         // a one off bug I think?
                         if (self.data[iii].bd.block_id != 0) self.updateMeshed(iii);
                     }
                 }
-                self.current_scale[1] = p[1] - op[1] + 1;
+                self.current_scale[1] = @intCast(p[1] - op[1] + 1);
                 p[1] += 1;
                 p[0] = op[0];
                 p[2] = op[2];
@@ -386,9 +386,9 @@ fn findQuads(self: *chunkerSubChunker) !void {
 }
 
 test run {
-    const positions: [36][3]f32 = undefined;
+    const positions: [36][3]u4 = undefined;
     const indices: [36]u32 = undefined;
-    const normals: [36][3]f32 = undefined;
+    const normals: [36][3]u2 = undefined;
 
     const chunk_data = std.testing.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
     defer std.testing.allocator.free(chunk_data);

@@ -81,8 +81,7 @@ fn build(self: *sorter) void {
         0,
     );
     // same order as defined in shader gen, just like gfx_mesh
-    const pos_loc: u32 = builder.defineFloatAttributeValue(3);
-    const nor_loc: u32 = builder.defineFloatAttributeValue(3);
+    const data_loc: u32 = builder.defineUintAttributeValue(2);
     const block_data_loc: u32 = builder.defineFloatAttributeValue(4);
     const attr_trans_loc: u32 = builder.defineFloatAttributeValue(4);
     builder.initBuffer();
@@ -126,12 +125,8 @@ fn build(self: *sorter) void {
             {
                 // const p = res.positions[ii];
                 if (true) @panic("Fix this, needs to be a uint");
-                const p: [3]f32 = .{ 0, 0, 0 };
-                builder.addFloatAtLocation(pos_loc, &p, vertex_index);
-            }
-            {
-                const n = res.normals[ii];
-                builder.addFloatAtLocation(nor_loc, &n, vertex_index);
+                const d: [2]u32 = .{ 0, 0 };
+                builder.addUintAtLocation(data_loc, &d, vertex_index);
             }
             {
                 const bd: block.BlockData = block.BlockData.fromId(res.block_data[ii]);
