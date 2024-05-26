@@ -113,7 +113,7 @@ pub const AttributeBuilder = struct {
         self.last_location += 1;
         self.stride += @as(gl.Sizei, @intCast(av.size)) * @as(gl.Sizei, @intCast(sizeFromType(av.type)));
         self.attr_vars.append(game.state.allocator, av) catch @panic("OOM");
-        if (self.debug) std.debug.print("defined float attribute value: \n", .{});
+        if (self.debug) std.debug.print("defined uint attribute value: \n", .{});
         if (self.debug) std.debug.print("   - size: {d} \n", .{av.size});
         if (self.debug) std.debug.print("   - offset: {d} \n", .{av.offset});
         if (self.debug) std.debug.print("   - location: {d} \n\n", .{av.location});
@@ -228,7 +228,10 @@ pub const AttributeBuilder = struct {
                 s,
                 self.stride,
             });
-            gl.vertexAttribPointer(av.location, av.size, av.type, av.normalized, self.stride, pointer);
+            switch (av.type) {
+                gl.UNSIGNED_INT => gl.vertexAttribIPointer(av.location, av.size, av.type, self.stride, pointer),
+                else => gl.vertexAttribPointer(av.location, av.size, av.type, av.normalized, self.stride, pointer),
+            }
             gl.enableVertexAttribArray(av.location);
             if (av.divisor) {
                 gl.vertexAttribDivisor(av.location, 1);

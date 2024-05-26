@@ -65,6 +65,7 @@ pub const VertexShaderGen = struct {
         fn run(r: *runner) ![:0]const u8 {
             r.a("#version 450 core\n");
             try r.gen_attribute_vars();
+            try r.gen_packed_attribute_vars();
             try r.gen_out_vars();
             try r.gen_mesh_transforms_decls();
             try r.gen_uniforms();
@@ -80,6 +81,7 @@ pub const VertexShaderGen = struct {
         }
 
         fn gen_attribute_vars(r: *runner) !void {
+            if (r.cfg.is_sub_chunks) return;
             var line: [250:0]u8 = undefined;
             line = try shader_helpers.attribute_location(r.location, "position", .vec3);
             r.l(&line);
@@ -112,6 +114,31 @@ pub const VertexShaderGen = struct {
                 r.l(&line);
                 r.location += 1;
             }
+        }
+
+        fn gen_packed_attribute_vars(r: *runner) !void {
+            if (!r.cfg.is_sub_chunks) return;
+            var line: [250:0]u8 = undefined;
+            line = try shader_helpers.attribute_location(r.location, "bl_attr_data", .uvec4);
+            r.l(&line);
+            r.location += 1;
+            if (r.cfg.has_attr_translation) {
+                line = try shader_helpers.attribute_location(r.location, "bl_attr_tr", .vec4);
+                r.l(&line);
+                r.location += 1;
+            }
+        }
+
+        fn gen_unpack_attribute_vars(r: *runner) !void {
+            if (!r.cfg.is_sub_chunks) return;
+            r.a("    uint bl_pk_n1 = (bl_attr_data[0] >> 16) & 3;\n");
+            r.a("    uint bl_pk_n2 = (bl_attr_data[0] >> 14) & 3;\n");
+            r.a("    uint bl_pk_n3 = (bl_attr_data[0] >> 12) & 3;\n");
+            r.a("    uint bl_pk_p_x = (bl_attr_data[0] >> 8) & 15;\n");
+            r.a("    uint bl_pk_p_y = (bl_attr_data[0] >> 4) & 15;\n");
+            r.a("    uint bl_pk_p_z = bl_attr_data[0] & 15;\n");
+            r.a("    vec3 position = vec3(float(bl_pk_p_x), float(bl_pk_p_y), float(bl_pk_p_z));\n");
+            r.a("    vec3 normal = vec3(float(bl_pk_n1) - 1, float(bl_pk_n2) - 1, float(bl_pk_n3) - 1);\n");
         }
 
         fn gen_out_vars(r: *runner) !void {
@@ -378,6 +405,7 @@ pub const VertexShaderGen = struct {
         fn gen_main(r: *runner) !void {
             r.a("void main()\n");
             r.a("{\n");
+            try r.gen_unpack_attribute_vars();
             r.a("    vec4 pos;\n");
             r.a("    pos = vec4(position.xyz, 1.0);\n");
             try r.gen_inline_mesh_transforms();
@@ -410,10 +438,17 @@ pub const VertexShaderGen = struct {
                 r.a("    fragPos = position;\n");
                 r.a("    fragPos = vec3(fragPos.x + 0.5, fragPos.y + 0.5, fragPos.z + 0.5);\n");
                 if (r.cfg.has_block_data) {
-                    r.a("    bl_block_index = block_data[0];\n");
-                    r.a("    bl_num_blocks = block_data[1];\n");
-                    r.a("    bl_block_ambient = floatBitsToUint(block_data[2]);\n");
-                    r.a("    bl_block_lighting = floatBitsToUint(block_data[3]);\n");
+                    if (r.cfg.is_sub_chunks) {
+                        r.a("    bl_block_index = float(bl_attr_data[2]);\n");
+                        r.a("    bl_num_blocks = float(bl_attr_data[3]);\n");
+                        r.a("    bl_block_ambient = (bl_attr_data[1] >> 8) & 11;\n");
+                        r.a("    bl_block_lighting = bl_attr_data[1] >> 22;\n");
+                    } else {
+                        r.a("    bl_block_index = block_data[0];\n");
+                        r.a("    bl_num_blocks = block_data[1];\n");
+                        r.a("    bl_block_ambient = floatBitsToUint(block_data[2]);\n");
+                        r.a("    bl_block_lighting = floatBitsToUint(block_data[3]);\n");
+                    }
                 }
             }
             if (r.cfg.has_normals) {

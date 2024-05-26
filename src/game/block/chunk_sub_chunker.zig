@@ -17,7 +17,7 @@ allocator: std.mem.Allocator,
 current_voxel: usize = 0,
 num_voxels_in_mesh: usize = 0,
 caching_meshed: bool = true,
-current_scale: @Vector(4, u4) = .{ 1, 1, 1, 0 },
+current_scale: @Vector(4, u4) = .{ 0, 0, 0, 0 },
 to_be_meshed: [min_voxels_in_mesh]usize = [_]usize{0} ** min_voxels_in_mesh,
 meshed: [chunk.sub_chunk.subChunkSize]bool = [_]bool{false} ** chunk.sub_chunk.subChunkSize,
 mesh_map: std.AutoHashMapUnmanaged(usize, @Vector(4, u4)) = .{},
@@ -172,13 +172,13 @@ fn scaleMesh(self: *chunkerSubChunker, vd: subChunkVoxelData, scale: @Vector(4, 
     var pi: usize = 0;
     while (pi < sm.positions.len) : (pi += 1) {
         if (sm.positions[pi][0] > 0) {
-            sm.positions[pi][0] = sm.positions[pi][0] + (scale[0] - 1);
+            sm.positions[pi][0] = scale[0];
         }
         if (sm.positions[pi][1] > 0) {
-            sm.positions[pi][1] = sm.positions[pi][1] + (scale[1] - 1);
+            sm.positions[pi][1] = scale[1];
         }
         if (sm.positions[pi][2] > 0) {
-            sm.positions[pi][2] = sm.positions[pi][2] + (scale[2] - 1);
+            sm.positions[pi][2] = scale[2];
         }
     }
     return sm;
@@ -209,7 +209,7 @@ fn updateQuads(self: *chunkerSubChunker) void {
 }
 
 fn initScale(self: *chunkerSubChunker) void {
-    self.current_scale = .{ 1, 1, 1, 0 };
+    self.current_scale = .{ 0, 0, 0, 0 };
 }
 
 fn findQuads(self: *chunkerSubChunker) !void {
@@ -277,7 +277,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
                 }
                 self.updateMeshed(ii);
                 endX = p[0];
-                self.current_scale[0] = @intCast(endX - op[0] + 1);
+                self.current_scale[0] = @intCast(endX - op[0]);
                 p[0] += 1;
                 if (p[0] >= chunk.sub_chunk.subChunkDim) {
                     num_dims_travelled += 1;
@@ -326,7 +326,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
                 }
                 numZAdded += 1;
                 endZ = p[2];
-                self.current_scale[2] = @intCast(endZ - op[2] + 1);
+                self.current_scale[2] = @intCast(endZ - op[2]);
                 p[2] += 1;
                 p[0] = op[0];
             } else {
@@ -360,7 +360,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
                         if (self.data[iii].bd.block_id != 0) self.updateMeshed(iii);
                     }
                 }
-                self.current_scale[1] = @intCast(p[1] - op[1] + 1);
+                self.current_scale[1] = @intCast(p[1] - op[1]);
                 p[1] += 1;
                 p[0] = op[0];
                 p[2] = op[2];
@@ -382,7 +382,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
         return;
     }
     self.meshed[i] = true;
-    self.mesh_map.put(self.allocator, i, .{ 1, 1, 1, 1 }) catch @panic("OOM");
+    self.mesh_map.put(self.allocator, i, .{ 0, 0, 0, 0 }) catch @panic("OOM");
 }
 
 pub const data_pkg = struct {

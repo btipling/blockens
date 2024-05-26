@@ -4,6 +4,7 @@ pub const varType = enum {
     vec4,
     mat4,
     uvec2,
+    uvec4,
 };
 
 pub fn attribute_location(
@@ -18,6 +19,7 @@ pub fn attribute_location(
         .vec4 => "vec4",
         .mat4 => "mat4",
         .uvec2 => "uvec2",
+        .uvec4 => "uvec4",
     };
     _ = try std.fmt.bufPrint(&buffer, "layout (location = {d}) in {s} {s};\n", .{ loc, var_type_name, name });
     return buffer;

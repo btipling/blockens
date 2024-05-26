@@ -84,6 +84,7 @@ fn build(self: *sorter) void {
     const data_loc: u32 = builder.defineUintAttributeValue(4);
     const attr_trans_loc: u32 = builder.defineFloatAttributeValue(4);
     builder.initBuffer();
+    // builder.debug = true;
     sci = 0;
     var vertex_offset: usize = 0;
     while (sci < self.all_sub_chunks.items.len) : (sci += 1) {
