@@ -98,7 +98,7 @@ fn build(self: *sorter) void {
             cp[2],
             0,
         };
-        const aloc: @Vector(4, f32) = loc + @as(@Vector(4, f32), @splat(0.5));
+        const aloc: @Vector(4, f32) = loc - @as(@Vector(4, f32), @splat(0.5));
 
         const cfp: @Vector(4, f32) = sc.sub_pos;
         const translation: @Vector(4, f32) = .{
@@ -108,7 +108,7 @@ fn build(self: *sorter) void {
             cfp[3],
         };
         var indices_buf: [chunk.sub_chunk.subChunkSize * 36]u32 = undefined;
-        var positions_buf: [chunk.sub_chunk.subChunkSize * 36][3]u4 = undefined;
+        var positions_buf: [chunk.sub_chunk.subChunkSize * 36][3]u5 = undefined;
         var normals_buf: [chunk.sub_chunk.subChunkSize * 36][3]u2 = undefined;
         var block_data_buf: [chunk.sub_chunk.subChunkSize * 36]u32 = undefined;
         const res = sc.chunker.getMeshData(

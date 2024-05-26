@@ -131,13 +131,13 @@ pub const VertexShaderGen = struct {
 
         fn gen_unpack_attribute_vars(r: *runner) !void {
             if (!r.cfg.is_sub_chunks) return;
-            r.a("    uint bl_pk_n1 = (bl_attr_data[0] >> 16) & 3;\n");
-            r.a("    uint bl_pk_n2 = (bl_attr_data[0] >> 14) & 3;\n");
-            r.a("    uint bl_pk_n3 = (bl_attr_data[0] >> 12) & 3;\n");
-            r.a("    uint bl_pk_p_x = (bl_attr_data[0] >> 8) & 15;\n");
-            r.a("    uint bl_pk_p_y = (bl_attr_data[0] >> 4) & 15;\n");
-            r.a("    uint bl_pk_p_z = bl_attr_data[0] & 15;\n");
-            r.a("    vec3 position = vec3(float(bl_pk_p_x), float(bl_pk_p_y), float(bl_pk_p_z));\n");
+            r.a("    uint bl_pk_n1 = (bl_attr_data[0] >> 19) & 3;\n");
+            r.a("    uint bl_pk_n2 = (bl_attr_data[0] >> 17) & 3;\n");
+            r.a("    uint bl_pk_n3 = (bl_attr_data[0] >> 15) & 3;\n");
+            r.a("    uint bl_pk_p_x = (bl_attr_data[0] >> 10) & 31;\n");
+            r.a("    uint bl_pk_p_y = (bl_attr_data[0] >> 5) & 31;\n");
+            r.a("    uint bl_pk_p_z = bl_attr_data[0] & 31;\n");
+            r.a("    vec3 position = vec3(float(bl_pk_p_x) + 0.5, float(bl_pk_p_y) + 0.5, float(bl_pk_p_z) + 0.5);\n");
             r.a("    vec3 normal = vec3(float(bl_pk_n1) - 1, float(bl_pk_n2) - 1, float(bl_pk_n3) - 1);\n");
         }
 
@@ -441,7 +441,7 @@ pub const VertexShaderGen = struct {
                     if (r.cfg.is_sub_chunks) {
                         r.a("    bl_block_index = float(bl_attr_data[2]);\n");
                         r.a("    bl_num_blocks = float(bl_attr_data[3]);\n");
-                        r.a("    bl_block_ambient = (bl_attr_data[1] >> 8) & 11;\n");
+                        r.a("    bl_block_ambient = (bl_attr_data[1] >> 8) & 4095;\n");
                         r.a("    bl_block_lighting = bl_attr_data[1] >> 22;\n");
                     } else {
                         r.a("    bl_block_index = block_data[0];\n");

@@ -300,7 +300,7 @@ const bounding_box_positions: [36][3]f32 = .{
     .{ 0, 1, 0 },
 };
 
-pub const voxel_positions: [36][3]u4 = .{
+pub const voxel_positions: [36][3]u5 = .{
     // z pos
     .{ 0, 0, 1 },
     .{ 1, 0, 1 },
