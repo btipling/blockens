@@ -39,6 +39,17 @@ pub fn addSubChunk(self: *sorter, sc: *chunk.sub_chunk) void {
 }
 
 pub fn buildMeshData(self: *sorter) void {
+    if (config.use_tracy) {
+        const tracy_zone = ztracy.ZoneNC(@src(), "SubChunkSorterBuild", 0x00_ff_ff_f0);
+        defer tracy_zone.End();
+        self.build();
+    } else {
+        self.build();
+    }
+}
+
+fn build(self: *sorter) void {
+    if (config.use_tracy) ztracy.Message("sub_chunk_sorter: starting build");
     self.mutex.lock();
     defer self.mutex.unlock();
     var sci: usize = 0;
@@ -105,6 +116,7 @@ pub fn buildMeshData(self: *sorter) void {
             full_offset,
         ) catch @panic("no mesh");
         full_offset = res.full_offset;
+        if (config.use_tracy) ztracy.Message("sub_chunk_sorter: building vertices");
         for (0..res.positions.len) |ii| {
             const vertex_index: usize = ii + vertex_offset;
             {
@@ -137,6 +149,7 @@ pub fn buildMeshData(self: *sorter) void {
     self.builder = builder;
     std.debug.print("total indicies: {d}\n", .{self.num_indices});
     self.indices = inds.toOwnedSlice(self.allocator) catch @panic("OOM");
+    if (config.use_tracy) ztracy.Message("sub_chunk_sorter: done building");
 }
 
 pub fn cullFrustum(self: *sorter, camera_position: @Vector(4, f32), view: zm.Mat, perspective: zm.Mat) void {
@@ -149,6 +162,17 @@ pub fn cullFrustum(self: *sorter, camera_position: @Vector(4, f32), view: zm.Mat
 }
 
 pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
+    if (config.use_tracy) {
+        const tracy_zone = ztracy.ZoneNC(@src(), "SubChunkSorterSort", 0x00_aa_ff_f0);
+        defer tracy_zone.End();
+        self.doSort(loc);
+    } else {
+        self.doSort(loc);
+    }
+}
+
+fn doSort(self: *sorter, loc: @Vector(4, f32)) void {
+    if (config.use_tracy) ztracy.Message("sub_chunk_sorter: starting sort");
     self.mutex.lock();
     defer self.mutex.unlock();
     _ = loc; // TODO: sort by loc
@@ -163,6 +187,10 @@ pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
         const sc: *chunk.sub_chunk = self.all_sub_chunks.items[sci];
         const num_indices = sc.chunker.total_indices_count;
         if (num_indices == 0) continue;
+        if (!sc.visible) {
+            index_offset += @intCast(num_indices);
+            continue;
+        }
         self.opaque_draws.append(self.allocator, @intCast(num_indices)) catch @panic("OOM");
         if (i == 0) {
             self.opaque_draw_offsets.append(self.allocator, null) catch @panic("OOM");
@@ -176,9 +204,12 @@ pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
         index_offset += @intCast(num_indices);
         i += 1;
     }
+    if (config.use_tracy) ztracy.Message("sub_chunk_sorter: done sorting");
 }
 
 const std = @import("std");
+const ztracy = @import("ztracy");
+const config = @import("config");
 const gfx = @import("../gfx/gfx.zig");
 const game = @import("../game.zig");
 const zm = @import("zmath");

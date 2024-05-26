@@ -1,3 +1,5 @@
+const job_name = "ChunkMeshJob";
+
 pub const ChunkMeshJob = struct {
     chunk: *chunk.Chunk,
     entity: blecs.ecs.entity_t,
@@ -7,8 +9,8 @@ pub const ChunkMeshJob = struct {
         self.chunk.mesh_mutex.lock();
         defer self.chunk.mesh_mutex.unlock();
         if (config.use_tracy) {
-            ztracy.SetThreadName("ChunkMeshJob");
-            const tracy_zone = ztracy.ZoneNC(@src(), "ChunkMeshJob", 0x00_00_ff_f0);
+            ztracy.SetThreadName(job_name);
+            const tracy_zone = ztracy.ZoneNC(@src(), job_name, 0x00_00_ff_f0);
             defer tracy_zone.End();
             self.mesh();
         } else {
