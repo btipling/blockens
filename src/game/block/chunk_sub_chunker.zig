@@ -150,26 +150,14 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
         const sci = e.key_ptr.*;
         const scale = e.value_ptr.*;
         const vd = self.data[sci];
-        var sm: shubChunkMesh = .{
-            .sub_index_pos = vd.scd.sub_index_pos,
-            .bd_id = vd.bd.toId(),
-        };
-        @memcpy(sm.indices[0..], self.indices[0..]);
-        @memcpy(sm.positions[0..], self.positions[0..]);
-        @memcpy(sm.normals[0..], self.normals[0..]);
-        var pi: usize = 0;
-        while (pi < sm.positions.len) : (pi += 1) {
-            if (sm.positions[pi][0] > 0) {
-                sm.positions[pi][0] = sm.positions[pi][0] + (scale[0] - 1);
+        if (scale[0] == 1 and scale[1] == 1 and scale[2] == 1) {
+            if (self.addSurfaces(vd)) |sm| {
+                self.meshes[self.num_meshes] = sm;
+                self.num_meshes += 1;
             }
-            if (sm.positions[pi][1] > 0) {
-                sm.positions[pi][1] = sm.positions[pi][1] + (scale[1] - 1);
-            }
-            if (sm.positions[pi][2] > 0) {
-                sm.positions[pi][2] = sm.positions[pi][2] + (scale[2] - 1);
-            }
+            continue;
         }
-        self.meshes[self.num_meshes] = sm;
+        self.meshes[self.num_meshes] = self.scaleMesh(vd, scale);
         self.num_meshes += 1;
     }
 
@@ -178,138 +166,165 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
     while (i < self.num_meshes) : (i += 1) {
         self.total_indices_count += self.meshes[i].indices.len;
     }
+}
 
-    // var surfaces: [6]?subChunkVoxelData = undefined;
-    // const xp: usize = 0;
-    // const xn: usize = 1;
-    // const yp: usize = 2;
-    // const yn: usize = 3;
-    // const zp: usize = 4;
-    // const zn: usize = 5;
+fn addSurfaces(self: *chunkerSubChunker, vd: subChunkVoxelData) ?shubChunkMesh {
+    var sm: shubChunkMesh = .{
+        .sub_index_pos = vd.scd.sub_index_pos,
+        .bd_id = vd.bd.toId(),
+    };
+    var surfaces: [6]?subChunkVoxelData = undefined;
+    const xp: usize = 0;
+    const xn: usize = 1;
+    const yp: usize = 2;
+    const yn: usize = 3;
+    const zp: usize = 4;
+    const zn: usize = 5;
 
-    // while (i < chunk.sub_chunk.subChunkSize) : (i += 1) {
-    //     var vd = self.data[i];
-    //     if (vd.bd.block_id == 0) continue;
+    if (vd.bd.block_id == 0) return null;
 
-    //     // get blocks facing each surface:
-    //     // x_pos
-    //     if (vd.scd.sub_index_pos[0] + 1 >= chunk.sub_chunk.subChunkDim) surfaces[xp] = null else {
-    //         var p = vd.scd.sub_index_pos;
-    //         p[0] += 1;
-    //         const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-    //         surfaces[xp] = self.data[sci];
-    //     }
-    //     // x_neg
-    //     if (vd.scd.sub_index_pos[0] == 0) surfaces[xn] = null else {
-    //         var p = vd.scd.sub_index_pos;
-    //         p[0] -= 1;
-    //         const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-    //         surfaces[xn] = self.data[sci];
-    //     }
-    //     // y_pos
-    //     if (vd.scd.sub_index_pos[1] + 1 >= chunk.sub_chunk.subChunkDim) surfaces[yp] = null else {
-    //         var p = vd.scd.sub_index_pos;
-    //         p[1] += 1;
-    //         const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-    //         surfaces[yp] = self.data[sci];
-    //     }
-    //     // y_neg
-    //     if (vd.scd.sub_index_pos[1] == 0) surfaces[yn] = null else {
-    //         var p = vd.scd.sub_index_pos;
-    //         p[1] -= 1;
-    //         const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-    //         surfaces[yn] = self.data[sci];
-    //     }
-    //     // z_pos
-    //     if (vd.scd.sub_index_pos[2] + 1 >= chunk.sub_chunk.subChunkDim) surfaces[zp] = null else {
-    //         var p = vd.scd.sub_index_pos;
-    //         p[2] += 1;
-    //         const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-    //         surfaces[zp] = self.data[sci];
-    //     }
-    //     // z_neg
-    //     if (vd.scd.sub_index_pos[2] == 0) surfaces[zn] = null else {
-    //         var p = vd.scd.sub_index_pos;
-    //         p[2] -= 1;
-    //         const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
-    //         surfaces[zn] = self.data[sci];
-    //     }
+    // get blocks facing each surface:
+    // x_pos
+    if (vd.scd.sub_index_pos[0] + 1 >= chunk.sub_chunk.subChunkDim) surfaces[xp] = null else {
+        var p = vd.scd.sub_index_pos;
+        p[0] += 1;
+        const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+        surfaces[xp] = self.data[sci];
+    }
+    // x_neg
+    if (vd.scd.sub_index_pos[0] == 0) surfaces[xn] = null else {
+        var p = vd.scd.sub_index_pos;
+        p[0] -= 1;
+        const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+        surfaces[xn] = self.data[sci];
+    }
+    // y_pos
+    if (vd.scd.sub_index_pos[1] + 1 >= chunk.sub_chunk.subChunkDim) surfaces[yp] = null else {
+        var p = vd.scd.sub_index_pos;
+        p[1] += 1;
+        const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+        surfaces[yp] = self.data[sci];
+    }
+    // y_neg
+    if (vd.scd.sub_index_pos[1] == 0) surfaces[yn] = null else {
+        var p = vd.scd.sub_index_pos;
+        p[1] -= 1;
+        const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+        surfaces[yn] = self.data[sci];
+    }
+    // z_pos
+    if (vd.scd.sub_index_pos[2] + 1 >= chunk.sub_chunk.subChunkDim) surfaces[zp] = null else {
+        var p = vd.scd.sub_index_pos;
+        p[2] += 1;
+        const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+        surfaces[zp] = self.data[sci];
+    }
+    // z_neg
+    if (vd.scd.sub_index_pos[2] == 0) surfaces[zn] = null else {
+        var p = vd.scd.sub_index_pos;
+        p[2] -= 1;
+        const sci = chunk.sub_chunk.subChunkPosToSubPositionData(p);
+        surfaces[zn] = self.data[sci];
+    }
 
-    //     x_pos: {
-    //         if (surfaces[xp]) |svd| if (svd.bd.block_id != 0) break :x_pos;
+    var num_indices: usize = 0;
+    x_pos: {
+        if (surfaces[xp]) |svd| if (svd.bd.block_id != 0) break :x_pos;
 
-    //         const vx_i: usize = 6; // x_pos goes 6 - 12 in cube mesh
-    //         const end = vx_i + 6;
-    //         const n = vd.num_indices;
-    //         const e = vd.num_indices + 6;
-    //         @memcpy(vd.indices[n..e], self.indices[n..e]);
-    //         @memcpy(vd.positions[n..e], self.positions[vx_i..end]);
-    //         @memcpy(vd.normals[n..e], self.normals[vx_i..end]);
-    //         vd.num_indices += 6;
-    //     }
-    //     x_neg: {
-    //         if (surfaces[xn]) |svd| if (svd.bd.block_id != 0) break :x_neg;
+        const vx_i: usize = 6; // x_pos goes 6 - 12 in cube mesh
+        const end = vx_i + 6;
+        const n = num_indices;
+        const e = num_indices + 6;
+        @memcpy(sm.indices[n..e], self.indices[n..e]);
+        @memcpy(sm.positions[n..e], self.positions[vx_i..end]);
+        @memcpy(sm.normals[n..e], self.normals[vx_i..end]);
+        num_indices += 6;
+    }
+    x_neg: {
+        if (surfaces[xn]) |svd| if (svd.bd.block_id != 0) break :x_neg;
 
-    //         const vx_i: usize = 18; // x_neg goes 18 - 24 in cube mesh
-    //         const end = vx_i + 6;
-    //         const n = vd.num_indices;
-    //         const e = vd.num_indices + 6;
-    //         @memcpy(vd.indices[n..e], self.indices[n..e]);
-    //         @memcpy(vd.positions[n..e], self.positions[vx_i..end]);
-    //         @memcpy(vd.normals[n..e], self.normals[vx_i..end]);
-    //         vd.num_indices += 6;
-    //     }
-    //     y_pos: {
-    //         if (surfaces[yp]) |svd| if (svd.bd.block_id != 0) break :y_pos;
+        const vx_i: usize = 18; // x_neg goes 18 - 24 in cube mesh
+        const end = vx_i + 6;
+        const n = num_indices;
+        const e = num_indices + 6;
+        @memcpy(sm.indices[n..e], self.indices[n..e]);
+        @memcpy(sm.positions[n..e], self.positions[vx_i..end]);
+        @memcpy(sm.normals[n..e], self.normals[vx_i..end]);
+        num_indices += 6;
+    }
+    y_pos: {
+        if (surfaces[yp]) |svd| if (svd.bd.block_id != 0) break :y_pos;
 
-    //         const vx_i: usize = 30; // y_pos goes 30 - 36 in cube mesh
-    //         const end = vx_i + 6;
-    //         const n = vd.num_indices;
-    //         const e = vd.num_indices + 6;
-    //         @memcpy(vd.indices[n..e], self.indices[n..e]);
-    //         @memcpy(vd.positions[n..e], self.positions[vx_i..end]);
-    //         @memcpy(vd.normals[n..e], self.normals[vx_i..end]);
-    //         vd.num_indices += 6;
-    //     }
-    //     y_neg: {
-    //         if (surfaces[yn]) |svd| if (svd.bd.block_id != 0) break :y_neg;
+        const vx_i: usize = 30; // y_pos goes 30 - 36 in cube mesh
+        const end = vx_i + 6;
+        const n = num_indices;
+        const e = num_indices + 6;
+        @memcpy(sm.indices[n..e], self.indices[n..e]);
+        @memcpy(sm.positions[n..e], self.positions[vx_i..end]);
+        @memcpy(sm.normals[n..e], self.normals[vx_i..end]);
+        num_indices += 6;
+    }
+    y_neg: {
+        if (surfaces[yn]) |svd| if (svd.bd.block_id != 0) break :y_neg;
 
-    //         const vx_i: usize = 24; // y_neg goes 24 - 30 in cube mesh
-    //         const end = vx_i + 6;
-    //         const n = vd.num_indices;
-    //         const e = vd.num_indices + 6;
-    //         @memcpy(vd.indices[n..e], self.indices[n..e]);
-    //         @memcpy(vd.positions[n..e], self.positions[vx_i..end]);
-    //         @memcpy(vd.normals[n..e], self.normals[vx_i..end]);
-    //         vd.num_indices += 6;
-    //     }
-    //     z_pos: {
-    //         if (surfaces[zp]) |svd| if (svd.bd.block_id != 0) break :z_pos;
+        const vx_i: usize = 24; // y_neg goes 24 - 30 in cube mesh
+        const end = vx_i + 6;
+        const n = num_indices;
+        const e = num_indices + 6;
+        @memcpy(sm.indices[n..e], self.indices[n..e]);
+        @memcpy(sm.positions[n..e], self.positions[vx_i..end]);
+        @memcpy(sm.normals[n..e], self.normals[vx_i..end]);
+        num_indices += 6;
+    }
+    z_pos: {
+        if (surfaces[zp]) |svd| if (svd.bd.block_id != 0) break :z_pos;
 
-    //         const vx_i: usize = 0; // z_pos goes 0 - 6 in cube mesh
-    //         const end = vx_i + 6;
-    //         const n = vd.num_indices;
-    //         const e = vd.num_indices + 6;
-    //         @memcpy(vd.indices[n..e], self.indices[n..e]);
-    //         @memcpy(vd.positions[n..e], self.positions[vx_i..end]);
-    //         @memcpy(vd.normals[n..e], self.normals[vx_i..end]);
-    //         vd.num_indices += 6;
-    //     }
-    //     z_neg: {
-    //         if (surfaces[zn]) |svd| if (svd.bd.block_id != 0) break :z_neg;
+        const vx_i: usize = 0; // z_pos goes 0 - 6 in cube mesh
+        const end = vx_i + 6;
+        const n = num_indices;
+        const e = num_indices + 6;
+        @memcpy(sm.indices[n..e], self.indices[n..e]);
+        @memcpy(sm.positions[n..e], self.positions[vx_i..end]);
+        @memcpy(sm.normals[n..e], self.normals[vx_i..end]);
+        num_indices += 6;
+    }
+    z_neg: {
+        if (surfaces[zn]) |svd| if (svd.bd.block_id != 0) break :z_neg;
 
-    //         const vx_i: usize = 12; // z_neg goes 12 - 18 in cube mesh
-    //         const end = vx_i + 6;
-    //         const n = vd.num_indices;
-    //         const e = vd.num_indices + 6;
-    //         @memcpy(vd.indices[n..e], self.indices[n..e]);
-    //         @memcpy(vd.positions[n..e], self.positions[vx_i..end]);
-    //         @memcpy(vd.normals[n..e], self.normals[vx_i..end]);
-    //         vd.num_indices += 6;
-    //     }
-    //     self.total_indices_count += vd.num_indices;
-    //     self.data[i] = vd;
-    // }
+        const vx_i: usize = 12; // z_neg goes 12 - 18 in cube mesh
+        const end = vx_i + 6;
+        const n = num_indices;
+        const e = num_indices + 6;
+        @memcpy(sm.indices[n..e], self.indices[n..e]);
+        @memcpy(sm.positions[n..e], self.positions[vx_i..end]);
+        @memcpy(sm.normals[n..e], self.normals[vx_i..end]);
+        num_indices += 6;
+    }
+    if (num_indices == 0) return null;
+    return sm;
+}
+
+fn scaleMesh(self: *chunkerSubChunker, vd: subChunkVoxelData, scale: @Vector(4, f32)) shubChunkMesh {
+    var sm: shubChunkMesh = .{
+        .sub_index_pos = vd.scd.sub_index_pos,
+        .bd_id = vd.bd.toId(),
+    };
+    @memcpy(sm.indices[0..], self.indices[0..]);
+    @memcpy(sm.positions[0..], self.positions[0..]);
+    @memcpy(sm.normals[0..], self.normals[0..]);
+    var pi: usize = 0;
+    while (pi < sm.positions.len) : (pi += 1) {
+        if (sm.positions[pi][0] > 0) {
+            sm.positions[pi][0] = sm.positions[pi][0] + (scale[0] - 1);
+        }
+        if (sm.positions[pi][1] > 0) {
+            sm.positions[pi][1] = sm.positions[pi][1] + (scale[1] - 1);
+        }
+        if (sm.positions[pi][2] > 0) {
+            sm.positions[pi][2] = sm.positions[pi][2] + (scale[2] - 1);
+        }
+    }
+    return sm;
 }
 
 fn updateMeshed(self: *chunkerSubChunker, i: usize) void {
