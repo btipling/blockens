@@ -161,7 +161,13 @@ fn screenCameraSystem(
             cull_up,
         );
     }
-    cullChunks(cull_position, cull_look_at, perspective);
+    if (game.state.ui.sub_chunks) {
+        if (game.state.ui.game_sub_chunks_sorter.setCamera(cull_position, cull_look_at, perspective)) {
+            game.state.jobs.cullSubChunks();
+        }
+    } else {
+        cullChunks(cull_position, cull_look_at, perspective);
+    }
     m = zm.mul(m, look_at);
     m = zm.mul(m, perspective);
     if (post_perspective) |pp| {
