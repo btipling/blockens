@@ -84,7 +84,7 @@ pub fn buildMeshData(self: *sorter) void {
             cp[2],
             0,
         };
-        const aloc: @Vector(4, f32) = loc - @as(@Vector(4, f32), @splat(0.5));
+        const aloc: @Vector(4, f32) = loc + @as(@Vector(4, f32), @splat(0.5));
 
         const cfp: @Vector(4, f32) = sc.sub_pos;
         const translation: @Vector(4, f32) = .{

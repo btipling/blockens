@@ -189,9 +189,10 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
     if (lcd.sub_chunks) {
         game.state.ui.resetGameSorter();
         game.state.jobs.meshSubChunk(false, false);
+        ui_helpers.loadChunksInWorld(false);
         return;
     }
-    ui_helpers.loadChunksInWorld();
+    ui_helpers.loadChunksInWorld(true);
     screen_helpers.showGameScreen();
     ui_helpers.loadCharacterInWorld();
 }

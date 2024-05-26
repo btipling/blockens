@@ -26,10 +26,11 @@ pub fn renderSettingsChunk(
     game.state.blocks.settings_chunks.put(wp, c) catch @panic("OOM");
 }
 
-pub fn renderGameChunk(
+pub fn initGameChunk(
     wp: chunk.worldPosition,
     entity: blecs.ecs.entity_t,
     save: bool,
+    render: bool,
 ) void {
     const world = game.state.world;
 
@@ -45,8 +46,10 @@ pub fn renderGameChunk(
     @memcpy(c.data, ch_cfg.chunkData);
     c.updated = true;
 
-    const chunk_entity = init_chunk_entity(world, c);
-    blecs.ecs.add(world, chunk_entity, blecs.components.block.NeedsMeshing);
+    if (render) {
+        const chunk_entity = init_chunk_entity(world, c);
+        blecs.ecs.add(world, chunk_entity, blecs.components.block.NeedsMeshing);
+    }
 
     if (game.state.blocks.game_chunks.get(wp)) |cc| {
         cc.deinit();

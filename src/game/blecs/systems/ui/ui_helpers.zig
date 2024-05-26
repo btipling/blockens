@@ -105,11 +105,11 @@ pub fn worldChooser(sel: worldChoice) ?worldChoice {
     return choice;
 }
 
-pub fn loadChunksInWorld() void {
+pub fn loadChunksInWorld(render_chunks: bool) void {
     entities.screen.clearWorld();
     var instancedKeys = game.state.ui.world_chunk_table_data.keyIterator();
     while (instancedKeys.next()) |k| {
-        chunk.render.renderGameChunk(k.*, ecs.new_id(game.state.world), false);
+        chunk.render.initGameChunk(k.*, ecs.new_id(game.state.world), false, render_chunks);
     }
 }
 

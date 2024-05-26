@@ -29,7 +29,7 @@ pub fn createEditedChunk(wp: worldPosition, pos: @Vector(4, f32), block_id: u8) 
         .chunkData = cd,
     };
     game.state.ui.world_chunk_table_data.put(game.state.ui.allocator, wp, new_ch_cfg) catch @panic("OOM");
-    render.renderGameChunk(wp, blecs.ecs.new_id(game.state.world), false);
+    render.initGameChunk(wp, blecs.ecs.new_id(game.state.world), false, true);
     return;
 }
 
