@@ -4,9 +4,9 @@ meshes: [chunk.sub_chunk.subChunkSize]shubChunkMesh = undefined,
 num_meshes: usize = 0,
 total_indices_count: usize = 0,
 // these are used to generate vertices for each surface
-positions: [36][3]f32,
+positions: [36][3]u4,
 indices: [36]u32,
-normals: [36][3]f32,
+normals: [36][3]u2,
 
 // fixed buffer allocator
 fba_buffer: [chunk.sub_chunk.subChunkSize * @sizeOf(@Vector(4, f32))]u8,
@@ -17,10 +17,10 @@ allocator: std.mem.Allocator,
 current_voxel: usize = 0,
 num_voxels_in_mesh: usize = 0,
 caching_meshed: bool = true,
-current_scale: @Vector(4, f32) = .{ 1, 1, 1, 0 },
+current_scale: @Vector(4, u4) = .{ 1, 1, 1, 0 },
 to_be_meshed: [min_voxels_in_mesh]usize = [_]usize{0} ** min_voxels_in_mesh,
 meshed: [chunk.sub_chunk.subChunkSize]bool = [_]bool{false} ** chunk.sub_chunk.subChunkSize,
-mesh_map: std.AutoHashMapUnmanaged(usize, @Vector(4, f32)) = .{},
+mesh_map: std.AutoHashMapUnmanaged(usize, @Vector(4, u4)) = .{},
 
 const chunkerSubChunker = @This();
 
@@ -31,11 +31,11 @@ pub const ChunkerError = error{
 };
 
 pub const shubChunkMesh = struct {
-    sub_index_pos: @Vector(4, f32),
+    sub_index_pos: @Vector(4, u4),
     bd_id: u32,
-    positions: [36][3]f32 = undefined,
+    positions: [36][3]u4 = undefined,
     indices: [36]u32 = undefined,
-    normals: [36][3]f32 = undefined,
+    normals: [36][3]u2 = undefined,
 };
 
 pub const subChunkVoxelData = struct {
@@ -46,8 +46,8 @@ pub const subChunkVoxelData = struct {
 
 pub const meshData = struct {
     indices: []u32,
-    positions: [][3]f32,
-    normals: [][3]f32,
+    positions: [][3]u4,
+    normals: [][3]u2,
     block_data: []u32,
     full_offset: u32 = 0,
 };
@@ -55,9 +55,9 @@ pub const meshData = struct {
 pub fn init(
     chunk_data: []const u32,
     pos: chunk.sub_chunk.subPosition,
-    positions: [36][3]f32,
+    positions: [36][3]u4,
     indices: [36]u32,
-    normals: [36][3]f32,
+    normals: [36][3]u2,
 ) chunkerSubChunker {
     var buffer: [chunk.sub_chunk.subChunkSize * @sizeOf(@Vector(4, f32))]u8 = undefined;
     var fba = std.heap.FixedBufferAllocator.init(&buffer);
@@ -77,8 +77,8 @@ pub fn init(
 pub fn getMeshData(
     self: *chunkerSubChunker,
     indices_buf: *[chunk.sub_chunk.subChunkSize * 36]u32,
-    vertices_buf: *[chunk.sub_chunk.subChunkSize * 36][3]f32,
-    normals_buf: *[chunk.sub_chunk.subChunkSize * 36][3]f32,
+    positions_buf: *[chunk.sub_chunk.subChunkSize * 36][3]u4,
+    normals_buf: *[chunk.sub_chunk.subChunkSize * 36][3]u2,
     block_data_buf: *[chunk.sub_chunk.subChunkSize * 36]u32,
     full_offset: u32,
 ) !meshData {
@@ -91,8 +91,8 @@ pub fn getMeshData(
         while (ii < mesh.indices.len) : (ii += 1) {
             const index = mesh.indices[ii];
             indices_buf[ii + offset] = index + offset + full_offset;
-            const mesh_pos: [3]f32 = mesh.positions[ii];
-            vertices_buf[ii + offset] = [3]f32{
+            const mesh_pos: [3]u4 = mesh.positions[ii];
+            positions_buf[ii + offset] = [3]u4{
                 mesh_pos[0] + sub_index_pos[0],
                 mesh_pos[1] + sub_index_pos[1],
                 mesh_pos[2] + sub_index_pos[2],
@@ -105,7 +105,7 @@ pub fn getMeshData(
     if (offset == 0) return ChunkerError.NoMeshData;
     return .{
         .indices = indices_buf[0..offset],
-        .positions = vertices_buf[0..offset],
+        .positions = positions_buf[0..offset],
         .normals = normals_buf[0..offset],
         .block_data = block_data_buf[0..offset],
         .full_offset = full_offset + offset,
@@ -161,7 +161,7 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
     }
 }
 
-fn scaleMesh(self: *chunkerSubChunker, vd: subChunkVoxelData, scale: @Vector(4, f32)) shubChunkMesh {
+fn scaleMesh(self: *chunkerSubChunker, vd: subChunkVoxelData, scale: @Vector(4, u4)) shubChunkMesh {
     var sm: shubChunkMesh = .{
         .sub_index_pos = vd.scd.sub_index_pos,
         .bd_id = vd.bd.toId(),
@@ -213,7 +213,7 @@ fn initScale(self: *chunkerSubChunker) void {
 }
 
 fn findQuads(self: *chunkerSubChunker) !void {
-    var op: @Vector(4, f32) = .{ 0, 0, 0, 0 };
+    var op: @Vector(4, u4) = .{ 0, 0, 0, 0 };
     var p = op;
     p[0] += 1;
     var i: usize = 0;
@@ -257,10 +257,10 @@ fn findQuads(self: *chunkerSubChunker) !void {
             continue :outer;
         }
         self.current_voxel = i;
-        var endX: f32 = op[0];
-        var endZ: f32 = op[2];
-        var numXAdded: f32 = 0;
-        var numZAdded: f32 = 0;
+        var endX: u4 = op[0];
+        var endZ: u4 = op[2];
+        var numXAdded: u4 = 0;
+        var numZAdded: u4 = 0;
         inner: while (true) {
             if (num_dims_travelled == 1) {
                 const ii = chunk.sub_chunk.subChunkPosToSubPositionData(p);
@@ -316,11 +316,11 @@ fn findQuads(self: *chunkerSubChunker) !void {
                     continue :inner;
                 }
                 // need to add all x's along the y to meshed map
-                const _beg = @as(usize, @intFromFloat(op[0]));
-                const _end = @as(usize, @intFromFloat(endX)) + 1;
+                const _beg = @as(usize, @intCast(op[0]));
+                const _end = @as(usize, @intCast(endX)) + 1;
                 for (_beg.._end) |xToAdd| {
-                    const _xToAdd = @as(f32, @floatFromInt(xToAdd));
-                    const np: @Vector(4, f32) = .{ _xToAdd, p[1], p[2], 0 };
+                    const _xToAdd: u4 = @intCast(xToAdd);
+                    const np: @Vector(4, u4) = .{ _xToAdd, p[1], p[2], 0 };
                     const iii = chunk.sub_chunk.subChunkPosToSubPositionData(np);
                     if (self.data[iii].bd.block_id != 0) self.updateMeshed(iii);
                 }
@@ -347,14 +347,14 @@ fn findQuads(self: *chunkerSubChunker) !void {
                     continue :inner;
                 }
                 // need to add all x's along the y to meshed map
-                const _begX = @as(usize, @intFromFloat(op[0]));
-                const _endX = @as(usize, @intFromFloat(endX)) + 1;
+                const _begX = @as(usize, @intCast(op[0]));
+                const _endX = @as(usize, @intCast(endX)) + 1;
                 for (_begX.._endX) |xToAdd| {
-                    const _xToAdd = @as(f32, @floatFromInt(xToAdd));
-                    const _begZ = @as(usize, @intFromFloat(op[2]));
-                    const _endZ = @as(usize, @intFromFloat(endZ)) + 1;
+                    const _xToAdd: u4 = @intCast(xToAdd);
+                    const _begZ = @as(usize, @intCast(op[2]));
+                    const _endZ = @as(usize, @intCast(endZ)) + 1;
                     for (_begZ.._endZ) |zToAdd| {
-                        const _zToAdd = @as(f32, @floatFromInt(zToAdd));
+                        const _zToAdd: u4 = @intCast(zToAdd);
                         const iii = chunk.sub_chunk.subChunkPosToSubPositionData(.{ _xToAdd, p[1], _zToAdd, 0 });
                         // a one off bug I think?
                         if (self.data[iii].bd.block_id != 0) self.updateMeshed(iii);

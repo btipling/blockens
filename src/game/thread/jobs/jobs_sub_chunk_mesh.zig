@@ -38,9 +38,9 @@ pub const SubChunkMeshJob = struct {
                     const chunker = chunk.sub_chunk.chunker.init(
                         chunk_data,
                         sub_pos,
-                        gfx.mesh.cube_positions,
+                        gfx.mesh.voxel_positions,
                         gfx.mesh.cube_indices,
-                        gfx.mesh.cube_normals,
+                        gfx.mesh.voxel_normals,
                     );
                     const sc = chunk.sub_chunk.init(
                         game.state.allocator,

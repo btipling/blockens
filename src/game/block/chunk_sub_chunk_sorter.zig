@@ -109,8 +109,8 @@ fn build(self: *sorter) void {
             cfp[3],
         };
         var indices_buf: [chunk.sub_chunk.subChunkSize * 36]u32 = undefined;
-        var vertices_buf: [chunk.sub_chunk.subChunkSize * 36][3]f32 = undefined;
-        var normals_buf: [chunk.sub_chunk.subChunkSize * 36][3]f32 = undefined;
+        var vertices_buf: [chunk.sub_chunk.subChunkSize * 36][3]u4 = undefined;
+        var normals_buf: [chunk.sub_chunk.subChunkSize * 36][3]u2 = undefined;
         var block_data_buf: [chunk.sub_chunk.subChunkSize * 36]u32 = undefined;
         const res = sc.chunker.getMeshData(
             &indices_buf,
@@ -124,7 +124,9 @@ fn build(self: *sorter) void {
         for (0..res.positions.len) |ii| {
             const vertex_index: usize = ii + vertex_offset;
             {
-                const p = res.positions[ii];
+                // const p = res.positions[ii];
+                if (true) @panic("Fix this, needs to be a uint");
+                const p: [3]f32 = .{ 0, 0, 0 };
                 builder.addFloatAtLocation(pos_loc, &p, vertex_index);
             }
             {
