@@ -12,8 +12,7 @@ pub fn init(allocator: std.mem.Allocator) *Gfx {
         .lighting_ssbo = gl.lighting_buffer.initLightingShaderStorageBufferObject(constants.LightingBindingPoint),
     };
 
-    var mb = mesh_buffer_builder{};
-    mb.init(&gfx.ssbos);
+    gfx.mesh_buffer_builder.init(&gfx.ssbos);
 
     return gfx;
 }
@@ -52,6 +51,7 @@ pub const Gfx = struct {
     animation_data: AnimationData = undefined,
     lighting_ssbo: u32 = 0,
     ambient_lighting: f32 = 1,
+    mesh_buffer_builder: mesh_buffer_builder = .{},
 
     pub fn update_lighting(self: *Gfx) void {
         gl.lighting_buffer.updateLightingShaderStorageBufferObject(

@@ -2,6 +2,11 @@ wp: worldPosition,
 sub_pos: subPosition,
 chunker: chunker,
 visible: bool = true,
+
+buf_index: usize = 0,
+buf_size: usize = 0,
+buf_capacity: usize = 0,
+
 allocator: std.mem.Allocator,
 
 const SubChunk = @This();

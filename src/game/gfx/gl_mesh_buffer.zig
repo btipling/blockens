@@ -1,6 +1,6 @@
-const meshVertexData = struct {
-    attr_data: [4]u32,
-    attr_transform: [4]f32,
+pub const meshVertexData = struct {
+    attr_data: [4]u32 = undefined,
+    attr_translation: [4]f32 = undefined,
 };
 
 // About 200MB preallocated.
@@ -16,6 +16,17 @@ pub fn initMeshShaderStorageBufferObject(block_binding_point: u32) u32 {
     gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, block_binding_point, ssbo);
     gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, 0);
     return ssbo;
+}
+
+pub fn addData(ssbo: u32, offset: usize, data: []meshVertexData) void {
+    const data_ptr: *const anyopaque = data.ptr;
+
+    const struct_size: isize = @intCast(@sizeOf(meshVertexData));
+    const size: isize = @intCast(data.len * struct_size);
+    const buffer_offset: isize = @as(isize, @intCast(offset)) * struct_size + @as(isize, @intCast(offset));
+
+    gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
+    gl.bufferSubData(gl.SHADER_STORAGE_BUFFER, buffer_offset, size, data_ptr);
 }
 
 const gl = @import("zopengl").bindings;

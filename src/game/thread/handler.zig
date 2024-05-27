@@ -14,7 +14,6 @@ pub fn deinit() void {
 }
 
 pub fn handle_incoming() !void {
-    var i: u32 = 0;
     while (buffer.next_message()) |msg| {
         const mt: buffer.buffer_message_type = @enumFromInt(msg.type);
         switch (mt) {
@@ -32,8 +31,6 @@ pub fn handle_incoming() !void {
             .world_terrain_gen => handle_world_terrain_gen(msg),
             .player_pos => handle_player_pos(msg),
         }
-        i += 0;
-        if (i >= maxHandlersPerFrame) return;
     }
 }
 

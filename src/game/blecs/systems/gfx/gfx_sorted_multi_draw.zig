@@ -76,7 +76,6 @@ fn gfxSortedMultiDraw(
     }
     gl.bindVertexArray(er.vao);
 
-    game.state.ui.gfx_meshes_drawn_counter += 0;
     sorter.mutex.lock();
     defer sorter.mutex.unlock();
     const offsets = sorter.opaque_draw_offsets;
