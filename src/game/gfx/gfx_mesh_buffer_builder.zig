@@ -4,27 +4,10 @@ const MeshData = @This();
 
 mesh_binding_point: u32 = constants.MeshDataBindingPoint,
 
-pub fn init(self: *MeshData, vertices: []const [3]f32, ssbos: *std.AutoHashMap(u32, u32)) void {
-    var buf: [1000 * @sizeOf(gl.mesh_buffer.meshData)]u8 = undefined;
-    var allocator = std.heap.FixedBufferAllocator.init(buf[0..]);
-
-    var md = std.ArrayList(gl.mesh_buffer.meshData).init(allocator.allocator());
-    for (vertices) |v| {
-        md.append(.{
-            .vertices = .{
-                v[0],
-                v[1],
-                v[2],
-                1,
-            },
-        }) catch @panic("OOM");
-    }
-
+pub fn init(self: *MeshData, ssbos: *std.AutoHashMap(u32, u32)) void {
     if (ssbos.contains(self.mesh_binding_point)) return;
     const new_ssbo = gl.mesh_buffer.initMeshShaderStorageBufferObject(
-        allocator.allocator(),
         self.mesh_binding_point,
-        md.items,
     );
     ssbos.put(self.mesh_binding_point, new_ssbo) catch @panic("OOM");
 }
