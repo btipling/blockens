@@ -6,8 +6,8 @@ allocator: std.mem.Allocator,
 
 const SubChunk = @This();
 
-pub const subChunkDim = 16;
-pub const subChunkSize: comptime_int = subChunkDim * subChunkDim * subChunkDim;
+pub const sub_chunk_dim = 16;
+pub const sub_chunk_size: comptime_int = sub_chunk_dim * sub_chunk_dim * sub_chunk_dim;
 
 pub const subPosition = @Vector(4, f32);
 
@@ -36,11 +36,11 @@ pub const subPositionIndex = struct {
     chunk_pos: @Vector(4, f32) = .{ 0, 0, 0, 0 },
     // A usize index into a chunk.chunkSize array
     chunk_index: usize = 0,
-    // The sub chunks offset position within a chunk.chunkSize array, a multiple of subChunkDim
+    // The sub chunks offset position within a chunk.chunkSize array, a multiple of sub_chunk_dim
     sub_pos: subPosition = .{ 0, 0, 0, 0 },
-    // The x, y, z position mapped to an index within the subChunkSize array
+    // The x, y, z position mapped to an index within the sub_chunk_size array
     sub_index_pos: @Vector(4, u4) = .{ 0, 0, 0, 0 },
-    // A usize index into a subChunkSize array
+    // A usize index into a sub_chunk_size array
     sub_chunk_index: usize = 0,
 };
 
@@ -48,17 +48,17 @@ pub fn subChunkPosToSubPositionData(pos: @Vector(4, u4)) usize {
     const sip_x: usize = @intCast(pos[0]);
     const sip_y: usize = @intCast(pos[1]);
     const sip_z: usize = @intCast(pos[2]);
-    return sip_x + sip_y * subChunkDim + sip_z * subChunkDim * subChunkDim;
+    return sip_x + sip_y * sub_chunk_dim + sip_z * sub_chunk_dim * sub_chunk_dim;
 }
 
 pub fn chunkPosToSubPositionData(pos: @Vector(4, f32)) subPositionIndex {
-    const sub_pos_x = @divFloor(pos[0], subChunkDim);
-    const sub_pos_y = @divFloor(pos[1], subChunkDim);
-    const sub_pos_z = @divFloor(pos[2], subChunkDim);
+    const sub_pos_x = @divFloor(pos[0], sub_chunk_dim);
+    const sub_pos_y = @divFloor(pos[1], sub_chunk_dim);
+    const sub_pos_z = @divFloor(pos[2], sub_chunk_dim);
 
-    const sub_index_pos_x: u4 = @intCast(@mod(@as(usize, @intFromFloat(pos[0])), subChunkDim));
-    const sub_index_pos_y: u4 = @intCast(@mod(@as(usize, @intFromFloat(pos[1])), subChunkDim));
-    const sub_index_pos_z: u4 = @intCast(@mod(@as(usize, @intFromFloat(pos[2])), subChunkDim));
+    const sub_index_pos_x: u4 = @intCast(@mod(@as(usize, @intFromFloat(pos[0])), sub_chunk_dim));
+    const sub_index_pos_y: u4 = @intCast(@mod(@as(usize, @intFromFloat(pos[1])), sub_chunk_dim));
+    const sub_index_pos_z: u4 = @intCast(@mod(@as(usize, @intFromFloat(pos[2])), sub_chunk_dim));
 
     const sc_pos: @Vector(4, u4) = .{
         sub_index_pos_x,

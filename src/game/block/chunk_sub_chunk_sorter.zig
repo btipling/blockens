@@ -102,15 +102,15 @@ fn build(self: *sorter) void {
 
         const cfp: @Vector(4, f32) = sc.sub_pos;
         const translation: @Vector(4, f32) = .{
-            (cfp[0] * chunk.sub_chunk.subChunkDim) + aloc[0],
-            (cfp[1] * chunk.sub_chunk.subChunkDim) + aloc[1],
-            (cfp[2] * chunk.sub_chunk.subChunkDim) + aloc[2],
+            (cfp[0] * chunk.sub_chunk.sub_chunk_dim) + aloc[0],
+            (cfp[1] * chunk.sub_chunk.sub_chunk_dim) + aloc[1],
+            (cfp[2] * chunk.sub_chunk.sub_chunk_dim) + aloc[2],
             cfp[3],
         };
-        var indices_buf: [chunk.sub_chunk.subChunkSize * 36]u32 = undefined;
-        var positions_buf: [chunk.sub_chunk.subChunkSize * 36][3]u5 = undefined;
-        var normals_buf: [chunk.sub_chunk.subChunkSize * 36][3]u2 = undefined;
-        var block_data_buf: [chunk.sub_chunk.subChunkSize * 36]u32 = undefined;
+        var indices_buf: [chunk.sub_chunk.sub_chunk_size * 36]u32 = undefined;
+        var positions_buf: [chunk.sub_chunk.sub_chunk_size * 36][3]u5 = undefined;
+        var normals_buf: [chunk.sub_chunk.sub_chunk_size * 36][3]u2 = undefined;
+        var block_data_buf: [chunk.sub_chunk.sub_chunk_size * 36]u32 = undefined;
         const res = sc.chunker.getMeshData(
             &indices_buf,
             &positions_buf,
@@ -198,52 +198,52 @@ fn doCullling(self: *sorter, camera_position: @Vector(4, f32), view: zm.Mat, per
         const p = sc.wp.vecFromWorldPosition();
         const scp = sc.sub_pos;
         const loc: @Vector(4, f32) = .{
-            p[0] * chunk.chunkDim + scp[0] * chunk.sub_chunk.subChunkDim,
-            p[1] * chunk.chunkDim + scp[1] * chunk.sub_chunk.subChunkDim,
-            p[2] * chunk.chunkDim + scp[2] * chunk.sub_chunk.subChunkDim,
+            p[0] * chunk.chunkDim + scp[0] * chunk.sub_chunk.sub_chunk_dim,
+            p[1] * chunk.chunkDim + scp[1] * chunk.sub_chunk.sub_chunk_dim,
+            p[2] * chunk.chunkDim + scp[2] * chunk.sub_chunk.sub_chunk_dim,
             1,
         };
         const front_bot_l: @Vector(4, f32) = loc;
         const front_bot_r: @Vector(4, f32) = .{
-            loc[0] + chunk.sub_chunk.subChunkDim,
+            loc[0] + chunk.sub_chunk.sub_chunk_dim,
             loc[1],
             loc[2],
             loc[3],
         };
         const front_top_l: @Vector(4, f32) = .{
             loc[0],
-            loc[1] + chunk.sub_chunk.subChunkDim,
+            loc[1] + chunk.sub_chunk.sub_chunk_dim,
             loc[2],
             loc[3],
         };
         const front_top_r: @Vector(4, f32) = .{
-            loc[0] + chunk.sub_chunk.subChunkDim,
-            loc[1] + chunk.sub_chunk.subChunkDim,
+            loc[0] + chunk.sub_chunk.sub_chunk_dim,
+            loc[1] + chunk.sub_chunk.sub_chunk_dim,
             loc[2],
             loc[3],
         };
         const back_bot_l: @Vector(4, f32) = .{
             loc[0],
             loc[1],
-            loc[2] + chunk.sub_chunk.subChunkDim,
+            loc[2] + chunk.sub_chunk.sub_chunk_dim,
             loc[3],
         };
         const back_bot_r: @Vector(4, f32) = .{
-            loc[0] + chunk.sub_chunk.subChunkDim,
+            loc[0] + chunk.sub_chunk.sub_chunk_dim,
             loc[1],
-            loc[2] + chunk.sub_chunk.subChunkDim,
+            loc[2] + chunk.sub_chunk.sub_chunk_dim,
             loc[3],
         };
         const back_top_l: @Vector(4, f32) = .{
             loc[0],
-            loc[1] + chunk.sub_chunk.subChunkDim,
-            loc[2] + chunk.sub_chunk.subChunkDim,
+            loc[1] + chunk.sub_chunk.sub_chunk_dim,
+            loc[2] + chunk.sub_chunk.sub_chunk_dim,
             loc[3],
         };
         const back_top_r: @Vector(4, f32) = .{
-            loc[0] + chunk.sub_chunk.subChunkDim,
-            loc[1] + chunk.sub_chunk.subChunkDim,
-            loc[2] + chunk.sub_chunk.subChunkDim,
+            loc[0] + chunk.sub_chunk.sub_chunk_dim,
+            loc[1] + chunk.sub_chunk.sub_chunk_dim,
+            loc[2] + chunk.sub_chunk.sub_chunk_dim,
             loc[3],
         };
         const to_check: [8]@Vector(4, f32) = .{
@@ -258,7 +258,7 @@ fn doCullling(self: *sorter, camera_position: @Vector(4, f32), view: zm.Mat, per
         };
         for (to_check) |coordinates| {
             const distance_from_camera = euclideanDistance(camera_position, coordinates);
-            if (distance_from_camera <= chunk.sub_chunk.subChunkDim) {
+            if (distance_from_camera <= chunk.sub_chunk.sub_chunk_dim) {
                 remove = false;
             } else {
                 const ca_s: @Vector(4, f32) = zm.mul(coordinates, view);

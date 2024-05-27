@@ -1,6 +1,6 @@
 pos: chunk.sub_chunk.subPosition,
-data: [chunk.sub_chunk.subChunkSize]subChunkVoxelData = undefined,
-meshes: [chunk.sub_chunk.subChunkSize]shubChunkMesh = undefined,
+data: [chunk.sub_chunk.sub_chunk_size]subChunkVoxelData = undefined,
+meshes: [chunk.sub_chunk.sub_chunk_size]shubChunkMesh = undefined,
 num_meshes: usize = 0,
 total_indices_count: usize = 0,
 // these are used to generate vertices for each surface
@@ -9,7 +9,7 @@ indices: [36]u32,
 normals: [36][3]u2,
 
 // fixed buffer allocator
-fba_buffer: [chunk.sub_chunk.subChunkSize * @sizeOf(@Vector(4, f32))]u8,
+fba_buffer: [chunk.sub_chunk.sub_chunk_size * @sizeOf(@Vector(4, f32))]u8,
 fba: std.heap.FixedBufferAllocator,
 allocator: std.mem.Allocator,
 
@@ -19,7 +19,7 @@ num_voxels_in_mesh: usize = 0,
 caching_meshed: bool = true,
 current_scale: @Vector(4, u5) = .{ 1, 1, 1, 0 },
 to_be_meshed: [min_voxels_in_mesh]usize = [_]usize{0} ** min_voxels_in_mesh,
-meshed: [chunk.sub_chunk.subChunkSize]bool = [_]bool{false} ** chunk.sub_chunk.subChunkSize,
+meshed: [chunk.sub_chunk.sub_chunk_size]bool = [_]bool{false} ** chunk.sub_chunk.sub_chunk_size,
 mesh_map: std.AutoHashMapUnmanaged(usize, @Vector(4, u5)) = .{},
 
 const chunkerSubChunker = @This();
@@ -59,7 +59,7 @@ pub fn init(
     indices: [36]u32,
     normals: [36][3]u2,
 ) chunkerSubChunker {
-    var buffer: [chunk.sub_chunk.subChunkSize * @sizeOf(@Vector(4, f32))]u8 = undefined;
+    var buffer: [chunk.sub_chunk.sub_chunk_size * @sizeOf(@Vector(4, f32))]u8 = undefined;
     var fba = std.heap.FixedBufferAllocator.init(&buffer);
     var csc: chunkerSubChunker = .{
         .pos = pos,
@@ -76,10 +76,10 @@ pub fn init(
 
 pub fn getMeshData(
     self: *chunkerSubChunker,
-    indices_buf: *[chunk.sub_chunk.subChunkSize * 36]u32,
-    positions_buf: *[chunk.sub_chunk.subChunkSize * 36][3]u5,
-    normals_buf: *[chunk.sub_chunk.subChunkSize * 36][3]u2,
-    block_data_buf: *[chunk.sub_chunk.subChunkSize * 36]u32,
+    indices_buf: *[chunk.sub_chunk.sub_chunk_size * 36]u32,
+    positions_buf: *[chunk.sub_chunk.sub_chunk_size * 36][3]u5,
+    normals_buf: *[chunk.sub_chunk.sub_chunk_size * 36][3]u2,
+    block_data_buf: *[chunk.sub_chunk.sub_chunk_size * 36]u32,
     full_offset: u32,
 ) !meshData {
     var offset: u32 = 0;
@@ -119,13 +119,13 @@ fn run(self: *chunkerSubChunker, chunk_data: []const u32) void {
 
     var i: usize = 0;
     var x: usize = 0;
-    while (x < chunk.sub_chunk.subChunkDim) : (x += 1) {
+    while (x < chunk.sub_chunk.sub_chunk_dim) : (x += 1) {
         const _x: f32 = @floatFromInt(x);
         var z: usize = 0;
-        while (z < chunk.sub_chunk.subChunkDim) : (z += 1) {
+        while (z < chunk.sub_chunk.sub_chunk_dim) : (z += 1) {
             const _z: f32 = @floatFromInt(z);
             var y: usize = 0;
-            while (y < chunk.sub_chunk.subChunkDim) : (y += 1) {
+            while (y < chunk.sub_chunk.sub_chunk_dim) : (y += 1) {
                 const _y: f32 = @floatFromInt(y);
                 const c_pos: @Vector(4, f32) = .{
                     _x + pos_x,
@@ -227,22 +227,22 @@ fn findQuads(self: *chunkerSubChunker) !void {
                 break;
             }
             i += 1;
-            if (i >= chunk.sub_chunk.subChunkSize) {
+            if (i >= chunk.sub_chunk.sub_chunk_size) {
                 break :outer;
             }
             op = self.data[i].scd.sub_index_pos;
             p = op;
-            if (p[1] >= chunk.sub_chunk.subChunkDim) @breakpoint();
-            if (p[0] + 1 < chunk.sub_chunk.subChunkDim) {
+            if (p[1] >= chunk.sub_chunk.sub_chunk_dim) @breakpoint();
+            if (p[0] + 1 < chunk.sub_chunk.sub_chunk_dim) {
                 p[0] += 1;
                 break;
             }
-            if (p[2] + 1 < chunk.sub_chunk.subChunkDim) {
+            if (p[2] + 1 < chunk.sub_chunk.sub_chunk_dim) {
                 num_dims_travelled = 2;
                 p[2] += 1;
                 break;
             }
-            if (p[1] + 1 < chunk.sub_chunk.subChunkDim) {
+            if (p[1] + 1 < chunk.sub_chunk.sub_chunk_dim) {
                 num_dims_travelled = 3;
                 p[1] += 1;
                 break;
@@ -268,7 +268,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
                     num_dims_travelled += 1;
                     p[0] = op[0];
                     p[2] += 1;
-                    p[1] = op[1]; // Happens when near chunk.sub_chunk.subChunkDims
+                    p[1] = op[1]; // Happens when near chunk.sub_chunk.sub_chunk_dims
                     continue :inner;
                 }
                 if (numXAdded == 0) {
@@ -279,7 +279,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
                 endX = p[0];
                 self.current_scale[0] = @intCast(endX - op[0] + 1);
                 p[0] += 1;
-                if (p[0] >= chunk.sub_chunk.subChunkDim) {
+                if (p[0] >= chunk.sub_chunk.sub_chunk_dim) {
                     num_dims_travelled += 1;
                     p[2] += 1;
                     p[0] = op[0];
@@ -287,10 +287,10 @@ fn findQuads(self: *chunkerSubChunker) !void {
                 }
                 numXAdded += 1;
             } else if (num_dims_travelled == 2) {
-                if (p[2] >= chunk.sub_chunk.subChunkDim) {
+                if (p[2] >= chunk.sub_chunk.sub_chunk_dim) {
                     p[2] = op[2];
                     p[1] += 1;
-                    if (p[1] >= chunk.sub_chunk.subChunkDim) {
+                    if (p[1] >= chunk.sub_chunk.sub_chunk_dim) {
                         break :inner;
                     }
                     num_dims_travelled += 1;
@@ -302,7 +302,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
                     p[0] = op[0];
                     p[2] = op[2];
                     p[1] += 1;
-                    if (p[1] >= chunk.sub_chunk.subChunkDim) {
+                    if (p[1] >= chunk.sub_chunk.sub_chunk_dim) {
                         break :inner;
                     }
                     num_dims_travelled += 1;
@@ -364,7 +364,7 @@ fn findQuads(self: *chunkerSubChunker) !void {
                 p[1] += 1;
                 p[0] = op[0];
                 p[2] = op[2];
-                if (p[1] >= chunk.sub_chunk.subChunkDim) {
+                if (p[1] >= chunk.sub_chunk.sub_chunk_dim) {
                     break :inner;
                 }
                 continue :inner;
@@ -476,7 +476,7 @@ test run {
         indices,
         normals,
     );
-    try std.testing.expectEqual(chunk.sub_chunk.subChunkSize, t1.data.len);
+    try std.testing.expectEqual(chunk.sub_chunk.sub_chunk_size, t1.data.len);
 
     var tbd: block.BlockData = t1.data[scd.sub_chunk_index].bd;
     try std.testing.expectEqual(3, tbd.block_id);
@@ -493,7 +493,7 @@ test run {
         indices,
         normals,
     );
-    try std.testing.expectEqual(chunk.sub_chunk.subChunkSize, t2.data.len);
+    try std.testing.expectEqual(chunk.sub_chunk.sub_chunk_size, t2.data.len);
     tbd = t2.data[scd.sub_chunk_index].bd;
     try std.testing.expectEqual(3, tbd.block_id);
 }
