@@ -656,6 +656,8 @@ pub fn loadCoreProfile(loader: LoaderFn, major: u32, minor: u32) !void {
         try load("glNamedBufferStorage", .{&bindings.namedBufferStorage});
         try load("glBindTextureUnit", .{&bindings.bindTextureUnit});
         try load("glTextureBarrier", .{&bindings.textureBarrier});
+        try load("glClearBufferData", .{&bindings.clearBufferData});
+        try load("glClearNamedBufferData", .{&bindings.clearNamedBufferData});
         // TODO
     }
 

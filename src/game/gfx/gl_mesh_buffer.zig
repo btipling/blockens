@@ -30,7 +30,6 @@ pub fn addData(ssbo: u32, offset: usize, data: []meshVertexData) usize {
 }
 
 pub fn clearData(ssbo: u32) void {
-    std.debug.print("clearing?\n", .{});
     gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
     gl.bufferData(gl.SHADER_STORAGE_BUFFER, preallocated_mem_size, null, gl.DYNAMIC_DRAW);
 }

@@ -41,6 +41,7 @@ pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData) allocData
 
 pub fn clear(self: *MeshData) void {
     gl.mesh_buffer.clearData(self.ssbo);
+    self.offset = 0;
 }
 
 const std = @import("std");
