@@ -28,7 +28,9 @@ pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData) allocData
     gl.mesh_buffer.addData(self.ssbo, self.offset, data);
     const obj_size = @sizeOf(gl.mesh_buffer.meshVertexData);
     const data_size = data.len * obj_size;
-    const alloc_capacity_size: usize = @min(max_alloc_offset, (data.len + @mod(data.len, min_alloc_offset)) * obj_size);
+    const alloc_capacity_size = data_size;
+    // TODO: enable editing
+    // const alloc_capacity_size: usize = @min(max_alloc_offset, (data.len + @mod(data.len, min_alloc_offset)) * obj_size);
 
     const ad: allocData = .{
         .index = self.offset,

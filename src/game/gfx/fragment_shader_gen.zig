@@ -48,7 +48,7 @@ pub const FragmentShaderGen = struct {
         }
 
         fn run(r: *runner) ![:0]const u8 {
-            r.a("#version 450 core\n");
+            r.a("#version 460 core\n");
             r.a("out vec4 FragColor;\n");
             if (r.cfg.is_meshed) {
                 r.a("\nin vec3 fragPos;\n");

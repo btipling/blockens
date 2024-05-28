@@ -176,7 +176,7 @@ pub const Game = struct {
         _ = window.setCursorPosCallback(input.cursor.cursorPosCallback);
         _ = window.setMouseButtonCallback(input.mouse_button.mouseBtnCallback);
 
-        const glsl_version: [:0]const u8 = "#version 450";
+        const glsl_version: [:0]const u8 = "#version 460";
         zgui.backend.initWithGlSlVersion(window, glsl_version);
         zmesh.init(allocator);
         errdefer zmesh.deinit();
