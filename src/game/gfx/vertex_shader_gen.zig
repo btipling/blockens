@@ -159,7 +159,8 @@ pub const VertexShaderGen = struct {
 
         fn gen_unpack_attribute_block(r: *runner) !void {
             if (!r.cfg.is_sub_chunks) return;
-            r.a("    bl_mesh_data bl_attr_md = bl_meshes[gl_DrawID + gl_VertexID];\n");
+
+            r.a("    bl_mesh_data bl_attr_md = bl_meshes[gl_VertexID];\n");
             r.a("    uvec4 bl_attr_data = bl_attr_md.bl_attr_data;\n");
             r.a("    vec4 bl_attr_tr = bl_attr_md.bl_attr_tr;\n");
             r.a("    uint bl_pk_n1 = (bl_attr_data[0] >> 19) & 3;\n");

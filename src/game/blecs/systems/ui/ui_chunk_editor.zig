@@ -157,6 +157,7 @@ fn toggleWireframe() void {
 }
 
 fn evalChunkFunc() !void {
+    game.state.gfx.mesh_buffer_builder.clear();
     _ = game.state.jobs.generateDemoChunk(game.state.ui.sub_chunks);
 }
 

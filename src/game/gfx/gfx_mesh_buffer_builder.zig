@@ -25,21 +25,22 @@ const min_alloc_offset = 250;
 const max_alloc_offset = chunk.sub_chunk.sub_chunk_size;
 
 pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData) allocData {
-    gl.mesh_buffer.addData(self.ssbo, self.offset, data);
+    self.offset = gl.mesh_buffer.addData(self.ssbo, self.offset, data);
     const obj_size = @sizeOf(gl.mesh_buffer.meshVertexData);
-    const data_size = data.len * obj_size;
-    const alloc_capacity_size = data_size;
     // TODO: enable editing
     // const alloc_capacity_size: usize = @min(max_alloc_offset, (data.len + @mod(data.len, min_alloc_offset)) * obj_size);
 
     const ad: allocData = .{
         .index = self.offset,
-        .size = data_size,
-        .capacity = alloc_capacity_size,
+        .size = obj_size * data.len,
+        .capacity = obj_size * data.len,
     };
 
-    self.offset += alloc_capacity_size;
     return ad;
+}
+
+pub fn clear(self: *MeshData) void {
+    gl.mesh_buffer.clearData(self.ssbo);
 }
 
 const std = @import("std");

@@ -70,7 +70,7 @@ fn build(self: *sorter) void {
     var full_offset: u32 = 0;
     std.debug.print("initing with {d} num indices\n", .{self.num_indices});
 
-    var mesh_data: [chunk.sub_chunk.sub_chunk_size]gfx.gl.mesh_buffer.meshVertexData = undefined;
+    var mesh_data: [chunk.sub_chunk.sub_chunk_size * 36]gfx.gl.mesh_buffer.meshVertexData = undefined;
     sci = 0;
     while (sci < self.all_sub_chunks.items.len) : (sci += 1) {
         const sc: *chunk.sub_chunk = self.all_sub_chunks.items[sci];
