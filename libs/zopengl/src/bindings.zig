@@ -2988,6 +2988,21 @@ pub var namedBufferStorage: *const fn (
 ) callconv(.C) void = undefined;
 pub var bindTextureUnit: *const fn (unit: Uint, texture: Uint) callconv(.C) void = undefined;
 pub var textureBarrier: *const fn () callconv(.C) void = undefined;
+
+pub var clearBufferData: *const fn (
+    target: Enum,
+    internalformat: Enum,
+    format: Enum,
+    type: Enum,
+    data: ?*const anyopaque,
+) callconv(.C) void = undefined;
+pub var clearNamedBufferData: *const fn (
+    buffer: Uint,
+    internalformat: Enum,
+    format: Enum,
+    type: Enum,
+    data: ?*const anyopaque,
+) callconv(.C) void = undefined;
 //--------------------------------------------------------------------------------------------------
 //
 // OpenGL 1.0 and 1.1 (Compatibility Profile)

@@ -13,7 +13,7 @@ pub const SubChunkCullJob = struct {
     }
 
     pub fn cull(_: *SubChunkCullJob) void {
-        const sorter = game.state.ui.game_sub_chunks_sorter;
+        const sorter = game.state.gfx.game_sub_chunks_sorter;
         if (config.use_tracy) ztracy.Message("starting sub_chunk cull");
         sorter.cullFrustum();
         if (config.use_tracy) ztracy.Message("done with sub chunk cull job");

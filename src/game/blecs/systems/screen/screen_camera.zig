@@ -162,7 +162,7 @@ fn screenCameraSystem(
         );
     }
     if (game.state.ui.sub_chunks) {
-        if (game.state.ui.game_sub_chunks_sorter.setCamera(cull_position, cull_look_at, perspective)) {
+        if (game.state.gfx.game_sub_chunks_sorter.setCamera(cull_position, cull_look_at, perspective)) {
             game.state.jobs.cullSubChunks();
         }
     } else {

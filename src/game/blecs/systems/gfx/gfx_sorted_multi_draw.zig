@@ -59,13 +59,13 @@ fn gfxSortedMultiDraw(
         if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Game))) {
             return;
         }
-        sorter = game.state.ui.game_sub_chunks_sorter;
+        sorter = game.state.gfx.game_sub_chunks_sorter;
     }
     if (parent == screen.settingDataEntity) {
         if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Settings))) {
             return;
         }
-        sorter = game.state.ui.demo_sub_chunks_sorter;
+        sorter = game.state.gfx.demo_sub_chunks_sorter;
     }
     if (sorter.num_indices == 0) return;
     if (er.enable_depth_test) gl.enable(gl.DEPTH_TEST);
@@ -76,7 +76,6 @@ fn gfxSortedMultiDraw(
     }
     gl.bindVertexArray(er.vao);
 
-    game.state.ui.gfx_meshes_drawn_counter += 0;
     sorter.mutex.lock();
     defer sorter.mutex.unlock();
     const offsets = sorter.opaque_draw_offsets;

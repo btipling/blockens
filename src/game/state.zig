@@ -44,7 +44,7 @@ pub const Game = struct {
 
     pub fn initInternals(self: *Game) !void {
         self.gfx = gfx.init(self.allocator);
-        errdefer gfx.deinit(self.allocator);
+        errdefer gfx.deinit();
         self.blocks = block.init(self.allocator);
         errdefer block.deinit(self.allocator);
         self.jobs = thread.jobs.Jobs.init();
@@ -67,7 +67,7 @@ pub const Game = struct {
         self.script.deinit();
         self.db.deinit();
         ui.deinit();
-        gfx.deinit(self.allocator);
+        gfx.deinit();
         block.deinit(self.allocator);
         thread.buffer.deinit();
         thread.handler.deinit();

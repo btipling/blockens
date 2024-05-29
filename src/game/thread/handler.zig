@@ -14,7 +14,6 @@ pub fn deinit() void {
 }
 
 pub fn handle_incoming() !void {
-    var i: u32 = 0;
     while (buffer.next_message()) |msg| {
         const mt: buffer.buffer_message_type = @enumFromInt(msg.type);
         switch (mt) {
@@ -32,8 +31,6 @@ pub fn handle_incoming() !void {
             .world_terrain_gen => handle_world_terrain_gen(msg),
             .player_pos => handle_player_pos(msg),
         }
-        i += 0;
-        if (i >= maxHandlersPerFrame) return;
     }
 }
 
@@ -65,7 +62,7 @@ fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
     }
     game.state.blocks.generated_settings_chunks.put(chunk_data.wp, chunk_data.chunk_data) catch @panic("OOM");
     if (chunk_data.sub_chunks) {
-        game.state.ui.resetDemoSorter();
+        game.state.gfx.resetDemoSorter();
         game.state.jobs.meshSubChunk(false, true);
         return;
     }
@@ -105,9 +102,9 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
     };
     var sorter: *chunk.sub_chunk.sorter = undefined;
     if (scd.is_settings) {
-        sorter = game.state.ui.demo_sub_chunks_sorter;
+        sorter = game.state.gfx.demo_sub_chunks_sorter;
     } else {
-        sorter = game.state.ui.game_sub_chunks_sorter;
+        sorter = game.state.gfx.game_sub_chunks_sorter;
     }
     for (scd.sub_chunks) |sc| {
         if (sc.chunker.total_indices_count > 0) {
@@ -119,7 +116,18 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
     game.state.ui.load_percentage_load_sub_chunks = pr.percent;
     if (!pr.done) return;
     std.debug.print("initing sub chunks\n", .{});
-    game.state.jobs.buildSubChunks(scd.is_terrain, scd.is_settings);
+    // game.state.jobs.buildSubChunks(scd.is_terrain, scd.is_settings);
+    sorter.buildMeshData();
+    sorter.sort(.{ 0, 0, 0, 0 });
+
+    if (scd.is_settings) {
+        blecs.entities.screen.initDemoSubChunks(true, scd.is_terrain);
+        return;
+    }
+
+    blecs.entities.screen.initGameSubChunks();
+    screen_helpers.showGameScreen();
+    ui_helpers.loadCharacterInWorld();
 }
 
 fn handle_sub_chunks_build(msg: buffer.buffer_message) void {
@@ -187,7 +195,7 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
     if (!pr.done) return;
     if (!lcd.start_game) return;
     if (lcd.sub_chunks) {
-        game.state.ui.resetGameSorter();
+        game.state.gfx.resetGameSorter();
         game.state.jobs.meshSubChunk(false, false);
         ui_helpers.loadChunksInWorld(false);
         return;
@@ -271,7 +279,7 @@ fn handle_demo_terrain_gen(msg: buffer.buffer_message) void {
     });
     if (tg_d.sub_chunks) {
         blecs.entities.screen.clearDemoObjects();
-        game.state.ui.resetDemoSorter();
+        game.state.gfx.resetDemoSorter();
         game.state.jobs.meshSubChunk(true, true);
         return;
     }

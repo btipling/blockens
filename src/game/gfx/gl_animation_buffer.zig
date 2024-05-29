@@ -36,6 +36,7 @@ pub fn initAnimationShaderStorageBufferObject(
 pub fn resizeAnimationShaderStorageBufferObject(ssbo: u32, num_frames: usize) void {
     var ar = std.ArrayListUnmanaged(animationKeyFrame){};
     defer ar.deinit(game.state.allocator);
+    std.debug.print("resizing animation storage ssbo: {d}\n", .{ssbo});
     var i: usize = 0;
     while (i < num_frames) : (i += 1) {
         ar.append(game.state.allocator, .{
@@ -60,6 +61,7 @@ pub fn addAnimationShaderStorageBufferData(
 ) void {
     var ar = std.ArrayListUnmanaged(animationKeyFrame){};
     defer ar.deinit(game.state.allocator);
+    std.debug.print("adding storage ssbo: {d}\n", .{ssbo});
     for (data) |d| {
         ar.append(game.state.allocator, animationKeyFrame{
             .data = [4]f32{ d.frame, 0, 0, 0 },

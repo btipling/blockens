@@ -112,10 +112,10 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     } else if (er.is_sub_chunks) {
         var sorter: *chunk.sub_chunk.sorter = undefined;
         if (parent == screen.gameDataEntity) {
-            sorter = game.state.ui.game_sub_chunks_sorter;
+            sorter = game.state.gfx.game_sub_chunks_sorter;
         }
         if (parent == screen.settingDataEntity) {
-            sorter = game.state.ui.demo_sub_chunks_sorter;
+            sorter = game.state.gfx.demo_sub_chunks_sorter;
         }
         if (sorter.ebo != 0) @panic("Should not mesh a previously meshed sorter");
         const inds = sorter.indices orelse @panic("nope");
@@ -125,10 +125,6 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         game.state.ui.gfx_triangle_count = @divFloor(inds.len, 3);
         game.state.ui.gfx_meshes_drawn = sorter.all_sub_chunks.items.len;
         sorter.ebo = ebo;
-        builder = sorter.builder orelse @panic("nope");
-        sorter.builder = null;
-        builder.vbo = vbo;
-        builder.usage = gl.STATIC_DRAW;
     } else {
         ebo = gfx.gl.Gl.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
     }
@@ -176,7 +172,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         }
 
         if (config.use_tracy) ztracy.Message("initializing vbo buffer builder");
-        builder.initBuffer();
+        if (!er.is_sub_chunks) builder.initBuffer();
         for (0..er.mesh_data.positions.len) |ii| {
             if (config.use_tracy) ztracy.Message("adding element vertex to vbo buffer builder");
             var p = er.mesh_data.positions[ii];
@@ -212,7 +208,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     }
 
     if (config.use_tracy) ztracy.Message("writing vbo buffer to gpu");
-    builder.write();
+    if (!er.is_sub_chunks) builder.write();
 
     if (config.use_tracy) ztracy.Message("writing uniforms to gpu");
     if (er.transform) |t| {
@@ -289,7 +285,7 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     _ = game.state.gfx.renderConfigs.remove(erc.id);
     ecs.delete(world, erc.id);
     er.mesh_data.deinit();
-    builder.deinit();
+    if (!er.is_sub_chunks) builder.deinit();
     game.state.allocator.destroy(er);
     if (config.use_tracy) ztracy.Message("gfx mesh system is done");
 }

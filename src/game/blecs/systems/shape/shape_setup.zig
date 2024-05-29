@@ -80,6 +80,7 @@ const shaders = struct {
         if (e.animation != null) {
             animation_block_index = game.state.gfx.animation_data.animation_binding_point;
         }
+
         const v_cfg = gfx.shadergen.vertex.VertexShaderGen.vertexShaderConfig{
             .debug = e.debug,
             .has_uniform_mat = e.has_uniform_mat,
@@ -101,6 +102,7 @@ const shaders = struct {
                 break :blk null;
             },
             .is_sub_chunks = e.is_sub_chunks,
+            .mesh_binding_point = e.mesh_binding_point,
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch @panic("vertex shader gen fail");
     }
@@ -156,6 +158,7 @@ const extractions = struct {
     is_multi_draw: bool = false,
     mob_id: i32 = 0,
     is_sub_chunks: bool = false,
+    mesh_binding_point: u32 = 0,
 
     fn deinit(self: *extractions) void {
         if (self.mesh_transforms) |mt| mt.deinit();
@@ -203,10 +206,12 @@ const extractions = struct {
     }
 
     fn extractSubChunks(e: *extractions, world: *ecs.world_t, entity: ecs.entity_t) void {
-        if (ecs.has_id(world, entity, ecs.id(components.block.SubChunks))) {
+        if (ecs.get_id(world, entity, ecs.id(components.block.SubChunks))) |opaque_ptr| {
+            const sc: *const components.block.SubChunks = @ptrCast(@alignCast(opaque_ptr));
             if (e.debug) std.debug.print("extractBlock: is meshed\n", .{});
             e.is_sub_chunks = true;
             e.is_meshed = true;
+            e.mesh_binding_point = sc.mesh_binding_point;
         }
     }
 

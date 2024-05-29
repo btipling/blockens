@@ -2,7 +2,6 @@ index_offset: usize = 0,
 allocator: std.mem.Allocator,
 all_sub_chunks: std.ArrayListUnmanaged(*chunk.sub_chunk) = .{},
 ebo: u32 = 0,
-builder: ?*gfx.buffer_data.AttributeBuilder = null,
 indices: ?[]u32 = null,
 num_indices: usize = 0,
 mutex: std.Thread.Mutex = .{},
@@ -13,13 +12,15 @@ opaque_draw_offsets: std.ArrayListUnmanaged(?*const anyopaque) = .{},
 camera_position: ?@Vector(4, f32) = null,
 view: ?zm.Mat = null,
 perspective: ?zm.Mat = null,
+mesh_buffer_builder: gfx.mesh_buffer_builder,
 
 const sorter = @This();
 
-pub fn init(allocator: std.mem.Allocator) *sorter {
+pub fn init(allocator: std.mem.Allocator, mbb: gfx.mesh_buffer_builder) *sorter {
     const s = allocator.create(sorter) catch @panic("OOM");
     s.* = .{
         .allocator = allocator,
+        .mesh_buffer_builder = mbb,
     };
     return s;
 }
@@ -31,7 +32,6 @@ pub fn deinit(self: *sorter) void {
     self.all_sub_chunks.deinit(self.allocator);
     self.opaque_draws.deinit(self.allocator);
     self.opaque_draw_offsets.deinit(self.allocator);
-    if (self.builder) |b| b.deinit();
     if (self.indices) |i| self.allocator.free(i);
     self.allocator.destroy(self);
 }
@@ -70,23 +70,10 @@ fn build(self: *sorter) void {
     errdefer inds.deinit(self.allocator);
 
     var full_offset: u32 = 0;
-    var builder = game.state.allocator.create(
-        gfx.buffer_data.AttributeBuilder,
-    ) catch @panic("OOM");
     std.debug.print("initing with {d} num indices\n", .{self.num_indices});
 
-    builder.* = gfx.buffer_data.AttributeBuilder.init(
-        @intCast(self.num_indices),
-        0, // set in gfx_mesh
-        0,
-    );
-    // same order as defined in shader gen, just like gfx_mesh
-    const data_loc: u32 = builder.defineUintAttributeValue(4);
-    const attr_trans_loc: u32 = builder.defineFloatAttributeValue(4);
-    builder.initBuffer();
-    // builder.debug = true;
+    var mesh_data: [chunk.sub_chunk.sub_chunk_size * 36]gfx.gl.mesh_buffer.meshVertexData = undefined;
     sci = 0;
-    var vertex_offset: usize = 0;
     while (sci < self.all_sub_chunks.items.len) : (sci += 1) {
         const sc: *chunk.sub_chunk = self.all_sub_chunks.items[sci];
         if (sc.chunker.total_indices_count == 0) continue;
@@ -121,7 +108,7 @@ fn build(self: *sorter) void {
         full_offset = res.full_offset;
         if (config.use_tracy) ztracy.Message("sub_chunk_sorter: building vertices");
         for (0..res.positions.len) |ii| {
-            const vertex_index: usize = ii + vertex_offset;
+            var md: gfx.gl.mesh_buffer.meshVertexData = .{};
             {
                 const dp = chunk.sub_chunk.chunker.dataToUint(.{
                     .positions = res.positions[ii],
@@ -130,20 +117,19 @@ fn build(self: *sorter) void {
                 const bd: block.BlockData = block.BlockData.fromId(res.block_data[ii]);
                 const block_index: u32 = @intCast(game.state.ui.texture_atlas_block_index[@intCast(bd.block_id)]);
                 const num_blocks: u32 = @intCast(game.state.ui.texture_atlas_num_blocks);
-                const d: [4]u32 = .{ dp, res.block_data[ii], block_index, num_blocks };
-                builder.addUintAtLocation(data_loc, &d, vertex_index);
+                md.attr_data = .{ dp, res.block_data[ii], block_index, num_blocks };
             }
             {
-                const atr_data: [4]f32 = translation;
-                builder.addFloatAtLocation(attr_trans_loc, &atr_data, vertex_index);
+                md.attr_translation = translation;
             }
-            builder.nextVertex();
+            mesh_data[ii] = md;
         }
-
+        const ad = self.mesh_buffer_builder.addData(mesh_data[0..res.positions.len]);
+        sc.buf_index = ad.index;
+        sc.buf_size = ad.size;
+        sc.buf_capacity = ad.capacity;
         inds.appendSliceAssumeCapacity(res.indices);
-        vertex_offset += sc.chunker.total_indices_count;
     }
-    self.builder = builder;
     std.debug.print("total indicies: {d}\n", .{self.num_indices});
     self.indices = inds.toOwnedSlice(self.allocator) catch @panic("OOM");
     if (config.use_tracy) ztracy.Message("sub_chunk_sorter: done building");

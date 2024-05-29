@@ -1,29 +1,37 @@
-pub const meshData = struct {
-    vertices: [4]f32,
+pub const meshVertexData = struct {
+    attr_data: [4]u32 = undefined,
+    attr_translation: [4]f32 = undefined,
 };
 
-pub fn initMeshShaderStorageBufferObject(
-    allocator: std.mem.Allocator,
-    block_binding_point: u32,
-    data: []meshData,
-) u32 {
-    var mdl = std.ArrayListUnmanaged(meshData){};
-    defer mdl.deinit(allocator);
-    for (data) |d| {
-        mdl.append(allocator, d) catch @panic("OOM");
-    }
+// About 200MB preallocated.
+const preallocated_mem_size: usize = @sizeOf(meshVertexData) * 16 * 1024 * 1024;
+
+pub fn initMeshShaderStorageBufferObject(block_binding_point: u32) u32 {
     var ssbo: u32 = undefined;
     gl.genBuffers(1, &ssbo);
-    std.debug.print("mesh storage ssbo: {d}\n", .{ssbo});
     gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
 
-    const data_ptr: *const anyopaque = mdl.items.ptr;
-    const struct_size = @sizeOf(meshData);
-    const size = @as(isize, @intCast(mdl.items.len * struct_size));
-    gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, data_ptr, gl.STATIC_DRAW);
+    gl.bufferData(gl.SHADER_STORAGE_BUFFER, preallocated_mem_size, null, gl.DYNAMIC_DRAW);
     gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, block_binding_point, ssbo);
-    gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, 0);
     return ssbo;
+}
+
+pub fn addData(ssbo: u32, offset: usize, data: []meshVertexData) usize {
+    const data_ptr: *const anyopaque = data.ptr;
+
+    const struct_size: isize = @intCast(@sizeOf(meshVertexData));
+    const size: isize = @intCast(data.len * struct_size);
+    const buffer_offset: isize = @intCast(offset);
+    if (size + buffer_offset > preallocated_mem_size) @panic("SSBO allocation fault");
+
+    gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
+    gl.bufferSubData(gl.SHADER_STORAGE_BUFFER, buffer_offset, size, data_ptr);
+    return @intCast(buffer_offset + size);
+}
+
+pub fn clearData(ssbo: u32) void {
+    gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
+    gl.bufferData(gl.SHADER_STORAGE_BUFFER, preallocated_mem_size, null, gl.DYNAMIC_DRAW);
 }
 
 const gl = @import("zopengl").bindings;
