@@ -61,7 +61,6 @@ pub fn addAnimationShaderStorageBufferData(
 ) void {
     var ar = std.ArrayListUnmanaged(animationKeyFrame){};
     defer ar.deinit(game.state.allocator);
-    std.debug.print("adding storage ssbo: {d}\n", .{ssbo});
     for (data) |d| {
         ar.append(game.state.allocator, animationKeyFrame{
             .data = [4]f32{ d.frame, 0, 0, 0 },
