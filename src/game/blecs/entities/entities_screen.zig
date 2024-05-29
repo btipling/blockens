@@ -463,7 +463,7 @@ pub fn initDemoSubChunks(reset: bool, is_terrain: bool) void {
     const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
     _ = ecs.set(world, sc_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
     _ = ecs.set(world, sc_e, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
-    ecs.add(world, sc_e, components.block.SubChunks);
+    _ = ecs.set(world, sc_e, components.block.SubChunks, .{ .mesh_binding_point = gfx.constants.SettingsMeshDataBindingPoint });
     ecs.add(world, sc_e, components.gfx.SortedMultiDraw);
     ecs.add(world, sc_e, components.block.UseTextureAtlas);
     _ = ecs.set(world, sc_e, components.shape.Lighting, .{ .ssbo = gfx.constants.LightingBindingPoint });
@@ -484,7 +484,7 @@ pub fn initGameSubChunks() void {
     const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
     _ = ecs.set(world, sc_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
     _ = ecs.set(world, sc_e, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
-    ecs.add(world, sc_e, components.block.SubChunks);
+    _ = ecs.set(world, sc_e, components.block.SubChunks, .{ .mesh_binding_point = gfx.constants.GameMeshDataBindingPoint });
     ecs.add(world, sc_e, components.gfx.SortedMultiDraw);
     ecs.add(world, sc_e, components.block.UseTextureAtlas);
     _ = ecs.set(world, sc_e, components.shape.Lighting, .{ .ssbo = gfx.constants.LightingBindingPoint });

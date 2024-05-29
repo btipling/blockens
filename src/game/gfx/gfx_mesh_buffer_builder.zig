@@ -3,7 +3,7 @@
 const MeshData = @This();
 
 ssbo: u32 = 0,
-mesh_binding_point: u32 = constants.MeshDataBindingPoint,
+mesh_binding_point: u32,
 offset: usize = 0,
 
 pub fn init(self: *MeshData, ssbos: *std.AutoHashMap(u32, u32)) void {

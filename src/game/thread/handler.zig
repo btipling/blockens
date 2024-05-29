@@ -62,7 +62,7 @@ fn handle_demo_chunk_gen(msg: buffer.buffer_message) void {
     }
     game.state.blocks.generated_settings_chunks.put(chunk_data.wp, chunk_data.chunk_data) catch @panic("OOM");
     if (chunk_data.sub_chunks) {
-        game.state.ui.resetDemoSorter();
+        game.state.gfx.resetDemoSorter();
         game.state.jobs.meshSubChunk(false, true);
         return;
     }
@@ -102,9 +102,9 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
     };
     var sorter: *chunk.sub_chunk.sorter = undefined;
     if (scd.is_settings) {
-        sorter = game.state.ui.demo_sub_chunks_sorter;
+        sorter = game.state.gfx.demo_sub_chunks_sorter;
     } else {
-        sorter = game.state.ui.game_sub_chunks_sorter;
+        sorter = game.state.gfx.game_sub_chunks_sorter;
     }
     for (scd.sub_chunks) |sc| {
         if (sc.chunker.total_indices_count > 0) {
@@ -195,7 +195,7 @@ fn handle_load_chunk(msg: buffer.buffer_message) void {
     if (!pr.done) return;
     if (!lcd.start_game) return;
     if (lcd.sub_chunks) {
-        game.state.ui.resetGameSorter();
+        game.state.gfx.resetGameSorter();
         game.state.jobs.meshSubChunk(false, false);
         ui_helpers.loadChunksInWorld(false);
         return;
@@ -279,7 +279,7 @@ fn handle_demo_terrain_gen(msg: buffer.buffer_message) void {
     });
     if (tg_d.sub_chunks) {
         blecs.entities.screen.clearDemoObjects();
-        game.state.ui.resetDemoSorter();
+        game.state.gfx.resetDemoSorter();
         game.state.jobs.meshSubChunk(true, true);
         return;
     }

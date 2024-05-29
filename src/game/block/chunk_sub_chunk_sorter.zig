@@ -12,13 +12,15 @@ opaque_draw_offsets: std.ArrayListUnmanaged(?*const anyopaque) = .{},
 camera_position: ?@Vector(4, f32) = null,
 view: ?zm.Mat = null,
 perspective: ?zm.Mat = null,
+mesh_buffer_builder: gfx.mesh_buffer_builder,
 
 const sorter = @This();
 
-pub fn init(allocator: std.mem.Allocator) *sorter {
+pub fn init(allocator: std.mem.Allocator, mbb: gfx.mesh_buffer_builder) *sorter {
     const s = allocator.create(sorter) catch @panic("OOM");
     s.* = .{
         .allocator = allocator,
+        .mesh_buffer_builder = mbb,
     };
     return s;
 }
@@ -122,7 +124,7 @@ fn build(self: *sorter) void {
             }
             mesh_data[ii] = md;
         }
-        const ad = game.state.gfx.mesh_buffer_builder.addData(mesh_data[0..res.positions.len]);
+        const ad = self.mesh_buffer_builder.addData(mesh_data[0..res.positions.len]);
         sc.buf_index = ad.index;
         sc.buf_size = ad.size;
         sc.buf_capacity = ad.capacity;

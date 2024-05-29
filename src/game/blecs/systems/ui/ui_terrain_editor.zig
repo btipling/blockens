@@ -61,7 +61,7 @@ fn drawControls() !void {
             .w = btn_dms[0],
             .h = btn_dms[1],
         })) {
-            game.state.gfx.mesh_buffer_builder.clear();
+            game.state.gfx.settings_mesh_buffer_builder.clear();
             _ = game.state.jobs.generateDemoDescriptor(
                 game.state.ui.sub_chunks,
                 game.state.ui.terrain_gen_x_buf,

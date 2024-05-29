@@ -23,6 +23,7 @@ pub const VertexShaderGen = struct {
         is_multi_draw: bool = false,
         is_meshed: bool = false,
         mesh_transforms: ?[]MeshTransforms,
+        mesh_binding_point: u32,
         is_sub_chunks: bool = false,
     };
 
@@ -136,7 +137,7 @@ pub const VertexShaderGen = struct {
             r.a("};\n\n");
             r.a("\n");
             const line = try shader_helpers.ssbo_binding(
-                constants.MeshDataBindingPoint,
+                r.cfg.mesh_binding_point,
                 constants.SubChunksBlockName,
             );
             r.l(&line);

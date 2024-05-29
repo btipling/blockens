@@ -112,10 +112,10 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
     } else if (er.is_sub_chunks) {
         var sorter: *chunk.sub_chunk.sorter = undefined;
         if (parent == screen.gameDataEntity) {
-            sorter = game.state.ui.game_sub_chunks_sorter;
+            sorter = game.state.gfx.game_sub_chunks_sorter;
         }
         if (parent == screen.settingDataEntity) {
-            sorter = game.state.ui.demo_sub_chunks_sorter;
+            sorter = game.state.gfx.demo_sub_chunks_sorter;
         }
         if (sorter.ebo != 0) @panic("Should not mesh a previously meshed sorter");
         const inds = sorter.indices orelse @panic("nope");
