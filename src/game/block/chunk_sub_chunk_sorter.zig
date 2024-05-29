@@ -6,8 +6,8 @@ indices: ?[]u32 = null,
 num_indices: usize = 0,
 mutex: std.Thread.Mutex = .{},
 
-opaque_draws: std.ArrayListUnmanaged(c_int) = .{},
-opaque_draw_offsets: std.ArrayListUnmanaged(?*const anyopaque) = .{},
+opaque_draw_first: std.ArrayListUnmanaged(c_int) = .{},
+opaque_draw_count: std.ArrayListUnmanaged(c_int) = .{},
 
 camera_position: ?@Vector(4, f32) = null,
 view: ?zm.Mat = null,
@@ -30,8 +30,8 @@ pub fn deinit(self: *sorter) void {
         sc.deinit();
     }
     self.all_sub_chunks.deinit(self.allocator);
-    self.opaque_draws.deinit(self.allocator);
-    self.opaque_draw_offsets.deinit(self.allocator);
+    self.opaque_draw_first.deinit(self.allocator);
+    self.opaque_draw_count.deinit(self.allocator);
     if (self.indices) |i| self.allocator.free(i);
     self.allocator.destroy(self);
 }
@@ -284,8 +284,8 @@ pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
 fn doSort(self: *sorter, loc: @Vector(4, f32)) void {
     if (config.use_tracy) ztracy.Message("sub_chunk_sorter: starting sort");
     _ = loc; // TODO: sort by loc
-    self.opaque_draws.clearRetainingCapacity();
-    self.opaque_draw_offsets.clearRetainingCapacity();
+    self.opaque_draw_first.clearRetainingCapacity();
+    self.opaque_draw_count.clearRetainingCapacity();
     // TODO actually track index per sub chunk.
     const count = self.all_sub_chunks.items.len;
     var index_offset: usize = 0;
@@ -299,16 +299,8 @@ fn doSort(self: *sorter, loc: @Vector(4, f32)) void {
             index_offset += @intCast(num_indices);
             continue;
         }
-        self.opaque_draws.append(self.allocator, @intCast(num_indices)) catch @panic("OOM");
-        if (i == 0) {
-            self.opaque_draw_offsets.append(self.allocator, null) catch @panic("OOM");
-        } else {
-            const offset: usize = (@sizeOf(c_uint) * index_offset);
-            self.opaque_draw_offsets.append(
-                self.allocator,
-                @as(*anyopaque, @ptrFromInt(offset)),
-            ) catch @panic("OOM");
-        }
+        self.opaque_draw_first.append(self.allocator, @intCast(index_offset)) catch @panic("OOM");
+        self.opaque_draw_count.append(self.allocator, @intCast(num_indices)) catch @panic("OOM");
         index_offset += @intCast(num_indices);
         i += 1;
     }

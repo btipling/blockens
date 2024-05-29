@@ -78,14 +78,13 @@ fn gfxSortedMultiDraw(
 
     sorter.mutex.lock();
     defer sorter.mutex.unlock();
-    const offsets = sorter.opaque_draw_offsets;
-    const draws = sorter.opaque_draws;
-    gl.multiDrawElements(
+    const count = sorter.opaque_draw_count;
+    const first = sorter.opaque_draw_first;
+    gl.multiDrawArrays(
         gl.TRIANGLES,
-        draws.items.ptr,
-        gl.UNSIGNED_INT,
-        @ptrCast(offsets.items.ptr),
-        @intCast(draws.items.len),
+        first.items.ptr,
+        count.items.ptr,
+        @intCast(first.items.len),
     );
 }
 
