@@ -117,14 +117,8 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
         if (parent == screen.settingDataEntity) {
             sorter = game.state.gfx.demo_sub_chunks_sorter;
         }
-        if (sorter.ebo != 0) @panic("Should not mesh a previously meshed sorter");
-        const inds = sorter.indices orelse @panic("nope");
-        sorter.indices = null;
-        defer game.state.allocator.free(inds);
-        ebo = gfx.gl.Gl.initEBO(inds) catch @panic("nope");
-        game.state.ui.gfx_triangle_count = @divFloor(inds.len, 3);
+        game.state.ui.gfx_triangle_count = @divFloor(sorter.num_indices, 3);
         game.state.ui.gfx_meshes_drawn = sorter.all_sub_chunks.items.len;
-        sorter.ebo = ebo;
     } else {
         ebo = gfx.gl.Gl.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
     }
