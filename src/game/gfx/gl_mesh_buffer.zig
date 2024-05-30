@@ -34,10 +34,7 @@ pub fn addData(ssbo: u32, offset: usize, data: []meshVertexData) usize {
     return @intCast(buffer_offset + size);
 }
 
-pub fn clearData(ssbo: u32) void {
-    gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
-    // gl.bufferData(gl.SHADER_STORAGE_BUFFER, preallocated_mem_size, null, gl.DYNAMIC_DRAW);
-}
+pub fn clearData(_: u32) void {}
 
 const gl = @import("zopengl").bindings;
 const std = @import("std");

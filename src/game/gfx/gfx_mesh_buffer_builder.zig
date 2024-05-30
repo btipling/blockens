@@ -5,6 +5,7 @@ const MeshData = @This();
 ssbo: u32 = 0,
 mesh_binding_point: u32,
 offset: usize = 0,
+with_allocation: bool = false,
 
 pub fn init(self: *MeshData, ssbos: *std.AutoHashMap(u32, u32)) void {
     if (ssbos.contains(self.mesh_binding_point)) return;
