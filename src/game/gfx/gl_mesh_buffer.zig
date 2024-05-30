@@ -10,14 +10,14 @@ pub fn initMeshShaderStorageBufferObject(block_binding_point: u32) u32 {
     var ssbo: u32 = undefined;
     gl.genBuffers(1, &ssbo);
     gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
-
-    gl.bufferData(gl.SHADER_STORAGE_BUFFER, preallocated_mem_size, null, gl.DYNAMIC_DRAW);
+    const flags = gl.MAP_WRITE_BIT | gl.MAP_PERSISTENT_BIT | gl.MAP_COHERENT_BIT;
+    gl.namedBufferStorage(ssbo, preallocated_mem_size, null, flags);
     gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, block_binding_point, ssbo);
     return ssbo;
 }
 
 pub fn addData(ssbo: u32, offset: usize, data: []meshVertexData) usize {
-    const data_ptr: *const anyopaque = data.ptr;
+    const dataptr: []const u8 = std.mem.sliceAsBytes(data);
 
     const struct_size: isize = @intCast(@sizeOf(meshVertexData));
     const size: isize = @intCast(data.len * struct_size);
@@ -25,13 +25,18 @@ pub fn addData(ssbo: u32, offset: usize, data: []meshVertexData) usize {
     if (size + buffer_offset > preallocated_mem_size) @panic("SSBO allocation fault");
 
     gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
-    gl.bufferSubData(gl.SHADER_STORAGE_BUFFER, buffer_offset, size, data_ptr);
+    const flags = gl.MAP_WRITE_BIT | gl.MAP_PERSISTENT_BIT | gl.MAP_COHERENT_BIT;
+    const gl_ptr = gl.mapBufferRange(gl.SHADER_STORAGE_BUFFER, buffer_offset, size, flags);
+    std.debug.assert(gl_ptr != null);
+    const dest = @as([*]u8, @ptrCast(gl_ptr orelse unreachable));
+    @memcpy(dest, dataptr);
+    if (gl.unmapBuffer(gl.SHADER_STORAGE_BUFFER) == 0) @panic("oh no");
     return @intCast(buffer_offset + size);
 }
 
 pub fn clearData(ssbo: u32) void {
     gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
-    gl.bufferData(gl.SHADER_STORAGE_BUFFER, preallocated_mem_size, null, gl.DYNAMIC_DRAW);
+    // gl.bufferData(gl.SHADER_STORAGE_BUFFER, preallocated_mem_size, null, gl.DYNAMIC_DRAW);
 }
 
 const gl = @import("zopengl").bindings;

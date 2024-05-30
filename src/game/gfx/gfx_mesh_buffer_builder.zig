@@ -21,19 +21,29 @@ pub const allocData = struct {
     capacity: usize,
 };
 
-const min_alloc_offset = 250;
 const max_alloc_offset = chunk.sub_chunk.sub_chunk_size;
 
 pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData) allocData {
-    self.offset = gl.mesh_buffer.addData(self.ssbo, self.offset, data);
+    const index = self.offset;
+    const actual_offset = gl.mesh_buffer.addData(self.ssbo, self.offset, data);
+
     const obj_size = @sizeOf(gl.mesh_buffer.meshVertexData);
-    // TODO: enable editing
-    // const alloc_capacity_size: usize = @min(max_alloc_offset, (data.len + @mod(data.len, min_alloc_offset)) * obj_size);
+    const actual_consumed_space = obj_size * data.len;
+    // This math has to be correct:
+    // std.debug.assert(actual_offset == self.offset + actual_consumed_space);
+
+    // Allocate some extra space to allow for some edits without reallocating.
+    const extra_space = obj_size * 100;
+    const alloc_capacity_size: usize = @min(max_alloc_offset, actual_consumed_space + extra_space);
+    self.offset = self.offset + alloc_capacity_size;
+    // Assert that we don't set offset to less than we actually needed.
+    // std.debug.assert(actual_offset <= self.offset);
+    self.offset = actual_offset;
 
     const ad: allocData = .{
-        .index = self.offset,
-        .size = obj_size * data.len,
-        .capacity = obj_size * data.len,
+        .index = index,
+        .size = actual_consumed_space,
+        .capacity = alloc_capacity_size,
     };
 
     return ad;

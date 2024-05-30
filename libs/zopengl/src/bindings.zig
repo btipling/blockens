@@ -2924,6 +2924,9 @@ pub var shaderStorageBlockBinding: *const fn (
 // OpenGL 4.4 (Core Profile)
 //
 //--------------------------------------------------------------------------------------------------
+pub const MAP_PERSISTENT_BIT = 0x0040;
+pub const MAP_COHERENT_BIT = 0x0080;
+
 pub var clearTexImage: *const fn (
     texture: Uint,
     level: Int,
