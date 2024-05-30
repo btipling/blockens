@@ -235,6 +235,8 @@ fn doCullling(self: *sorter, camera_position: @Vector(4, f32), view: zm.Mat, per
             const distance_from_camera = euclideanDistance(camera_position, coordinates);
             if (distance_from_camera <= chunk.sub_chunk.sub_chunk_dim) {
                 remove = false;
+            } else if (distance_from_camera > game_config.far) {
+                remove = true;
             } else {
                 const ca_s: @Vector(4, f32) = zm.mul(coordinates, view);
                 const clip_space: @Vector(4, f32) = zm.mul(ca_s, perspective);
@@ -301,6 +303,7 @@ const ztracy = @import("ztracy");
 const config = @import("config");
 const gfx = @import("../gfx/gfx.zig");
 const game = @import("../game.zig");
+const game_config = @import("../config.zig");
 const zm = @import("zmath");
 const block = @import("block.zig");
 const chunk = block.chunk;
