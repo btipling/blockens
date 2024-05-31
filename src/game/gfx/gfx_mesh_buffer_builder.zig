@@ -19,15 +19,13 @@ pub fn init(self: *MeshData, ssbos: *std.AutoHashMap(u32, u32)) void {
         std.debug.print("mesh ssbo: {d} binding point: {d}\n", .{ new_ssbo, self.mesh_binding_point });
         ssbos.put(self.mesh_binding_point, new_ssbo) catch @panic("OOM");
     }
-    if (self.with_allocation) {
-        if (!ssbos.contains(self.allocator_binding_point)) {
-            const new_ssbo = gl.allocator_buffer.initAllocatorShaderStorageBufferObject(
-                self.allocator_binding_point,
-            );
-            self.allocator_ssbo = new_ssbo;
-            std.debug.print("allocator ssbo: {d} binding point: {d}\n", .{ new_ssbo, self.allocator_binding_point });
-            ssbos.put(self.allocator_binding_point, new_ssbo) catch @panic("OOM");
-        }
+    if (!ssbos.contains(self.allocator_binding_point)) {
+        const new_ssbo = gl.draw_buffer.initDrawShaderStorageBufferObject(
+            self.allocator_binding_point,
+        );
+        self.allocator_ssbo = new_ssbo;
+        std.debug.print("allocator ssbo: {d} binding point: {d}\n", .{ new_ssbo, self.allocator_binding_point });
+        ssbos.put(self.allocator_binding_point, new_ssbo) catch @panic("OOM");
     }
 }
 
@@ -55,19 +53,17 @@ pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData) allocData
     // Assert that we don't set offset to less than we actually needed.
     // std.debug.assert(actual_offset <= self.offset);
     self.offset = actual_offset;
-    var pd: [1]gl.allocator_buffer.pointerData = .{
+    var pd: [1]gl.draw_buffer.drawData = .{
         .{
             .offset = @intCast(self.additions),
             .count = 0,
         },
     };
-    if (self.with_allocation) {
-        gl.allocator_buffer.addPointers(
-            self.allocator_ssbo,
-            self.additions * @sizeOf(gl.allocator_buffer.pointerData),
-            pd[0..],
-        );
-    }
+    gl.draw_buffer.addDrawData(
+        self.allocator_ssbo,
+        self.additions * @sizeOf(gl.draw_buffer.drawData),
+        pd[0..],
+    );
     self.additions += 1;
 
     const ad: allocData = .{

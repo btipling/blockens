@@ -1,11 +1,11 @@
-pub const pointerData = struct {
+pub const drawData = struct {
     offset: u32 = undefined,
     count: u32 = undefined,
 };
 
-const preallocated_mem_size: usize = @sizeOf(pointerData) * 16 * 1024 * 1024;
+const preallocated_mem_size: usize = @sizeOf(drawData) * 16 * 1024 * 1024;
 
-pub fn initAllocatorShaderStorageBufferObject(block_binding_point: u32) u32 {
+pub fn initDrawShaderStorageBufferObject(block_binding_point: u32) u32 {
     var ssbo: u32 = undefined;
     gl.genBuffers(1, &ssbo);
     gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
@@ -15,10 +15,10 @@ pub fn initAllocatorShaderStorageBufferObject(block_binding_point: u32) u32 {
     return ssbo;
 }
 
-pub fn addPointers(ssbo: u32, offset: usize, pd: []const pointerData) void {
+pub fn addDrawData(ssbo: u32, offset: usize, pd: []const drawData) void {
     const dataptr: []const u8 = std.mem.sliceAsBytes(pd);
 
-    const struct_size: isize = @intCast(@sizeOf(pointerData));
+    const struct_size: isize = @intCast(@sizeOf(drawData));
     const size: isize = @intCast(pd.len * struct_size);
     const buffer_offset: isize = @intCast(offset);
 
