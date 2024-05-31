@@ -135,14 +135,28 @@ pub const VertexShaderGen = struct {
             r.a("    uvec4 bl_attr_data;\n");
             r.a("    vec4 bl_attr_tr;\n");
             r.a("};\n\n");
+            r.a("struct bl_draw_data {\n");
+            r.a("    uint bl_draw_offset;\n");
+            r.a("    uint bl_draw_count;\n");
+            r.a("    vec4 bl_attr_new_tr;\n");
+            r.a("};\n\n");
             r.a("\n");
-            const line = try shader_helpers.ssbo_binding(
+            var line = try shader_helpers.ssbo_binding(
                 r.cfg.mesh_binding_point,
-                constants.SubChunksBlockName,
+                constants.MeshBlockName,
             );
             r.l(&line);
             r.a("{\n");
             r.a("    bl_mesh_data bl_meshes[];\n");
+            r.a("};\n\n");
+            r.a("\n");
+            line = try shader_helpers.ssbo_binding(
+                r.cfg.mesh_binding_point,
+                constants.DrawBlockName,
+            );
+            r.l(&line);
+            r.a("{\n");
+            r.a("    bl_draw_data bl_draws[];\n");
             r.a("};\n\n");
         }
 

@@ -11,7 +11,8 @@ pub const UBOGFXDataName: []const u8 = "gfx_data";
 pub const UBOShaderDataName: []const u8 = "shader_data";
 pub const AnimationBlockName: []const u8 = "bl_animation_block";
 pub const LightingBlockName: []const u8 = "bl_lighting_block";
-pub const SubChunksBlockName: []const u8 = "bl_sub_chunks_block";
+pub const MeshBlockName: []const u8 = "bl_mesh_block";
+pub const DrawBlockName: []const u8 = "bl_draw_block";
 
 // UBO binding points
 pub const GameUBOBindingPoint: u32 = 0;
@@ -23,7 +24,7 @@ pub const LightingBindingPoint: u32 = 20;
 pub const GameMeshDataBindingPoint: u32 = 30;
 pub const SettingsMeshDataBindingPoint: u32 = 40;
 pub const GameDrawBindingPoint: u32 = 50;
-pub const GameSettingsBindingPoint: u32 = 50;
+pub const GameSettingsBindingPoint: u32 = 60;
 
 // Animations
 pub const DemoCharacterWalkingAnimationID: u32 = 0x01;
