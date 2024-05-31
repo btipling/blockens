@@ -3,7 +3,7 @@
 const MeshData = @This();
 
 buffer_ssbo: u32 = 0,
-allocator_ssbo: u32 = 0,
+draw_ssbo: u32 = 0,
 mesh_binding_point: u32,
 draw_binding_point: u32,
 offset: usize = 0,
@@ -23,7 +23,7 @@ pub fn init(self: *MeshData, ssbos: *std.AutoHashMap(u32, u32)) void {
         const new_ssbo = gl.draw_buffer.initDrawShaderStorageBufferObject(
             self.draw_binding_point,
         );
-        self.allocator_ssbo = new_ssbo;
+        self.draw_ssbo = new_ssbo;
         std.debug.print("allocator ssbo: {d} binding point: {d}\n", .{ new_ssbo, self.draw_binding_point });
         ssbos.put(self.draw_binding_point, new_ssbo) catch @panic("OOM");
     }
@@ -60,7 +60,7 @@ pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData, translati
         },
     };
     gl.draw_buffer.addDrawData(
-        self.allocator_ssbo,
+        self.draw_ssbo,
         self.additions * @sizeOf(gl.draw_buffer.drawData),
         pd[0..],
     );
