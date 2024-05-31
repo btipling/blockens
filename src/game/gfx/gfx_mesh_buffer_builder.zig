@@ -5,7 +5,7 @@ const MeshData = @This();
 buffer_ssbo: u32 = 0,
 allocator_ssbo: u32 = 0,
 mesh_binding_point: u32,
-allocator_binding_point: u32,
+draw_binding_point: u32,
 offset: usize = 0,
 additions: usize = 0,
 with_allocation: bool = false,
@@ -19,13 +19,13 @@ pub fn init(self: *MeshData, ssbos: *std.AutoHashMap(u32, u32)) void {
         std.debug.print("mesh ssbo: {d} binding point: {d}\n", .{ new_ssbo, self.mesh_binding_point });
         ssbos.put(self.mesh_binding_point, new_ssbo) catch @panic("OOM");
     }
-    if (!ssbos.contains(self.allocator_binding_point)) {
+    if (!ssbos.contains(self.draw_binding_point)) {
         const new_ssbo = gl.draw_buffer.initDrawShaderStorageBufferObject(
-            self.allocator_binding_point,
+            self.draw_binding_point,
         );
         self.allocator_ssbo = new_ssbo;
-        std.debug.print("allocator ssbo: {d} binding point: {d}\n", .{ new_ssbo, self.allocator_binding_point });
-        ssbos.put(self.allocator_binding_point, new_ssbo) catch @panic("OOM");
+        std.debug.print("allocator ssbo: {d} binding point: {d}\n", .{ new_ssbo, self.draw_binding_point });
+        ssbos.put(self.draw_binding_point, new_ssbo) catch @panic("OOM");
     }
 }
 

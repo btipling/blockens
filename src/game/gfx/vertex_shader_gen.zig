@@ -178,6 +178,7 @@ pub const VertexShaderGen = struct {
             r.a("    bl_draw_data bl_draw_dd = bl_draws[gl_DrawID];\n");
             r.a("    vec4 bl_attr_tr = bl_draw_dd.bl_attr_tr;\n");
             r.a("    bl_mesh_data bl_attr_md = bl_meshes[gl_VertexID];\n");
+            r.a("    vec4 bl_attr_old_tr = bl_attr_md.bl_attr_old_tr;\n");
             r.a("    uvec4 bl_attr_data = bl_attr_md.bl_attr_data;\n");
             r.a("    uint bl_pk_n1 = (bl_attr_data[0] >> 19) & 3;\n");
             r.a("    uint bl_pk_n2 = (bl_attr_data[0] >> 17) & 3;\n");
@@ -189,6 +190,8 @@ pub const VertexShaderGen = struct {
             r.a("    vec3 normal = vec3(float(bl_pk_n1) - 1, float(bl_pk_n2) - 1, float(bl_pk_n3) - 1);\n");
             r.a("bl_debug_draw_id = gl_DrawID;\n");
             r.a("bl_debug_addition = bl_draw_dd.bl_draw_pointer[0];\n");
+            r.a("bl_debug_old_ttr = bl_attr_old_tr;\n");
+            r.a("bl_debug_new_ttr = bl_attr_tr;\n");
         }
 
         fn gen_out_vars(r: *runner) !void {
@@ -220,6 +223,8 @@ pub const VertexShaderGen = struct {
             if (r.cfg.is_sub_chunks) {
                 r.a("out uint bl_debug_draw_id;\n");
                 r.a("out uint bl_debug_addition;\n");
+                r.a("out vec4 bl_debug_old_ttr;\n");
+                r.a("out vec4 bl_debug_new_ttr;\n");
             }
         }
 
