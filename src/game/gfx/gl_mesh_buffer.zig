@@ -34,8 +34,6 @@ pub fn addData(ssbo: u32, offset: usize, data: []meshVertexData) usize {
     return @intCast(buffer_offset + size);
 }
 
-pub fn clearData(_: u32) void {}
-
 const gl = @import("zopengl").bindings;
 const std = @import("std");
 const gfx = @import("gfx.zig");

@@ -2,18 +2,30 @@
 
 const MeshData = @This();
 
-ssbo: u32 = 0,
+buffer_ssbo: u32 = 0,
+allocator_ssbo: u32 = 0,
 mesh_binding_point: u32,
+allocator_binding_point: u32,
 offset: usize = 0,
 with_allocation: bool = false,
 
 pub fn init(self: *MeshData, ssbos: *std.AutoHashMap(u32, u32)) void {
-    if (ssbos.contains(self.mesh_binding_point)) return;
-    const new_ssbo = gl.mesh_buffer.initMeshShaderStorageBufferObject(
-        self.mesh_binding_point,
-    );
-    self.ssbo = new_ssbo;
-    ssbos.put(self.mesh_binding_point, new_ssbo) catch @panic("OOM");
+    if (!ssbos.contains(self.mesh_binding_point)) {
+        const new_ssbo = gl.mesh_buffer.initMeshShaderStorageBufferObject(
+            self.mesh_binding_point,
+        );
+        self.buffer_ssbo = new_ssbo;
+        ssbos.put(self.mesh_binding_point, new_ssbo) catch @panic("OOM");
+    }
+    if (self.with_allocation) {
+        if (!ssbos.contains(self.allocator_binding_point)) {
+            const new_ssbo = gl.allocator_buffer.initAllocatorShaderStorageBufferObject(
+                self.allocator_binding_point,
+            );
+            self.allocator_ssbo = new_ssbo;
+            ssbos.put(self.mesh_binding_point, new_ssbo) catch @panic("OOM");
+        }
+    }
 }
 
 pub const allocData = struct {
@@ -26,7 +38,7 @@ const max_alloc_offset = chunk.sub_chunk.sub_chunk_size;
 
 pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData) allocData {
     const index = self.offset;
-    const actual_offset = gl.mesh_buffer.addData(self.ssbo, self.offset, data);
+    const actual_offset = gl.mesh_buffer.addData(self.buffer_ssbo, self.offset, data);
 
     const obj_size = @sizeOf(gl.mesh_buffer.meshVertexData);
     const actual_consumed_space = obj_size * data.len;
@@ -51,7 +63,6 @@ pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData) allocData
 }
 
 pub fn clear(self: *MeshData) void {
-    gl.mesh_buffer.clearData(self.ssbo);
     self.offset = 0;
 }
 

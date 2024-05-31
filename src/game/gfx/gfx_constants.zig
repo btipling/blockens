@@ -13,13 +13,16 @@ pub const AnimationBlockName: []const u8 = "bl_animation_block";
 pub const LightingBlockName: []const u8 = "bl_lighting_block";
 pub const SubChunksBlockName: []const u8 = "bl_sub_chunks_block";
 
-// Binding points
+// UBO binding points
 pub const GameUBOBindingPoint: u32 = 0;
 pub const SettingsUBOBindingPoint: u32 = 1;
-pub const AnimationBindingPoint: u32 = 2;
-pub const LightingBindingPoint: u32 = 3;
-pub const GameMeshDataBindingPoint: u32 = 4;
-pub const SettingsMeshDataBindingPoint: u32 = 5;
+
+// SSBO binding points
+pub const AnimationBindingPoint: u32 = 10;
+pub const LightingBindingPoint: u32 = 20;
+pub const GameMeshDataBindingPoint: u32 = 30;
+pub const SettingsMeshDataBindingPoint: u32 = 40;
+pub const GameAllocatorBindingPoint: u32 = 50;
 
 // Animations
 pub const DemoCharacterWalkingAnimationID: u32 = 0x01;

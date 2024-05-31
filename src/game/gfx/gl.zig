@@ -283,3 +283,4 @@ const buffer_data = @import("buffer_data.zig");
 pub const animation_buffer = @import("gl_animation_buffer.zig");
 pub const lighting_buffer = @import("gl_lighting_buffer.zig");
 pub const mesh_buffer = @import("gl_mesh_buffer.zig");
+pub const allocator_buffer = @import("gl_allocator_buffer.zig");

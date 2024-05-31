@@ -3,8 +3,15 @@ var gfx: *Gfx = undefined;
 pub fn init(allocator: std.mem.Allocator) *Gfx {
     mesh.init();
 
-    var gbb: mesh_buffer_builder = .{ .mesh_binding_point = constants.GameMeshDataBindingPoint };
-    var sbb: mesh_buffer_builder = .{ .mesh_binding_point = constants.SettingsMeshDataBindingPoint };
+    var gbb: mesh_buffer_builder = .{
+        .mesh_binding_point = constants.GameMeshDataBindingPoint,
+        .allocator_binding_point = constants.GameAllocatorBindingPoint,
+        .with_allocation = true,
+    };
+    var sbb: mesh_buffer_builder = .{
+        .mesh_binding_point = constants.SettingsMeshDataBindingPoint,
+        .allocator_binding_point = 0,
+    };
     gfx = allocator.create(Gfx) catch @panic("OOM");
     gfx.* = .{
         .ubos = std.AutoHashMap(u32, u32).init(allocator),
