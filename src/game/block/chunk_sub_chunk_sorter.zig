@@ -33,6 +33,14 @@ pub fn deinit(self: *sorter) void {
     self.allocator.destroy(self);
 }
 
+pub fn clear(self: *sorter) void {
+    for (self.all_sub_chunks.items) |sc| {
+        sc.deinit();
+    }
+    self.all_sub_chunks.clearRetainingCapacity();
+    self.mesh_buffer_builder.clear();
+}
+
 pub fn addSubChunk(self: *sorter, sc: *chunk.sub_chunk) void {
     self.mutex.lock();
     defer self.mutex.unlock();

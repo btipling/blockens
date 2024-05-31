@@ -3,8 +3,8 @@ var gfx: *Gfx = undefined;
 pub fn init(allocator: std.mem.Allocator) *Gfx {
     mesh.init();
 
-    const gbb: mesh_buffer_builder = .{ .mesh_binding_point = constants.GameMeshDataBindingPoint };
-    const sbb: mesh_buffer_builder = .{ .mesh_binding_point = constants.SettingsMeshDataBindingPoint };
+    var gbb: mesh_buffer_builder = .{ .mesh_binding_point = constants.GameMeshDataBindingPoint };
+    var sbb: mesh_buffer_builder = .{ .mesh_binding_point = constants.SettingsMeshDataBindingPoint };
     gfx = allocator.create(Gfx) catch @panic("OOM");
     gfx.* = .{
         .ubos = std.AutoHashMap(u32, u32).init(allocator),
@@ -13,15 +13,13 @@ pub fn init(allocator: std.mem.Allocator) *Gfx {
         .mob_data = std.AutoHashMap(i32, *mob.Mob).init(allocator),
         .animation_data = AnimationData.init(allocator),
         .lighting_ssbo = gl.lighting_buffer.initLightingShaderStorageBufferObject(constants.LightingBindingPoint),
-        .game_mesh_buffer_builder = gbb,
-        .settings_mesh_buffer_builder = sbb,
         .allocator = allocator,
     };
 
-    gfx.game_mesh_buffer_builder.init(&gfx.ssbos);
-    gfx.settings_mesh_buffer_builder.init(&gfx.ssbos);
-    gfx.game_sub_chunks_sorter = chunk.sub_chunk.sorter.init(allocator, gfx.game_mesh_buffer_builder);
-    gfx.demo_sub_chunks_sorter = chunk.sub_chunk.sorter.init(allocator, gfx.settings_mesh_buffer_builder);
+    gbb.init(&gfx.ssbos);
+    sbb.init(&gfx.ssbos);
+    gfx.game_sub_chunks_sorter = chunk.sub_chunk.sorter.init(allocator, gbb);
+    gfx.demo_sub_chunks_sorter = chunk.sub_chunk.sorter.init(allocator, sbb);
 
     return gfx;
 }
@@ -61,8 +59,6 @@ pub const Gfx = struct {
     ambient_lighting: f32 = 1,
     demo_sub_chunks_sorter: *chunk.sub_chunk.sorter = undefined,
     game_sub_chunks_sorter: *chunk.sub_chunk.sorter = undefined,
-    game_mesh_buffer_builder: mesh_buffer_builder = undefined,
-    settings_mesh_buffer_builder: mesh_buffer_builder = undefined,
     allocator: std.mem.Allocator,
 
     pub fn update_lighting(self: *Gfx) void {
@@ -103,12 +99,11 @@ pub const Gfx = struct {
     }
 
     pub fn resetDemoSorter(self: *Gfx) void {
-        self.demo_sub_chunks_sorter.deinit();
-        self.demo_sub_chunks_sorter = chunk.sub_chunk.sorter.init(self.allocator, self.settings_mesh_buffer_builder);
+        self.demo_sub_chunks_sorter.clear();
     }
+
     pub fn resetGameSorter(self: *Gfx) void {
-        self.game_sub_chunks_sorter.deinit();
-        self.game_sub_chunks_sorter = chunk.sub_chunk.sorter.init(self.allocator, self.game_mesh_buffer_builder);
+        self.game_sub_chunks_sorter.clear();
     }
 };
 
