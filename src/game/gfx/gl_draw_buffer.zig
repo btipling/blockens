@@ -25,6 +25,7 @@ pub fn addDrawData(ssbo: u32, offset: usize, pd: []const drawData) void {
     gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
     const flags = gl.MAP_WRITE_BIT | gl.MAP_PERSISTENT_BIT | gl.MAP_COHERENT_BIT;
     const gl_ptr = gl.mapBufferRange(gl.SHADER_STORAGE_BUFFER, buffer_offset, size, flags);
+    if (gl_ptr == null) return;
     std.debug.assert(gl_ptr != null);
     const dest = @as([*]u8, @ptrCast(gl_ptr orelse unreachable));
     @memcpy(dest, dataptr);

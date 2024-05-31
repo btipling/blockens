@@ -21,7 +21,6 @@ pub fn handle_incoming() !void {
             .chunk_gen => handle_demo_chunk_gen(msg),
             .chunk_mesh => handle_chunk_mesh(msg),
             .sub_chunk_mesh => handle_sub_chunks_mesh(msg),
-            .sub_chunk_build => handle_sub_chunks_build(msg),
             .lighting => handle_lighting(msg),
             .lighting_cross_chunk => handle_lighting_cross_chunk(msg),
             .load_chunk => handle_load_chunk(msg),
@@ -116,7 +115,6 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
     game.state.ui.load_percentage_load_sub_chunks = pr.percent;
     if (!pr.done) return;
     std.debug.print("initing sub chunks\n", .{});
-    // game.state.jobs.buildSubChunks(scd.is_terrain, scd.is_settings);
     sorter.buildMeshData();
     sorter.sort(.{ 0, 0, 0, 0 });
 
@@ -125,24 +123,6 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
         return;
     }
 
-    blecs.entities.screen.initGameSubChunks();
-    screen_helpers.showGameScreen();
-    ui_helpers.loadCharacterInWorld();
-}
-
-fn handle_sub_chunks_build(msg: buffer.buffer_message) void {
-    const pr = buffer.progress_report(msg);
-    const bd: buffer.buffer_data = buffer.get_data(msg) orelse return;
-    const scd: buffer.sub_chunk_build_data = switch (bd) {
-        buffer.buffer_data.sub_chunk_build => |d| d,
-        else => return,
-    };
-    if (!pr.done) return;
-    std.debug.print("initing sub chunks\n", .{});
-    if (scd.is_settings) {
-        blecs.entities.screen.initDemoSubChunks(true, scd.is_terrain);
-        return;
-    }
     blecs.entities.screen.initGameSubChunks();
     screen_helpers.showGameScreen();
     ui_helpers.loadCharacterInWorld();
