@@ -7,6 +7,7 @@ allocator_ssbo: u32 = 0,
 mesh_binding_point: u32,
 allocator_binding_point: u32,
 offset: usize = 0,
+additions: usize = 0,
 with_allocation: bool = false,
 
 pub fn init(self: *MeshData, ssbos: *std.AutoHashMap(u32, u32)) void {
@@ -15,6 +16,7 @@ pub fn init(self: *MeshData, ssbos: *std.AutoHashMap(u32, u32)) void {
             self.mesh_binding_point,
         );
         self.buffer_ssbo = new_ssbo;
+        std.debug.print("mesh ssbo: {d} binding point: {d}\n", .{ new_ssbo, self.mesh_binding_point });
         ssbos.put(self.mesh_binding_point, new_ssbo) catch @panic("OOM");
     }
     if (self.with_allocation) {
@@ -23,7 +25,8 @@ pub fn init(self: *MeshData, ssbos: *std.AutoHashMap(u32, u32)) void {
                 self.allocator_binding_point,
             );
             self.allocator_ssbo = new_ssbo;
-            ssbos.put(self.mesh_binding_point, new_ssbo) catch @panic("OOM");
+            std.debug.print("allocator ssbo: {d} binding point: {d}\n", .{ new_ssbo, self.allocator_binding_point });
+            ssbos.put(self.allocator_binding_point, new_ssbo) catch @panic("OOM");
         }
     }
 }
@@ -52,6 +55,20 @@ pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData) allocData
     // Assert that we don't set offset to less than we actually needed.
     // std.debug.assert(actual_offset <= self.offset);
     self.offset = actual_offset;
+    var pd: [1]gl.allocator_buffer.pointerData = .{
+        .{
+            .offset = @intCast(self.additions),
+            .count = 0,
+        },
+    };
+    if (self.with_allocation) {
+        gl.allocator_buffer.addPointers(
+            self.allocator_ssbo,
+            self.additions * @sizeOf(gl.allocator_buffer.pointerData),
+            pd[0..],
+        );
+    }
+    self.additions += 1;
 
     const ad: allocData = .{
         .index = index,
@@ -64,6 +81,7 @@ pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData) allocData
 
 pub fn clear(self: *MeshData) void {
     self.offset = 0;
+    self.additions = 0;
 }
 
 const std = @import("std");

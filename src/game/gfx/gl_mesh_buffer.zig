@@ -16,7 +16,7 @@ pub fn initMeshShaderStorageBufferObject(block_binding_point: u32) u32 {
     return ssbo;
 }
 
-pub fn addData(ssbo: u32, offset: usize, data: []meshVertexData) usize {
+pub fn addData(ssbo: u32, offset: usize, data: []const meshVertexData) usize {
     const dataptr: []const u8 = std.mem.sliceAsBytes(data);
 
     const struct_size: isize = @intCast(@sizeOf(meshVertexData));
