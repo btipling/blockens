@@ -1,6 +1,7 @@
 pub const drawData = struct {
     offset: u32 = undefined,
     count: u32 = undefined,
+    translation: [4]f32 = undefined,
 };
 
 const preallocated_mem_size: usize = @sizeOf(drawData) * 16 * 1024 * 1024;

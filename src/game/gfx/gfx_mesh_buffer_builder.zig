@@ -37,7 +37,7 @@ pub const allocData = struct {
 
 const max_alloc_offset = chunk.sub_chunk.sub_chunk_size;
 
-pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData) allocData {
+pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData, translation: @Vector(4, f32)) allocData {
     const index = self.offset;
     const actual_offset = gl.mesh_buffer.addData(self.buffer_ssbo, self.offset, data);
 
@@ -57,6 +57,7 @@ pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData) allocData
         .{
             .offset = @intCast(self.additions),
             .count = 0,
+            .translation = translation,
         },
     };
     gl.draw_buffer.addDrawData(

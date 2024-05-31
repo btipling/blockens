@@ -123,7 +123,7 @@ fn build(self: *sorter) void {
             }
             mesh_data[ii] = md;
         }
-        const ad = self.mesh_buffer_builder.addData(mesh_data[0..res.positions.len]);
+        const ad = self.mesh_buffer_builder.addData(mesh_data[0..res.positions.len], translation);
         sc.buf_index = ad.index;
         sc.buf_size = ad.size;
         sc.buf_capacity = ad.capacity;
