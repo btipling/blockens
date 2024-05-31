@@ -10,7 +10,7 @@ pub fn init(allocator: std.mem.Allocator) *Gfx {
     };
     var sbb: mesh_buffer_builder = .{
         .mesh_binding_point = constants.SettingsMeshDataBindingPoint,
-        .allocator_binding_point = constants.GameSettingsBindingPoint,
+        .allocator_binding_point = constants.SettingsDrawBindingPoint,
     };
     gfx = allocator.create(Gfx) catch @panic("OOM");
     gfx.* = .{

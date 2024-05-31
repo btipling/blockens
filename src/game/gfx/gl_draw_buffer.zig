@@ -1,10 +1,9 @@
 pub const drawData = struct {
-    offset: u32 = undefined,
-    count: u32 = undefined,
+    draw_pointer: [4]u32,
     translation: [4]f32 = undefined,
 };
 
-const preallocated_mem_size: usize = @sizeOf(drawData) * 16 * 1024 * 1024;
+const preallocated_mem_size: usize = @sizeOf(drawData) * 1024 * 1024;
 
 pub fn initDrawShaderStorageBufferObject(block_binding_point: u32) u32 {
     var ssbo: u32 = undefined;

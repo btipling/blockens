@@ -55,8 +55,7 @@ pub fn addData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData, translati
     self.offset = actual_offset;
     var pd: [1]gl.draw_buffer.drawData = .{
         .{
-            .offset = @intCast(self.additions),
-            .count = 0,
+            .draw_pointer = [4]u32{ @intCast(self.additions), 0, 0, 0 },
             .translation = translation,
         },
     };
