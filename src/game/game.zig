@@ -187,6 +187,9 @@ pub const Game = struct {
         try state.initInternals();
         errdefer state.deinit();
 
+        thread.gfx.init(allocator);
+        errdefer thread.gfx.deinit();
+
         blecs.init();
         errdefer blecs.ecs.fini(state.world);
         return .{};
@@ -194,6 +197,7 @@ pub const Game = struct {
 
     pub fn deinit(_: Game) void {
         _ = blecs.ecs.fini(state.world);
+        thread.gfx.deinit();
         zstbi.deinit();
         zmesh.deinit();
         zgui.backend.deinit();
@@ -271,6 +275,9 @@ pub const Game = struct {
                     const w: u32 = @intCast(fb_size[0]);
                     const h: u32 = @intCast(fb_size[1]);
                     zgui.backend.newFrame(w, h);
+                }
+                {
+                    thread.gfx.send(.count);
                 }
                 try thread.handler.handle_incoming();
                 _ = blecs.ecs.progress(state.world, state.input.delta_time);
