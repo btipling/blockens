@@ -45,7 +45,6 @@ pub fn addSubChunk(self: *sorter, sc: *chunk.sub_chunk) void {
     self.mutex.lock();
     defer self.mutex.unlock();
     self.all_sub_chunks.append(self.allocator, sc) catch @panic("OOM");
-    std.debug.print("adding demo sub chunk or what {d}?\n", .{self.all_sub_chunks.items.len});
 }
 
 pub fn buildMeshData(self: *sorter) void {
@@ -59,7 +58,6 @@ pub fn buildMeshData(self: *sorter) void {
 }
 
 fn build(self: *sorter) void {
-    std.debug.print("building sub chunks? {d}\n", .{self.all_sub_chunks.items.len});
     if (config.use_tracy) ztracy.Message("sub_chunk_sorter: starting build");
     self.mutex.lock();
     defer self.mutex.unlock();

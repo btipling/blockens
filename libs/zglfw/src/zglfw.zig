@@ -826,6 +826,14 @@ pub const Window = opaque {
         try maybeError();
         unreachable;
     }
+    pub fn createCtx(
+        title: [:0]const u8,
+        share: ?*Window,
+    ) Error!*Window {
+        if (glfwCreateWindow(100, 100, title, null, share)) |window| return window;
+        try maybeError();
+        unreachable;
+    }
     extern fn glfwCreateWindow(
         width: i32,
         height: i32,

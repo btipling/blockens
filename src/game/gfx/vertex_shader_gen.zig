@@ -130,6 +130,13 @@ pub const VertexShaderGen = struct {
             }
         }
 
+        //         struct bl_mesh_data {
+        //             uvec4 bl_attr_data;
+        //         };
+        //         struct bl_draw_data {
+        //             uvec4 bl_draw_pointer;
+        //             vec4 bl_attr_tr;
+        //         };
         fn gen_sub_chunk_block(r: *runner) !void {
             if (!r.cfg.is_sub_chunks) return;
             r.a("struct bl_mesh_data {\n");

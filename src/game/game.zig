@@ -122,19 +122,14 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     return window;
 }
 
-fn initGfxGlCtx(gl_major: u8, gl_minor: u8) !*glfw.Window {
+fn initGfxGlCtx(gl_major: u8, gl_minor: u8, window: *glfw.Window) !*glfw.Window {
     glfw.windowHintTyped(.context_version_major, gl_major);
     glfw.windowHintTyped(.context_version_minor, gl_minor);
     glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
     glfw.windowHintTyped(.opengl_forward_compat, false);
     glfw.windowHintTyped(.client_api, .opengl_api);
     glfw.windowHintTyped(.visible, false);
-    const ctx = glfw.Window.create(
-        100,
-        100,
-        "gfx_context",
-        null,
-    ) catch |err| {
+    const ctx = glfw.Window.createCtx("gfx_context", window) catch |err| {
         std.log.err("Failed to create gfx gl context.", .{});
         return err;
     };
@@ -190,7 +185,7 @@ pub const Game = struct {
         const window = try initWindow(gl_major, gl_minor);
         errdefer window.destroy();
 
-        const gfx_gl_ctx = try initGfxGlCtx(gl_major, gl_minor);
+        const gfx_gl_ctx = try initGfxGlCtx(gl_major, gl_minor, window);
         errdefer gfx_gl_ctx.destroy();
         state.ui.setScreenSize(window);
         state.window = window;

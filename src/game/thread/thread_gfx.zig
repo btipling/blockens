@@ -82,11 +82,13 @@ pub const GfxResultBuffer = struct {
     pub const gfxResultType = enum(u8) {
         settings_sub_chunk_draws,
         game_sub_chunk_draws,
+        new_ssbo,
     };
 
     pub const gfxResult = union(gfxResultType) {
         settings_sub_chunk_draws: gfx.GfxSubChunkDraws,
         game_sub_chunk_draws: gfx.GfxSubChunkDraws,
+        new_ssbo: struct { ssbo: u32, binding_point: u32 },
     };
     mutex: std.Thread.Mutex = .{},
     allocator: std.mem.Allocator,
@@ -183,6 +185,22 @@ fn start(args: Args) void {
         .demo_sub_chunks_sorter = chunk.sub_chunk.sorter.init(args.allocator, sbb),
         .gl_ctx = args.gl_ctx,
     };
+    gfx_result_buffer.send(.{ .new_ssbo = .{
+        .ssbo = gbb.buffer_ssbo,
+        .binding_point = gbb.mesh_binding_point,
+    } });
+    gfx_result_buffer.send(.{ .new_ssbo = .{
+        .ssbo = gbb.draw_ssbo,
+        .binding_point = gbb.draw_binding_point,
+    } });
+    gfx_result_buffer.send(.{ .new_ssbo = .{
+        .ssbo = sbb.buffer_ssbo,
+        .binding_point = sbb.mesh_binding_point,
+    } });
+    gfx_result_buffer.send(.{ .new_ssbo = .{
+        .ssbo = sbb.draw_ssbo,
+        .binding_point = sbb.draw_binding_point,
+    } });
     ctx.run();
 }
 
