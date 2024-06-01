@@ -29,7 +29,6 @@ pub fn initAnimationShaderStorageBufferObject(
     const size = @as(isize, @intCast(ar.items.len * struct_size));
     gl.bufferData(gl.SHADER_STORAGE_BUFFER, size, data_ptr, gl.DYNAMIC_DRAW);
     gl.bindBufferBase(gl.SHADER_STORAGE_BUFFER, block_binding_point, ssbo);
-    gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, 0);
     return ssbo;
 }
 

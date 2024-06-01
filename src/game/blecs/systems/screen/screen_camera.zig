@@ -162,9 +162,11 @@ fn screenCameraSystem(
         );
     }
     if (game.state.ui.sub_chunks) {
-        if (game.state.gfx.game_sub_chunks_sorter.setCamera(cull_position, cull_look_at, perspective)) {
-            game.state.jobs.cullSubChunks();
-        }
+        thread.gfx.trySend(.{ .game_cull_sub_chunk = .{
+            .camera_position = cull_position,
+            .view = cull_look_at,
+            .perspective = perspective,
+        } });
     } else {
         cullChunks(cull_position, cull_look_at, perspective);
     }
@@ -305,6 +307,7 @@ const math = @import("../../../math/math.zig");
 const components = @import("../../components/components.zig");
 const entities = @import("../../entities/entities.zig");
 const game = @import("../../../game.zig");
+const thread = @import("../../../thread/thread.zig");
 const gfx = @import("../../../gfx/gfx.zig");
 const block = @import("../../../block/block.zig");
 const chunk = block.chunk;

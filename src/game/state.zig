@@ -30,6 +30,8 @@ pub const Input = struct {
 
 pub const Game = struct {
     allocator: std.mem.Allocator = undefined,
+    ts_allocator: std.mem.Allocator = undefined,
+    ta: std.heap.ThreadSafeAllocator = undefined,
     window: *glfw.Window = undefined,
     world: *blecs.ecs.world_t = undefined,
     db: data.Data = undefined,
@@ -43,6 +45,10 @@ pub const Game = struct {
     quit: bool = false,
 
     pub fn initInternals(self: *Game) !void {
+        self.ta = .{
+            .child_allocator = self.allocator,
+        };
+        self.ts_allocator = self.ta.allocator();
         self.gfx = gfx.init(self.allocator);
         errdefer gfx.deinit();
         self.blocks = block.init(self.allocator);

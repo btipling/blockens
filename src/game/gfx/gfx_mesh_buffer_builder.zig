@@ -10,22 +10,20 @@ offset: usize = 0,
 additions: usize = 0,
 with_allocation: bool = false,
 
-pub fn init(self: *MeshData, ssbos: *std.AutoHashMap(u32, u32)) void {
-    if (!ssbos.contains(self.mesh_binding_point)) {
+pub fn init(self: *MeshData) void {
+    {
         const new_ssbo = gl.mesh_buffer.initMeshShaderStorageBufferObject(
             self.mesh_binding_point,
         );
         self.buffer_ssbo = new_ssbo;
         std.debug.print("mesh ssbo: {d} binding point: {d}\n", .{ new_ssbo, self.mesh_binding_point });
-        ssbos.put(self.mesh_binding_point, new_ssbo) catch @panic("OOM");
     }
-    if (!ssbos.contains(self.draw_binding_point)) {
+    {
         const new_ssbo = gl.draw_buffer.initDrawShaderStorageBufferObject(
             self.draw_binding_point,
         );
         self.draw_ssbo = new_ssbo;
         std.debug.print("allocator ssbo: {d} binding point: {d}\n", .{ new_ssbo, self.draw_binding_point });
-        ssbos.put(self.draw_binding_point, new_ssbo) catch @panic("OOM");
     }
 }
 
@@ -72,6 +70,17 @@ pub fn addMeshData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData, trans
     };
 
     return ad;
+}
+
+pub fn addMeshDataBulk(self: *MeshData, data: []gl.mesh_buffer.meshVertexData, drawData: []gl.draw_buffer.drawData) void {
+    const actual_offset = gl.mesh_buffer.addData(self.buffer_ssbo, 0, data);
+    gl.draw_buffer.addDrawData(
+        self.draw_ssbo,
+        0,
+        drawData,
+    );
+    self.additions = drawData.len;
+    self.offset = actual_offset;
 }
 
 pub fn clear(self: *MeshData) void {

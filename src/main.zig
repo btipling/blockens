@@ -13,8 +13,9 @@ pub fn runDebug() !void {
         const ztracy = @import("ztracy");
         const tracy_zone = ztracy.ZoneNC(@src(), "Blockens Init", 0x00_ff_00_00);
         defer tracy_zone.End();
-        var tracy_allocator = ztracy.TracyAllocator.init(gpa.allocator());
-        g = try game.Game.init(tracy_allocator.allocator());
+        // var tracy_allocator = ztracy.TracyAllocator.init(gpa.allocator());
+        // g = try game.Game.init(tracy_allocator.allocator());
+        g = try game.Game.init(gpa.allocator());
     } else {
         g = try game.Game.init(gpa.allocator());
     }

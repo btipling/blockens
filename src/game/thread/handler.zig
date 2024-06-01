@@ -99,26 +99,13 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
         buffer.buffer_data.sub_chunk_mesh => |d| d,
         else => return,
     };
-    var sorter: *chunk.sub_chunk.sorter = undefined;
-    if (scd.is_settings) {
-        sorter = game.state.gfx.demo_sub_chunks_sorter;
-    } else {
-        sorter = game.state.gfx.game_sub_chunks_sorter;
-    }
     for (scd.sub_chunks) |sc| {
         if (sc.chunker.total_indices_count > 0) {
-            sorter.addSubChunk(sc);
-            var cmd: thread_gfx.GfxCommandBuffer.gfxCommand = undefined;
             if (scd.is_settings) {
-                cmd = .{
-                    .settings_subchunk = sc,
-                };
+                thread_gfx.send(.{ .settings_sub_chunk = sc });
             } else {
-                cmd = .{
-                    .game_subchunk = sc,
-                };
+                thread_gfx.send(.{ .game_sub_chunk = sc });
             }
-            thread_gfx.send(cmd);
         } else {
             sc.deinit();
         }
@@ -126,17 +113,16 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
     game.state.ui.load_percentage_load_sub_chunks = pr.percent;
     if (!pr.done) return;
     std.debug.print("initing sub chunks\n", .{});
-    sorter.buildMeshData();
-    sorter.sort(.{ 0, 0, 0, 0 });
+    if (scd.is_settings) {
+        thread_gfx.send(.{ .settings_build_sub_chunk = {} });
+    } else {
+        thread_gfx.send(.{ .game_build_sub_chunk = {} });
+    }
 
     if (scd.is_settings) {
         blecs.entities.screen.initDemoSubChunks(true, scd.is_terrain);
         return;
     }
-
-    blecs.entities.screen.initGameSubChunks();
-    screen_helpers.showGameScreen();
-    ui_helpers.loadCharacterInWorld();
 }
 
 fn handle_lighting(msg: buffer.buffer_message) void {
