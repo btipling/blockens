@@ -123,10 +123,6 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
         blecs.entities.screen.initDemoSubChunks(true, scd.is_terrain);
         return;
     }
-
-    blecs.entities.screen.initGameSubChunks();
-    screen_helpers.showGameScreen();
-    ui_helpers.loadCharacterInWorld();
 }
 
 fn handle_lighting(msg: buffer.buffer_message) void {

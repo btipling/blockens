@@ -72,6 +72,17 @@ pub fn addMeshData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData, trans
     return ad;
 }
 
+pub fn addMeshDataBulk(self: *MeshData, data: []gl.mesh_buffer.meshVertexData, drawData: []gl.draw_buffer.drawData) void {
+    const actual_offset = gl.mesh_buffer.addData(self.buffer_ssbo, 0, data);
+    gl.draw_buffer.addDrawData(
+        self.draw_ssbo,
+        0,
+        drawData,
+    );
+    self.additions = drawData.len;
+    self.offset = actual_offset;
+}
+
 pub fn clear(self: *MeshData) void {
     self.offset = 0;
     self.clearDraws();

@@ -162,7 +162,7 @@ fn screenCameraSystem(
         );
     }
     if (game.state.ui.sub_chunks) {
-        thread.gfx.send(.{ .game_cull_sub_chunk = .{
+        thread.gfx.trySend(.{ .game_cull_sub_chunk = .{
             .camera_position = cull_position,
             .view = cull_look_at,
             .perspective = perspective,

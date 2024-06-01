@@ -1,4 +1,3 @@
-count: u32 = 0,
 allocator: std.mem.Allocator = undefined,
 cmd_buffer: *GfxCommandBuffer,
 exit: bool = false,
@@ -16,7 +15,6 @@ pub var gfx_result_buffer: *GfxResultBuffer = undefined;
 
 pub const GfxCommandBuffer = struct {
     pub const gfxCommandType = enum(u8) {
-        count,
         exit,
         settings_sub_chunk,
         game_sub_chunk,
@@ -34,7 +32,6 @@ pub const GfxCommandBuffer = struct {
     };
 
     pub const gfxCommand = union(gfxCommandType) {
-        count: void,
         exit: void,
         settings_sub_chunk: *chunk.sub_chunk,
         game_sub_chunk: *chunk.sub_chunk,
@@ -67,6 +64,12 @@ pub const GfxCommandBuffer = struct {
         self.cmds.insert(self.allocator, 0, cmd) catch @panic("OOM");
     }
 
+    pub fn trySend(self: *GfxCommandBuffer, cmd: gfxCommand) void {
+        if (!self.mutex.tryLock()) return;
+        defer self.mutex.unlock();
+        self.cmds.insert(self.allocator, 0, cmd) catch @panic("OOM");
+    }
+
     pub fn read(self: *GfxCommandBuffer, handler: anytype) void {
         if (!self.mutex.tryLock()) return;
         defer self.mutex.unlock();
@@ -83,12 +86,14 @@ pub const GfxResultBuffer = struct {
         settings_sub_chunk_draws,
         game_sub_chunk_draws,
         new_ssbo,
+        game_sub_chunks_ready,
     };
 
     pub const gfxResult = union(gfxResultType) {
         settings_sub_chunk_draws: gfx.GfxSubChunkDraws,
         game_sub_chunk_draws: gfx.GfxSubChunkDraws,
         new_ssbo: struct { ssbo: u32, binding_point: u32 },
+        game_sub_chunks_ready: void,
     };
     mutex: std.Thread.Mutex = .{},
     allocator: std.mem.Allocator,
@@ -121,13 +126,19 @@ pub const GfxResultBuffer = struct {
     }
 
     pub fn read(self: *GfxResultBuffer, handler: anytype) void {
-        if (!self.mutex.tryLock()) return;
+        if (config.use_tracy) ztracy.Message("GfxResultBuffer: read");
+        if (!self.mutex.tryLock()) {
+            if (config.use_tracy) ztracy.Message("GfxResultBuffer: tried lock");
+            return;
+        }
+        if (config.use_tracy) ztracy.Message("GfxResultBuffer: reading");
         defer self.mutex.unlock();
         while (true) {
             const cmd = self.cmds.popOrNull();
             if (cmd == null) break;
             @call(.auto, handler, .{cmd.?});
         }
+        if (config.use_tracy) ztracy.Message("GfxResultBuffer: done reading");
     }
 };
 
@@ -165,10 +176,12 @@ pub fn deinit() void {
 pub fn send(cmd: GfxCommandBuffer.gfxCommand) void {
     gfx_cmd_bufer.send(cmd);
 }
+pub fn trySend(cmd: GfxCommandBuffer.gfxCommand) void {
+    gfx_cmd_bufer.trySend(cmd);
+}
 
 fn start(args: Args) void {
     if (config.use_tracy) {
-        const ztracy = @import("ztracy");
         ztracy.SetThreadName("GfxThread");
     }
     glfw.makeContextCurrent(args.gl_ctx);
@@ -213,9 +226,6 @@ fn start(args: Args) void {
 
 fn handle(cmd: GfxCommandBuffer.gfxCommand) void {
     switch (cmd) {
-        .count => {
-            ctx.count += 1;
-        },
         .exit => {
             ctx.exit = true;
         },
@@ -242,6 +252,7 @@ fn handle(cmd: GfxCommandBuffer.gfxCommand) void {
                 .first = ctx.game_sub_chunks_sorter.opaque_draw_first.toOwnedSlice(ctx.allocator) catch @panic("OOM"),
                 .count = ctx.game_sub_chunks_sorter.opaque_draw_count.toOwnedSlice(ctx.allocator) catch @panic("OOM"),
             } });
+            gfx_result_buffer.send(.{ .game_sub_chunks_ready = {} });
         },
         .settings_clear_sub_chunk => ctx.demo_sub_chunks_sorter.clear(),
         .game_clear_sub_chunk => ctx.game_sub_chunks_sorter.clear(),
@@ -260,29 +271,26 @@ fn handle(cmd: GfxCommandBuffer.gfxCommand) void {
 }
 
 fn run(self: *Ctx) void {
-    if (config.use_tracy) {
-        const ztracy = @import("ztracy");
-        const tracy_zone = ztracy.ZoneNC(@src(), "GfxThreadRun", 0x0F_CF_82_f0);
-        defer tracy_zone.End();
-        self._run();
-        return;
-    }
-    self._run();
-}
-
-fn _run(self: *Ctx) void {
     errdefer self.end();
     while (!self.exit) {
-        glfw.makeContextCurrent(ctx.gl_ctx);
-        std.time.sleep(std.time.ns_per_ms * 1);
-        self.cmd_buffer.read(handle);
-        std.Thread.yield() catch {};
+        if (config.use_tracy) {
+            const tracy_zone = ztracy.ZoneNC(@src(), "GfxThreadRun", 0x0F_CF_82_f0);
+            defer tracy_zone.End();
+            self.loop();
+            continue;
+        }
+        self.loop();
     }
     ctx.end();
 }
 
+fn loop(self: *Ctx) void {
+    glfw.makeContextCurrent(ctx.gl_ctx);
+    self.cmd_buffer.read(handle);
+}
+
 fn end(self: *Ctx) void {
-    std.debug.print("exiting gfx thread, final count: {d}", .{self.count});
+    std.debug.print("exiting gfx thread", .{});
     self.demo_sub_chunks_sorter.deinit();
     self.game_sub_chunks_sorter.deinit();
     self.allocator.destroy(self);
@@ -291,6 +299,7 @@ fn end(self: *Ctx) void {
 const std = @import("std");
 const zm = @import("zmath");
 const glfw = @import("zglfw");
+const ztracy = @import("ztracy");
 const config = @import("config");
 const zopengl = @import("zopengl");
 const gfx = @import("../gfx/gfx.zig");

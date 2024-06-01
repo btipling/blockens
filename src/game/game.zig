@@ -206,7 +206,7 @@ pub const Game = struct {
         try state.initInternals();
         errdefer state.deinit();
 
-        thread.gfx.init(allocator, gfx_gl_ctx);
+        thread.gfx.init(state.ts_allocator, gfx_gl_ctx);
         errdefer thread.gfx.deinit();
 
         blecs.init();
@@ -265,7 +265,6 @@ pub const Game = struct {
                     // Dedicated gfx OpenGL ctx thread
                     const handle_i_zone = ztracy.ZoneN(@src(), "GfxThreadHandler");
                     defer handle_i_zone.End();
-                    thread.gfx.send(.count);
                     gfx.handler.handle_incoming();
                 }
                 {
@@ -309,7 +308,6 @@ pub const Game = struct {
                 }
                 {
                     // Dedicated gfx OpenGL ctx thread
-                    thread.gfx.send(.count);
                     gfx.handler.handle_incoming();
                 }
                 {

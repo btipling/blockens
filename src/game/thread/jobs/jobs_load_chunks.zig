@@ -48,17 +48,17 @@ pub const LoadChunkJob = struct {
             self.finishJob(false, wp_t, wp_b, .{}, .{});
             return;
         };
-        const top_chunk_small: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-        errdefer game.state.allocator.free(chunkDataTop.voxels);
-        const bot_chunk_small: []u32 = game.state.allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
-        errdefer game.state.allocator.free(chunkDataBot.voxels);
+        const top_chunk_small: []u32 = game.state.ts_allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+        errdefer game.state.ts_allocator.free(chunkDataTop.voxels);
+        const bot_chunk_small: []u32 = game.state.ts_allocator.alloc(u32, chunk.chunkSize) catch @panic("OOM");
+        errdefer game.state.ts_allocator.free(chunkDataBot.voxels);
         {
-            const top_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
-            defer game.state.allocator.free(top_chunk);
-            const bottom_chunk: []u64 = game.state.allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
-            defer game.state.allocator.free(bottom_chunk);
+            const top_chunk: []u64 = game.state.ts_allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.ts_allocator.free(top_chunk);
+            const bottom_chunk: []u64 = game.state.ts_allocator.alloc(u64, chunk.chunkSize) catch @panic("OOM");
+            defer game.state.ts_allocator.free(bottom_chunk);
             data.chunk_file.loadChunkData(
-                game.state.allocator,
+                game.state.ts_allocator,
                 w_id,
                 x,
                 z,

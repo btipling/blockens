@@ -72,6 +72,11 @@ fn build(self: *sorter) void {
     std.debug.print("initing with {d} num indices\n", .{self.num_indices});
 
     var mesh_data: [chunk.sub_chunk.sub_chunk_size * 36]gfx.gl.mesh_buffer.meshVertexData = undefined;
+
+    var mesh_vertex_data = std.ArrayList(gfx.gl.mesh_buffer.meshVertexData).init(self.allocator);
+    defer mesh_vertex_data.deinit();
+    var draw_data = std.ArrayList(gfx.gl.draw_buffer.drawData).init(self.allocator);
+    defer draw_data.deinit();
     sci = 0;
     while (sci < self.all_sub_chunks.items.len) : (sci += 1) {
         const sc: *chunk.sub_chunk = self.all_sub_chunks.items[sci];
@@ -121,11 +126,17 @@ fn build(self: *sorter) void {
             }
             mesh_data[ii] = md;
         }
-        const ad = self.mesh_buffer_builder.addMeshData(mesh_data[0..res.positions.len], sc.translation);
-        sc.buf_index = ad.index;
-        sc.buf_size = ad.size;
-        sc.buf_capacity = ad.capacity;
+        if (config.use_tracy) ztracy.Message("sub_chunk_sorter: addMeshData");
+        mesh_vertex_data.appendSlice(mesh_data[0..res.positions.len]) catch @panic("OOM");
+        draw_data.append(.{
+            .draw_pointer = [4]u32{ @intCast(sci), 0, 0, 0 },
+            .translation = sc.translation,
+        }) catch @panic("OOM");
+        // sc.buf_index = ad.index;
+        // sc.buf_size = ad.size;
+        // sc.buf_capacity = ad.capacity;
     }
+    self.mesh_buffer_builder.addMeshDataBulk(mesh_vertex_data.items, draw_data.items);
     std.debug.print("total indicies: {d}\n", .{self.num_indices});
     if (config.use_tracy) ztracy.Message("sub_chunk_sorter: done building");
 }
