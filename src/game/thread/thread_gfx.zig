@@ -10,12 +10,12 @@ var gfx_thread: std.Thread = undefined;
 var gfx_cmd_bufer: *GfxCommandBuffer = undefined;
 
 pub const GfxCommandBuffer = struct {
-    pub const gfxCommand = enum(u8) {
+    pub const gfxCommandType = enum(u8) {
         count,
         exit,
     };
 
-    pub const gfxCommandData = union(gfxCommand) {
+    pub const gfxCommand = union(gfxCommandType) {
         count: void,
         exit: void,
     };
