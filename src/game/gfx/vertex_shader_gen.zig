@@ -134,7 +134,6 @@ pub const VertexShaderGen = struct {
             if (!r.cfg.is_sub_chunks) return;
             r.a("struct bl_mesh_data {\n");
             r.a("    uvec4 bl_attr_data;\n");
-            r.a("    vec4 bl_attr_old_tr;\n");
             r.a("};\n\n");
             r.a("struct bl_draw_data {\n");
             r.a("    uvec4 bl_draw_pointer;\n");
@@ -174,12 +173,8 @@ pub const VertexShaderGen = struct {
 
         fn gen_unpack_attribute_block(r: *runner) !void {
             if (!r.cfg.is_sub_chunks) return;
-            // draw data - per mesh
-            r.a("    bl_draw_data bl_draw_dd = bl_draws[gl_DrawID];\n");
-            r.a("    vec4 bl_attr_tr = bl_draw_dd.bl_attr_tr;\n");
             // mesh data - per vertex data
             r.a("    bl_mesh_data bl_attr_md = bl_meshes[gl_VertexID];\n");
-            r.a("    vec4 bl_attr_old_tr = bl_attr_md.bl_attr_old_tr;\n");
             r.a("    uvec4 bl_attr_data = bl_attr_md.bl_attr_data;\n");
             r.a("    uint bl_pk_n1 = (bl_attr_data[0] >> 19) & 3;\n");
             r.a("    uint bl_pk_n2 = (bl_attr_data[0] >> 17) & 3;\n");
@@ -189,11 +184,9 @@ pub const VertexShaderGen = struct {
             r.a("    uint bl_pk_p_z = bl_attr_data[0] & 31;\n");
             r.a("    vec3 position = vec3(float(bl_pk_p_x) + 0.5, float(bl_pk_p_y) + 0.5, float(bl_pk_p_z) + 0.5);\n");
             r.a("    vec3 normal = vec3(float(bl_pk_n1) - 1, float(bl_pk_n2) - 1, float(bl_pk_n3) - 1);\n");
-            r.a("bl_debug_draw_id = gl_DrawID;\n");
-            r.a("bl_debug_sci_id = bl_attr_data[3];\n");
-            r.a("bl_debug_addition = bl_draw_dd.bl_draw_pointer[0];\n");
-            r.a("bl_debug_old_ttr = bl_attr_old_tr;\n");
-            r.a("bl_debug_new_ttr = bl_attr_tr;\n");
+            // draw data - per mesh
+            r.a("    bl_draw_data bl_draw_dd = bl_draws[bl_attr_data[3]];\n");
+            r.a("    vec4 bl_attr_tr = bl_draw_dd.bl_attr_tr;\n");
         }
 
         fn gen_out_vars(r: *runner) !void {
@@ -220,13 +213,6 @@ pub const VertexShaderGen = struct {
                 r.a("flat out float bl_block_index;\n");
                 r.a("flat out uint bl_block_ambient;\n");
                 r.a("flat out uint bl_block_lighting;\n");
-            }
-            if (r.cfg.is_sub_chunks) {
-                r.a("out uint bl_debug_draw_id;\n");
-                r.a("out uint bl_debug_sci_id;\n");
-                r.a("out uint bl_debug_addition;\n");
-                r.a("out vec4 bl_debug_old_ttr;\n");
-                r.a("out vec4 bl_debug_new_ttr;\n");
             }
         }
 

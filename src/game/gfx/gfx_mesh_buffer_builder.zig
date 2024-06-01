@@ -37,14 +37,25 @@ pub const allocData = struct {
 
 const max_alloc_offset = chunk.sub_chunk.sub_chunk_size;
 
-pub fn addMeshData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData) allocData {
+pub fn addMeshData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData, translation: @Vector(4, f32)) allocData {
     const index = self.offset;
     const actual_offset = gl.mesh_buffer.addData(self.buffer_ssbo, self.offset, data);
 
     const obj_size = @sizeOf(gl.mesh_buffer.meshVertexData);
     const actual_consumed_space = obj_size * data.len;
-    // This math has to be correct:
-    // std.debug.assert(actual_offset == self.offset + actual_consumed_space);
+
+    var pd: [1]gl.draw_buffer.drawData = .{
+        .{
+            .draw_pointer = [4]u32{ @intCast(self.additions), 0, 0, 0 },
+            .translation = translation,
+        },
+    };
+    gl.draw_buffer.addDrawData(
+        self.draw_ssbo,
+        self.additions * @sizeOf(gl.draw_buffer.drawData),
+        pd[0..],
+    );
+    self.additions += 1;
 
     // Allocate some extra space to allow for some edits without reallocating.
     const extra_space = obj_size * 100;
@@ -61,20 +72,6 @@ pub fn addMeshData(self: *MeshData, data: []gl.mesh_buffer.meshVertexData) alloc
     };
 
     return ad;
-}
-pub fn addDrawData(self: *MeshData, sci: u32, translation: @Vector(4, f32)) void {
-    var pd: [1]gl.draw_buffer.drawData = .{
-        .{
-            .draw_pointer = [4]u32{ @intCast(sci), 0, 0, 0 },
-            .translation = translation,
-        },
-    };
-    gl.draw_buffer.addDrawData(
-        self.draw_ssbo,
-        self.additions * @sizeOf(gl.draw_buffer.drawData),
-        pd[0..],
-    );
-    self.additions += 1;
 }
 
 pub fn clear(self: *MeshData) void {

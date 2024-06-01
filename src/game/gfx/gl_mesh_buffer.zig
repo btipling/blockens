@@ -1,6 +1,5 @@
 pub const meshVertexData = struct {
     attr_data: [4]u32 = undefined,
-    attr_translation: [4]f32 = undefined,
 };
 
 // About 200MB preallocated.

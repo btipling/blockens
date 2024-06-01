@@ -119,12 +119,9 @@ fn build(self: *sorter) void {
                 const draw_id: u32 = @intCast(sci);
                 md.attr_data = .{ dp, res.block_data[ii], block_index, draw_id };
             }
-            {
-                md.attr_translation = sc.translation;
-            }
             mesh_data[ii] = md;
         }
-        const ad = self.mesh_buffer_builder.addMeshData(mesh_data[0..res.positions.len]);
+        const ad = self.mesh_buffer_builder.addMeshData(mesh_data[0..res.positions.len], sc.translation);
         sc.buf_index = ad.index;
         sc.buf_size = ad.size;
         sc.buf_capacity = ad.capacity;
@@ -303,7 +300,6 @@ fn doSort(self: *sorter, loc: @Vector(4, f32)) void {
         self.opaque_draw_first.append(self.allocator, @intCast(index_offset)) catch @panic("OOM");
         self.opaque_draw_count.append(self.allocator, @intCast(num_indices)) catch @panic("OOM");
 
-        self.mesh_buffer_builder.addDrawData(@intCast(sc.sc_index), sc.translation);
         index_offset += @intCast(num_indices);
         i += 1;
     }
