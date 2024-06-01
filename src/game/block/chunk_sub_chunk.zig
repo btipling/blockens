@@ -9,6 +9,7 @@ buf_capacity: usize = 0,
 
 translation: @Vector(4, f32) = .{ 0, 0, 0, 0 },
 sc_index: usize = 0,
+bounding_box: [8]@Vector(4, f32),
 
 allocator: std.mem.Allocator,
 
@@ -26,10 +27,74 @@ pub fn init(
     csc: chunker,
 ) !*SubChunk {
     const c: *SubChunk = try allocator.create(SubChunk);
+
+    const p = wp.vecFromWorldPosition();
+    const scp = sub_pos;
+    const loc: @Vector(4, f32) = .{
+        p[0] * chunk.chunkDim + scp[0] * chunk.sub_chunk.sub_chunk_dim,
+        p[1] * chunk.chunkDim + scp[1] * chunk.sub_chunk.sub_chunk_dim,
+        p[2] * chunk.chunkDim + scp[2] * chunk.sub_chunk.sub_chunk_dim,
+        1,
+    };
+    const front_bot_l: @Vector(4, f32) = loc;
+    const front_bot_r: @Vector(4, f32) = .{
+        loc[0] + chunk.sub_chunk.sub_chunk_dim,
+        loc[1],
+        loc[2],
+        loc[3],
+    };
+    const front_top_l: @Vector(4, f32) = .{
+        loc[0],
+        loc[1] + chunk.sub_chunk.sub_chunk_dim,
+        loc[2],
+        loc[3],
+    };
+    const front_top_r: @Vector(4, f32) = .{
+        loc[0] + chunk.sub_chunk.sub_chunk_dim,
+        loc[1] + chunk.sub_chunk.sub_chunk_dim,
+        loc[2],
+        loc[3],
+    };
+    const back_bot_l: @Vector(4, f32) = .{
+        loc[0],
+        loc[1],
+        loc[2] + chunk.sub_chunk.sub_chunk_dim,
+        loc[3],
+    };
+    const back_bot_r: @Vector(4, f32) = .{
+        loc[0] + chunk.sub_chunk.sub_chunk_dim,
+        loc[1],
+        loc[2] + chunk.sub_chunk.sub_chunk_dim,
+        loc[3],
+    };
+    const back_top_l: @Vector(4, f32) = .{
+        loc[0],
+        loc[1] + chunk.sub_chunk.sub_chunk_dim,
+        loc[2] + chunk.sub_chunk.sub_chunk_dim,
+        loc[3],
+    };
+    const back_top_r: @Vector(4, f32) = .{
+        loc[0] + chunk.sub_chunk.sub_chunk_dim,
+        loc[1] + chunk.sub_chunk.sub_chunk_dim,
+        loc[2] + chunk.sub_chunk.sub_chunk_dim,
+        loc[3],
+    };
+    const bounding_box: [8]@Vector(4, f32) = .{
+        front_bot_l,
+        front_bot_r,
+        front_top_l,
+        front_top_r,
+        back_bot_l,
+        back_bot_r,
+        back_top_l,
+        back_top_r,
+    };
+
     c.* = SubChunk{
         .wp = wp,
         .sub_pos = sub_pos,
         .chunker = csc,
+        .bounding_box = bounding_box,
         .allocator = allocator,
     };
     return c;

@@ -1,8 +1,8 @@
 index_offset: usize = 0,
 allocator: std.mem.Allocator,
-all_sub_chunks: std.ArrayListUnmanaged(*chunk.sub_chunk) = .{},
+all_sub_chunks: [10_000]*chunk.sub_chunk = undefined,
+num_sub_chunks: usize = 0,
 num_indices: usize = 0,
-mutex: std.Thread.Mutex = .{},
 
 opaque_draw_first: std.ArrayListUnmanaged(c_int) = .{},
 opaque_draw_count: std.ArrayListUnmanaged(c_int) = .{},
@@ -24,27 +24,27 @@ pub fn init(allocator: std.mem.Allocator, mbb: gfx.mesh_buffer_builder) *sorter 
 }
 
 pub fn deinit(self: *sorter) void {
-    for (self.all_sub_chunks.items) |sc| {
-        sc.deinit();
+    var sci: usize = 0;
+    while (sci < self.num_sub_chunks) : (sci += 1) {
+        self.all_sub_chunks[sci].deinit();
     }
-    self.all_sub_chunks.deinit(self.allocator);
     self.opaque_draw_first.deinit(self.allocator);
     self.opaque_draw_count.deinit(self.allocator);
     self.allocator.destroy(self);
 }
 
 pub fn clear(self: *sorter) void {
-    for (self.all_sub_chunks.items) |sc| {
-        sc.deinit();
+    var sci: usize = 0;
+    while (sci < self.num_sub_chunks) : (sci += 1) {
+        self.all_sub_chunks[sci].deinit();
     }
-    self.all_sub_chunks.clearRetainingCapacity();
     self.mesh_buffer_builder.clear();
+    self.num_sub_chunks = 0;
 }
 
 pub fn addSubChunk(self: *sorter, sc: *chunk.sub_chunk) void {
-    self.mutex.lock();
-    defer self.mutex.unlock();
-    self.all_sub_chunks.append(self.allocator, sc) catch @panic("OOM");
+    self.all_sub_chunks[self.num_sub_chunks] = sc;
+    self.num_sub_chunks += 1;
 }
 
 pub fn buildMeshData(self: *sorter) void {
@@ -59,12 +59,10 @@ pub fn buildMeshData(self: *sorter) void {
 
 fn build(self: *sorter) void {
     if (config.use_tracy) ztracy.Message("sub_chunk_sorter: starting build");
-    self.mutex.lock();
-    defer self.mutex.unlock();
     var sci: usize = 0;
     self.num_indices = 0;
-    while (sci < self.all_sub_chunks.items.len) : (sci += 1) {
-        const sc: *chunk.sub_chunk = self.all_sub_chunks.items[sci];
+    while (sci < self.num_sub_chunks) : (sci += 1) {
+        const sc: *chunk.sub_chunk = self.all_sub_chunks[sci];
         self.num_indices += sc.chunker.total_indices_count;
     }
 
@@ -78,8 +76,8 @@ fn build(self: *sorter) void {
     var draw_data = std.ArrayList(gfx.gl.draw_buffer.drawData).init(self.allocator);
     defer draw_data.deinit();
     sci = 0;
-    while (sci < self.all_sub_chunks.items.len) : (sci += 1) {
-        const sc: *chunk.sub_chunk = self.all_sub_chunks.items[sci];
+    while (sci < self.num_sub_chunks) : (sci += 1) {
+        const sc: *chunk.sub_chunk = self.all_sub_chunks[sci];
         if (sc.chunker.total_indices_count == 0) continue;
         const cp = sc.wp.getWorldLocation();
         var loc: @Vector(4, f32) = undefined;
@@ -162,9 +160,6 @@ pub fn cullFrustum(self: *sorter) void {
 }
 
 pub fn setCamera(self: *sorter, camera_position: @Vector(4, f32), view: zm.Mat, perspective: zm.Mat) bool {
-    if (!self.mutex.tryLock()) return false;
-    defer self.mutex.unlock();
-
     self.camera_position = camera_position;
     self.view = view;
     self.perspective = perspective;
@@ -173,113 +168,54 @@ pub fn setCamera(self: *sorter, camera_position: @Vector(4, f32), view: zm.Mat, 
 
 fn doCullling(self: *sorter, camera_position: @Vector(4, f32), view: zm.Mat, perspective: zm.Mat) void {
     if (config.use_tracy) ztracy.Message("sub_chunk_sorter: start cull");
-    var datas: std.ArrayListUnmanaged(*chunk.sub_chunk) = .{};
-    {
-        self.mutex.lock();
-        defer self.mutex.unlock();
-        datas = self.all_sub_chunks.clone(self.allocator) catch @panic("OOM");
-    }
-    defer datas.deinit(self.allocator);
 
-    const count = datas.items.len;
+    const count = self.num_sub_chunks;
     var sci: usize = 0;
     while (sci < count) : (sci += 1) {
-        const sc: *chunk.sub_chunk = datas.items[sci];
-        var remove = true;
-
-        const p = sc.wp.vecFromWorldPosition();
-        const scp = sc.sub_pos;
-        const loc: @Vector(4, f32) = .{
-            p[0] * chunk.chunkDim + scp[0] * chunk.sub_chunk.sub_chunk_dim,
-            p[1] * chunk.chunkDim + scp[1] * chunk.sub_chunk.sub_chunk_dim,
-            p[2] * chunk.chunkDim + scp[2] * chunk.sub_chunk.sub_chunk_dim,
-            1,
-        };
-        const front_bot_l: @Vector(4, f32) = loc;
-        const front_bot_r: @Vector(4, f32) = .{
-            loc[0] + chunk.sub_chunk.sub_chunk_dim,
-            loc[1],
-            loc[2],
-            loc[3],
-        };
-        const front_top_l: @Vector(4, f32) = .{
-            loc[0],
-            loc[1] + chunk.sub_chunk.sub_chunk_dim,
-            loc[2],
-            loc[3],
-        };
-        const front_top_r: @Vector(4, f32) = .{
-            loc[0] + chunk.sub_chunk.sub_chunk_dim,
-            loc[1] + chunk.sub_chunk.sub_chunk_dim,
-            loc[2],
-            loc[3],
-        };
-        const back_bot_l: @Vector(4, f32) = .{
-            loc[0],
-            loc[1],
-            loc[2] + chunk.sub_chunk.sub_chunk_dim,
-            loc[3],
-        };
-        const back_bot_r: @Vector(4, f32) = .{
-            loc[0] + chunk.sub_chunk.sub_chunk_dim,
-            loc[1],
-            loc[2] + chunk.sub_chunk.sub_chunk_dim,
-            loc[3],
-        };
-        const back_top_l: @Vector(4, f32) = .{
-            loc[0],
-            loc[1] + chunk.sub_chunk.sub_chunk_dim,
-            loc[2] + chunk.sub_chunk.sub_chunk_dim,
-            loc[3],
-        };
-        const back_top_r: @Vector(4, f32) = .{
-            loc[0] + chunk.sub_chunk.sub_chunk_dim,
-            loc[1] + chunk.sub_chunk.sub_chunk_dim,
-            loc[2] + chunk.sub_chunk.sub_chunk_dim,
-            loc[3],
-        };
-        const to_check: [8]@Vector(4, f32) = .{
-            front_bot_l,
-            front_bot_r,
-            front_top_l,
-            front_top_r,
-            back_bot_l,
-            back_bot_r,
-            back_top_l,
-            back_top_r,
-        };
-        for (to_check) |coordinates| {
-            const distance_from_camera = euclideanDistance(camera_position, coordinates);
-            if (distance_from_camera <= chunk.sub_chunk.sub_chunk_dim) {
-                remove = false;
-            } else if (distance_from_camera > game_config.far) {
-                remove = true;
-            } else {
-                const ca_s: @Vector(4, f32) = zm.mul(coordinates, view);
-                const clip_space: @Vector(4, f32) = zm.mul(ca_s, perspective);
-                if (-clip_space[3] <= clip_space[0] and clip_space[0] <= clip_space[3] and
-                    -clip_space[3] <= clip_space[1] and clip_space[1] <= clip_space[3] and
-                    -clip_space[3] <= clip_space[2] and clip_space[2] <= clip_space[3])
-                {
-                    remove = false;
-                }
-            }
+        if (config.use_tracy) {
+            const tracy_zone = ztracy.ZoneNC(@src(), "SubChunkSorterCullSubChunk", 0x00_aa_ff_f0);
+            defer tracy_zone.End();
+            self.cullSubChunk(camera_position, view, perspective, sci);
+        } else {
+            self.cullSubChunk(camera_position, view, perspective, sci);
         }
-        datas.items[sci].visible = !remove;
     }
 
-    {
-        self.mutex.lock();
-        defer self.mutex.unlock();
-        self.all_sub_chunks.replaceRange(self.allocator, 0, datas.items.len, datas.items) catch @panic("OOM");
-        if (config.use_tracy) ztracy.Message("sub_chunk_sorter: one culling");
-        self.doSort(.{ 0, 0, 0, 0 });
+    if (config.use_tracy) ztracy.Message("sub_chunk_sorter: one culling");
+    self.doSort(.{ 0, 0, 0, 0 });
+}
+
+fn cullSubChunk(
+    self: *sorter,
+    camera_position: @Vector(4, f32),
+    view: zm.Mat,
+    perspective: zm.Mat,
+    sci: usize,
+) void {
+    const sc: *chunk.sub_chunk = self.all_sub_chunks[sci];
+    var remove = true;
+    for (sc.bounding_box) |coordinates| {
+        const distance_from_camera = euclideanDistance(camera_position, coordinates);
+        if (distance_from_camera <= chunk.sub_chunk.sub_chunk_dim) {
+            remove = false;
+        } else if (distance_from_camera > game_config.far) {
+            remove = true;
+        } else {
+            const ca_s: @Vector(4, f32) = zm.mul(coordinates, view);
+            const clip_space: @Vector(4, f32) = zm.mul(ca_s, perspective);
+            if (!(-clip_space[3] <= clip_space[0])) continue;
+            if (!(clip_space[0] <= clip_space[3])) continue;
+            if (!(-clip_space[3] <= clip_space[1])) continue;
+            if (!(clip_space[1] <= clip_space[3])) continue;
+            if (!(-clip_space[3] <= clip_space[2])) continue;
+            if (!(clip_space[2] <= clip_space[3])) continue;
+            remove = false;
+        }
     }
+    self.all_sub_chunks[sci].visible = !remove;
 }
 
 pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
-    self.mutex.lock();
-    defer self.mutex.unlock();
     if (config.use_tracy) {
         const tracy_zone = ztracy.ZoneNC(@src(), "SubChunkSorterSort", 0x00_aa_ff_f0);
         defer tracy_zone.End();
@@ -295,13 +231,13 @@ fn doSort(self: *sorter, loc: @Vector(4, f32)) void {
     self.opaque_draw_first.clearRetainingCapacity();
     self.opaque_draw_count.clearRetainingCapacity();
     // TODO actually track index per sub chunk.
-    const count = self.all_sub_chunks.items.len;
+    const count = self.num_sub_chunks;
     var index_offset: usize = 0;
     var sci: usize = 0;
     var i: usize = 0;
     self.mesh_buffer_builder.clearDraws();
     while (sci < count) : (sci += 1) {
-        const sc: *chunk.sub_chunk = self.all_sub_chunks.items[sci];
+        const sc: *chunk.sub_chunk = self.all_sub_chunks[sci];
         const num_indices = sc.chunker.total_indices_count;
         if (num_indices == 0) continue;
         if (!sc.visible) {
