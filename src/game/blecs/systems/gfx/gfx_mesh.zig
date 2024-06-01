@@ -109,16 +109,6 @@ fn meshSystem(world: *ecs.world_t, entity: ecs.entity_t, screen: *const componen
             builder.usage = gl.STATIC_DRAW;
             _c.attr_builder = null;
         }
-    } else if (er.is_sub_chunks) {
-        var sorter: *chunk.sub_chunk.sorter = undefined;
-        if (parent == screen.gameDataEntity) {
-            sorter = game.state.gfx.game_sub_chunks_sorter;
-        }
-        if (parent == screen.settingDataEntity) {
-            sorter = game.state.gfx.demo_sub_chunks_sorter;
-        }
-        game.state.ui.gfx_triangle_count = @divFloor(sorter.num_indices, 3);
-        game.state.ui.gfx_meshes_drawn = sorter.all_sub_chunks.items.len;
     } else {
         ebo = gfx.gl.Gl.initEBO(er.mesh_data.indices[0..]) catch @panic("nope");
     }

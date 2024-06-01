@@ -242,6 +242,9 @@ pub const Game = struct {
                     try thread.handler.handle_incoming();
                 }
                 {
+                    thread.gfx.send(.count);
+                }
+                {
                     const ecs_progress_zone = ztracy.ZoneN(@src(), "ECSProgress");
                     defer ecs_progress_zone.End();
                     _ = blecs.ecs.progress(state.world, state.input.delta_time);

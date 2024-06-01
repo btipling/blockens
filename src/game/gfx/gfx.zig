@@ -3,15 +3,6 @@ var gfx: *Gfx = undefined;
 pub fn init(allocator: std.mem.Allocator) *Gfx {
     mesh.init();
 
-    var gbb: mesh_buffer_builder = .{
-        .mesh_binding_point = constants.GameMeshDataBindingPoint,
-        .draw_binding_point = constants.GameDrawBindingPoint,
-        .with_allocation = true,
-    };
-    var sbb: mesh_buffer_builder = .{
-        .mesh_binding_point = constants.SettingsMeshDataBindingPoint,
-        .draw_binding_point = constants.SettingsDrawBindingPoint,
-    };
     gfx = allocator.create(Gfx) catch @panic("OOM");
     gfx.* = .{
         .ubos = std.AutoHashMap(u32, u32).init(allocator),
@@ -22,11 +13,6 @@ pub fn init(allocator: std.mem.Allocator) *Gfx {
         .lighting_ssbo = gl.lighting_buffer.initLightingShaderStorageBufferObject(constants.LightingBindingPoint),
         .allocator = allocator,
     };
-
-    gbb.init(&gfx.ssbos);
-    sbb.init(&gfx.ssbos);
-    gfx.game_sub_chunks_sorter = chunk.sub_chunk.sorter.init(allocator, gbb);
-    gfx.demo_sub_chunks_sorter = chunk.sub_chunk.sorter.init(allocator, sbb);
 
     return gfx;
 }
@@ -56,6 +42,12 @@ pub const ElementsRendererConfig = struct {
     is_sub_chunks: bool = false,
 };
 
+pub const GfxSubChunkDraws = struct {
+    num_indices: usize,
+    first: []c_int,
+    count: []c_int,
+};
+
 pub const Gfx = struct {
     ubos: std.AutoHashMap(u32, u32) = undefined,
     ssbos: std.AutoHashMap(u32, u32) = undefined,
@@ -64,8 +56,8 @@ pub const Gfx = struct {
     animation_data: AnimationData = undefined,
     lighting_ssbo: u32 = 0,
     ambient_lighting: f32 = 1,
-    demo_sub_chunks_sorter: *chunk.sub_chunk.sorter = undefined,
-    game_sub_chunks_sorter: *chunk.sub_chunk.sorter = undefined,
+    settings_sub_chunk_draws: ?GfxSubChunkDraws = null,
+    game_sub_chunk_draws: ?GfxSubChunkDraws = null,
     allocator: std.mem.Allocator,
 
     pub fn update_lighting(self: *Gfx) void {
@@ -82,11 +74,11 @@ pub const Gfx = struct {
     }
 
     fn deinit(self: *Gfx) void {
+        self.deinitSettingsDraws();
+        self.deinitGameDraws();
         self.animation_data.deinit(self.allocator);
         self.ubos.deinit();
         self.ssbos.deinit();
-        self.demo_sub_chunks_sorter.deinit();
-        self.game_sub_chunks_sorter.deinit();
         var cfgs = self.renderConfigs.valueIterator();
         while (cfgs.next()) |rcfg| {
             self.allocator.destroy(rcfg);
@@ -101,16 +93,30 @@ pub const Gfx = struct {
         self.allocator.destroy(self);
     }
 
+    pub fn deinitSettingsDraws(self: *Gfx) void {
+        if (self.settings_sub_chunk_draws) |d| {
+            self.allocator.free(d.first);
+            self.allocator.free(d.count);
+        }
+    }
+
+    pub fn deinitGameDraws(self: *Gfx) void {
+        if (self.game_sub_chunk_draws) |d| {
+            self.allocator.free(d.first);
+            self.allocator.free(d.count);
+        }
+    }
+
     pub fn addAnimation(self: *Gfx, key: AnimationData.AnimationRefKey, a: *Animation) void {
         self.animation_data.add(key, a, &self.ssbos);
     }
 
-    pub fn resetDemoSorter(self: *Gfx) void {
-        self.demo_sub_chunks_sorter.clear();
+    pub fn resetDemoSorter(_: *Gfx) void {
+        thread.gfx.send(.{ .settings_clear_sub_chunk = {} });
     }
 
-    pub fn resetGameSorter(self: *Gfx) void {
-        self.game_sub_chunks_sorter.clear();
+    pub fn resetGameSorter(_: *Gfx) void {
+        thread.gfx.send(.{ .game_clear_sub_chunk = {} });
     }
 };
 
@@ -119,6 +125,7 @@ const zm = @import("zmath");
 const blecs = @import("../blecs/blecs.zig");
 const data = @import("../data/data.zig");
 const mob = @import("../mob.zig");
+const thread = @import("../thread/thread.zig");
 const block = @import("../block/block.zig");
 const chunk = block.chunk;
 
