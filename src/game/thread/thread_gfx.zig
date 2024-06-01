@@ -63,7 +63,7 @@ pub const GfxCommandBuffer = struct {
     pub fn send(self: *GfxCommandBuffer, cmd: gfxCommand) void {
         self.mutex.lock();
         defer self.mutex.unlock();
-        self.cmds.append(self.allocator, cmd) catch @panic("OOM");
+        self.cmds.insert(self.allocator, 0, cmd) catch @panic("OOM");
     }
 
     pub fn read(self: *GfxCommandBuffer, handler: anytype) void {
@@ -185,11 +185,9 @@ fn handle(cmd: GfxCommandBuffer.gfxCommand) void {
             ctx.exit = true;
         },
         .settings_sub_chunk => |sc| {
-            std.debug.print("gfx got a settings sub chunk! {}\n", .{sc.sub_pos});
             ctx.demo_sub_chunks_sorter.addSubChunk(sc);
         },
         .game_sub_chunk => |sc| {
-            std.debug.print("gfx got a game sub chunk! {}\n", .{sc.sub_pos});
             ctx.game_sub_chunks_sorter.addSubChunk(sc);
         },
         .settings_build_sub_chunk => {

@@ -133,7 +133,7 @@ fn initGL(gl_major: u8, gl_minor: u8, _: *glfw.Window) !void {
     gl.cullFace(gl.BACK);
     gl.debugMessageCallback(glErrorCallbackfn, null);
     gl.enable(GL_DEBUG_OUTPUT);
-    gl.enable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    gl.disable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     const gl_version = gl.getString(gl.VERSION);
     const gl_renderer = gl.getString(gl.RENDERER);
     std.debug.print("system gl version: {s} renderer: {s}\n", .{ gl_version, gl_renderer });
