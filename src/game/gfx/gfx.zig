@@ -43,13 +43,10 @@ pub const ElementsRendererConfig = struct {
 };
 
 pub const GfxSubChunkDraws = struct {
-    num_indices: usize,
-    first: []c_int,
-    count: []c_int,
-    pub fn deinit(self: GfxSubChunkDraws, allocator: std.mem.Allocator) void {
-        allocator.free(self.first);
-        allocator.free(self.count);
-    }
+    num_indices: usize = 0,
+    first: [10_000]c_int = undefined,
+    count: [10_000]c_int = undefined,
+    num_draws: usize = 0,
 };
 
 pub const Gfx = struct {
@@ -60,8 +57,8 @@ pub const Gfx = struct {
     animation_data: AnimationData = undefined,
     lighting_ssbo: u32 = 0,
     ambient_lighting: f32 = 1,
-    settings_sub_chunk_draws: ?GfxSubChunkDraws = null,
-    game_sub_chunk_draws: ?GfxSubChunkDraws = null,
+    settings_sub_chunk_draws: GfxSubChunkDraws = .{},
+    game_sub_chunk_draws: GfxSubChunkDraws = .{},
     allocator: std.mem.Allocator,
 
     pub fn update_lighting(self: *Gfx) void {
@@ -78,8 +75,6 @@ pub const Gfx = struct {
     }
 
     fn deinit(self: *Gfx) void {
-        self.deinitSettingsDraws();
-        self.deinitGameDraws();
         self.animation_data.deinit(self.allocator);
         self.ubos.deinit();
         self.ssbos.deinit();
@@ -95,14 +90,6 @@ pub const Gfx = struct {
         }
         self.mob_data.deinit();
         self.allocator.destroy(self);
-    }
-
-    pub fn deinitSettingsDraws(self: *Gfx) void {
-        if (self.settings_sub_chunk_draws) |d| d.deinit(self.allocator);
-    }
-
-    pub fn deinitGameDraws(self: *Gfx) void {
-        if (self.game_sub_chunk_draws) |d| d.deinit(self.allocator);
     }
 
     pub fn addAnimation(self: *Gfx, key: AnimationData.AnimationRefKey, a: *Animation) void {

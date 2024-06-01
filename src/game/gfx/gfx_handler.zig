@@ -13,12 +13,10 @@ fn handle(res: thread.gfx.GfxResultBuffer.gfxResult) void {
     switch (res) {
         thread.gfx.GfxResultBuffer.gfxResult.settings_sub_chunk_draws => |d| {
             if (config.use_tracy) ztracy.Message("handling gfx result: settings_sub_chunk_draws");
-            game.state.gfx.deinitSettingsDraws();
             game.state.gfx.settings_sub_chunk_draws = d;
         },
         thread.gfx.GfxResultBuffer.gfxResult.game_sub_chunk_draws => |d| {
             if (config.use_tracy) ztracy.Message("handling gfx result: game_sub_chunk_draws");
-            game.state.gfx.deinitGameDraws();
             game.state.gfx.game_sub_chunk_draws = d;
         },
         thread.gfx.GfxResultBuffer.gfxResult.new_ssbo => |d| {

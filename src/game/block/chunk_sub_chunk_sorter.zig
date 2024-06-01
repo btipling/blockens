@@ -4,8 +4,9 @@ all_sub_chunks: [10_000]*chunk.sub_chunk = undefined,
 num_sub_chunks: usize = 0,
 num_indices: usize = 0,
 
-opaque_draw_first: std.ArrayListUnmanaged(c_int) = .{},
-opaque_draw_count: std.ArrayListUnmanaged(c_int) = .{},
+opaque_draw_first: [10_000]c_int = undefined,
+opaque_draw_count: [10_000]c_int = undefined,
+num_draws: usize = 0,
 
 camera_position: ?@Vector(4, f32) = null,
 view: ?zm.Mat = null,
@@ -28,8 +29,6 @@ pub fn deinit(self: *sorter) void {
     while (sci < self.num_sub_chunks) : (sci += 1) {
         self.all_sub_chunks[sci].deinit();
     }
-    self.opaque_draw_first.deinit(self.allocator);
-    self.opaque_draw_count.deinit(self.allocator);
     self.allocator.destroy(self);
 }
 
@@ -228,8 +227,7 @@ pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
 fn doSort(self: *sorter, loc: @Vector(4, f32)) void {
     if (config.use_tracy) ztracy.Message("sub_chunk_sorter: starting sort");
     _ = loc; // TODO: sort by loc
-    self.opaque_draw_first.clearRetainingCapacity();
-    self.opaque_draw_count.clearRetainingCapacity();
+    self.num_draws = 0;
     // TODO actually track index per sub chunk.
     const count = self.num_sub_chunks;
     var index_offset: usize = 0;
@@ -244,8 +242,9 @@ fn doSort(self: *sorter, loc: @Vector(4, f32)) void {
             index_offset += @intCast(num_indices);
             continue;
         }
-        self.opaque_draw_first.append(self.allocator, @intCast(index_offset)) catch @panic("OOM");
-        self.opaque_draw_count.append(self.allocator, @intCast(num_indices)) catch @panic("OOM");
+        self.opaque_draw_first[self.num_draws] = @intCast(index_offset);
+        self.opaque_draw_count[self.num_draws] = @intCast(num_indices);
+        self.num_draws += 1;
 
         index_offset += @intCast(num_indices);
         i += 1;
