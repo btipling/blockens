@@ -46,7 +46,7 @@ pub const GfxSubChunkDraws = struct {
     num_indices: usize,
     first: []c_int,
     count: []c_int,
-    fn deinit(self: GfxSubChunkDraws, allocator: std.mem.Allocator) void {
+    pub fn deinit(self: GfxSubChunkDraws, allocator: std.mem.Allocator) void {
         allocator.free(self.first);
         allocator.free(self.count);
     }

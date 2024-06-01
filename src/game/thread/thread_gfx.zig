@@ -103,6 +103,13 @@ pub const GfxResultBuffer = struct {
     }
 
     pub fn deinit(self: *GfxResultBuffer) void {
+        for (self.cmds.items) |cmd| {
+            switch (cmd) {
+                gfxResult.game_sub_chunk_draws => |d| d.deinit(self.allocator),
+                gfxResult.settings_sub_chunk_draws => |d| d.deinit(self.allocator),
+                else => {},
+            }
+        }
         self.cmds.deinit(self.allocator);
         self.allocator.destroy(self);
     }
