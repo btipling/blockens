@@ -13,11 +13,15 @@ pub const GfxCommandBuffer = struct {
     pub const gfxCommandType = enum(u8) {
         count,
         exit,
+        settings_subchunk,
+        game_subchunk,
     };
 
     pub const gfxCommand = union(gfxCommandType) {
         count: void,
         exit: void,
+        settings_subchunk: *chunk.sub_chunk,
+        game_subchunk: *chunk.sub_chunk,
     };
     mutex: std.Thread.Mutex = .{},
     allocator: std.mem.Allocator,
@@ -97,10 +101,15 @@ fn handle(cmd: GfxCommandBuffer.gfxCommand) void {
     switch (cmd) {
         .count => {
             ctx.count += 1;
-            std.debug.print("count is: {d}\n", .{ctx.count});
         },
         .exit => {
             ctx.exit = true;
+        },
+        .settings_subchunk => |sc| {
+            std.debug.print("gfx got a settings sub chunk! {}\n", .{sc.sub_pos});
+        },
+        .game_subchunk => |sc| {
+            std.debug.print("gfx got a game sub chunk! {}\n", .{sc.sub_pos});
         },
     }
     return;
@@ -121,3 +130,5 @@ fn end(self: *Ctx) void {
 }
 
 const std = @import("std");
+const block = @import("../block/block.zig");
+const chunk = block.chunk;

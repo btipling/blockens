@@ -108,6 +108,17 @@ fn handle_sub_chunks_mesh(msg: buffer.buffer_message) void {
     for (scd.sub_chunks) |sc| {
         if (sc.chunker.total_indices_count > 0) {
             sorter.addSubChunk(sc);
+            var cmd: thread_gfx.GfxCommandBuffer.gfxCommand = undefined;
+            if (scd.is_settings) {
+                cmd = .{
+                    .settings_subchunk = sc,
+                };
+            } else {
+                cmd = .{
+                    .game_subchunk = sc,
+                };
+            }
+            thread_gfx.send(cmd);
         } else {
             sc.deinit();
         }
@@ -297,3 +308,4 @@ const buffer = @import("./buffer.zig");
 const helpers = @import("../blecs/helpers.zig");
 const ui_helpers = @import("../blecs/systems/ui/ui_helpers.zig");
 const screen_helpers = @import("../blecs/systems/screen_helpers.zig");
+const thread_gfx = @import("thread_gfx.zig");
