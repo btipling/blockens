@@ -87,12 +87,13 @@ fn build(self: *sorter) void {
         const aloc: @Vector(4, f32) = loc - @as(@Vector(4, f32), @splat(0.5));
 
         const cfp: @Vector(4, f32) = sc.sub_pos;
-        const translation: @Vector(4, f32) = .{
+        sc.translation = .{
             (cfp[0] * chunk.sub_chunk.sub_chunk_dim) + aloc[0],
             (cfp[1] * chunk.sub_chunk.sub_chunk_dim) + aloc[1],
             (cfp[2] * chunk.sub_chunk.sub_chunk_dim) + aloc[2],
             cfp[3],
         };
+        sc.sc_index = sci;
         var indices_buf: [chunk.sub_chunk.sub_chunk_size * 36]u32 = undefined;
         var positions_buf: [chunk.sub_chunk.sub_chunk_size * 36][3]u5 = undefined;
         var normals_buf: [chunk.sub_chunk.sub_chunk_size * 36][3]u2 = undefined;
@@ -115,15 +116,12 @@ fn build(self: *sorter) void {
                 });
                 const bd: block.BlockData = block.BlockData.fromId(res.block_data[ii]);
                 const block_index: u32 = @intCast(game.state.ui.texture_atlas_block_index[@intCast(bd.block_id)]);
-                const num_blocks: u32 = @intCast(game.state.ui.texture_atlas_num_blocks);
-                md.attr_data = .{ dp, res.block_data[ii], block_index, num_blocks };
-            }
-            {
-                md.attr_translation = translation;
+                const draw_id: u32 = @intCast(sci);
+                md.attr_data = .{ dp, res.block_data[ii], block_index, draw_id };
             }
             mesh_data[ii] = md;
         }
-        const ad = self.mesh_buffer_builder.addData(mesh_data[0..res.positions.len], translation);
+        const ad = self.mesh_buffer_builder.addMeshData(mesh_data[0..res.positions.len], sc.translation);
         sc.buf_index = ad.index;
         sc.buf_size = ad.size;
         sc.buf_capacity = ad.capacity;
@@ -290,6 +288,7 @@ fn doSort(self: *sorter, loc: @Vector(4, f32)) void {
     var index_offset: usize = 0;
     var sci: usize = 0;
     var i: usize = 0;
+    self.mesh_buffer_builder.clearDraws();
     while (sci < count) : (sci += 1) {
         const sc: *chunk.sub_chunk = self.all_sub_chunks.items[sci];
         const num_indices = sc.chunker.total_indices_count;
@@ -300,6 +299,7 @@ fn doSort(self: *sorter, loc: @Vector(4, f32)) void {
         }
         self.opaque_draw_first.append(self.allocator, @intCast(index_offset)) catch @panic("OOM");
         self.opaque_draw_count.append(self.allocator, @intCast(num_indices)) catch @panic("OOM");
+
         index_offset += @intCast(num_indices);
         i += 1;
     }

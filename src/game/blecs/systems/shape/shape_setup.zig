@@ -103,6 +103,7 @@ const shaders = struct {
             },
             .is_sub_chunks = e.is_sub_chunks,
             .mesh_binding_point = e.mesh_binding_point,
+            .draw_binding_point = e.draw_binding_point,
         };
         return gfx.shadergen.vertex.VertexShaderGen.genVertexShader(v_cfg) catch @panic("vertex shader gen fail");
     }
@@ -159,6 +160,7 @@ const extractions = struct {
     mob_id: i32 = 0,
     is_sub_chunks: bool = false,
     mesh_binding_point: u32 = 0,
+    draw_binding_point: u32 = 0,
 
     fn deinit(self: *extractions) void {
         if (self.mesh_transforms) |mt| mt.deinit();
@@ -212,6 +214,7 @@ const extractions = struct {
             e.is_sub_chunks = true;
             e.is_meshed = true;
             e.mesh_binding_point = sc.mesh_binding_point;
+            e.draw_binding_point = sc.draw_binding_point;
         }
     }
 

@@ -12,7 +12,6 @@ pub const buffer_message_type = enum(u8) {
     chunk_gen,
     chunk_mesh,
     sub_chunk_mesh,
-    sub_chunk_build,
     lighting,
     lighting_cross_chunk,
     load_chunk,
@@ -28,7 +27,6 @@ pub const buffer_data = union(buffer_message_type) {
     chunk_gen: chunk_gen_data,
     chunk_mesh: chunk_mesh_data,
     sub_chunk_mesh: sub_chunk_mesh_data,
-    sub_chunk_build: sub_chunk_build_data,
     lighting: lightings_data,
     lighting_cross_chunk: lightings_data,
     load_chunk: load_chunk_data,
@@ -66,12 +64,6 @@ pub const chunk_mesh_data = struct {
 
 pub const sub_chunk_mesh_data = struct {
     sub_chunks: [64]*chunk.sub_chunk,
-    is_terrain: bool,
-    is_settings: bool,
-};
-
-pub const sub_chunk_build_data = struct {
-    sorter: *chunk.sub_chunk.sorter,
     is_terrain: bool,
     is_settings: bool,
 };

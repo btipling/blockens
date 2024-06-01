@@ -24,7 +24,7 @@ pub const LightingBindingPoint: u32 = 20;
 pub const GameMeshDataBindingPoint: u32 = 30;
 pub const SettingsMeshDataBindingPoint: u32 = 40;
 pub const GameDrawBindingPoint: u32 = 50;
-pub const GameSettingsBindingPoint: u32 = 60;
+pub const SettingsDrawBindingPoint: u32 = 60;
 
 // Animations
 pub const DemoCharacterWalkingAnimationID: u32 = 0x01;

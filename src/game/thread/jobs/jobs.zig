@@ -107,27 +107,6 @@ pub const Jobs = struct {
         return;
     }
 
-    pub fn buildSubChunks(self: *Jobs, is_terrain: bool, is_settings: bool) void {
-        var sorter: *chunk.sub_chunk.sorter = undefined;
-        if (is_settings) {
-            sorter = game.state.ui.demo_sub_chunks_sorter;
-        } else {
-            sorter = game.state.ui.game_sub_chunks_sorter;
-        }
-        _ = self.jobs.schedule(
-            zjobs.JobId.none,
-            job_sub_chunk_build.SubChunkBuilderJob{
-                .sorter = sorter,
-                .is_terrain = is_terrain,
-                .is_settings = is_settings,
-            },
-        ) catch |e| {
-            std.debug.print("error scheduling sub chunk build job: {}\n", .{e});
-            return;
-        };
-        return;
-    }
-
     pub fn generateDemoChunk(self: *Jobs, sub_chunks: bool) zjobs.JobId {
         return self.jobs.schedule(
             zjobs.JobId.none,
@@ -378,7 +357,6 @@ const state = @import("../../state.zig");
 const blecs = @import("../../blecs/blecs.zig");
 const job_chunk_meshing = @import("jobs_chunk_meshing.zig");
 const job_sub_chunk_mesh = @import("jobs_sub_chunk_mesh.zig");
-const job_sub_chunk_build = @import("jobs_sub_chunk_build.zig");
 const job_sub_chunk_cull = @import("jobs_sub_chunk_cull.zig");
 const job_demo_generate_chunk = @import("jobs_demo_generate_chunk.zig");
 const job_demo_descriptor_gen = @import("jobs_demo_descriptor_gen.zig");

@@ -463,12 +463,15 @@ pub fn initDemoSubChunks(reset: bool, is_terrain: bool) void {
     const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
     _ = ecs.set(world, sc_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
     _ = ecs.set(world, sc_e, components.shape.UBO, .{ .binding_point = gfx.constants.SettingsUBOBindingPoint });
-    _ = ecs.set(world, sc_e, components.block.SubChunks, .{ .mesh_binding_point = gfx.constants.SettingsMeshDataBindingPoint });
+    _ = ecs.set(world, sc_e, components.block.SubChunks, .{
+        .mesh_binding_point = gfx.constants.SettingsMeshDataBindingPoint,
+        .draw_binding_point = gfx.constants.SettingsDrawBindingPoint,
+    });
     ecs.add(world, sc_e, components.gfx.SortedMultiDraw);
     ecs.add(world, sc_e, components.block.UseTextureAtlas);
     _ = ecs.set(world, sc_e, components.shape.Lighting, .{ .ssbo = gfx.constants.LightingBindingPoint });
     ecs.add(world, sc_e, components.shape.NeedsSetup);
-    ecs.add(world, sc_e, components.Debug);
+    // ecs.add(world, sc_e, components.Debug);
     const values = game.state.blocks.generated_settings_chunks.values();
     for (values) |cd| {
         game.state.allocator.free(cd);
@@ -484,7 +487,10 @@ pub fn initGameSubChunks() void {
     const cr_c = math.vecs.Vflx4.initBytes(0, 0, 0, 0);
     _ = ecs.set(world, sc_e, components.shape.Color, components.shape.Color.fromVec(cr_c));
     _ = ecs.set(world, sc_e, components.shape.UBO, .{ .binding_point = gfx.constants.GameUBOBindingPoint });
-    _ = ecs.set(world, sc_e, components.block.SubChunks, .{ .mesh_binding_point = gfx.constants.GameMeshDataBindingPoint });
+    _ = ecs.set(world, sc_e, components.block.SubChunks, .{
+        .mesh_binding_point = gfx.constants.GameMeshDataBindingPoint,
+        .draw_binding_point = gfx.constants.GameDrawBindingPoint,
+    });
     ecs.add(world, sc_e, components.gfx.SortedMultiDraw);
     ecs.add(world, sc_e, components.block.UseTextureAtlas);
     _ = ecs.set(world, sc_e, components.shape.Lighting, .{ .ssbo = gfx.constants.LightingBindingPoint });

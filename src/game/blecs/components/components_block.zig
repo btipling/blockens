@@ -19,6 +19,7 @@ pub const ChunkUpdate = struct {
 };
 pub const SubChunks = struct {
     mesh_binding_point: u32,
+    draw_binding_point: u32,
 };
 pub const HighlightedBlock = struct {};
 pub const NeedsMeshing = struct {};

@@ -1,10 +1,9 @@
 pub const drawData = struct {
-    offset: u32 = undefined,
-    count: u32 = undefined,
+    draw_pointer: [4]u32,
     translation: [4]f32 = undefined,
 };
 
-const preallocated_mem_size: usize = @sizeOf(drawData) * 16 * 1024 * 1024;
+const preallocated_mem_size: usize = @sizeOf(drawData) * 1024 * 1024;
 
 pub fn initDrawShaderStorageBufferObject(block_binding_point: u32) u32 {
     var ssbo: u32 = undefined;
@@ -26,6 +25,7 @@ pub fn addDrawData(ssbo: u32, offset: usize, pd: []const drawData) void {
     gl.bindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo);
     const flags = gl.MAP_WRITE_BIT | gl.MAP_PERSISTENT_BIT | gl.MAP_COHERENT_BIT;
     const gl_ptr = gl.mapBufferRange(gl.SHADER_STORAGE_BUFFER, buffer_offset, size, flags);
+    if (gl_ptr == null) return;
     std.debug.assert(gl_ptr != null);
     const dest = @as([*]u8, @ptrCast(gl_ptr orelse unreachable));
     @memcpy(dest, dataptr);

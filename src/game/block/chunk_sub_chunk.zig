@@ -7,6 +7,9 @@ buf_index: usize = 0,
 buf_size: usize = 0,
 buf_capacity: usize = 0,
 
+translation: @Vector(4, f32) = .{ 0, 0, 0, 0 },
+sc_index: usize = 0,
+
 allocator: std.mem.Allocator,
 
 const SubChunk = @This();
