@@ -1,4 +1,4 @@
-pub fn handle_incoming() !void {
+pub fn handle_incoming() void {
     thread.gfx.gfx_result_buffer.read(handle);
 }
 

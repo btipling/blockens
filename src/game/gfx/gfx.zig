@@ -46,6 +46,10 @@ pub const GfxSubChunkDraws = struct {
     num_indices: usize,
     first: []c_int,
     count: []c_int,
+    fn deinit(self: GfxSubChunkDraws, allocator: std.mem.Allocator) void {
+        allocator.free(self.first);
+        allocator.free(self.count);
+    }
 };
 
 pub const Gfx = struct {
@@ -94,17 +98,11 @@ pub const Gfx = struct {
     }
 
     pub fn deinitSettingsDraws(self: *Gfx) void {
-        if (self.settings_sub_chunk_draws) |d| {
-            self.allocator.free(d.first);
-            self.allocator.free(d.count);
-        }
+        if (self.settings_sub_chunk_draws) |d| d.deinit(self.allocator);
     }
 
     pub fn deinitGameDraws(self: *Gfx) void {
-        if (self.game_sub_chunk_draws) |d| {
-            self.allocator.free(d.first);
-            self.allocator.free(d.count);
-        }
+        if (self.game_sub_chunk_draws) |d| d.deinit(self.allocator);
     }
 
     pub fn addAnimation(self: *Gfx, key: AnimationData.AnimationRefKey, a: *Animation) void {
@@ -139,3 +137,4 @@ pub const animation = @import("gfx_animation.zig");
 pub const Animation = animation.Animation;
 pub const AnimationData = animation.AnimationData;
 pub const mesh_buffer_builder = @import("gfx_mesh_buffer_builder.zig");
+pub const handler = @import("gfx_handler.zig");

@@ -122,6 +122,26 @@ fn initWindow(gl_major: u8, gl_minor: u8) !*glfw.Window {
     return window;
 }
 
+fn initGfxGlCtx(gl_major: u8, gl_minor: u8) !*glfw.Window {
+    glfw.windowHintTyped(.context_version_major, gl_major);
+    glfw.windowHintTyped(.context_version_minor, gl_minor);
+    glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
+    glfw.windowHintTyped(.opengl_forward_compat, false);
+    glfw.windowHintTyped(.client_api, .opengl_api);
+    glfw.windowHintTyped(.visible, false);
+    const ctx = glfw.Window.create(
+        100,
+        100,
+        "gfx_context",
+        null,
+    ) catch |err| {
+        std.log.err("Failed to create gfx gl context.", .{});
+        return err;
+    };
+
+    return ctx;
+}
+
 fn initGL(gl_major: u8, gl_minor: u8, _: *glfw.Window) !void {
     try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
 
@@ -168,6 +188,10 @@ pub const Game = struct {
         const gl_minor = 6;
 
         const window = try initWindow(gl_major, gl_minor);
+        errdefer window.destroy();
+
+        const gfx_gl_ctx = try initGfxGlCtx(gl_major, gl_minor);
+        errdefer gfx_gl_ctx.destroy();
         state.ui.setScreenSize(window);
         state.window = window;
 
@@ -187,7 +211,7 @@ pub const Game = struct {
         try state.initInternals();
         errdefer state.deinit();
 
-        thread.gfx.init(allocator);
+        thread.gfx.init(allocator, gfx_gl_ctx);
         errdefer thread.gfx.deinit();
 
         blecs.init();
@@ -237,12 +261,17 @@ pub const Game = struct {
                     zgui.backend.newFrame(w, h);
                 }
                 {
-                    const handle_i_zone = ztracy.ZoneN(@src(), "ThreadHandler");
+                    // Jobs
+                    const handle_i_zone = ztracy.ZoneN(@src(), "JobsThreadHandler");
                     defer handle_i_zone.End();
                     try thread.handler.handle_incoming();
                 }
                 {
+                    // Dedicated gfx OpenGL ctx thread
+                    const handle_i_zone = ztracy.ZoneN(@src(), "GfxThreadHandler");
+                    defer handle_i_zone.End();
                     thread.gfx.send(.count);
+                    gfx.handler.handle_incoming();
                 }
                 {
                     const ecs_progress_zone = ztracy.ZoneN(@src(), "ECSProgress");
@@ -280,12 +309,23 @@ pub const Game = struct {
                     zgui.backend.newFrame(w, h);
                 }
                 {
-                    thread.gfx.send(.count);
+                    // Jobs
+                    try thread.handler.handle_incoming();
                 }
-                try thread.handler.handle_incoming();
-                _ = blecs.ecs.progress(state.world, state.input.delta_time);
-                zgui.backend.draw();
-                state.window.swapBuffers();
+                {
+                    // Dedicated gfx OpenGL ctx thread
+                    thread.gfx.send(.count);
+                    gfx.handler.handle_incoming();
+                }
+                {
+                    _ = blecs.ecs.progress(state.world, state.input.delta_time);
+                }
+                {
+                    zgui.backend.draw();
+                }
+                {
+                    state.window.swapBuffers();
+                }
             }
         }
     }
@@ -307,3 +347,4 @@ const blecs = @import("blecs/blecs.zig");
 const input = @import("input/input.zig");
 const thread = @import("thread/thread.zig");
 const ui = @import("ui/ui.zig");
+const gfx = @import("gfx/gfx.zig");

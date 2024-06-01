@@ -2,6 +2,7 @@ count: u32 = 0,
 allocator: std.mem.Allocator = undefined,
 cmd_buffer: *GfxCommandBuffer,
 exit: bool = false,
+gl_ctx: *glfw.Window,
 
 demo_sub_chunks_sorter: *chunk.sub_chunk.sorter = undefined,
 game_sub_chunks_sorter: *chunk.sub_chunk.sorter = undefined,
@@ -124,9 +125,10 @@ pub const GfxResultBuffer = struct {
 const Args = struct {
     allocator: std.mem.Allocator,
     cmd_buffer: *GfxCommandBuffer,
+    gl_ctx: *glfw.Window,
 };
 
-pub fn init(allocator: std.mem.Allocator) void {
+pub fn init(allocator: std.mem.Allocator, gl_ctx: *glfw.Window) void {
     const cfg: std.Thread.SpawnConfig = .{
         .stack_size = 16 * 1024 * 1024,
     };
@@ -135,6 +137,7 @@ pub fn init(allocator: std.mem.Allocator) void {
     const args: Args = .{
         .allocator = allocator,
         .cmd_buffer = gfx_cmd_bufer,
+        .gl_ctx = gl_ctx,
     };
     gfx_thread = std.Thread.spawn(cfg, start, .{args}) catch |e| std.debug.panic(
         "gfx thread span werror{any}\n",
@@ -155,6 +158,12 @@ pub fn send(cmd: GfxCommandBuffer.gfxCommand) void {
 }
 
 fn start(args: Args) void {
+    if (config.use_tracy) {
+        const ztracy = @import("ztracy");
+        ztracy.SetThreadName("GfxThread");
+    }
+    glfw.makeContextCurrent(args.gl_ctx);
+
     ctx = args.allocator.create(Ctx) catch @panic("OOM");
     var gbb: gfx.mesh_buffer_builder = .{
         .mesh_binding_point = gfx.constants.GameMeshDataBindingPoint,
@@ -172,6 +181,7 @@ fn start(args: Args) void {
         .cmd_buffer = args.cmd_buffer,
         .game_sub_chunks_sorter = chunk.sub_chunk.sorter.init(args.allocator, gbb),
         .demo_sub_chunks_sorter = chunk.sub_chunk.sorter.init(args.allocator, sbb),
+        .gl_ctx = args.gl_ctx,
     };
     ctx.run();
 }
@@ -225,7 +235,20 @@ fn handle(cmd: GfxCommandBuffer.gfxCommand) void {
 }
 
 fn run(self: *Ctx) void {
+    if (config.use_tracy) {
+        const ztracy = @import("ztracy");
+        const tracy_zone = ztracy.ZoneNC(@src(), "GfxThreadRun", 0x0F_CF_82_f0);
+        defer tracy_zone.End();
+        self._run();
+        return;
+    }
+    self._run();
+}
+
+fn _run(self: *Ctx) void {
+    errdefer self.end();
     while (!self.exit) {
+        glfw.makeContextCurrent(ctx.gl_ctx);
         std.time.sleep(std.time.ns_per_ms * 1);
         self.cmd_buffer.read(handle);
         std.Thread.yield() catch {};
@@ -242,6 +265,9 @@ fn end(self: *Ctx) void {
 
 const std = @import("std");
 const zm = @import("zmath");
+const glfw = @import("zglfw");
+const config = @import("config");
+const zopengl = @import("zopengl");
 const gfx = @import("../gfx/gfx.zig");
 const block = @import("../block/block.zig");
 const chunk = block.chunk;
