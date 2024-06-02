@@ -24,6 +24,7 @@ $tests = @(
     ".\src\game\block\chunk_compress.zig",
     ".\src\game\block\chunk_sub_chunker.zig",
     ".\src\game\block\chunk_sub_chunk.zig",
+    ".\src\game\block\chunk_sub_chunk_aabb.zig",
     ".\src\game\ui\ui_format.zig"
 )
 

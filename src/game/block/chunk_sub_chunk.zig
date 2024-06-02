@@ -36,58 +36,58 @@ pub fn init(
         p[2] * chunk.chunkDim + scp[2] * chunk.sub_chunk.sub_chunk_dim,
         1,
     };
-    const front_bot_l: @Vector(4, f32) = loc;
-    const front_bot_r: @Vector(4, f32) = .{
+    const x_pos_y_neg_z_neg: @Vector(4, f32) = loc;
+    const x_pos_y_neg_z_pos: @Vector(4, f32) = .{
         loc[0] + chunk.sub_chunk.sub_chunk_dim,
         loc[1],
         loc[2],
         loc[3],
     };
-    const front_top_l: @Vector(4, f32) = .{
+    const x_pos_y_pos_z_neg: @Vector(4, f32) = .{
         loc[0],
         loc[1] + chunk.sub_chunk.sub_chunk_dim,
         loc[2],
         loc[3],
     };
-    const front_top_r: @Vector(4, f32) = .{
+    const x_pos_y_pos_z_pos: @Vector(4, f32) = .{
         loc[0] + chunk.sub_chunk.sub_chunk_dim,
         loc[1] + chunk.sub_chunk.sub_chunk_dim,
         loc[2],
         loc[3],
     };
-    const back_bot_l: @Vector(4, f32) = .{
+    const x_neg_y_neg_z_neg: @Vector(4, f32) = .{
         loc[0],
         loc[1],
         loc[2] + chunk.sub_chunk.sub_chunk_dim,
         loc[3],
     };
-    const back_bot_r: @Vector(4, f32) = .{
+    const x_neg_y_neg_z_pos: @Vector(4, f32) = .{
         loc[0] + chunk.sub_chunk.sub_chunk_dim,
         loc[1],
         loc[2] + chunk.sub_chunk.sub_chunk_dim,
         loc[3],
     };
-    const back_top_l: @Vector(4, f32) = .{
+    const x_neg_y_pos_z_neg: @Vector(4, f32) = .{
         loc[0],
         loc[1] + chunk.sub_chunk.sub_chunk_dim,
         loc[2] + chunk.sub_chunk.sub_chunk_dim,
         loc[3],
     };
-    const back_top_r: @Vector(4, f32) = .{
+    const x_neg_y_pos_z_pos: @Vector(4, f32) = .{
         loc[0] + chunk.sub_chunk.sub_chunk_dim,
         loc[1] + chunk.sub_chunk.sub_chunk_dim,
         loc[2] + chunk.sub_chunk.sub_chunk_dim,
         loc[3],
     };
     const bounding_box: [8]@Vector(4, f32) = .{
-        front_bot_l,
-        front_bot_r,
-        front_top_l,
-        front_top_r,
-        back_bot_l,
-        back_bot_r,
-        back_top_l,
-        back_top_r,
+        x_pos_y_neg_z_neg,
+        x_pos_y_neg_z_pos,
+        x_pos_y_pos_z_neg,
+        x_pos_y_pos_z_pos,
+        x_neg_y_neg_z_neg,
+        x_neg_y_neg_z_pos,
+        x_neg_y_pos_z_neg,
+        x_neg_y_pos_z_pos,
     };
 
     c.* = SubChunk{
@@ -102,6 +102,17 @@ pub fn init(
 
 pub fn deinit(self: *SubChunk) void {
     self.allocator.destroy(self);
+}
+
+pub fn actualWorldSpaceCoordinate(self: *SubChunk) @Vector(4, f32) {
+    const p = self.wp.vecFromWorldPosition();
+    const scp = self.sub_pos;
+    return .{
+        p[0] * chunk.chunkDim + scp[0] * chunk.sub_chunk.sub_chunk_dim,
+        p[1] * chunk.chunkDim + scp[1] * chunk.sub_chunk.sub_chunk_dim,
+        p[2] * chunk.chunkDim + scp[2] * chunk.sub_chunk.sub_chunk_dim,
+        1,
+    };
 }
 
 pub const subPositionIndex = struct {
