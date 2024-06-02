@@ -232,3 +232,4 @@ const chunk = @import("chunk.zig");
 
 pub const sorter = @import("chunk_sub_chunk_sorter.zig");
 pub const chunker = @import("chunk_sub_chunker.zig");
+pub const aabb_tree = @import("chunk_sub_chunk_aabb.zig");
