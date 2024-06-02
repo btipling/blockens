@@ -54,7 +54,7 @@ fn gfxSortedMultiDraw(
     if (!ecs.is_alive(world, entity)) return;
     if (ecs.has_id(world, entity, ecs.id(components.gfx.ManuallyHidden))) return;
     const parent = ecs.get_parent(world, entity);
-    var draws: ?gfx.GfxSubChunkDraws = null;
+    var draws: gfx.GfxSubChunkDraws = undefined;
     if (parent == screen.gameDataEntity) {
         if (!ecs.has_id(world, screen.current, ecs.id(components.screen.Game))) {
             return;
@@ -67,8 +67,8 @@ fn gfxSortedMultiDraw(
         }
         draws = game.state.gfx.settings_sub_chunk_draws;
     }
-    if (draws == null) return;
-    const d = draws.?;
+    if (draws.num_draws == 0) return;
+    const d = draws;
     if (d.num_indices == 0) return;
     if (er.enable_depth_test) gl.enable(gl.DEPTH_TEST);
     gl.useProgram(er.program);
@@ -78,13 +78,13 @@ fn gfxSortedMultiDraw(
     }
     gl.bindVertexArray(er.vao);
 
-    const first = d.first;
-    const count = d.count;
+    const first = d.first[0..d.num_draws];
+    const count = d.count[0..d.num_draws];
     gl.multiDrawArrays(
         gl.TRIANGLES,
         first.ptr,
         count.ptr,
-        @intCast(first.len),
+        @intCast(d.num_draws),
     );
 }
 

@@ -110,8 +110,6 @@ pub const GfxResultBuffer = struct {
     pub fn deinit(self: *GfxResultBuffer) void {
         for (self.cmds.items) |cmd| {
             switch (cmd) {
-                gfxResult.game_sub_chunk_draws => |d| d.deinit(self.allocator),
-                gfxResult.settings_sub_chunk_draws => |d| d.deinit(self.allocator),
                 else => {},
             }
         }
@@ -240,8 +238,9 @@ fn handle(cmd: GfxCommandBuffer.gfxCommand) void {
             ctx.demo_sub_chunks_sorter.sort(.{ 0, 0, 0, 0 });
             gfx_result_buffer.send(.{ .settings_sub_chunk_draws = .{
                 .num_indices = ctx.demo_sub_chunks_sorter.num_indices,
-                .first = ctx.demo_sub_chunks_sorter.opaque_draw_first.toOwnedSlice(ctx.allocator) catch @panic("OOM"),
-                .count = ctx.demo_sub_chunks_sorter.opaque_draw_count.toOwnedSlice(ctx.allocator) catch @panic("OOM"),
+                .num_draws = ctx.demo_sub_chunks_sorter.num_draws,
+                .first = ctx.demo_sub_chunks_sorter.opaque_draw_first,
+                .count = ctx.demo_sub_chunks_sorter.opaque_draw_count,
             } });
         },
         .game_build_sub_chunk => {
@@ -249,8 +248,9 @@ fn handle(cmd: GfxCommandBuffer.gfxCommand) void {
             ctx.game_sub_chunks_sorter.sort(.{ 0, 0, 0, 0 });
             gfx_result_buffer.send(.{ .game_sub_chunk_draws = .{
                 .num_indices = ctx.game_sub_chunks_sorter.num_indices,
-                .first = ctx.game_sub_chunks_sorter.opaque_draw_first.toOwnedSlice(ctx.allocator) catch @panic("OOM"),
-                .count = ctx.game_sub_chunks_sorter.opaque_draw_count.toOwnedSlice(ctx.allocator) catch @panic("OOM"),
+                .num_draws = ctx.game_sub_chunks_sorter.num_draws,
+                .first = ctx.game_sub_chunks_sorter.opaque_draw_first,
+                .count = ctx.game_sub_chunks_sorter.opaque_draw_count,
             } });
             gfx_result_buffer.send(.{ .game_sub_chunks_ready = {} });
         },
@@ -262,8 +262,9 @@ fn handle(cmd: GfxCommandBuffer.gfxCommand) void {
             ctx.game_sub_chunks_sorter.sort(.{ 0, 0, 0, 0 });
             gfx_result_buffer.send(.{ .game_sub_chunk_draws = .{
                 .num_indices = ctx.game_sub_chunks_sorter.num_indices,
-                .first = ctx.game_sub_chunks_sorter.opaque_draw_first.toOwnedSlice(ctx.allocator) catch @panic("OOM"),
-                .count = ctx.game_sub_chunks_sorter.opaque_draw_count.toOwnedSlice(ctx.allocator) catch @panic("OOM"),
+                .num_draws = ctx.game_sub_chunks_sorter.num_draws,
+                .first = ctx.game_sub_chunks_sorter.opaque_draw_first,
+                .count = ctx.game_sub_chunks_sorter.opaque_draw_count,
             } });
         },
     }
