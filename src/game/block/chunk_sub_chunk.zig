@@ -1,6 +1,6 @@
 wp: worldPosition,
 sub_pos: subPosition,
-chunker: chunker,
+chunker: chunker = undefined,
 visible: bool = true,
 
 buf_index: usize = 0,
@@ -9,9 +9,9 @@ buf_capacity: usize = 0,
 
 translation: @Vector(4, f32) = .{ 0, 0, 0, 0 },
 sc_index: usize = 0,
-bounding_box: [8]@Vector(4, f32),
+bounding_box: [8]@Vector(4, f32) = undefined,
 
-allocator: std.mem.Allocator,
+allocator: std.mem.Allocator = undefined,
 
 const SubChunk = @This();
 
@@ -28,8 +28,23 @@ pub fn init(
 ) !*SubChunk {
     const c: *SubChunk = try allocator.create(SubChunk);
 
-    const p = wp.vecFromWorldPosition();
-    const scp = sub_pos;
+    c.* = SubChunk{
+        .wp = wp,
+        .sub_pos = sub_pos,
+        .chunker = csc,
+        .allocator = allocator,
+    };
+    c.initBouningBox();
+    return c;
+}
+
+pub fn deinit(self: *SubChunk) void {
+    self.allocator.destroy(self);
+}
+
+pub fn initBouningBox(self: *SubChunk) void {
+    const p = self.wp.vecFromWorldPosition();
+    const scp = self.sub_pos;
     const loc: @Vector(4, f32) = .{
         p[0] * chunk.chunkDim + scp[0] * chunk.sub_chunk.sub_chunk_dim,
         p[1] * chunk.chunkDim + scp[1] * chunk.sub_chunk.sub_chunk_dim,
@@ -89,22 +104,10 @@ pub fn init(
         x_neg_y_pos_z_neg,
         x_neg_y_pos_z_pos,
     };
-
-    c.* = SubChunk{
-        .wp = wp,
-        .sub_pos = sub_pos,
-        .chunker = csc,
-        .bounding_box = bounding_box,
-        .allocator = allocator,
-    };
-    return c;
+    self.bounding_box = bounding_box;
 }
 
-pub fn deinit(self: *SubChunk) void {
-    self.allocator.destroy(self);
-}
-
-pub fn actualWorldSpaceCoordinate(self: *SubChunk) @Vector(4, f32) {
+pub fn actualWorldSpaceCoordinate(self: *const SubChunk) @Vector(4, f32) {
     const p = self.wp.vecFromWorldPosition();
     const scp = self.sub_pos;
     return .{
