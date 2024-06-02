@@ -170,17 +170,6 @@ pub fn debugPrintBoundingBox(self: *AABB, recursive: bool) void {
 pub fn addSubChunk(self: *AABB, sc: *const chunk.sub_chunk) void {
     // If smallest possible AABB, just add the sub chunk as a child:
     if (self.dimension == chunk.sub_chunk.sub_chunk_dim * 2) {
-        const awsc = sc.actualWorldSpaceCoordinate();
-        std.debug.print("adding ({d}, {d}, {d}, {d}) into: ({d}, {d}, {d}, {d})\n", .{
-            awsc[0],
-            awsc[1],
-            awsc[2],
-            awsc[3],
-            self.slot_position[0],
-            self.slot_position[1],
-            self.slot_position[2],
-            self.slot_position[3],
-        });
         std.debug.assert(self.num_sub_chunks < 8);
         self.sub_chunks[self.num_sub_chunks] = sc;
         self.num_sub_chunks += 1;
