@@ -2,6 +2,8 @@ index_offset: usize = 0,
 allocator: std.mem.Allocator,
 all_sub_chunks: [10_000]*chunk.sub_chunk = undefined,
 num_sub_chunks: usize = 0,
+visible_sub_chunks: [10_000]usize = undefined,
+num_visible: usize = 0,
 num_indices: usize = 0,
 
 opaque_draw_first: [10_000]c_int = undefined,
@@ -12,6 +14,7 @@ camera_position: ?@Vector(4, f32) = null,
 view: ?zm.Mat = null,
 perspective: ?zm.Mat = null,
 mesh_buffer_builder: gfx.mesh_buffer_builder,
+aabb_tree: *chunk.sub_chunk.aabb_tree,
 
 const sorter = @This();
 
@@ -20,6 +23,11 @@ pub fn init(allocator: std.mem.Allocator, mbb: gfx.mesh_buffer_builder) *sorter 
     s.* = .{
         .allocator = allocator,
         .mesh_buffer_builder = mbb,
+        .aabb_tree = chunk.sub_chunk.aabb_tree.init(
+            allocator,
+            chunk.sub_chunk.aabb_tree.root_dimension,
+            .{ -255, 0, -255, 0 },
+        ),
     };
     return s;
 }
@@ -29,6 +37,7 @@ pub fn deinit(self: *sorter) void {
     while (sci < self.num_sub_chunks) : (sci += 1) {
         self.all_sub_chunks[sci].deinit();
     }
+    self.aabb_tree.deinit();
     self.allocator.destroy(self);
 }
 
@@ -44,6 +53,9 @@ pub fn clear(self: *sorter) void {
 pub fn addSubChunk(self: *sorter, sc: *chunk.sub_chunk) void {
     self.all_sub_chunks[self.num_sub_chunks] = sc;
     self.num_sub_chunks += 1;
+    if (sc.chunker.total_indices_count == 0) return;
+    self.aabb_tree.addSubChunk(sc);
+    // self.aabb_tree.debugPrintBoundingBox(true);
 }
 
 pub fn buildMeshData(self: *sorter) void {
@@ -168,20 +180,68 @@ pub fn setCamera(self: *sorter, camera_position: @Vector(4, f32), view: zm.Mat, 
 fn doCullling(self: *sorter, camera_position: @Vector(4, f32), view: zm.Mat, perspective: zm.Mat) void {
     if (config.use_tracy) ztracy.Message("sub_chunk_sorter: start cull");
 
-    const count = self.num_sub_chunks;
-    var sci: usize = 0;
-    while (sci < count) : (sci += 1) {
-        if (config.use_tracy) {
-            const tracy_zone = ztracy.ZoneNC(@src(), "SubChunkSorterCullSubChunk", 0x00_aa_ff_f0);
-            defer tracy_zone.End();
-            self.cullSubChunk(camera_position, view, perspective, sci);
-        } else {
-            self.cullSubChunk(camera_position, view, perspective, sci);
+    if (game.state.ui.gfx_use_aabb_chull) {
+        self.cullSubChunksWithAABBTree(view);
+    } else {
+        const count = self.num_sub_chunks;
+        var sci: usize = 0;
+        while (sci < count) : (sci += 1) {
+            if (config.use_tracy) {
+                const tracy_zone = ztracy.ZoneNC(@src(), "SubChunkSorterCullSubChunk", 0x00_aa_ff_f0);
+                defer tracy_zone.End();
+                self.cullSubChunk(camera_position, view, perspective, sci);
+            } else {
+                self.cullSubChunk(camera_position, view, perspective, sci);
+            }
         }
     }
 
     if (config.use_tracy) ztracy.Message("sub_chunk_sorter: one culling");
     self.doSort(.{ 0, 0, 0, 0 });
+}
+
+fn cullSubChunksWithAABBTree(
+    self: *sorter,
+    view: zm.Mat,
+) void {
+    self.num_visible = 0;
+    var visible_aabb_trees: [10_000]*chunk.sub_chunk.aabb_tree = undefined;
+    var num_aabb_trees_left: usize = 0;
+    var aabb_tree: *chunk.sub_chunk.aabb_tree = self.aabb_tree;
+    std.debug.print("\n\n\ncullSubChunksWithAABBTree begins\n", .{});
+    const w: f32 = game.state.ui.screen_size[0];
+    const h: f32 = game.state.ui.screen_size[1];
+    const s = w / h;
+    const f = frustum.init(view, game_config.fov, s, game_config.near, game_config.far);
+    while (true) {
+        {
+            var i: usize = 0;
+            while (i < aabb_tree.num_sub_chunks) : (i += 1) {
+                std.debug.print("sc visible?, checking. num_visible {d}\n", .{self.num_visible});
+                const sc = aabb_tree.sub_chunks[i];
+                if (f.axisAlignedBoxVisible(sc.center, sc.effective_radius)) {
+                    self.visible_sub_chunks[self.num_visible] = sc.sc_index;
+                    std.debug.print("sc visible, adding. num_visible {d}\n", .{self.num_visible});
+                    self.num_visible += 1;
+                }
+            }
+        }
+        {
+            var i: usize = 0;
+            while (i < aabb_tree.num_children) : (i += 1) {
+                const child = aabb_tree.children[i];
+                if (f.axisAlignedBoxVisible(child.center, child.effective_radius)) {
+                    visible_aabb_trees[num_aabb_trees_left] = child;
+                    num_aabb_trees_left += 1;
+                    std.debug.print("visible aabb, adding. left {d}\n", .{num_aabb_trees_left});
+                }
+            }
+        }
+        if (num_aabb_trees_left == 0) break;
+        aabb_tree = visible_aabb_trees[num_aabb_trees_left - 1];
+        num_aabb_trees_left -= 1;
+        std.debug.print("checking next aabb, left {d}\n", .{num_aabb_trees_left});
+    }
 }
 
 fn cullSubChunk(
@@ -218,10 +278,39 @@ pub fn sort(self: *sorter, loc: @Vector(4, f32)) void {
     if (config.use_tracy) {
         const tracy_zone = ztracy.ZoneNC(@src(), "SubChunkSorterSort", 0x00_aa_ff_f0);
         defer tracy_zone.End();
+        if (game.state.ui.gfx_use_aabb_chull) {
+            self.doAABBCulledSort(loc);
+            return;
+        }
         self.doSort(loc);
     } else {
+        if (game.state.ui.gfx_use_aabb_chull) {
+            self.doAABBCulledSort(loc);
+            return;
+        }
         self.doSort(loc);
     }
+}
+
+fn doAABBCulledSort(self: *sorter, loc: @Vector(4, f32)) void {
+    if (config.use_tracy) ztracy.Message("sub_chunk_sorter: starting aabb sort");
+    _ = loc; // TODO: sort by loc
+    self.num_draws = 0;
+    var index_offset: usize = 0;
+    self.mesh_buffer_builder.clearDraws();
+    var i: usize = 0;
+    while (i < self.num_visible) : (i += 1) {
+        const sci = self.visible_sub_chunks[i];
+        const sc: *chunk.sub_chunk = self.all_sub_chunks[sci];
+        const num_indices = sc.chunker.total_indices_count;
+        self.opaque_draw_first[self.num_draws] = @intCast(index_offset);
+        self.opaque_draw_count[self.num_draws] = @intCast(num_indices);
+        self.num_draws += 1;
+
+        index_offset += @intCast(num_indices);
+        i += 1;
+    }
+    if (config.use_tracy) ztracy.Message("sub_chunk_sorter: done aabb sorting");
 }
 
 fn doSort(self: *sorter, loc: @Vector(4, f32)) void {
@@ -259,5 +348,6 @@ const gfx = @import("../gfx/gfx.zig");
 const game = @import("../game.zig");
 const game_config = @import("../config.zig");
 const zm = @import("zmath");
+const frustum = @import("../math/frustum.zig");
 const block = @import("block.zig");
 const chunk = block.chunk;
