@@ -1,6 +1,6 @@
 wp: worldPosition,
 sub_pos: subPosition,
-chunker: chunker,
+chunker: chunker = undefined,
 visible: bool = true,
 
 buf_index: usize = 0,
@@ -9,9 +9,11 @@ buf_capacity: usize = 0,
 
 translation: @Vector(4, f32) = .{ 0, 0, 0, 0 },
 sc_index: usize = 0,
-bounding_box: [8]@Vector(4, f32),
+effective_radius: @Vector(4, f32) = .{ 0, 0, 0, 0 },
+center: @Vector(4, f32) = .{ 0, 0, 0, 0 },
+bounding_box: [8]@Vector(4, f32) = undefined,
 
-allocator: std.mem.Allocator,
+allocator: std.mem.Allocator = undefined,
 
 const SubChunk = @This();
 
@@ -28,14 +30,35 @@ pub fn init(
 ) !*SubChunk {
     const c: *SubChunk = try allocator.create(SubChunk);
 
+    const dim_f: f32 = @floatFromInt(sub_chunk_dim);
+    const effective_radius: f32 = @floor(dim_f / 2.0);
     const p = wp.vecFromWorldPosition();
     const scp = sub_pos;
     const loc: @Vector(4, f32) = .{
         p[0] * chunk.chunkDim + scp[0] * chunk.sub_chunk.sub_chunk_dim,
         p[1] * chunk.chunkDim + scp[1] * chunk.sub_chunk.sub_chunk_dim,
         p[2] * chunk.chunkDim + scp[2] * chunk.sub_chunk.sub_chunk_dim,
-        1,
+        0,
     };
+
+    const center: @Vector(4, f32) = loc + @as(@Vector(4, f32), @splat(effective_radius));
+    c.* = SubChunk{
+        .wp = wp,
+        .sub_pos = sub_pos,
+        .effective_radius = @splat(effective_radius),
+        .center = center,
+        .chunker = csc,
+        .allocator = allocator,
+    };
+    c.initBoundingBox(loc);
+    return c;
+}
+
+pub fn deinit(self: *SubChunk) void {
+    self.allocator.destroy(self);
+}
+
+pub fn initBoundingBox(self: *SubChunk, loc: @Vector(4, f32)) void {
     const x_pos_y_neg_z_neg: @Vector(4, f32) = loc;
     const x_pos_y_neg_z_pos: @Vector(4, f32) = .{
         loc[0] + chunk.sub_chunk.sub_chunk_dim,
@@ -89,22 +112,10 @@ pub fn init(
         x_neg_y_pos_z_neg,
         x_neg_y_pos_z_pos,
     };
-
-    c.* = SubChunk{
-        .wp = wp,
-        .sub_pos = sub_pos,
-        .chunker = csc,
-        .bounding_box = bounding_box,
-        .allocator = allocator,
-    };
-    return c;
+    self.bounding_box = bounding_box;
 }
 
-pub fn deinit(self: *SubChunk) void {
-    self.allocator.destroy(self);
-}
-
-pub fn actualWorldSpaceCoordinate(self: *SubChunk) @Vector(4, f32) {
+pub fn actualWorldSpaceCoordinate(self: *const SubChunk) @Vector(4, f32) {
     const p = self.wp.vecFromWorldPosition();
     const scp = self.sub_pos;
     return .{
@@ -229,3 +240,4 @@ const chunk = @import("chunk.zig");
 
 pub const sorter = @import("chunk_sub_chunk_sorter.zig");
 pub const chunker = @import("chunk_sub_chunker.zig");
+pub const aabb_tree = @import("chunk_sub_chunk_aabb.zig");

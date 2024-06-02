@@ -48,6 +48,9 @@ fn run(it: *ecs.iter_t) callconv(.C) void {
                 _ = zgui.checkbox("Lock cull from player position", .{
                     .v = &game.state.ui.gfx_lock_cull_to_player_pos,
                 });
+                _ = zgui.checkbox("Cull with aabb trees", .{
+                    .v = &game.state.ui.gfx_use_aabb_chull,
+                });
                 showChunkList() catch continue;
             }
             zgui.end();
