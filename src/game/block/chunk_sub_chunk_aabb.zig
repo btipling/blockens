@@ -23,6 +23,10 @@ pub fn init(allocator: std.mem.Allocator, dimension: usize, slot_position: @Vect
 }
 
 pub fn deinit(self: *AABB) void {
+    var i: usize = 0;
+    while (i < self.num_children) : (i += 1) {
+        self.children[i].deinit();
+    }
     self.allocator.destroy(self);
 }
 
@@ -89,7 +93,8 @@ pub fn addSubChunk(self: *AABB, sc: *const chunk.sub_chunk) void {
     if (self.dimension == chunk.sub_chunk.sub_chunk_dim * 2) {
         std.debug.assert(self.num_children < 4);
         self.sub_chunks[self.num_children] = sc;
-        self.num_children += 1;
+        self.num_sub_chunks += 1;
+        return;
     }
     const pos: @Vector(4, f32) = sc.actualWorldSpaceCoordinate();
     // Current bounded world range is -256 -> +256
@@ -98,6 +103,7 @@ pub fn addSubChunk(self: *AABB, sc: *const chunk.sub_chunk) void {
     const self_dim: f32 = @floatFromInt(self.dimension);
     const offset_slot_pos = range_pos / @as(@Vector(4, f32), @splat(self_dim / 2));
     const slot_position = offset_slot_pos - bound_offset;
+
     var i: usize = 0;
     while (i < self.num_children) : (i += 1) {
         const child: *AABB = self.children[i];
