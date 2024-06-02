@@ -34,7 +34,7 @@ pub fn init(
         .chunker = csc,
         .allocator = allocator,
     };
-    c.initBouningBox();
+    c.initBoundingBox();
     return c;
 }
 
@@ -42,7 +42,7 @@ pub fn deinit(self: *SubChunk) void {
     self.allocator.destroy(self);
 }
 
-pub fn initBouningBox(self: *SubChunk) void {
+pub fn initBoundingBox(self: *SubChunk) void {
     const p = self.wp.vecFromWorldPosition();
     const scp = self.sub_pos;
     const loc: @Vector(4, f32) = .{
